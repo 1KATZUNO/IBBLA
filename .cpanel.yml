@@ -1,0 +1,30 @@
+---
+deployment:
+  tasks:
+    # Definir variables de ruta
+    - export DEPLOYPATH=/home/ibbsccou/public_html/IBBSC/
+    - export REPOPATH=/home/ibbsccou/repositories/IBBSCation/
+    
+    # Limpiar public_html (excepto .htaccess y archivos ocultos importantes)
+    - /bin/find $DEPLOYPATH -mindepth 1 ! -name '.htaccess' ! -name '.well-known' -delete
+    
+    # Copiar contenido de /public a public_html
+    - /bin/cp -R public/* $DEPLOYPATH
+    - /bin/cp public/.htaccess $DEPLOYPATH 2>/dev/null || :
+    
+    # Crear symlink para storage
+    - /bin/rm -rf $DEPLOYPATH/storage
+    - /bin/ln -s $REPOPATH/storage/app/public $DEPLOYPATH/storage
+    
+    # Instalar dependencias de Composer (si composer existe)
+    - /usr/local/bin/ea-php82 /opt/cpanel/composer/bin/composer install --no-dev --optimize-autoloader --working-dir=$REPOPATH 2>/dev/null || echo "Composer no disponible"
+    
+    # Optimizar Laravel
+    - cd $REPOPATH && /usr/local/bin/ea-php82 artisan config:cache
+    - cd $REPOPATH && /usr/local/bin/ea-php82 artisan route:cache
+    - cd $REPOPATH && /usr/local/bin/ea-php82 artisan view:cache
+    
+    # Permisos correctos
+    - /bin/chmod -R 755 $DEPLOYPATH
+    - /bin/chmod -R 775 $REPOPATH/storage
+    - /bin/chmod -R 775 $REPOPATH/bootstrap/cache

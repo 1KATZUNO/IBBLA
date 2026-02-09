@@ -1,0 +1,275 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    body {
+        @apply font-sans antialiased bg-gray-50;
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+        @apply font-display;
+        letter-spacing: -0.01em;
+    }
+}
+
+@layer components {
+    /* Clean Card */
+    .glass-card {
+        @apply bg-white rounded-xl shadow-card border border-gray-100;
+        transition: box-shadow 0.2s ease, transform 0.2s ease;
+    }
+
+    .glass-card:hover {
+        @apply shadow-card-hover;
+    }
+
+    /* Primary Button - Azul corporativo */
+    .btn-primary {
+        @apply relative bg-blue-600 text-white font-semibold px-6 py-3 rounded-lg;
+        @apply shadow-sm transition-all duration-200;
+        @apply hover:bg-blue-700 hover:shadow-md active:bg-blue-800;
+    }
+
+    /* Alias para compatibilidad */
+    .btn-gemini {
+        @apply btn-primary;
+    }
+
+    /* Input Fields */
+    .input-primary {
+        @apply w-full px-4 py-3 rounded-lg border border-gray-300 bg-white;
+        @apply focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none;
+        @apply transition-all duration-200;
+    }
+
+    /* Alias para compatibilidad */
+    .input-gemini {
+        @apply input-primary;
+    }
+
+    /* Stats Card con borde lateral azul */
+    .stat-card {
+        @apply relative bg-white rounded-xl p-6 shadow-card border border-gray-100;
+        @apply transition-all duration-200 hover:shadow-card-hover;
+        @apply flex flex-col;
+        @apply border-l-4 border-l-blue-600;
+        min-height: 140px;
+    }
+
+    .stat-card dd {
+        @apply break-all;
+        word-break: break-word;
+        overflow-wrap: anywhere;
+    }
+
+    /* Texto azul sólido (reemplazo de gradiente) */
+    .text-gradient {
+        @apply text-blue-700 font-semibold;
+    }
+
+    /* Scrollbar personalizado */
+    .scrollbar-primary::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+    }
+
+    .scrollbar-primary::-webkit-scrollbar-track {
+        @apply bg-gray-100 rounded-full;
+    }
+
+    .scrollbar-primary::-webkit-scrollbar-thumb {
+        @apply bg-gray-300 rounded-full;
+    }
+
+    .scrollbar-primary::-webkit-scrollbar-thumb:hover {
+        @apply bg-gray-400;
+    }
+
+    /* Alias para compatibilidad */
+    .scrollbar-gemini {
+        @apply scrollbar-primary;
+    }
+
+    /* Badge */
+    .badge-primary {
+        @apply inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium;
+        @apply bg-blue-100 text-blue-800;
+        @apply transition-all duration-200;
+    }
+
+    /* Alias para compatibilidad */
+    .badge-gemini {
+        @apply badge-primary;
+    }
+
+    /* Table Style */
+    .table-primary {
+        @apply w-full border-collapse;
+    }
+
+    .table-primary thead tr {
+        @apply bg-blue-700 text-white;
+    }
+
+    .table-primary thead th {
+        @apply px-6 py-4 text-left font-semibold tracking-wider uppercase text-sm;
+    }
+
+    .table-primary thead th:first-child {
+        @apply rounded-tl-lg;
+    }
+
+    .table-primary thead th:last-child {
+        @apply rounded-tr-lg;
+    }
+
+    .table-primary tbody tr {
+        @apply bg-white border-b border-gray-100;
+        @apply transition-colors duration-200 hover:bg-blue-50;
+    }
+
+    .table-primary tbody td {
+        @apply px-6 py-4;
+    }
+
+    /* Alias para compatibilidad */
+    .table-gemini {
+        @apply table-primary;
+    }
+
+    .table-gemini thead tr {
+        @apply bg-blue-700 text-white;
+    }
+
+    .table-gemini thead th {
+        @apply px-6 py-4 text-left font-semibold tracking-wider uppercase text-sm;
+    }
+
+    .table-gemini thead th:first-child {
+        @apply rounded-tl-lg;
+    }
+
+    .table-gemini thead th:last-child {
+        @apply rounded-tr-lg;
+    }
+
+    .table-gemini tbody tr {
+        @apply bg-white border-b border-gray-100;
+        @apply transition-colors duration-200 hover:bg-blue-50;
+    }
+
+    .table-gemini tbody td {
+        @apply px-6 py-4;
+    }
+
+    /* Modal */
+    .modal-overlay {
+        @apply fixed inset-0 bg-gray-900/50;
+        animation: fadeIn 0.2s ease-out;
+    }
+
+    .modal-content {
+        @apply relative bg-white rounded-xl shadow-xl;
+        @apply border border-gray-200 p-8 max-w-2xl mx-auto my-8;
+        animation: fadeInUp 0.3s ease-out;
+    }
+
+    /* Alerts */
+    .alert-success {
+        @apply bg-green-50 border border-green-200 text-green-800 px-6 py-4 rounded-lg;
+    }
+
+    .alert-error {
+        @apply bg-red-50 border border-red-200 text-red-800 px-6 py-4 rounded-lg;
+    }
+
+    .alert-info {
+        @apply bg-blue-50 border border-blue-200 text-blue-800 px-6 py-4 rounded-lg;
+    }
+
+    .alert-warning {
+        @apply bg-yellow-50 border border-yellow-200 text-yellow-800 px-6 py-4 rounded-lg;
+    }
+
+    /* Background pattern simple */
+    .bg-pattern {
+        @apply bg-gray-50;
+    }
+}
+
+@layer utilities {
+    /* Animation Delays (reducidos) */
+    .delay-100 { animation-delay: 0.05s; }
+    .delay-200 { animation-delay: 0.1s; }
+    .delay-300 { animation-delay: 0.15s; }
+    .delay-400 { animation-delay: 0.2s; }
+    .delay-500 { animation-delay: 0.25s; }
+}
+
+/* ============================================
+   ESTILOS PARA APP MOVIL (IBBSCApp WebView)
+   ============================================ */
+
+/* Bottom Navigation */
+.mobile-nav-item {
+    @apply flex flex-col items-center justify-center px-2 py-1;
+    @apply transition-colors duration-200;
+    min-width: 0;
+    flex: 1;
+}
+
+.mobile-nav-item:active {
+    @apply bg-gray-100;
+}
+
+/* Cuando la clase ibbsc-mobile-app esta presente (inyectada por WebView o por el body class) */
+.ibbsc-mobile-app .stat-card {
+    @apply p-4;
+    min-height: 100px;
+}
+
+.ibbsc-mobile-app .glass-card {
+    @apply p-4;
+}
+
+.ibbsc-mobile-app h1 {
+    @apply text-2xl;
+}
+
+.ibbsc-mobile-app h2 {
+    @apply text-xl;
+}
+
+.ibbsc-mobile-app h3 {
+    @apply text-lg;
+}
+
+/* Modales responsive para movil */
+.ibbsc-mobile-app .modal-content {
+    @apply mx-4 my-4 p-4;
+    max-width: calc(100vw - 2rem);
+}
+
+/* Tablas responsive en movil */
+.ibbsc-mobile-app .table-primary thead th,
+.ibbsc-mobile-app .table-gemini thead th {
+    @apply px-3 py-2 text-xs;
+}
+
+.ibbsc-mobile-app .table-primary tbody td,
+.ibbsc-mobile-app .table-gemini tbody td {
+    @apply px-3 py-2 text-sm;
+}
+
+/* Esconder scrollbar en movil para apariencia mas limpia */
+.ibbsc-mobile-app ::-webkit-scrollbar {
+    display: none;
+}
+
+.ibbsc-mobile-app {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
