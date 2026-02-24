@@ -30,13 +30,11 @@
 
                 <div>
                     <label for="tipo_culto" class="block text-sm font-medium text-gray-700 mb-2">Tipo de Culto</label>
-                    <select name="tipo_culto" id="tipo_culto" 
+                    <select name="tipo_culto" id="tipo_culto"
                             class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
-                        <option value="domingo" {{ old('tipo_culto') == 'domingo' ? 'selected' : '' }}>Domingo AM</option>
-                        <option value="domingo_pm" {{ old('tipo_culto') == 'domingo_pm' ? 'selected' : '' }}>Domingo PM</option>
-                        <option value="miércoles" {{ old('tipo_culto') == 'miércoles' ? 'selected' : '' }}>Miércoles</option>
-                        <option value="sábado" {{ old('tipo_culto') == 'sábado' ? 'selected' : '' }}>Sábado</option>
-                        <option value="especial" {{ old('tipo_culto') == 'especial' ? 'selected' : '' }}>Especial</option>
+                        @foreach($serviceTypes as $type)
+                            <option value="{{ $type->slug }}" {{ old('tipo_culto') == $type->slug ? 'selected' : '' }}>{{ $type->nombre }}</option>
+                        @endforeach
                     </select>
                     @error('tipo_culto')
                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>

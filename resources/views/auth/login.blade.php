@@ -68,9 +68,11 @@
     <!-- Loading Overlay -->
     <div id="loadingOverlay" class="fixed inset-0 bg-blue-700 z-[9999] flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-300">
         <div class="text-center">
-            <!-- Logo -->
+            <!-- Checkmark Icon -->
             <div class="mb-8">
-                <img src="{{ asset('images/Logo.png') }}" alt="IBBSC" class="w-24 h-24 mx-auto">
+                <svg class="w-24 h-24 mx-auto text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
             </div>
 
             <!-- Spinner -->

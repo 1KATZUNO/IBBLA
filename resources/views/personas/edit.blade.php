@@ -127,36 +127,35 @@
                     
                     <div id="promesas-container" class="space-y-4">
                         @php
-                            $categorias = ['misiones', 'micro', 'construccion', 'seminario', 'campa', 'prestamo'];
                             $promesasActuales = $persona->promesas->keyBy('categoria');
                         @endphp
-                        
-                        @foreach($categorias as $index => $categoria)
+
+                        @foreach($categorias as $index => $cat)
                         @php
-                            $promesaExistente = $promesasActuales->get($categoria);
+                            $promesaExistente = $promesasActuales->get($cat->slug);
                         @endphp
                         <div class="bg-gray-50 p-4 rounded-lg">
-                            <h4 class="text-sm font-medium text-gray-700 mb-3 capitalize">{{ ucfirst($categoria) }}</h4>
+                            <h4 class="text-sm font-medium text-gray-700 mb-3">{{ $cat->nombre }}</h4>
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
                                 <div>
                                     <label class="block text-xs text-gray-600 mb-1">Monto</label>
-                                    <input type="number" 
-                                           name="promesas[{{$index}}][monto]" 
-                                           step="0.01" 
-                                           min="0" 
+                                    <input type="number"
+                                           name="promesas[{{$index}}][monto]"
+                                           step="0.01"
+                                           min="0"
                                            value="{{ old('promesas.'.$index.'.monto', $promesaExistente->monto ?? 0) }}"
                                            class="w-full rounded-md border-gray-300 text-sm">
                                 </div>
                                 <div>
                                     <label class="block text-xs text-gray-600 mb-1">Frecuencia</label>
-                                    <select name="promesas[{{$index}}][frecuencia]" 
+                                    <select name="promesas[{{$index}}][frecuencia]"
                                             class="w-full rounded-md border-gray-300 text-sm">
                                         <option value="semanal" {{ old('promesas.'.$index.'.frecuencia', $promesaExistente->frecuencia ?? 'mensual') == 'semanal' ? 'selected' : '' }}>Semanal</option>
                                         <option value="quincenal" {{ old('promesas.'.$index.'.frecuencia', $promesaExistente->frecuencia ?? 'mensual') == 'quincenal' ? 'selected' : '' }}>Quincenal</option>
                                         <option value="mensual" {{ old('promesas.'.$index.'.frecuencia', $promesaExistente->frecuencia ?? 'mensual') == 'mensual' ? 'selected' : '' }}>Mensual</option>
                                     </select>
                                 </div>
-                                <input type="hidden" name="promesas[{{$index}}][categoria]" value="{{$categoria}}">
+                                <input type="hidden" name="promesas[{{$index}}][categoria]" value="{{ $cat->slug }}">
                                 <div class="flex items-end">
                                     <p class="text-xs text-gray-500">
                                         <span class="font-medium">Ejemplo:</span><br>

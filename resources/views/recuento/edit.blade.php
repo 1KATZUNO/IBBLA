@@ -55,24 +55,23 @@
                 <h3 class="text-lg font-semibold text-gray-900 mb-4">Detalles del Sobre</h3>
 
                 @php
-                    $categorias = ['diezmo', 'misiones', 'seminario', 'campa', 'prestamo', 'construccion', 'micro'];
                     $detallesPorCategoria = $sobre->detalles->keyBy('categoria');
                 @endphp
 
-                @foreach($categorias as $categoria)
+                @foreach($categorias as $cat)
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
-                    <label for="detalle_{{ $categoria }}" class="block text-sm font-medium text-gray-700">
-                        {{ ucfirst($categoria) }}
+                    <label for="detalle_{{ $cat->slug }}" class="block text-sm font-medium text-gray-700">
+                        {{ $cat->nombre }}
                     </label>
                     <div class="relative">
-                        <input type="hidden" name="detalles[{{ $loop->index }}][categoria]" value="{{ $categoria }}">
+                        <input type="hidden" name="detalles[{{ $loop->index }}][categoria]" value="{{ $cat->slug }}">
                         <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">₡</span>
-                        <input type="number" 
-                               name="detalles[{{ $loop->index }}][monto]" 
-                               id="detalle_{{ $categoria }}"
-                               min="0" 
-                               step="0.01" 
-                               value="{{ old('detalles.' . $loop->index . '.monto', $detallesPorCategoria->get($categoria)->monto ?? 0) }}" 
+                        <input type="number"
+                               name="detalles[{{ $loop->index }}][monto]"
+                               id="detalle_{{ $cat->slug }}"
+                               min="0"
+                               step="0.01"
+                               value="{{ old('detalles.' . $loop->index . '.monto', $detallesPorCategoria->get($cat->slug)->monto ?? 0) }}"
                                class="w-full pl-7 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 detalle-monto">
                     </div>
                 </div>

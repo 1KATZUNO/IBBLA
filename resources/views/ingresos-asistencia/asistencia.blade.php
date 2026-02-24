@@ -125,19 +125,14 @@
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         @if($culto->asistencia)
-                            {{ $culto->asistencia->chapel_hombres + $culto->asistencia->chapel_mujeres + 
-                               $culto->asistencia->chapel_adultos_mayores + $culto->asistencia->chapel_adultos + 
-                               $culto->asistencia->chapel_jovenes }}
+                            {{ $culto->asistencia->getTotalCapilla() }}
                         @else
                             -
                         @endif
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         @if($culto->asistencia)
-                            {{ $culto->asistencia->total_asistencia - 
-                               ($culto->asistencia->chapel_hombres + $culto->asistencia->chapel_mujeres + 
-                                $culto->asistencia->chapel_adultos_mayores + $culto->asistencia->chapel_adultos + 
-                                $culto->asistencia->chapel_jovenes) }}
+                            {{ $culto->asistencia->getTotalClases() }}
                         @else
                             -
                         @endif

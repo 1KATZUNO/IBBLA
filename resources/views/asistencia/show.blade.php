@@ -32,45 +32,12 @@
             </div>
         </div>
 
-        @php
-            $totalCapilla = ($asistencia->chapel_adultos_hombres ?? 0) + 
-                           ($asistencia->chapel_adultos_mujeres ?? 0) +
-                           ($asistencia->chapel_adultos_mayores_hombres ?? 0) + 
-                           ($asistencia->chapel_adultos_mayores_mujeres ?? 0) +
-                           ($asistencia->chapel_jovenes_masculinos ?? 0) + 
-                           ($asistencia->chapel_jovenes_femeninas ?? 0) +
-                           ($asistencia->chapel_maestros_hombres ?? 0) +
-                           ($asistencia->chapel_maestros_mujeres ?? 0);
-            
-            $totalNinos = ($asistencia->clase_0_1_hombres ?? 0) + ($asistencia->clase_0_1_mujeres ?? 0) +
-                         ($asistencia->clase_2_6_hombres ?? 0) + ($asistencia->clase_2_6_mujeres ?? 0) +
-                         ($asistencia->clase_7_8_hombres ?? 0) + ($asistencia->clase_7_8_mujeres ?? 0) +
-                         ($asistencia->clase_9_11_hombres ?? 0) + ($asistencia->clase_9_11_mujeres ?? 0);
-            
-            $totalMaestros = ($asistencia->clase_0_1_maestros_hombres ?? 0) + ($asistencia->clase_0_1_maestros_mujeres ?? 0) +
-                            ($asistencia->clase_2_6_maestros_hombres ?? 0) + ($asistencia->clase_2_6_maestros_mujeres ?? 0) +
-                            ($asistencia->clase_7_8_maestros_hombres ?? 0) + ($asistencia->clase_7_8_maestros_mujeres ?? 0) +
-                            ($asistencia->clase_9_11_maestros_hombres ?? 0) + ($asistencia->clase_9_11_maestros_mujeres ?? 0);
-            
-            $totalSalvos = ($asistencia->salvos_adulto_hombre ?? 0) + ($asistencia->salvos_adulto_mujer ?? 0) +
-                          ($asistencia->salvos_joven_hombre ?? 0) + ($asistencia->salvos_joven_mujer ?? 0) +
-                          ($asistencia->salvos_nino ?? 0) + ($asistencia->salvos_nina ?? 0);
-            
-            $totalBautismos = ($asistencia->bautismos_adulto_hombre ?? 0) + ($asistencia->bautismos_adulto_mujer ?? 0) +
-                             ($asistencia->bautismos_joven_hombre ?? 0) + ($asistencia->bautismos_joven_mujer ?? 0) +
-                             ($asistencia->bautismos_nino ?? 0) + ($asistencia->bautismos_nina ?? 0);
-            
-            $totalVisitas = ($asistencia->visitas_adulto_hombre ?? 0) + ($asistencia->visitas_adulto_mujer ?? 0) +
-                           ($asistencia->visitas_joven_hombre ?? 0) + ($asistencia->visitas_joven_mujer ?? 0) +
-                           ($asistencia->visitas_nino ?? 0) + ($asistencia->visitas_nina ?? 0);
-        @endphp
-
         <!-- Tabla de Detalles -->
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200 border">
                 <thead class="bg-blue-50">
                     <tr>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">Categoría</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">Categoria</th>
                         <th class="px-4 py-3 text-center text-xs font-medium text-gray-700 uppercase">Hombres</th>
                         <th class="px-4 py-3 text-center text-xs font-medium text-gray-700 uppercase">Mujeres</th>
                         <th class="px-4 py-3 text-center text-xs font-medium text-gray-700 uppercase">Total</th>
@@ -94,7 +61,7 @@
                         <td class="px-4 py-2 text-sm text-center font-semibold">{{ ($asistencia->chapel_adultos_mayores_hombres ?? 0) + ($asistencia->chapel_adultos_mayores_mujeres ?? 0) }}</td>
                     </tr>
                     <tr>
-                        <td class="px-4 py-2 text-sm text-gray-700 pl-8">Jóvenes</td>
+                        <td class="px-4 py-2 text-sm text-gray-700 pl-8">Jovenes</td>
                         <td class="px-4 py-2 text-sm text-center">{{ $asistencia->chapel_jovenes_masculinos ?? 0 }}</td>
                         <td class="px-4 py-2 text-sm text-center">{{ $asistencia->chapel_jovenes_femeninas ?? 0 }}</td>
                         <td class="px-4 py-2 text-sm text-center font-semibold">{{ ($asistencia->chapel_jovenes_masculinos ?? 0) + ($asistencia->chapel_jovenes_femeninas ?? 0) }}</td>
@@ -110,58 +77,26 @@
                     <tr class="bg-green-50 font-semibold">
                         <td class="px-4 py-2 text-sm" colspan="4">CLASES</td>
                     </tr>
+                    @foreach($asistencia->detallesClases->sortBy(fn($d) => $d->claseAsistencia->orden ?? 0) as $detalle)
                     <tr>
-                        <td class="px-4 py-2 text-sm text-gray-700 pl-8">Clase 0-1 Años</td>
-                        <td class="px-4 py-2 text-sm text-center">{{ $asistencia->clase_0_1_hombres ?? 0 }}</td>
-                        <td class="px-4 py-2 text-sm text-center">{{ $asistencia->clase_0_1_mujeres ?? 0 }}</td>
-                        <td class="px-4 py-2 text-sm text-center font-semibold">{{ ($asistencia->clase_0_1_hombres ?? 0) + ($asistencia->clase_0_1_mujeres ?? 0) }}</td>
+                        <td class="px-4 py-2 text-sm text-gray-700 pl-8">{{ $detalle->claseAsistencia->nombre }}</td>
+                        <td class="px-4 py-2 text-sm text-center">{{ $detalle->hombres ?? 0 }}</td>
+                        <td class="px-4 py-2 text-sm text-center">{{ $detalle->mujeres ?? 0 }}</td>
+                        <td class="px-4 py-2 text-sm text-center font-semibold">{{ ($detalle->hombres ?? 0) + ($detalle->mujeres ?? 0) }}</td>
                     </tr>
+                    @if($detalle->claseAsistencia->tiene_maestros)
                     <tr>
-                        <td class="px-4 py-2 text-sm text-gray-700 pl-8">Maestros 0-1</td>
-                        <td class="px-4 py-2 text-sm text-center">{{ $asistencia->clase_0_1_maestros_hombres ?? 0 }}</td>
-                        <td class="px-4 py-2 text-sm text-center">{{ $asistencia->clase_0_1_maestros_mujeres ?? 0 }}</td>
-                        <td class="px-4 py-2 text-sm text-center font-semibold">{{ ($asistencia->clase_0_1_maestros_hombres ?? 0) + ($asistencia->clase_0_1_maestros_mujeres ?? 0) }}</td>
+                        <td class="px-4 py-2 text-sm text-gray-700 pl-8">Maestros {{ $detalle->claseAsistencia->nombre }}</td>
+                        <td class="px-4 py-2 text-sm text-center">{{ $detalle->maestros_hombres ?? 0 }}</td>
+                        <td class="px-4 py-2 text-sm text-center">{{ $detalle->maestros_mujeres ?? 0 }}</td>
+                        <td class="px-4 py-2 text-sm text-center font-semibold">{{ ($detalle->maestros_hombres ?? 0) + ($detalle->maestros_mujeres ?? 0) }}</td>
                     </tr>
-                    <tr>
-                        <td class="px-4 py-2 text-sm text-gray-700 pl-8">Clase 2-6 Años</td>
-                        <td class="px-4 py-2 text-sm text-center">{{ $asistencia->clase_2_6_hombres ?? 0 }}</td>
-                        <td class="px-4 py-2 text-sm text-center">{{ $asistencia->clase_2_6_mujeres ?? 0 }}</td>
-                        <td class="px-4 py-2 text-sm text-center font-semibold">{{ ($asistencia->clase_2_6_hombres ?? 0) + ($asistencia->clase_2_6_mujeres ?? 0) }}</td>
-                    </tr>
-                    <tr>
-                        <td class="px-4 py-2 text-sm text-gray-700 pl-8">Maestros 2-6</td>
-                        <td class="px-4 py-2 text-sm text-center">{{ $asistencia->clase_2_6_maestros_hombres ?? 0 }}</td>
-                        <td class="px-4 py-2 text-sm text-center">{{ $asistencia->clase_2_6_maestros_mujeres ?? 0 }}</td>
-                        <td class="px-4 py-2 text-sm text-center font-semibold">{{ ($asistencia->clase_2_6_maestros_hombres ?? 0) + ($asistencia->clase_2_6_maestros_mujeres ?? 0) }}</td>
-                    </tr>
-                    <tr>
-                        <td class="px-4 py-2 text-sm text-gray-700 pl-8">Clase 7-8 Años</td>
-                        <td class="px-4 py-2 text-sm text-center">{{ $asistencia->clase_7_8_hombres ?? 0 }}</td>
-                        <td class="px-4 py-2 text-sm text-center">{{ $asistencia->clase_7_8_mujeres ?? 0 }}</td>
-                        <td class="px-4 py-2 text-sm text-center font-semibold">{{ ($asistencia->clase_7_8_hombres ?? 0) + ($asistencia->clase_7_8_mujeres ?? 0) }}</td>
-                    </tr>
-                    <tr>
-                        <td class="px-4 py-2 text-sm text-gray-700 pl-8">Maestros 7-8</td>
-                        <td class="px-4 py-2 text-sm text-center">{{ $asistencia->clase_7_8_maestros_hombres ?? 0 }}</td>
-                        <td class="px-4 py-2 text-sm text-center">{{ $asistencia->clase_7_8_maestros_mujeres ?? 0 }}</td>
-                        <td class="px-4 py-2 text-sm text-center font-semibold">{{ ($asistencia->clase_7_8_maestros_hombres ?? 0) + ($asistencia->clase_7_8_maestros_mujeres ?? 0) }}</td>
-                    </tr>
-                    <tr>
-                        <td class="px-4 py-2 text-sm text-gray-700 pl-8">Clase 9-11 Años</td>
-                        <td class="px-4 py-2 text-sm text-center">{{ $asistencia->clase_9_11_hombres ?? 0 }}</td>
-                        <td class="px-4 py-2 text-sm text-center">{{ $asistencia->clase_9_11_mujeres ?? 0 }}</td>
-                        <td class="px-4 py-2 text-sm text-center font-semibold">{{ ($asistencia->clase_9_11_hombres ?? 0) + ($asistencia->clase_9_11_mujeres ?? 0) }}</td>
-                    </tr>
-                    <tr>
-                        <td class="px-4 py-2 text-sm text-gray-700 pl-8">Maestros 9-11</td>
-                        <td class="px-4 py-2 text-sm text-center">{{ $asistencia->clase_9_11_maestros_hombres ?? 0 }}</td>
-                        <td class="px-4 py-2 text-sm text-center">{{ $asistencia->clase_9_11_maestros_mujeres ?? 0 }}</td>
-                        <td class="px-4 py-2 text-sm text-center font-semibold">{{ ($asistencia->clase_9_11_maestros_hombres ?? 0) + ($asistencia->clase_9_11_maestros_mujeres ?? 0) }}</td>
-                    </tr>
+                    @endif
+                    @endforeach
 
                     <!-- SALVOS -->
                     <tr class="bg-green-100 font-semibold">
-                        <td class="px-4 py-2 text-sm" colspan="4">✝️ SALVOS</td>
+                        <td class="px-4 py-2 text-sm" colspan="4">SALVOS</td>
                     </tr>
                     <tr>
                         <td class="px-4 py-2 text-sm text-gray-700 pl-8">Adultos</td>
@@ -170,13 +105,13 @@
                         <td class="px-4 py-2 text-sm text-center font-semibold">{{ ($asistencia->salvos_adulto_hombre ?? 0) + ($asistencia->salvos_adulto_mujer ?? 0) }}</td>
                     </tr>
                     <tr>
-                        <td class="px-4 py-2 text-sm text-gray-700 pl-8">Jóvenes</td>
+                        <td class="px-4 py-2 text-sm text-gray-700 pl-8">Jovenes</td>
                         <td class="px-4 py-2 text-sm text-center">{{ $asistencia->salvos_joven_hombre ?? 0 }}</td>
                         <td class="px-4 py-2 text-sm text-center">{{ $asistencia->salvos_joven_mujer ?? 0 }}</td>
                         <td class="px-4 py-2 text-sm text-center font-semibold">{{ ($asistencia->salvos_joven_hombre ?? 0) + ($asistencia->salvos_joven_mujer ?? 0) }}</td>
                     </tr>
                     <tr>
-                        <td class="px-4 py-2 text-sm text-gray-700 pl-8">Niños</td>
+                        <td class="px-4 py-2 text-sm text-gray-700 pl-8">Ninos</td>
                         <td class="px-4 py-2 text-sm text-center">{{ $asistencia->salvos_nino ?? 0 }}</td>
                         <td class="px-4 py-2 text-sm text-center">{{ $asistencia->salvos_nina ?? 0 }}</td>
                         <td class="px-4 py-2 text-sm text-center font-semibold">{{ ($asistencia->salvos_nino ?? 0) + ($asistencia->salvos_nina ?? 0) }}</td>
@@ -184,7 +119,7 @@
 
                     <!-- BAUTISMOS -->
                     <tr class="bg-blue-100 font-semibold">
-                        <td class="px-4 py-2 text-sm" colspan="4">💧 BAUTISMOS</td>
+                        <td class="px-4 py-2 text-sm" colspan="4">BAUTISMOS</td>
                     </tr>
                     <tr>
                         <td class="px-4 py-2 text-sm text-gray-700 pl-8">Adultos</td>
@@ -193,13 +128,13 @@
                         <td class="px-4 py-2 text-sm text-center font-semibold">{{ ($asistencia->bautismos_adulto_hombre ?? 0) + ($asistencia->bautismos_adulto_mujer ?? 0) }}</td>
                     </tr>
                     <tr>
-                        <td class="px-4 py-2 text-sm text-gray-700 pl-8">Jóvenes</td>
+                        <td class="px-4 py-2 text-sm text-gray-700 pl-8">Jovenes</td>
                         <td class="px-4 py-2 text-sm text-center">{{ $asistencia->bautismos_joven_hombre ?? 0 }}</td>
                         <td class="px-4 py-2 text-sm text-center">{{ $asistencia->bautismos_joven_mujer ?? 0 }}</td>
                         <td class="px-4 py-2 text-sm text-center font-semibold">{{ ($asistencia->bautismos_joven_hombre ?? 0) + ($asistencia->bautismos_joven_mujer ?? 0) }}</td>
                     </tr>
                     <tr>
-                        <td class="px-4 py-2 text-sm text-gray-700 pl-8">Niños</td>
+                        <td class="px-4 py-2 text-sm text-gray-700 pl-8">Ninos</td>
                         <td class="px-4 py-2 text-sm text-center">{{ $asistencia->bautismos_nino ?? 0 }}</td>
                         <td class="px-4 py-2 text-sm text-center">{{ $asistencia->bautismos_nina ?? 0 }}</td>
                         <td class="px-4 py-2 text-sm text-center font-semibold">{{ ($asistencia->bautismos_nino ?? 0) + ($asistencia->bautismos_nina ?? 0) }}</td>
@@ -207,7 +142,7 @@
 
                     <!-- VISITAS -->
                     <tr class="bg-purple-100 font-semibold">
-                        <td class="px-4 py-2 text-sm" colspan="4">👥 VISITAS</td>
+                        <td class="px-4 py-2 text-sm" colspan="4">VISITAS</td>
                     </tr>
                     <tr>
                         <td class="px-4 py-2 text-sm text-gray-700 pl-8">Adultos</td>
@@ -216,13 +151,13 @@
                         <td class="px-4 py-2 text-sm text-center font-semibold">{{ ($asistencia->visitas_adulto_hombre ?? 0) + ($asistencia->visitas_adulto_mujer ?? 0) }}</td>
                     </tr>
                     <tr>
-                        <td class="px-4 py-2 text-sm text-gray-700 pl-8">Jóvenes</td>
+                        <td class="px-4 py-2 text-sm text-gray-700 pl-8">Jovenes</td>
                         <td class="px-4 py-2 text-sm text-center">{{ $asistencia->visitas_joven_hombre ?? 0 }}</td>
                         <td class="px-4 py-2 text-sm text-center">{{ $asistencia->visitas_joven_mujer ?? 0 }}</td>
                         <td class="px-4 py-2 text-sm text-center font-semibold">{{ ($asistencia->visitas_joven_hombre ?? 0) + ($asistencia->visitas_joven_mujer ?? 0) }}</td>
                     </tr>
                     <tr>
-                        <td class="px-4 py-2 text-sm text-gray-700 pl-8">Niños</td>
+                        <td class="px-4 py-2 text-sm text-gray-700 pl-8">Ninos</td>
                         <td class="px-4 py-2 text-sm text-center">{{ $asistencia->visitas_nino ?? 0 }}</td>
                         <td class="px-4 py-2 text-sm text-center">{{ $asistencia->visitas_nina ?? 0 }}</td>
                         <td class="px-4 py-2 text-sm text-center font-semibold">{{ ($asistencia->visitas_nino ?? 0) + ($asistencia->visitas_nina ?? 0) }}</td>
@@ -232,35 +167,41 @@
         </div>
 
         <!-- Totales Finales -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mt-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 mt-6">
             <div class="bg-blue-50 rounded-lg p-4 border-2 border-blue-200">
                 <div class="text-sm text-gray-600 mb-1">Total Capilla</div>
-                <div class="text-3xl font-bold text-blue-600">{{ $totalCapilla + $totalMaestros - $totalVisitas }}</div>
-                <div class="text-xs text-gray-500 mt-1">Con maestros, sin visitas</div>
+                <div class="text-3xl font-bold text-blue-600">{{ $asistencia->getTotalCapilla() }}</div>
+                <div class="text-xs text-gray-500 mt-1">Con maestros capilla</div>
             </div>
-            
+
             <div class="bg-green-50 rounded-lg p-4 border-2 border-green-200">
-                <div class="text-sm text-gray-600 mb-1">Total Niños</div>
-                <div class="text-3xl font-bold text-green-600">{{ $totalNinos }}</div>
+                <div class="text-sm text-gray-600 mb-1">Total Ninos</div>
+                <div class="text-3xl font-bold text-green-600">{{ $asistencia->getTotalNinos() }}</div>
                 <div class="text-xs text-gray-500 mt-1">Sin contar maestros</div>
             </div>
-            
+
             <div class="bg-yellow-50 rounded-lg p-4 border-2 border-yellow-200">
                 <div class="text-sm text-gray-600 mb-1">Total Salvos</div>
-                <div class="text-3xl font-bold text-yellow-600">{{ $totalSalvos }}</div>
+                <div class="text-3xl font-bold text-yellow-600">{{ $asistencia->getTotalSalvos() }}</div>
                 <div class="text-xs text-gray-500 mt-1">Decisiones registradas</div>
             </div>
-            
+
             <div class="bg-purple-50 rounded-lg p-4 border-2 border-purple-200">
                 <div class="text-sm text-gray-600 mb-1">Total Bautismos</div>
-                <div class="text-3xl font-bold text-purple-600">{{ $totalBautismos }}</div>
+                <div class="text-3xl font-bold text-purple-600">{{ $asistencia->getTotalBautismos() }}</div>
                 <div class="text-xs text-gray-500 mt-1">Bautizados en el culto</div>
             </div>
 
             <div class="bg-orange-50 rounded-lg p-4 border-2 border-orange-200">
                 <div class="text-sm text-gray-600 mb-1">Total Visitas</div>
-                <div class="text-3xl font-bold text-orange-600">{{ $totalVisitas }}</div>
+                <div class="text-3xl font-bold text-orange-600">{{ $asistencia->getTotalVisitas() }}</div>
                 <div class="text-xs text-gray-500 mt-1">Personas visitantes</div>
+            </div>
+
+            <div class="bg-teal-50 rounded-lg p-4 border-2 border-teal-200">
+                <div class="text-sm text-gray-600 mb-1">Total Maestros</div>
+                <div class="text-3xl font-bold text-teal-600">{{ $asistencia->getTotalMaestros() }}</div>
+                <div class="text-xs text-gray-500 mt-1">Maestros de clases</div>
             </div>
         </div>
 
@@ -273,7 +214,7 @@
                 </div>
                 <div class="mt-4 sm:mt-0 text-right">
                     <div class="text-xs opacity-75">Maestros de Clases</div>
-                    <div class="text-2xl font-semibold">{{ $totalMaestros }}</div>
+                    <div class="text-2xl font-semibold">{{ $asistencia->getTotalMaestros() }}</div>
                 </div>
             </div>
         </div>

@@ -11,13 +11,16 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->trustProxies(at: '*');
         $middleware->web(append: [
             \App\Http\Middleware\DetectMobileApp::class,
+            \App\Http\Middleware\ResolveTenant::class,
         ]);
 
         $middleware->alias([
             'role' => \App\Http\Middleware\CheckRole::class,
             'audit' => \App\Http\Middleware\AuditLogMiddleware::class,
+            'super_admin' => \App\Http\Middleware\SuperAdminMiddleware::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

@@ -53,13 +53,9 @@
                     <select name="categoria" id="categoria" 
                             class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                         <option value="">Todas las categorías</option>
-                        <option value="diezmo" {{ $categoria == 'diezmo' ? 'selected' : '' }}>Diezmo</option>
-                        <option value="misiones" {{ $categoria == 'misiones' ? 'selected' : '' }}>Misiones</option>
-                        <option value="seminario" {{ $categoria == 'seminario' ? 'selected' : '' }}>Seminario</option>
-                        <option value="campa" {{ $categoria == 'campa' ? 'selected' : '' }}>Campamento</option>
-                        <option value="construccion" {{ $categoria == 'construccion' ? 'selected' : '' }}>Construcción</option>
-                        <option value="prestamo" {{ $categoria == 'prestamo' ? 'selected' : '' }}>Préstamo</option>
-                        <option value="micro" {{ $categoria == 'micro' ? 'selected' : '' }}>Micro</option>
+                        @foreach($categoriasDisponibles as $cat)
+                        <option value="{{ $cat->slug }}" {{ $categoria == $cat->slug ? 'selected' : '' }}>{{ $cat->nombre }}</option>
+                        @endforeach
                     </select>
                 </div>
                 <div class="flex items-end">

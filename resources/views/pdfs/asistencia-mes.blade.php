@@ -21,10 +21,13 @@
     </style>
 </head>
 <body>
+    @php extract(tenant_pdf_data()); @endphp
     <div class="header">
-        <img src="data:image/png;base64,{{ base64_encode(file_get_contents(public_path('images/Logo2.png'))) }}" alt="Logo IBBSC">
+        <div style="background-color: {{ $tenantColor }}; border-radius: 50%; width: 70px; height: 70px; text-align: center; padding-left: 3px; margin-right: 15px;">
+            <img src="data:image/png;base64,{{ $tenantLogoBase64 }}" style="width: 50px; height: 50px; margin-top: 10px;" alt="Logo">
+        </div>
         <div class="header-text">
-            <h1>IBBSC - Iglesia Bíblica Bautista en Santa Cruz</h1>
+            <h1>{{ $tenantSiglas }} - {{ $tenantNombre }}</h1>
             <h2>Reporte de Asistencia - {{ $nombreMes }} {{ $año }}</h2>
             <p><strong>Generado:</strong> {{ now()->format('d/m/Y H:i') }}</p>
         </div>
@@ -59,67 +62,14 @@
             @foreach($cultos as $culto)
             @if($culto->asistencia)
             @php
-                $hombres = ($culto->asistencia->chapel_adultos_hombres ?? 0) + 
-                          ($culto->asistencia->chapel_adultos_mayores_hombres ?? 0) + 
-                          ($culto->asistencia->chapel_jovenes_masculinos ?? 0) + 
-                          ($culto->asistencia->chapel_maestros_hombres ?? 0) +
-                          ($culto->asistencia->clase_0_1_hombres ?? 0) + 
-                          ($culto->asistencia->clase_2_6_hombres ?? 0) + 
-                          ($culto->asistencia->clase_7_8_hombres ?? 0) + 
-                          ($culto->asistencia->clase_9_11_hombres ?? 0) +
-                          ($culto->asistencia->clase_0_1_maestros_hombres ?? 0) +
-                          ($culto->asistencia->clase_2_6_maestros_hombres ?? 0) +
-                          ($culto->asistencia->clase_7_8_maestros_hombres ?? 0) +
-                          ($culto->asistencia->clase_9_11_maestros_hombres ?? 0);
-                
-                $mujeres = ($culto->asistencia->chapel_adultos_mujeres ?? 0) + 
-                          ($culto->asistencia->chapel_adultos_mayores_mujeres ?? 0) + 
-                          ($culto->asistencia->chapel_jovenes_femeninas ?? 0) +
-                          ($culto->asistencia->chapel_maestros_mujeres ?? 0) +
-                          ($culto->asistencia->clase_0_1_mujeres ?? 0) + 
-                          ($culto->asistencia->clase_2_6_mujeres ?? 0) + 
-                          ($culto->asistencia->clase_7_8_mujeres ?? 0) + 
-                          ($culto->asistencia->clase_9_11_mujeres ?? 0) +
-                          ($culto->asistencia->clase_0_1_maestros_mujeres ?? 0) +
-                          ($culto->asistencia->clase_2_6_maestros_mujeres ?? 0) +
-                          ($culto->asistencia->clase_7_8_maestros_mujeres ?? 0) +
-                          ($culto->asistencia->clase_9_11_maestros_mujeres ?? 0);
-                
-                $ninos = ($culto->asistencia->clase_0_1_hombres ?? 0) + ($culto->asistencia->clase_0_1_mujeres ?? 0) +
-                        ($culto->asistencia->clase_2_6_hombres ?? 0) + ($culto->asistencia->clase_2_6_mujeres ?? 0) +
-                        ($culto->asistencia->clase_7_8_hombres ?? 0) + ($culto->asistencia->clase_7_8_mujeres ?? 0) +
-                        ($culto->asistencia->clase_9_11_hombres ?? 0) + ($culto->asistencia->clase_9_11_mujeres ?? 0);
-                
-                $totalCapilla = ($culto->asistencia->chapel_adultos_hombres ?? 0) + 
-                               ($culto->asistencia->chapel_adultos_mujeres ?? 0) +
-                               ($culto->asistencia->chapel_adultos_mayores_hombres ?? 0) + 
-                               ($culto->asistencia->chapel_adultos_mayores_mujeres ?? 0) +
-                               ($culto->asistencia->chapel_jovenes_masculinos ?? 0) + 
-                               ($culto->asistencia->chapel_jovenes_femeninas ?? 0) +
-                               ($culto->asistencia->chapel_maestros_hombres ?? 0) +
-                               ($culto->asistencia->chapel_maestros_mujeres ?? 0);
-                
-                $totalVisitas = ($culto->asistencia->visitas_adulto_hombre ?? 0) + 
-                               ($culto->asistencia->visitas_adulto_mujer ?? 0) +
-                               ($culto->asistencia->visitas_joven_hombre ?? 0) + 
-                               ($culto->asistencia->visitas_joven_mujer ?? 0) +
-                               ($culto->asistencia->visitas_nino ?? 0) + 
-                               ($culto->asistencia->visitas_nina ?? 0);
-                
-                $totalSalvos = ($culto->asistencia->salvos_adulto_hombre ?? 0) + 
-                              ($culto->asistencia->salvos_adulto_mujer ?? 0) +
-                              ($culto->asistencia->salvos_joven_hombre ?? 0) + 
-                              ($culto->asistencia->salvos_joven_mujer ?? 0) +
-                              ($culto->asistencia->salvos_nino ?? 0) + 
-                              ($culto->asistencia->salvos_nina ?? 0);
-                
-                $totalBautismos = ($culto->asistencia->bautismos_adulto_hombre ?? 0) + 
-                                 ($culto->asistencia->bautismos_adulto_mujer ?? 0) +
-                                 ($culto->asistencia->bautismos_joven_hombre ?? 0) + 
-                                 ($culto->asistencia->bautismos_joven_mujer ?? 0) +
-                                 ($culto->asistencia->bautismos_nino ?? 0) + 
-                                 ($culto->asistencia->bautismos_nina ?? 0);
-                
+                $hombres = $culto->asistencia->getTotalHombres();
+                $mujeres = $culto->asistencia->getTotalMujeres();
+                $ninos = $culto->asistencia->getTotalNinos();
+                $totalCapilla = $culto->asistencia->getTotalCapilla();
+                $totalVisitas = $culto->asistencia->getTotalVisitas();
+                $totalSalvos = $culto->asistencia->getTotalSalvos();
+                $totalBautismos = $culto->asistencia->getTotalBautismos();
+
                 $totalMes += $culto->asistencia->total_asistencia;
                 $totalHombres += $hombres;
                 $totalMujeres += $mujeres;
@@ -169,7 +119,7 @@
     </table>
     
     <div class="footer">
-        <p>Sistema de Administración - IBBSC - Iglesia Bíblica Bautista en Santa Cruz</p>
+        <p>Sistema de Administracion - {{ $tenantSiglas }} - {{ $tenantNombre }}</p>
     </div>
 </body>
 </html>

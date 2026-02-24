@@ -43,10 +43,13 @@
     </style>
 </head>
 <body>
+    @php extract(tenant_pdf_data()); @endphp
     <div class="header">
-        <img src="data:image/png;base64,{{ base64_encode(file_get_contents(public_path('images/Logo2.png'))) }}" alt="Logo IBBSC">
+        <div style="background-color: {{ $tenantColor }}; border-radius: 50%; width: 70px; height: 70px; text-align: center; padding-left: 3px; margin-right: 15px;">
+            <img src="data:image/png;base64,{{ $tenantLogoBase64 }}" style="width: 50px; height: 50px; margin-top: 10px;" alt="Logo">
+        </div>
         <div class="header-text">
-            <h1>IBBSC - Iglesia Bíblica Bautista en Santa Cruz</h1>
+            <h1>{{ $tenantSiglas }} - {{ $tenantNombre }}</h1>
             <h2>Recuento de Sobres - {{ $culto->fecha->format('d/m/Y') }} - {{ ucfirst($culto->tipo_culto) }}</h2>
         </div>
     </div>
@@ -101,14 +104,9 @@
                 <th>Método</th>
                 <th>Comprobante</th>
                 <th>Notas</th>
-                <th class="text-right">Diezmo</th>
-                <th class="text-right">Ofr. Esp.</th>
-                <th class="text-right">Misiones</th>
-                <th class="text-right">Semin.</th>
-                <th class="text-right">Camp.</th>
-                <th class="text-right">Prést.</th>
-                <th class="text-right">Const.</th>
-                <th class="text-right">Micro</th>
+                @foreach($categories as $cat)
+                <th class="text-right">{{ $cat->nombre }}</th>
+                @endforeach
                 <th class="text-right">Total</th>
             </tr>
         </thead>
@@ -122,14 +120,6 @@
             @foreach($culto->sobres->filter(fn($s) => !$transferenciasOnly || $s->metodo_pago === 'transferencia') as $sobre)
             @php
                 $detallesPorCategoria = $sobre->detalles->keyBy('categoria');
-                $diezmo = $detallesPorCategoria->get('diezmo')->monto ?? 0;
-                $ofrendaEspecial = $detallesPorCategoria->get('ofrenda_especial')->monto ?? 0;
-                $misiones = $detallesPorCategoria->get('misiones')->monto ?? 0;
-                $seminario = $detallesPorCategoria->get('seminario')->monto ?? 0;
-                $campa = $detallesPorCategoria->get('campa')->monto ?? 0;
-                $prestamo = $detallesPorCategoria->get('prestamo')->monto ?? 0;
-                $construccion = $detallesPorCategoria->get('construccion')->monto ?? 0;
-                $micro = $detallesPorCategoria->get('micro')->monto ?? 0;
                 $totalGeneral += $sobre->total_declarado;
                 if ($sobre->metodo_pago === 'transferencia') { $totalTransferencias += $sobre->total_declarado; } else { $totalEfectivo += $sobre->total_declarado; }
             @endphp
@@ -145,14 +135,9 @@
                 </td>
                 <td>{{ $sobre->metodo_pago === 'transferencia' ? ($sobre->comprobante_numero ?? '-') : '-' }}</td>
                 <td>{{ $sobre->notas ? $sobre->notas : '-' }}</td>
-                <td class="text-right">{{ number_format($diezmo, 2) }}</td>
-                <td class="text-right">{{ number_format($ofrendaEspecial, 2) }}</td>
-                <td class="text-right">{{ number_format($misiones, 2) }}</td>
-                <td class="text-right">{{ number_format($seminario, 2) }}</td>
-                <td class="text-right">{{ number_format($campa, 2) }}</td>
-                <td class="text-right">{{ number_format($prestamo, 2) }}</td>
-                <td class="text-right">{{ number_format($construccion, 2) }}</td>
-                <td class="text-right">{{ number_format($micro, 2) }}</td>
+                @foreach($categories as $cat)
+                <td class="text-right">{{ number_format($detallesPorCategoria->get($cat->slug)->monto ?? 0, 2) }}</td>
+                @endforeach
                 <td class="text-right subtotal">{{ number_format($sobre->total_declarado, 2) }}</td>
             </tr>
             @endforeach
@@ -171,11 +156,9 @@
                     <td>Efectivo</td>
                     <td class="text-right">-</td>
                     <td class="text-right">-</td>
+                    @foreach($categories as $cat)
                     <td class="text-right">-</td>
-                    <td class="text-right">-</td>
-                    <td class="text-right">-</td>
-                    <td class="text-right">-</td>
-                    <td class="text-right">-</td>
+                    @endforeach
                     <td class="text-right subtotal">{{ number_format($ofrenda->monto, 2) }}</td>
                 </tr>
                 @endforeach
@@ -192,11 +175,9 @@
                     <td>Efectivo</td>
                     <td class="text-right">-</td>
                     <td class="text-right">-</td>
+                    @foreach($categories as $cat)
                     <td class="text-right">-</td>
-                    <td class="text-right">-</td>
-                    <td class="text-right">-</td>
-                    <td class="text-right">-</td>
-                    <td class="text-right">-</td>
+                    @endforeach
                     <td class="text-right subtotal">-{{ number_format($egreso->monto, 2) }}</td>
                 </tr>
                 @endforeach
@@ -205,14 +186,9 @@
             <!-- Totales -->
             <tr class="total-row">
                 <td colspan="{{ $transferenciasOnly ? 4 : 5 }}" class="text-right">TOTALES</td>
-                <td class="text-right">{{ number_format($totalesPorCategoria['diezmo'], 2) }}</td>
-                <td class="text-right">{{ number_format($totalesPorCategoria['ofrenda_especial'], 2) }}</td>
-                <td class="text-right">{{ number_format($totalesPorCategoria['misiones'], 2) }}</td>
-                <td class="text-right">{{ number_format($totalesPorCategoria['seminario'], 2) }}</td>
-                <td class="text-right">{{ number_format($totalesPorCategoria['campa'], 2) }}</td>
-                <td class="text-right">{{ number_format($totalesPorCategoria['prestamo'], 2) }}</td>
-                <td class="text-right">{{ number_format($totalesPorCategoria['construccion'], 2) }}</td>
-                <td class="text-right">{{ number_format($totalesPorCategoria['micro'], 2) }}</td>
+                @foreach($categories as $cat)
+                <td class="text-right">{{ number_format($totalesPorCategoria[$cat->slug] ?? 0, 2) }}</td>
+                @endforeach
                 <td class="text-right">{{ number_format($totalGeneral, 2) }}</td>
             </tr>
         </tbody>
@@ -235,30 +211,11 @@
     <div class="resumen-box">
         <h3>Resumen por Categorías</h3>
         <div>
+            @foreach($categories as $cat)
             <span class="categoria-item">
-                <span class="categoria-label">Diezmo:</span> {{ number_format($totalesPorCategoria['diezmo'], 2) }}
+                <span class="categoria-label">{{ $cat->nombre }}:</span> {{ number_format($totalesPorCategoria[$cat->slug] ?? 0, 2) }}
             </span>
-            <span class="categoria-item">
-                <span class="categoria-label">Ofrenda Especial:</span> {{ number_format($totalesPorCategoria['ofrenda_especial'], 2) }}
-            </span>
-            <span class="categoria-item">
-                <span class="categoria-label">Misiones:</span> {{ number_format($totalesPorCategoria['misiones'], 2) }}
-            </span>
-            <span class="categoria-item">
-                <span class="categoria-label">Seminario:</span> {{ number_format($totalesPorCategoria['seminario'], 2) }}
-            </span>
-            <span class="categoria-item">
-                <span class="categoria-label">Campamento:</span> {{ number_format($totalesPorCategoria['campa'], 2) }}
-            </span>
-            <span class="categoria-item">
-                <span class="categoria-label">Préstamo:</span> {{ number_format($totalesPorCategoria['prestamo'], 2) }}
-            </span>
-            <span class="categoria-item">
-                <span class="categoria-label">Construcción:</span> {{ number_format($totalesPorCategoria['construccion'], 2) }}
-            </span>
-            <span class="categoria-item">
-                <span class="categoria-label">Micro:</span> {{ number_format($totalesPorCategoria['micro'], 2) }}
-            </span>
+            @endforeach
         </div>
     </div>
 
@@ -306,7 +263,7 @@
     </div>
 
     <div class="footer">
-        <p>Sistema de Administración - IBBSC - Iglesia Bíblica Bautista en Santa Cruz</p>
+        <p>Sistema de Administracion - {{ $tenantSiglas }} - {{ $tenantNombre }}</p>
     </div>
 </body>
 </html>

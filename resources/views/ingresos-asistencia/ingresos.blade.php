@@ -61,14 +61,9 @@
                     <tr>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tipo</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Diezmo</th>
-                           <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ofrenda Especial</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Misiones</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Seminario</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Campamento</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Construcción</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Préstamo</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Micro</th>
+                        @foreach($categories as $cat)
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">{{ $cat->nombre }}</th>
+                        @endforeach
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Suelto</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
                         <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Acciones</th>
@@ -85,20 +80,15 @@
                                 {{ $registro['tipo'] }}
                             </span>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">₡{{ number_format($registro['diezmo'], 2) }}</td>
-                           <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">₡{{ number_format($registro['ofrenda_especial'] ?? 0, 2) }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">₡{{ number_format($registro['misiones'], 2) }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">₡{{ number_format($registro['seminario'], 2) }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">₡{{ number_format($registro['campa'], 2) }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">₡{{ number_format($registro['construccion'], 2) }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">₡{{ number_format($registro['prestamo'], 2) }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">₡{{ number_format($registro['micro'], 2) }}</td>
+                        @foreach($categories as $cat)
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">₡{{ number_format($registro[$cat->slug] ?? 0, 2) }}</td>
+                        @endforeach
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">₡{{ number_format($registro['suelto'], 2) }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-green-600">₡{{ number_format($registro['total'], 2) }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-center text-sm">
                             @if(isset($registro['culto_id']))
-                            <a href="{{ route('ingresos-asistencia.pdf-recuento-individual', $registro['culto_id']) }}" 
-                               class="inline-flex items-center px-3 py-1 bg-red-600 text-white text-xs rounded hover:bg-red-700 transition-colors" 
+                            <a href="{{ route('ingresos-asistencia.pdf-recuento-individual', $registro['culto_id']) }}"
+                               class="inline-flex items-center px-3 py-1 bg-red-600 text-white text-xs rounded hover:bg-red-700 transition-colors"
                                target="_blank">
                                 <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
                                     <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd"></path>
@@ -106,15 +96,15 @@
                                 PDF
                             </a>
                                     <span class="mx-2">|</span>
-                                    <a href="{{ route('ingresos-asistencia.pdf-recuento-transferencias', $registro['culto_id']) }}" 
-                                        target="_blank" 
+                                    <a href="{{ route('ingresos-asistencia.pdf-recuento-transferencias', $registro['culto_id']) }}"
+                                        target="_blank"
                                         class="text-blue-600 hover:text-blue-900">Transferencias</a>
                             @endif
                         </td>
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="12" class="px-6 py-12 text-center text-gray-500">
+                        <td colspan="{{ $categories->count() + 5 }}" class="px-6 py-12 text-center text-gray-500">
                             No hay registros de ingresos
                         </td>
                     </tr>
@@ -122,14 +112,9 @@
                     @if(count($registros) > 0)
                     <tr class="bg-gray-100 font-bold">
                         <td colspan="2" class="px-6 py-4 text-sm text-gray-900">TOTALES</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">₡{{ number_format(collect($registros)->sum('diezmo'), 2) }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">₡{{ number_format(collect($registros)->sum('ofrenda_especial'), 2) }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">₡{{ number_format(collect($registros)->sum('misiones'), 2) }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">₡{{ number_format(collect($registros)->sum('seminario'), 2) }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">₡{{ number_format(collect($registros)->sum('campa'), 2) }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">₡{{ number_format(collect($registros)->sum('construccion'), 2) }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">₡{{ number_format(collect($registros)->sum('prestamo'), 2) }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">₡{{ number_format(collect($registros)->sum('micro'), 2) }}</td>
+                        @foreach($categories as $cat)
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">₡{{ number_format(collect($registros)->sum($cat->slug), 2) }}</td>
+                        @endforeach
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">₡{{ number_format(collect($registros)->sum('suelto'), 2) }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-green-600">₡{{ number_format(collect($registros)->sum('total'), 2) }}</td>
                         <td></td>

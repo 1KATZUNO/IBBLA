@@ -60,8 +60,9 @@ class RecuentoController extends Controller
         $cultoId = $request->get('culto_id');
         $culto = $cultoId ? Culto::findOrFail($cultoId) : null;
         $personas = Persona::where('activo', true)->get();
+        $categorias = tenant_categories(['es_ofrenda_suelta' => false]);
 
-        return view('recuento.create', compact('culto', 'personas'));
+        return view('recuento.create', compact('culto', 'personas', 'categorias'));
     }
 
     public function store(Request $request)
@@ -151,8 +152,9 @@ class RecuentoController extends Controller
 
         $sobre->load(['detalles', 'culto']);
         $personas = Persona::where('activo', true)->get();
+        $categorias = tenant_categories(['es_ofrenda_suelta' => false]);
 
-        return view('recuento.edit', compact('sobre', 'personas'));
+        return view('recuento.edit', compact('sobre', 'personas', 'categorias'));
     }
 
     public function update(Request $request, Sobre $sobre)

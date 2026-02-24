@@ -15,9 +15,13 @@ class DashboardController extends Controller
         // Obtener el mes y año desde la request o usar el actual
         $mes = $request->input('mes', Carbon::now()->month);
         $año = $request->input('año', Carbon::now()->year);
-        
+
         $inicioMes = Carbon::createFromDate($año, $mes, 1)->startOfMonth();
         $finMes = Carbon::createFromDate($año, $mes, 1)->endOfMonth();
+
+        // Load tenant categories
+        $categories = tenant_categories();
+        $categoriaSlugs = $categories->pluck('slug')->toArray();
 
         // Últimos 10 cultos para el gráfico de barras
         $cultosRecientes = Culto::with('totales')
@@ -27,46 +31,32 @@ class DashboardController extends Controller
             ->reverse()
             ->values();
 
-        // Totales del mes seleccionado (antes era semanal, ahora es mensual)
-        $totalesMes = Culto::whereBetween('fecha', [$inicioMes, $finMes])
+        // Totales del mes seleccionado - dynamic per category
+        $cultosMes = Culto::whereBetween('fecha', [$inicioMes, $finMes])
             ->with('totales')
-            ->get()
-            ->reduce(function ($carry, $culto) {
-                if ($culto->totales) {
-                    $carry['total_general'] += $culto->totales->total_general;
-                    $carry['total_diezmo'] += $culto->totales->total_diezmo;
-                    $carry['total_misiones'] += $culto->totales->total_misiones;
-                    $carry['total_seminario'] += $culto->totales->total_seminario;
-                    $carry['total_campa'] += $culto->totales->total_campa;
-                    $carry['total_prestamo'] += $culto->totales->total_prestamo;
-                    $carry['total_construccion'] += $culto->totales->total_construccion;
-                    $carry['total_micro'] += $culto->totales->total_micro;
-                    $carry['total_suelto'] += $culto->totales->total_suelto;
-                }
-                return $carry;
-            }, [
-                'total_general' => 0,
-                'total_diezmo' => 0,
-                'total_misiones' => 0,
-                'total_seminario' => 0,
-                'total_campa' => 0,
-                'total_prestamo' => 0,
-                'total_construccion' => 0,
-                'total_micro' => 0,
-                'total_suelto' => 0,
-            ]);
+            ->get();
 
-        // Distribución por categorías (mismo mes)
-        $distribucion = [
-            'diezmo' => $totalesMes['total_diezmo'],
-            'misiones' => $totalesMes['total_misiones'],
-            'seminario' => $totalesMes['total_seminario'],
-            'campa' => $totalesMes['total_campa'],
-            'prestamo' => $totalesMes['total_prestamo'],
-            'construccion' => $totalesMes['total_construccion'],
-            'micro' => $totalesMes['total_micro'],
-            'suelto' => $totalesMes['total_suelto'],
-        ];
+        $totalesMes = ['total_general' => 0, 'total_suelto' => 0];
+        foreach ($categoriaSlugs as $slug) {
+            $totalesMes[$slug] = 0;
+        }
+
+        foreach ($cultosMes as $culto) {
+            if ($culto->totales) {
+                $totalesMes['total_general'] += $culto->totales->total_general;
+                $totalesMes['total_suelto'] += $culto->totales->total_suelto;
+                foreach ($categoriaSlugs as $slug) {
+                    $totalesMes[$slug] += $culto->totales->getCategoryTotal($slug);
+                }
+            }
+        }
+
+        // Distribución por categorías (mismo mes) - dynamic
+        $distribucion = [];
+        foreach ($categories as $cat) {
+            $distribucion[$cat->slug] = $totalesMes[$cat->slug] ?? 0;
+        }
+        $distribucion['suelto'] = $totalesMes['total_suelto'];
 
         // Asistencia (últimos 10 cultos)
         $asistencias = Culto::with('asistencia')
@@ -82,9 +72,10 @@ class DashboardController extends Controller
                 ];
             });
 
-        // Promesas cumplidas vs pendientes
+        // Promesas cumplidas vs pendientes - use dynamic exclusion
+        $categoriasExcluidas = $categories->where('excluir_de_promesas', true)->pluck('slug')->map(fn($s) => strtolower($s))->toArray();
         $personas = Persona::with(['promesas', 'sobres.detalles'])->get();
-        
+
         $promesasStatus = [
             'cumplidas' => 0,
             'pendientes' => 0,
@@ -92,8 +83,7 @@ class DashboardController extends Controller
 
         foreach ($personas as $persona) {
             foreach ($persona->promesas as $promesa) {
-                // Excluir promesas de diezmo: el diezmo no forma parte de compromisos/promesas
-                if (strtolower($promesa->categoria) === 'diezmo') {
+                if (in_array(strtolower($promesa->categoria), $categoriasExcluidas)) {
                     continue;
                 }
                 $montoPagado = $persona->sobres()
@@ -120,6 +110,7 @@ class DashboardController extends Controller
             'cultosRecientes',
             'totalesMes',
             'distribucion',
+            'categories',
             'asistencias',
             'promesasStatus',
             'mes',

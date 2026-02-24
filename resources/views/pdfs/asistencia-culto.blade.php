@@ -24,10 +24,13 @@
     </style>
 </head>
 <body>
+    @php extract(tenant_pdf_data()); @endphp
     <div class="header">
-        <img src="data:image/png;base64,{{ base64_encode(file_get_contents(public_path('images/Logo2.png'))) }}" alt="Logo IBBSC">
+        <div style="background-color: {{ $tenantColor }}; border-radius: 50%; width: 70px; height: 70px; text-align: center; padding-left: 3px; margin-right: 15px;">
+            <img src="data:image/png;base64,{{ $tenantLogoBase64 }}" style="width: 50px; height: 50px; margin-top: 10px;" alt="Logo">
+        </div>
         <div class="header-text">
-            <h1>IBBSC - Iglesia Bíblica Bautista en Santa Cruz</h1>
+            <h1>{{ $tenantSiglas }} - {{ $tenantNombre }}</h1>
             <h2>Reporte de Asistencia</h2>
         </div>
     </div>
@@ -36,34 +39,7 @@
         <p><strong>Fecha:</strong> {{ $culto->fecha->format('d/m/Y') }}</p>
         <p><strong>Tipo de Culto:</strong> {{ ucfirst($culto->tipo_culto) }}</p>
         <p><strong>Total Asistencia:</strong> {{ $culto->asistencia->total_asistencia }}</p>
-        @php
-            $totalCapilla = ($culto->asistencia->chapel_adultos_hombres ?? 0) + 
-                           ($culto->asistencia->chapel_adultos_mujeres ?? 0) +
-                           ($culto->asistencia->chapel_adultos_mayores_hombres ?? 0) + 
-                           ($culto->asistencia->chapel_adultos_mayores_mujeres ?? 0) +
-                           ($culto->asistencia->chapel_jovenes_masculinos ?? 0) + 
-                           ($culto->asistencia->chapel_jovenes_femeninas ?? 0) +
-                           ($culto->asistencia->chapel_maestros_hombres ?? 0) +
-                           ($culto->asistencia->chapel_maestros_mujeres ?? 0);
-            
-            $totalNinos = ($culto->asistencia->clase_0_1_hombres ?? 0) + ($culto->asistencia->clase_0_1_mujeres ?? 0) +
-                         ($culto->asistencia->clase_2_6_hombres ?? 0) + ($culto->asistencia->clase_2_6_mujeres ?? 0) +
-                         ($culto->asistencia->clase_7_8_hombres ?? 0) + ($culto->asistencia->clase_7_8_mujeres ?? 0) +
-                         ($culto->asistencia->clase_9_11_hombres ?? 0) + ($culto->asistencia->clase_9_11_mujeres ?? 0);
-            
-            $totalSalvos = ($culto->asistencia->salvos_adulto_hombre ?? 0) + ($culto->asistencia->salvos_adulto_mujer ?? 0) +
-                          ($culto->asistencia->salvos_joven_hombre ?? 0) + ($culto->asistencia->salvos_joven_mujer ?? 0) +
-                          ($culto->asistencia->salvos_nino ?? 0) + ($culto->asistencia->salvos_nina ?? 0);
-            
-            $totalBautismos = ($culto->asistencia->bautismos_adulto_hombre ?? 0) + ($culto->asistencia->bautismos_adulto_mujer ?? 0) +
-                             ($culto->asistencia->bautismos_joven_hombre ?? 0) + ($culto->asistencia->bautismos_joven_mujer ?? 0) +
-                             ($culto->asistencia->bautismos_nino ?? 0) + ($culto->asistencia->bautismos_nina ?? 0);
-            
-            $totalVisitas = ($culto->asistencia->visitas_adulto_hombre ?? 0) + ($culto->asistencia->visitas_adulto_mujer ?? 0) +
-                           ($culto->asistencia->visitas_joven_hombre ?? 0) + ($culto->asistencia->visitas_joven_mujer ?? 0) +
-                           ($culto->asistencia->visitas_nino ?? 0) + ($culto->asistencia->visitas_nina ?? 0);
-        @endphp
-        <p><strong>Total Capilla:</strong> {{ $totalCapilla }} | <strong>Total Niños:</strong> {{ $totalNinos }} | <strong>Salvos:</strong> {{ $totalSalvos }} | <strong>Bautismos:</strong> {{ $totalBautismos }} | <strong>Visitas:</strong> {{ $totalVisitas }}</p>
+        <p><strong>Total Capilla:</strong> {{ $culto->asistencia->getTotalCapilla() }} | <strong>Total Niños:</strong> {{ $culto->asistencia->getTotalNinos() }} | <strong>Salvos:</strong> {{ $culto->asistencia->getTotalSalvos() }} | <strong>Bautismos:</strong> {{ $culto->asistencia->getTotalBautismos() }} | <strong>Visitas:</strong> {{ $culto->asistencia->getTotalVisitas() }}</p>
     </div>
 
     <h3>Capilla</h3>
@@ -100,34 +76,15 @@
             </tr>
         </thead>
         <tbody>
+            @foreach($culto->asistencia->detallesClases->sortBy(fn($d) => $d->claseAsistencia->orden ?? 0) as $detalle)
             <tr>
-                <td>0-1 Años</td>
-                <td>{{ $culto->asistencia->clase_0_1_hombres }}</td>
-                <td>{{ $culto->asistencia->clase_0_1_mujeres }}</td>
-                <td>{{ $culto->asistencia->clase_0_1_maestros_hombres }}</td>
-                <td>{{ $culto->asistencia->clase_0_1_maestros_mujeres }}</td>
+                <td>{{ $detalle->claseAsistencia->nombre }}</td>
+                <td>{{ $detalle->hombres }}</td>
+                <td>{{ $detalle->mujeres }}</td>
+                <td>{{ $detalle->maestros_hombres }}</td>
+                <td>{{ $detalle->maestros_mujeres }}</td>
             </tr>
-            <tr>
-                <td>2-6 Años</td>
-                <td>{{ $culto->asistencia->clase_2_6_hombres }}</td>
-                <td>{{ $culto->asistencia->clase_2_6_mujeres }}</td>
-                <td>{{ $culto->asistencia->clase_2_6_maestros_hombres }}</td>
-                <td>{{ $culto->asistencia->clase_2_6_maestros_mujeres }}</td>
-            </tr>
-            <tr>
-                <td>7-8 Años</td>
-                <td>{{ $culto->asistencia->clase_7_8_hombres }}</td>
-                <td>{{ $culto->asistencia->clase_7_8_mujeres }}</td>
-                <td>{{ $culto->asistencia->clase_7_8_maestros_hombres }}</td>
-                <td>{{ $culto->asistencia->clase_7_8_maestros_mujeres }}</td>
-            </tr>
-            <tr>
-                <td>9-11 Años</td>
-                <td>{{ $culto->asistencia->clase_9_11_hombres }}</td>
-                <td>{{ $culto->asistencia->clase_9_11_mujeres }}</td>
-                <td>{{ $culto->asistencia->clase_9_11_maestros_hombres }}</td>
-                <td>{{ $culto->asistencia->clase_9_11_maestros_mujeres }}</td>
-            </tr>
+            @endforeach
         </tbody>
     </table>
 
@@ -204,7 +161,7 @@
     </table>
     
     <div class="footer">
-        <p>Sistema de Administración - IBBSC - Iglesia Bíblica Bautista en Santa Cruz</p>
+        <p>Sistema de Administracion - {{ $tenantSiglas }} - {{ $tenantNombre }}</p>
     </div>
 </body>
 </html>

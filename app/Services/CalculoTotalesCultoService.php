@@ -7,68 +7,70 @@ use App\Models\TotalesCulto;
 
 class CalculoTotalesCultoService
 {
+    // Legacy column mapping for dual-write backward compatibility
+    private const LEGACY_COLUMNS = [
+        'diezmo' => 'total_diezmo',
+        'ofrenda_especial' => 'total_ofrenda_especial',
+        'misiones' => 'total_misiones',
+        'seminario' => 'total_seminario',
+        'campa' => 'total_campa',
+        'prestamo' => 'total_prestamo',
+        'construccion' => 'total_construccion',
+        'micro' => 'total_micro',
+    ];
+
     public function recalcular(Culto $culto): TotalesCulto
     {
         $sobres = $culto->sobres()->with('detalles')->get();
         $ofrendasSueltas = $culto->ofrendasSueltas;
 
-        $totales = [
-            'total_diezmo' => 0,
-            'total_ofrenda_especial' => 0,
-            'total_misiones' => 0,
-            'total_seminario' => 0,
-            'total_campa' => 0,
-            'total_prestamo' => 0,
-            'total_construccion' => 0,
-            'total_micro' => 0,
-            'total_suelto' => 0,
-            'total_egresos' => 0,
-            'cantidad_sobres' => $sobres->count(),
-            'cantidad_transferencias' => 0,
-        ];
+        // Build category totals dynamically from sobre detalles
+        $categoriaTotales = [];
+        $cantidadTransferencias = 0;
 
-        // Calcular totales de sobres por categoría
         foreach ($sobres as $sobre) {
             if ($sobre->metodo_pago === 'transferencia') {
-                $totales['cantidad_transferencias']++;
+                $cantidadTransferencias++;
             }
 
             foreach ($sobre->detalles as $detalle) {
-                $categoria = strtolower($detalle->categoria);
-                $key = 'total_' . $categoria;
-                
-                if (isset($totales[$key])) {
-                    $totales[$key] += $detalle->monto;
-                }
+                $slug = strtolower($detalle->categoria);
+                $categoriaTotales[$slug] = ($categoriaTotales[$slug] ?? 0) + $detalle->monto;
             }
         }
 
-        // Calcular total de ofrendas sueltas
+        // Suelto
+        $totalSuelto = 0;
         foreach ($ofrendasSueltas as $ofrenda) {
-            $totales['total_suelto'] += $ofrenda->monto;
+            $totalSuelto += $ofrenda->monto;
         }
 
-        // Calcular total de egresos (restas)
+        // Egresos
+        $totalEgresos = 0;
         $egresos = $culto->egresos ?? collect();
         foreach ($egresos as $egreso) {
-            $totales['total_egresos'] += $egreso->monto;
+            $totalEgresos += $egreso->monto;
         }
 
-        // Calcular total general
-        // Total general incluye ingresos y resta egresos
-        $totales['total_general'] = array_sum([
-            $totales['total_diezmo'],
-            $totales['total_ofrenda_especial'],
-            $totales['total_misiones'],
-            $totales['total_seminario'],
-            $totales['total_campa'],
-            $totales['total_prestamo'],
-            $totales['total_construccion'],
-            $totales['total_micro'],
-            $totales['total_suelto'],
-        ]) - $totales['total_egresos'];
+        // Total general = sum of all categories + suelto - egresos
+        $sumaIngresos = array_sum($categoriaTotales) + $totalSuelto;
+        $totalGeneral = $sumaIngresos - $totalEgresos;
 
-        // Actualizar o crear registro de totales
+        // Build the data array
+        $totales = [
+            'total_suelto' => $totalSuelto,
+            'total_egresos' => $totalEgresos,
+            'total_general' => $totalGeneral,
+            'cantidad_sobres' => $sobres->count(),
+            'cantidad_transferencias' => $cantidadTransferencias,
+            'totales_por_categoria' => $categoriaTotales,
+        ];
+
+        // Dual-write: also populate legacy columns for backward compat
+        foreach (self::LEGACY_COLUMNS as $slug => $column) {
+            $totales[$column] = $categoriaTotales[$slug] ?? 0;
+        }
+
         return $culto->totales()->updateOrCreate(
             ['culto_id' => $culto->id],
             $totales

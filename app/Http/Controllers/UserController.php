@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\TenantRole;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
@@ -14,7 +15,12 @@ class UserController extends Controller
      */
     public function index()
     {
-        $usuarios = User::orderBy('created_at', 'desc')->paginate(15);
+        $tenant = tenant();
+        $usuarios = User::where('tenant_id', $tenant?->id)
+            ->where('is_super_admin', false)
+            ->orderBy('created_at', 'desc')
+            ->paginate(15);
+
         return view('admin.usuarios.index', compact('usuarios'));
     }
 
@@ -23,7 +29,10 @@ class UserController extends Controller
      */
     public function create()
     {
-        return view('admin.usuarios.create');
+        $tenant = tenant();
+        $roles = $tenant ? $tenant->roles()->orderBy('orden')->get() : collect();
+
+        return view('admin.usuarios.create', compact('roles'));
     }
 
     /**
@@ -31,14 +40,24 @@ class UserController extends Controller
      */
     public function store(Request $request)
     {
+        $tenant = tenant();
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
-            'rol' => 'required|in:admin,tesorero,asistente,invitado',
+            'rol' => 'required|in:admin,tesorero,asistente,servidor,miembro,invitado',
+            'tenant_role_id' => 'nullable|exists:tenant_roles,id',
         ]);
 
         $validated['password'] = Hash::make($validated['password']);
+        $validated['tenant_id'] = $tenant?->id;
+
+        // Assign tenant role if provided, otherwise find by legacy slug
+        if (empty($validated['tenant_role_id']) && $tenant) {
+            $tenantRole = $tenant->roles()->where('slug', $validated['rol'])->first();
+            $validated['tenant_role_id'] = $tenantRole?->id;
+        }
 
         User::create($validated);
 
@@ -59,7 +78,10 @@ class UserController extends Controller
      */
     public function edit(User $usuario)
     {
-        return view('admin.usuarios.edit', compact('usuario'));
+        $tenant = tenant();
+        $roles = $tenant ? $tenant->roles()->orderBy('orden')->get() : collect();
+
+        return view('admin.usuarios.edit', compact('usuario', 'roles'));
     }
 
     /**
@@ -71,13 +93,21 @@ class UserController extends Controller
             'name' => 'required|string|max:255',
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($usuario->id)],
             'password' => 'nullable|string|min:8|confirmed',
-            'rol' => 'required|in:admin,tesorero,asistente,invitado',
+            'rol' => 'required|in:admin,tesorero,asistente,servidor,miembro,invitado',
+            'tenant_role_id' => 'nullable|exists:tenant_roles,id',
         ]);
 
         if ($request->filled('password')) {
             $validated['password'] = Hash::make($validated['password']);
         } else {
             unset($validated['password']);
+        }
+
+        // Assign tenant role if provided, otherwise find by legacy slug
+        $tenant = tenant();
+        if (empty($validated['tenant_role_id']) && $tenant) {
+            $tenantRole = $tenant->roles()->where('slug', $validated['rol'])->first();
+            $validated['tenant_role_id'] = $tenantRole?->id;
         }
 
         $usuario->update($validated);

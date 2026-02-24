@@ -100,19 +100,14 @@
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm hidden sm:table-cell text-gray-500">
                         @if($culto->asistencia)
-                            {{ $culto->asistencia->chapel_hombres + $culto->asistencia->chapel_mujeres + 
-                               $culto->asistencia->chapel_adultos_mayores + $culto->asistencia->chapel_adultos + 
-                               $culto->asistencia->chapel_jovenes_masculinos + $culto->asistencia->chapel_jovenes_femeninas }}
+                            {{ $culto->asistencia->getTotalCapilla() }}
                         @else
                             -
                         @endif
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm hidden sm:table-cell text-gray-500">
                         @if($culto->asistencia)
-                            {{ $culto->asistencia->total_asistencia - 
-                               ($culto->asistencia->chapel_hombres + $culto->asistencia->chapel_mujeres + 
-                                $culto->asistencia->chapel_adultos_mayores + $culto->asistencia->chapel_adultos + 
-                                $culto->asistencia->chapel_jovenes_masculinos + $culto->asistencia->chapel_jovenes_femeninas) }}
+                            {{ $culto->asistencia->getTotalClases() }}
                         @else
                             -
                         @endif
@@ -248,11 +243,11 @@
                         <div class="grid grid-cols-2 gap-2 text-xs text-gray-600">
                             <div class="flex justify-between">
                                 <span>Capilla:</span>
-                                <span class="font-semibold">{{ $asistencia->chapel_hombres + $asistencia->chapel_mujeres + $asistencia->chapel_adultos_mayores + $asistencia->chapel_adultos + $asistencia->chapel_jovenes_masculinos + $asistencia->chapel_jovenes_femeninas }}</span>
+                                <span class="font-semibold">{{ $asistencia->getTotalCapilla() }}</span>
                             </div>
                             <div class="flex justify-between">
                                 <span>Clases:</span>
-                                <span class="font-semibold">{{ $asistencia->total_asistencia - ($asistencia->chapel_hombres + $asistencia->chapel_mujeres + $asistencia->chapel_adultos_mayores + $asistencia->chapel_adultos + $asistencia->chapel_jovenes_masculinos + $asistencia->chapel_jovenes_femeninas) }}</span>
+                                <span class="font-semibold">{{ $asistencia->getTotalClases() }}</span>
                             </div>
                         </div>
                     </div>

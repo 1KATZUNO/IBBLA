@@ -78,87 +78,18 @@
                     <h3 class="text-lg font-semibold mb-4">Detalles del Sobre</h3>
                     
                     <div class="space-y-3" id="detallesContainer">
-                        <!-- Categorías fijas -->
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            @foreach($categorias as $index => $cat)
                             <div>
-                                <label for="diezmo" class="block text-sm font-medium text-gray-700 mb-2">Diezmo</label>
+                                <label for="{{ $cat->slug }}" class="block text-sm font-medium text-gray-700 mb-2">{{ $cat->nombre }}</label>
                                 <div class="relative">
                                     <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">₡</span>
-                                    <input type="number" name="detalles[0][monto]" id="diezmo" step="0.01" min="0" value="0"
+                                    <input type="number" name="detalles[{{ $index }}][monto]" id="{{ $cat->slug }}" step="0.01" min="0" value="0"
                                            class="w-full pl-7 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 detalle-monto">
-                                    <input type="hidden" name="detalles[0][categoria]" value="diezmo">
+                                    <input type="hidden" name="detalles[{{ $index }}][categoria]" value="{{ $cat->slug }}">
                                 </div>
                             </div>
-
-                            <div>
-                                <label for="ofrenda_especial" class="block text-sm font-medium text-gray-700 mb-2">Ofrenda Especial</label>
-                                <div class="relative">
-                                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">₡</span>
-                                    <input type="number" name="detalles[1][monto]" id="ofrenda_especial" step="0.01" min="0" value="0"
-                                           class="w-full pl-7 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 detalle-monto">
-                                    <input type="hidden" name="detalles[1][categoria]" value="ofrenda_especial">
-                                </div>
-                            </div>
-
-                            <div>
-                                <label for="misiones" class="block text-sm font-medium text-gray-700 mb-2">Misiones</label>
-                                <div class="relative">
-                                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">₡</span>
-                                    <input type="number" name="detalles[2][monto]" id="misiones" step="0.01" min="0" value="0"
-                                           class="w-full pl-7 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 detalle-monto">
-                                    <input type="hidden" name="detalles[2][categoria]" value="misiones">
-                                </div>
-                            </div>
-
-                            <div>
-                                <label for="seminario" class="block text-sm font-medium text-gray-700 mb-2">Seminario</label>
-                                <div class="relative">
-                                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">₡</span>
-                                    <input type="number" name="detalles[3][monto]" id="seminario" step="0.01" min="0" value="0"
-                                           class="w-full pl-7 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 detalle-monto">
-                                    <input type="hidden" name="detalles[3][categoria]" value="seminario">
-                                </div>
-                            </div>
-
-                            <div>
-                                <label for="campa" class="block text-sm font-medium text-gray-700 mb-2">Campamento</label>
-                                <div class="relative">
-                                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">₡</span>
-                                    <input type="number" name="detalles[4][monto]" id="campa" step="0.01" min="0" value="0"
-                                           class="w-full pl-7 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 detalle-monto">
-                                    <input type="hidden" name="detalles[4][categoria]" value="campa">
-                                </div>
-                            </div>
-
-                            <div>
-                                <label for="prestamo" class="block text-sm font-medium text-gray-700 mb-2">Préstamo</label>
-                                <div class="relative">
-                                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">₡</span>
-                                    <input type="number" name="detalles[5][monto]" id="prestamo" step="0.01" min="0" value="0"
-                                           class="w-full pl-7 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 detalle-monto">
-                                    <input type="hidden" name="detalles[5][categoria]" value="prestamo">
-                                </div>
-                            </div>
-
-                            <div>
-                                <label for="construccion" class="block text-sm font-medium text-gray-700 mb-2">Construcción</label>
-                                <div class="relative">
-                                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">₡</span>
-                                    <input type="number" name="detalles[6][monto]" id="construccion" step="0.01" min="0" value="0"
-                                           class="w-full pl-7 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 detalle-monto">
-                                    <input type="hidden" name="detalles[6][categoria]" value="construccion">
-                                </div>
-                            </div>
-
-                            <div>
-                                <label for="micro" class="block text-sm font-medium text-gray-700 mb-2">Micro</label>
-                                <div class="relative">
-                                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">₡</span>
-                                    <input type="number" name="detalles[7][monto]" id="micro" step="0.01" min="0" value="0"
-                                           class="w-full pl-7 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 detalle-monto">
-                                    <input type="hidden" name="detalles[7][categoria]" value="micro">
-                                </div>
-                            </div>
+                            @endforeach
                         </div>
                     </div>
 

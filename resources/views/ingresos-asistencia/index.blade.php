@@ -70,37 +70,15 @@
     <div class="bg-white rounded-lg shadow p-6">
         <h3 class="text-lg font-semibold mb-4">Distribución por Categorías</h3>
         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div class="p-4 bg-blue-50 rounded-lg">
-                <p class="text-sm text-gray-600">Diezmo</p>
-                <p class="text-xl font-bold text-blue-600">₡{{ number_format($categorias['diezmo'], 0, ',', '.') }}</p>
+            @foreach($categories as $cat)
+            <div class="p-4 rounded-lg" style="background-color: {{ $cat->color }}15;">
+                <p class="text-sm text-gray-600">{{ $cat->nombre }}</p>
+                <p class="text-xl font-bold" style="color: {{ $cat->color }};">₡{{ number_format($categorias[$cat->slug] ?? 0, 0, ',', '.') }}</p>
             </div>
-            <div class="p-4 bg-green-50 rounded-lg">
-                <p class="text-sm text-gray-600">Misiones</p>
-                <p class="text-xl font-bold text-green-600">₡{{ number_format($categorias['misiones'], 0, ',', '.') }}</p>
-            </div>
-            <div class="p-4 bg-yellow-50 rounded-lg">
-                <p class="text-sm text-gray-600">Seminario</p>
-                <p class="text-xl font-bold text-yellow-600">₡{{ number_format($categorias['seminario'], 0, ',', '.') }}</p>
-            </div>
-            <div class="p-4 bg-purple-50 rounded-lg">
-                <p class="text-sm text-gray-600">Construcción</p>
-                <p class="text-xl font-bold text-purple-600">₡{{ number_format($categorias['construccion'], 0, ',', '.') }}</p>
-            </div>
-            <div class="p-4 bg-red-50 rounded-lg">
-                <p class="text-sm text-gray-600">Campamento</p>
-                <p class="text-xl font-bold text-red-600">₡{{ number_format($categorias['campa'], 0, ',', '.') }}</p>
-            </div>
-            <div class="p-4 bg-pink-50 rounded-lg">
-                <p class="text-sm text-gray-600">Préstamo</p>
-                <p class="text-xl font-bold text-pink-600">₡{{ number_format($categorias['prestamo'], 0, ',', '.') }}</p>
-            </div>
-            <div class="p-4 bg-indigo-50 rounded-lg">
-                <p class="text-sm text-gray-600">Micro</p>
-                <p class="text-xl font-bold text-indigo-600">₡{{ number_format($categorias['micro'], 0, ',', '.') }}</p>
-            </div>
+            @endforeach
             <div class="p-4 bg-gray-50 rounded-lg">
                 <p class="text-sm text-gray-600">Suelto</p>
-                <p class="text-xl font-bold text-gray-600">₡{{ number_format($categorias['suelto'], 0, ',', '.') }}</p>
+                <p class="text-xl font-bold text-gray-600">₡{{ number_format($categorias['suelto'] ?? 0, 0, ',', '.') }}</p>
             </div>
         </div>
     </div>

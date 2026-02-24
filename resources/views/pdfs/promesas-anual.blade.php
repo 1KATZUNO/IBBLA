@@ -167,8 +167,11 @@
     </style>
 </head>
 <body>
+    @php extract(tenant_pdf_data()); @endphp
     <div class="header">
-        <img src="{{ public_path('logo-ibbsc.png') }}" alt="IBBSC Logo" class="logo">
+        <div style="background-color: {{ $tenantColor }}; border-radius: 50%; width: 80px; height: 80px; text-align: center; padding-left: 3px; margin: 0 auto 10px auto;">
+            <img src="data:image/png;base64,{{ $tenantLogoBase64 }}" style="width: 60px; height: 60px; margin-top: 10px;" alt="Logo">
+        </div>
         <div class="title">Reporte Anual de Promesas</div>
         <div class="subtitle">Año {{ $año }}</div>
         @if($categoria && $categoria !== 'todas')
@@ -257,8 +260,8 @@
     </table>
 
     <div class="footer">
-        <p><strong>Iglesia Bautista Bíblica Sión de Coronado</strong></p>
-        <p>Sistema de Gestión de Ingresos y Promesas</p>
+        <p><strong>{{ $tenantSiglas }} - {{ $tenantNombre }}</strong></p>
+        <p>Sistema de Administracion - {{ $tenantSiglas }}</p>
     </div>
 </body>
 </html>

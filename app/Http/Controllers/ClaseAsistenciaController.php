@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\ClaseAsistencia;
+use App\Models\AsistenciaClaseDetalle;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -82,6 +83,14 @@ class ClaseAsistenciaController extends Controller
 
     public function destroy(ClaseAsistencia $clase)
     {
+        // Verificar si la clase tiene datos asociados
+        $tieneDatos = AsistenciaClaseDetalle::where('clase_asistencia_id', $clase->id)->exists();
+
+        if ($tieneDatos) {
+            return redirect()->route('admin.clases.index')
+                ->with('error', 'No se puede eliminar esta clase porque tiene datos de asistencia asociados. Desactívala en su lugar.');
+        }
+
         $clase->delete();
 
         return redirect()->route('admin.clases.index')

@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Reporte de Contribuciones - IBBSC</title>
+    <title>Reporte de Contribuciones - {{ tenant()?->siglas ?? 'Admin' }}</title>
     <style>
         @page {
             size: landscape;
@@ -194,13 +194,14 @@
 </head>
 <body>
     <div class="container">
+        @php extract(tenant_pdf_data()); @endphp
         <div class="header">
-            <div class="logo">
-                <img src="data:image/png;base64,{{ base64_encode(file_get_contents(public_path('images/Logo2.png'))) }}" alt="Logo IBBSC">
+            <div class="logo" style="background-color: {{ $tenantColor }}; border-radius: 50%; text-align: center; padding-left: 3px;">
+                <img src="data:image/png;base64,{{ $tenantLogoBase64 }}" style="width: 50px; height: 50px; margin-top: 5px;" alt="Logo">
             </div>
             <div class="header-text">
                 <h1>Reporte de Contribuciones</h1>
-                <h2>Iglesia Bíblica Bautista en Santa Cruz</h2>
+                <h2>{{ $tenantSiglas }} - {{ $tenantNombre }}</h2>
             </div>
         </div>
 
@@ -213,12 +214,9 @@
             <thead>
                 <tr>
                     <th>Nombre</th>
-                    <th>Diezmo</th>
-                    <th>Misiones</th>
-                    <th>Seminario</th>
-                    <th>Campamento</th>
-                    <th>Construcción</th>
-                    <th>Micro</th>
+                    @foreach($categorias as $cat)
+                    <th>{{ ucfirst($cat) }}</th>
+                    @endforeach
                     <th style="background: #166534;">Total</th>
                 </tr>
             </thead>
@@ -270,7 +268,7 @@
 
         <div class="footer">
             <p>Generado el {{ \Carbon\Carbon::now()->locale('es')->translatedFormat('d \d\e F \d\e Y \a \l\a\s h:i A') }}</p>
-            <p>IBBSC - Sistema de Administración</p>
+            <p>Sistema de Administracion - {{ $tenantSiglas }} - {{ $tenantNombre }}</p>
         </div>
     </div>
 </body>

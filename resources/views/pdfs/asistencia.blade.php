@@ -29,10 +29,13 @@
     </style>
 </head>
 <body>
+    @php extract(tenant_pdf_data()); @endphp
     <div class="header">
-        <img src="data:image/png;base64,{{ base64_encode(file_get_contents(public_path('images/Logo2.png'))) }}" alt="Logo IBBSC">
+        <div style="background-color: {{ $tenantColor }}; border-radius: 50%; width: 70px; height: 70px; text-align: center; padding-left: 3px; margin-right: 15px;">
+            <img src="data:image/png;base64,{{ $tenantLogoBase64 }}" style="width: 50px; height: 50px; margin-top: 10px;" alt="Logo">
+        </div>
         <div class="header-text">
-            <h1>IBBSC - Iglesia Bíblica Bautista en Santa Cruz</h1>
+            <h1>{{ $tenantSiglas }} - {{ $tenantNombre }}</h1>
             <h2>Reporte de Asistencia</h2>
             <p><strong>Fecha de Generación:</strong> {{ now()->format('d/m/Y H:i') }}</p>
         </div>
@@ -59,36 +62,10 @@
             @foreach($cultos as $culto)
             @if($culto->asistencia)
             @php
-                $hombres = $culto->asistencia->chapel_adultos_hombres + 
-                          $culto->asistencia->chapel_adultos_mayores_hombres + 
-                          $culto->asistencia->chapel_jovenes_masculinos + 
-                          $culto->asistencia->chapel_maestros_hombres +
-                          $culto->asistencia->clase_0_1_hombres + 
-                          $culto->asistencia->clase_2_6_hombres + 
-                          $culto->asistencia->clase_7_8_hombres + 
-                          $culto->asistencia->clase_9_11_hombres +
-                          $culto->asistencia->clase_0_1_maestros_hombres +
-                          $culto->asistencia->clase_2_6_maestros_hombres +
-                          $culto->asistencia->clase_7_8_maestros_hombres +
-                          $culto->asistencia->clase_9_11_maestros_hombres;
-                
-                $mujeres = $culto->asistencia->chapel_adultos_mujeres + 
-                          $culto->asistencia->chapel_adultos_mayores_mujeres + 
-                          $culto->asistencia->chapel_jovenes_femeninas +
-                          $culto->asistencia->clase_0_1_mujeres + 
-                          $culto->asistencia->clase_2_6_mujeres + 
-                          $culto->asistencia->clase_7_8_mujeres + 
-                          $culto->asistencia->clase_9_11_mujeres +
-                          $culto->asistencia->clase_0_1_maestros_mujeres +
-                          $culto->asistencia->clase_2_6_maestros_mujeres +
-                          $culto->asistencia->clase_7_8_maestros_mujeres +
-                          $culto->asistencia->clase_9_11_maestros_mujeres;
-                
-                $ninos = $culto->asistencia->clase_0_1_hombres + $culto->asistencia->clase_0_1_mujeres +
-                        $culto->asistencia->clase_2_6_hombres + $culto->asistencia->clase_2_6_mujeres +
-                        $culto->asistencia->clase_7_8_hombres + $culto->asistencia->clase_7_8_mujeres +
-                        $culto->asistencia->clase_9_11_hombres + $culto->asistencia->clase_9_11_mujeres;
-                
+                $hombres = $culto->asistencia->getTotalHombres();
+                $mujeres = $culto->asistencia->getTotalMujeres();
+                $ninos = $culto->asistencia->getTotalNinos();
+
                 $totalGeneral += $culto->asistencia->total_asistencia;
                 $totalHombres += $hombres;
                 $totalMujeres += $mujeres;
@@ -115,7 +92,7 @@
     </table>
     
     <div class="footer">
-        <p>Sistema de Administración - IBBSC - Iglesia Bíblica Bautista en Santa Cruz</p>
+        <p>Sistema de Administracion - {{ $tenantSiglas }} - {{ $tenantNombre }}</p>
     </div>
 </body>
 </html>

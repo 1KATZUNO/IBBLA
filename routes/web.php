@@ -9,6 +9,8 @@ use App\Http\Controllers\PersonaController;
 use App\Http\Controllers\PromesaController;
 use App\Http\Controllers\CultoController;
 use App\Http\Controllers\IngresosAsistenciaController;
+use App\Http\Controllers\SuperAdmin\DashboardController as SADashboardController;
+use App\Http\Controllers\SuperAdmin\TenantController as SATenantController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -31,9 +33,15 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-// Ruta para miembros - Mi Perfil
-Route::middleware(['auth', 'role:miembro'])->group(function () {
+// Ruta para miembros y servidores - Mi Perfil
+Route::middleware(['auth', 'role:miembro,servidor'])->group(function () {
     Route::get('/mi-perfil', [App\Http\Controllers\MiPerfilController::class, 'index'])->name('mi-perfil.index');
+});
+
+// Ruta para servidores - Marcar Asistencia
+Route::middleware(['auth', 'role:servidor'])->group(function () {
+    Route::get('/marcar-asistencia', [App\Http\Controllers\MarcarAsistenciaController::class, 'index'])->name('marcar-asistencia.index');
+    Route::post('/marcar-asistencia', [App\Http\Controllers\MarcarAsistenciaController::class, 'store'])->name('marcar-asistencia.store');
 });
 
 // Rutas para Admin y Tesorero - Recuento e Ingresos
@@ -157,8 +165,32 @@ Route::middleware(['auth', 'role:admin', 'audit'])->group(function () {
     // Gestión de Usuarios
     Route::resource('usuarios', App\Http\Controllers\UserController::class);
 
+    // Servidores
+    Route::get('/admin/servidores', [App\Http\Controllers\ServidorController::class, 'index'])->name('admin.servidores.index');
+    Route::get('/admin/servidores/reporte', [App\Http\Controllers\ServidorController::class, 'reporte'])->name('admin.servidores.reporte');
+    Route::get('/admin/servidores/qr/{culto}', [App\Http\Controllers\ServidorController::class, 'qrCulto'])->name('admin.servidores.qr');
+
     // Auditoría
     Route::get('/admin/auditoria', [App\Http\Controllers\AuditLogController::class, 'index'])->name('admin.auditoria.index');
+});
+
+// Super Admin Panel
+Route::middleware(['auth', 'super_admin'])->prefix('super-admin')->name('super-admin.')->group(function () {
+    Route::get('/', [SADashboardController::class, 'index'])->name('dashboard');
+    Route::get('ingresos-globales', [SADashboardController::class, 'ingresosGlobales'])->name('ingresos-globales');
+    Route::get('promesas-globales', [SADashboardController::class, 'promesasGlobales'])->name('promesas-globales');
+    Route::resource('tenants', SATenantController::class)->except(['show']);
+    Route::get('tenants/{tenant}/branding', [SATenantController::class, 'branding'])->name('tenants.branding');
+    Route::put('tenants/{tenant}/branding', [SATenantController::class, 'updateBranding'])->name('tenants.update-branding');
+    Route::get('tenants/{tenant}/categories', [SATenantController::class, 'categories'])->name('tenants.categories');
+    Route::post('tenants/{tenant}/categories', [SATenantController::class, 'storeCategory'])->name('tenants.store-category');
+    Route::put('tenants/{tenant}/categories/{category}', [SATenantController::class, 'updateCategory'])->name('tenants.update-category');
+    Route::delete('tenants/{tenant}/categories/{category}', [SATenantController::class, 'destroyCategory'])->name('tenants.destroy-category');
+    Route::get('tenants/{tenant}/domains', [SATenantController::class, 'domains'])->name('tenants.domains');
+    Route::post('tenants/{tenant}/domains', [SATenantController::class, 'storeDomain'])->name('tenants.store-domain');
+    Route::delete('tenants/{tenant}/domains/{domain}', [SATenantController::class, 'destroyDomain'])->name('tenants.destroy-domain');
+    Route::get('tenants/{tenant}/users', [SATenantController::class, 'users'])->name('tenants.users');
+    Route::post('tenants/{tenant}/toggle', [SATenantController::class, 'toggle'])->name('tenants.toggle');
 });
 
 require __DIR__.'/auth.php';

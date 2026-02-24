@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Asistencia extends Model
 {
@@ -19,22 +20,6 @@ class Asistencia extends Model
         'chapel_jovenes_femeninas',
         'chapel_maestros_hombres',
         'chapel_maestros_mujeres',
-        'clase_0_1_hombres',
-        'clase_0_1_mujeres',
-        'clase_0_1_maestros_hombres',
-        'clase_0_1_maestros_mujeres',
-        'clase_2_6_hombres',
-        'clase_2_6_mujeres',
-        'clase_2_6_maestros_hombres',
-        'clase_2_6_maestros_mujeres',
-        'clase_7_8_hombres',
-        'clase_7_8_mujeres',
-        'clase_7_8_maestros_hombres',
-        'clase_7_8_maestros_mujeres',
-        'clase_9_11_hombres',
-        'clase_9_11_mujeres',
-        'clase_9_11_maestros_hombres',
-        'clase_9_11_maestros_mujeres',
         'total_asistencia',
         'salvos_adulto_hombre',
         'salvos_adulto_mujer',
@@ -72,5 +57,103 @@ class Asistencia extends Model
     public function cerradoPor(): BelongsTo
     {
         return $this->belongsTo(User::class, 'cerrado_por');
+    }
+
+    public function detallesClases(): HasMany
+    {
+        return $this->hasMany(AsistenciaClaseDetalle::class);
+    }
+
+    public function detalleClase(string $slug): ?AsistenciaClaseDetalle
+    {
+        return $this->detallesClases->first(function ($detalle) use ($slug) {
+            return $detalle->claseAsistencia && $detalle->claseAsistencia->slug === $slug;
+        });
+    }
+
+    public function getTotalCapilla(): int
+    {
+        return ($this->chapel_adultos_hombres ?? 0) +
+               ($this->chapel_adultos_mujeres ?? 0) +
+               ($this->chapel_adultos_mayores_hombres ?? 0) +
+               ($this->chapel_adultos_mayores_mujeres ?? 0) +
+               ($this->chapel_jovenes_masculinos ?? 0) +
+               ($this->chapel_jovenes_femeninas ?? 0) +
+               ($this->chapel_maestros_hombres ?? 0) +
+               ($this->chapel_maestros_mujeres ?? 0);
+    }
+
+    public function getTotalClases(): int
+    {
+        return $this->detallesClases->sum(function ($detalle) {
+            return $detalle->getTotal();
+        });
+    }
+
+    public function getTotalNinos(): int
+    {
+        return $this->detallesClases->sum(function ($detalle) {
+            return $detalle->getTotalAlumnos();
+        });
+    }
+
+    public function getTotalMaestros(): int
+    {
+        return $this->detallesClases->sum(function ($detalle) {
+            return $detalle->getTotalMaestros();
+        });
+    }
+
+    public function getTotalClasesHombres(): int
+    {
+        return $this->detallesClases->sum(function ($detalle) {
+            return $detalle->hombres + $detalle->maestros_hombres;
+        });
+    }
+
+    public function getTotalClasesMujeres(): int
+    {
+        return $this->detallesClases->sum(function ($detalle) {
+            return $detalle->mujeres + $detalle->maestros_mujeres;
+        });
+    }
+
+    public function getTotalHombres(): int
+    {
+        return ($this->chapel_adultos_hombres ?? 0) +
+               ($this->chapel_adultos_mayores_hombres ?? 0) +
+               ($this->chapel_jovenes_masculinos ?? 0) +
+               ($this->chapel_maestros_hombres ?? 0) +
+               $this->getTotalClasesHombres();
+    }
+
+    public function getTotalMujeres(): int
+    {
+        return ($this->chapel_adultos_mujeres ?? 0) +
+               ($this->chapel_adultos_mayores_mujeres ?? 0) +
+               ($this->chapel_jovenes_femeninas ?? 0) +
+               ($this->chapel_maestros_mujeres ?? 0) +
+               $this->getTotalClasesMujeres();
+    }
+
+    public function getTotalSalvos(): int
+    {
+        return ($this->salvos_adulto_hombre ?? 0) + ($this->salvos_adulto_mujer ?? 0) +
+               ($this->salvos_joven_hombre ?? 0) + ($this->salvos_joven_mujer ?? 0) +
+               ($this->salvos_nino ?? 0) + ($this->salvos_nina ?? 0);
+    }
+
+    public function getTotalBautismos(): int
+    {
+        return ($this->bautismos_adulto_hombre ?? 0) + ($this->bautismos_adulto_mujer ?? 0) +
+               ($this->bautismos_joven_hombre ?? 0) + ($this->bautismos_joven_mujer ?? 0) +
+               ($this->bautismos_nino ?? 0) + ($this->bautismos_nina ?? 0);
+    }
+
+    public function getTotalVisitas(): int
+    {
+        return ($this->visitas_adulto_hombre ?? 0) + ($this->visitas_adulto_mujer ?? 0) +
+               ($this->visitas_joven_hombre ?? 0) + ($this->visitas_joven_mujer ?? 0) +
+               ($this->visitas_nino ?? 0) + ($this->visitas_nina ?? 0);
     }
 }

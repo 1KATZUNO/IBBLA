@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
@@ -9,6 +10,7 @@ use Carbon\Carbon;
 
 class Culto extends Model
 {
+    use BelongsToTenant;
     protected $table = 'cultos';
 
     protected $fillable = [
@@ -24,6 +26,8 @@ class Culto extends Model
         'cerrado',
         'cerrado_at',
         'cerrado_por',
+        'tenant_id',
+        'service_type_id',
     ];
 
     protected $casts = [
@@ -82,5 +86,31 @@ class Culto extends Model
     public function cerradoPor()
     {
         return $this->belongsTo(User::class, 'cerrado_por');
+    }
+
+    public function serviceType()
+    {
+        return $this->belongsTo(TenantServiceType::class, 'service_type_id');
+    }
+
+    /**
+     * Nombre del tipo de culto (dinamico o legacy).
+     */
+    public function getTipoNombreAttribute(): string
+    {
+        if ($this->serviceType) {
+            return $this->serviceType->nombre;
+        }
+        // Fallback para datos legacy con ENUM
+        $map = [
+            'domingo' => 'Domingo AM',
+            'domingo_pm' => 'Domingo PM',
+            'miércoles' => 'Miercoles',
+            'miercoles' => 'Miercoles',
+            'sábado' => 'Sabado',
+            'sabado' => 'Sabado',
+            'especial' => 'Especial',
+        ];
+        return $map[$this->tipo_culto] ?? ucfirst($this->tipo_culto ?? '');
     }
 }

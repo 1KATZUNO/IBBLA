@@ -39,6 +39,8 @@
                                 <option value="admin" {{ old('rol') === 'admin' ? 'selected' : '' }}>Admin - Acceso total</option>
                                 <option value="tesorero" {{ old('rol') === 'tesorero' ? 'selected' : '' }}>Tesorero - Dashboard + Recuento</option>
                                 <option value="asistente" {{ old('rol') === 'asistente' ? 'selected' : '' }}>Asistente - Dashboard + Asistencia</option>
+                                <option value="servidor" {{ old('rol') === 'servidor' ? 'selected' : '' }}>Servidor - Marcar Asistencia</option>
+                                <option value="miembro" {{ old('rol') === 'miembro' ? 'selected' : '' }}>Miembro - Mi Perfil</option>
                                 <option value="invitado" {{ old('rol') === 'invitado' ? 'selected' : '' }}>Invitado - Solo Dashboard</option>
                             </select>
                             @error('rol')

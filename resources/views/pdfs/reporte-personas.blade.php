@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reporte de Personas - IBBSC</title>
+    <title>Reporte de Personas - {{ tenant()?->siglas ?? 'Admin' }}</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -118,22 +118,16 @@
             width: 70px;
             height: 70px;
             margin-right: 20px;
-            background: rgba(255, 255, 255, 0.25);
-            backdrop-filter: blur(10px);
-            border-radius: 18px;
-            padding: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            text-align: center;
+            padding-left: 3px;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
             border: 1px solid rgba(255, 255, 255, 0.3);
         }
         
         .logo-container img {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+            width: 50px;
+            height: 50px;
+            margin-top: 10px;
         }
         
         .header-text {
@@ -500,16 +494,17 @@
     </style>
 </head>
 <body>
+    @php extract(tenant_pdf_data()); @endphp
     <div class="container">
         <!-- Header Estilo Gemini -->
         <div class="header">
             <div class="header-content">
-                <div class="logo-container">
-                    <img src="data:image/png;base64,{{ base64_encode(file_get_contents(public_path('images/Logo2.png'))) }}" alt="Logo IBBSC">
+                <div class="logo-container" style="background-color: {{ $tenantColor }}; border-radius: 50%;">
+                    <img src="data:image/png;base64,{{ $tenantLogoBase64 }}" alt="Logo">
                 </div>
                 <div class="header-text">
                     <h1>Reporte de Personas</h1>
-                    <h2>Iglesia Bautista Bíblica Shekinah de la Ciudad</h2>
+                    <h2>{{ $tenantSiglas }} - {{ $tenantNombre }}</h2>
                 </div>
             </div>
         </div>
@@ -666,7 +661,7 @@
 
     <div class="footer">
         <p>🕐 Generado el {{ \Carbon\Carbon::now()->locale('es')->translatedFormat('d \d\e F \d\e Y \a \l\a\s h:i A') }}</p>
-        <p>IBBSC - Sistema de Administración | Powered by Gemini-Style Design</p>
+        <p>Sistema de Administracion - {{ $tenantSiglas }} - {{ $tenantNombre }}</p>
     </div>
     </div>
 </body>

@@ -28,7 +28,8 @@ class PersonaController extends Controller
 
     public function create()
     {
-        return view('personas.create');
+        $categorias = tenant_categories(['excluir_de_promesas' => false]);
+        return view('personas.create', compact('categorias'));
     }
 
     public function store(Request $request)
@@ -59,6 +60,7 @@ class PersonaController extends Controller
                 'email' => $validated['correo'],
                 'password' => Hash::make($validated['password']),
                 'rol' => 'miembro',
+                'tenant_id' => auth()->user()->tenant_id,
             ]);
         }
 
@@ -157,7 +159,8 @@ class PersonaController extends Controller
     public function edit(Persona $persona)
     {
         $persona->load('promesas');
-        return view('personas.edit', compact('persona'));
+        $categorias = tenant_categories(['excluir_de_promesas' => false]);
+        return view('personas.edit', compact('persona', 'categorias'));
     }
 
     public function update(Request $request, Persona $persona)
@@ -191,6 +194,7 @@ class PersonaController extends Controller
                 'email' => $validated['correo'],
                 'password' => Hash::make($validated['password']),
                 'rol' => 'miembro',
+                'tenant_id' => auth()->user()->tenant_id,
             ]);
             $persona->user_id = $user->id;
             $createUser = true;
@@ -333,12 +337,11 @@ class PersonaController extends Controller
      */
     public function resetearPromesas()
     {
-        // Eliminar todos los compromisos
-        Compromiso::truncate();
-        
-        // Eliminar todas las promesas
-        Promesa::truncate();
-        
+        // Eliminar compromisos y promesas solo de personas del tenant actual
+        $personaIds = Persona::pluck('id');
+        Compromiso::whereIn('persona_id', $personaIds)->delete();
+        Promesa::whereIn('persona_id', $personaIds)->delete();
+
         return redirect()->route('personas.index')
             ->with('success', 'Todas las promesas y compromisos han sido reseteados. Los sobres dados se mantienen como historial.');
     }
@@ -413,8 +416,8 @@ class PersonaController extends Controller
                   'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
         $tituloPeriodo = "Enero - {$meses[$mesActual]} {$anioActual}";
 
-        // Categorías fijas en orden
-        $categorias = ['diezmo', 'misiones', 'seminario', 'campa', 'construccion', 'micro'];
+        // Categorías dinámicas del tenant
+        $categorias = tenant_categories()->pluck('slug')->toArray();
 
         // Obtener personas activas con sus sobres del período
         $personas = Persona::where('activo', true)
@@ -490,8 +493,8 @@ class PersonaController extends Controller
         $mesesNombres = ['', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
                         'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
 
-        // Categorias con subdivision (dado/esperado) - sin diezmo ni ofrenda
-        $categoriasConPromesa = ['misiones', 'seminario', 'campa', 'construccion', 'micro'];
+        // Categorias con subdivision (dado/esperado) - excluir las que tienen excluir_de_promesas
+        $categoriasConPromesa = tenant_categories(['excluir_de_promesas' => false])->pluck('slug')->toArray();
 
         // Obtener personas activas con promesas y sobres
         $personas = Persona::where('activo', true)

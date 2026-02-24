@@ -10,8 +10,53 @@ use Barryvdh\DomPDF\Facade\Pdf;
 
 class IngresosAsistenciaController extends Controller
 {
+    /**
+     * Build a registro row from a TotalesCulto using dynamic categories.
+     */
+    private function buildRegistroFromTotales($totales, array $slugs, array $extra = []): array
+    {
+        $row = $extra;
+        foreach ($slugs as $slug) {
+            $row[$slug] = $totales ? $totales->getCategoryTotal($slug) : 0;
+        }
+        $row['suelto'] = $totales->total_suelto ?? 0;
+        $row['total'] = $totales->total_general ?? 0;
+        return $row;
+    }
+
+    /**
+     * Build a registro row by summing a group of cultos using dynamic categories.
+     */
+    private function buildRegistroFromGroup($cultosGroup, array $slugs, array $extra = []): array
+    {
+        $row = $extra;
+        foreach ($slugs as $slug) {
+            $row[$slug] = $cultosGroup->sum(fn($c) => $c->totales ? $c->totales->getCategoryTotal($slug) : 0);
+        }
+        $row['suelto'] = $cultosGroup->sum('totales.total_suelto');
+        $row['total'] = $cultosGroup->sum('totales.total_general');
+        return $row;
+    }
+
+    /**
+     * Build a registro row from raw sobres (transferencias) using dynamic categories.
+     */
+    private function buildRegistroFromSobres($sobres, array $slugs, array $extra = []): array
+    {
+        $row = $extra;
+        foreach ($slugs as $slug) {
+            $row[$slug] = $sobres->flatMap->detalles->where('categoria', $slug)->sum('monto');
+        }
+        $row['suelto'] = 0;
+        $row['total'] = $sobres->flatMap->detalles->sum('monto');
+        return $row;
+    }
+
     public function index()
     {
+        $categories = tenant_categories();
+        $slugs = $categories->pluck('slug')->toArray();
+
         // Totales de la semana
         $inicioSemana = Carbon::now()->startOfWeek();
         $finSemana = Carbon::now()->endOfWeek();
@@ -23,24 +68,19 @@ class IngresosAsistenciaController extends Controller
 
         $totalSemanal = $cultosSemanales->sum(fn($c) => $c->totales ? $c->totales->total_general : 0);
 
-        // Distribución por categorías (no se usa en la nueva vista, pero la dejamos por compatibilidad)
-        $categorias = [
-            'diezmo' => $cultosSemanales->sum(fn($c) => $c->totales ? $c->totales->total_diezmo : 0),
-            'misiones' => $cultosSemanales->sum(fn($c) => $c->totales ? $c->totales->total_misiones : 0),
-            'seminario' => $cultosSemanales->sum(fn($c) => $c->totales ? $c->totales->total_seminario : 0),
-            'campa' => $cultosSemanales->sum(fn($c) => $c->totales ? $c->totales->total_campa : 0),
-            'prestamo' => $cultosSemanales->sum(fn($c) => $c->totales ? $c->totales->total_prestamo : 0),
-            'construccion' => $cultosSemanales->sum(fn($c) => $c->totales ? $c->totales->total_construccion : 0),
-            'micro' => $cultosSemanales->sum(fn($c) => $c->totales ? $c->totales->total_micro : 0),
-            'suelto' => $cultosSemanales->sum(fn($c) => $c->totales ? $c->totales->total_suelto : 0),
-        ];
+        // Distribución por categorías - dynamic
+        $categorias = [];
+        foreach ($slugs as $slug) {
+            $categorias[$slug] = $cultosSemanales->sum(fn($c) => $c->totales ? $c->totales->getCategoryTotal($slug) : 0);
+        }
+        $categorias['suelto'] = $cultosSemanales->sum(fn($c) => $c->totales ? $c->totales->total_suelto : 0);
 
-        return view('ingresos-asistencia.index', compact('cultosSemanales', 'totalSemanal', 'categorias'));
+        return view('ingresos-asistencia.index', compact('cultosSemanales', 'totalSemanal', 'categorias', 'categories'));
     }
 
     public function asistencia(Request $request)
     {
-        $query = Culto::with('asistencia')->orderBy('fecha', 'desc');
+        $query = Culto::with(['asistencia.detallesClases.claseAsistencia'])->orderBy('fecha', 'desc');
 
         // Filtro por mes
         if ($request->filled('mes') && $request->mes !== 'todos') {
@@ -88,6 +128,8 @@ class IngresosAsistenciaController extends Controller
 
     public function ingresos(Request $request)
     {
+        $categories = tenant_categories();
+        $slugs = $categories->pluck('slug')->toArray();
         $tipoReporte = $request->get('tipo_reporte', 'culto');
         $query = Culto::with(['totales', 'sobres.detalles', 'ofrendasSueltas'])->orderBy('fecha', 'desc');
 
@@ -104,98 +146,53 @@ class IngresosAsistenciaController extends Controller
 
         if ($tipoReporte == 'culto') {
             foreach ($cultos as $culto) {
-                $t = $culto->totales; // puede ser null
+                $t = $culto->totales;
                 if ($t) {
-                    $registros[] = [
+                    $registros[] = $this->buildRegistroFromTotales($t, $slugs, [
                         'culto_id' => $culto->id,
                         'fecha' => $culto->fecha->format('d/m/Y'),
                         'tipo' => ucfirst($culto->tipo_culto),
-                        'diezmo' => $t->total_diezmo ?? 0,
-                        'ofrenda_especial' => $t->total_ofrenda_especial ?? 0,
-                        'misiones' => $t->total_misiones ?? 0,
-                        'seminario' => $t->total_seminario ?? 0,
-                        'campa' => $t->total_campa ?? 0,
-                        'construccion' => $t->total_construccion ?? 0,
-                        'prestamo' => $t->total_prestamo ?? 0,
-                        'micro' => $t->total_micro ?? 0,
-                        'suelto' => $t->total_suelto ?? 0,
-                        'total' => $t->total_general ?? 0,
-                    ];
+                    ]);
                 } else {
                     // Calcular en vivo desde sobres y suelto para cultos sin totales
-                    $sumCat = function ($categoria) use ($culto) {
-                        return $culto->sobres->flatMap->detalles->where('categoria', $categoria)->sum('monto');
-                    };
-                    $suelto = $culto->ofrendasSueltas->sum('monto');
-                    $total = $culto->sobres->flatMap->detalles->sum('monto') + $suelto;
-                    $registros[] = [
+                    $row = [
                         'culto_id' => $culto->id,
                         'fecha' => $culto->fecha->format('d/m/Y'),
                         'tipo' => ucfirst($culto->tipo_culto),
-                        'diezmo' => $sumCat('diezmo'),
-                        'ofrenda_especial' => $sumCat('ofrenda_especial'),
-                        'misiones' => $sumCat('misiones'),
-                        'seminario' => $sumCat('seminario'),
-                        'campa' => $sumCat('campa'),
-                        'construccion' => $sumCat('construccion'),
-                        'prestamo' => $sumCat('prestamo'),
-                        'micro' => $sumCat('micro'),
-                        'suelto' => $suelto,
-                        'total' => $total,
                     ];
+                    foreach ($slugs as $slug) {
+                        $row[$slug] = $culto->sobres->flatMap->detalles->where('categoria', $slug)->sum('monto');
+                    }
+                    $row['suelto'] = $culto->ofrendasSueltas->sum('monto');
+                    $row['total'] = $culto->sobres->flatMap->detalles->sum('monto') + $row['suelto'];
+                    $registros[] = $row;
                 }
             }
         } elseif ($tipoReporte == 'semana') {
-            $semanas = $cultos->groupBy(function($culto) {
-                return $culto->fecha->startOfWeek()->format('d/m/Y');
-            });
-
+            $semanas = $cultos->groupBy(fn($culto) => $culto->fecha->startOfWeek()->format('d/m/Y'));
             foreach ($semanas as $semana => $cultosSeamana) {
-                $registros[] = [
+                $registros[] = $this->buildRegistroFromGroup($cultosSeamana, $slugs, [
                     'fecha' => 'Semana del ' . $semana,
                     'tipo' => 'Semanal',
-                    'diezmo' => $cultosSeamana->sum('totales.total_diezmo'),
-                    'ofrenda_especial' => $cultosSeamana->sum('totales.total_ofrenda_especial'),
-                    'misiones' => $cultosSeamana->sum('totales.total_misiones'),
-                    'seminario' => $cultosSeamana->sum('totales.total_seminario'),
-                    'campa' => $cultosSeamana->sum('totales.total_campa'),
-                    'construccion' => $cultosSeamana->sum('totales.total_construccion'),
-                    'prestamo' => $cultosSeamana->sum('totales.total_prestamo'),
-                    'micro' => $cultosSeamana->sum('totales.total_micro'),
-                    'suelto' => $cultosSeamana->sum('totales.total_suelto'),
-                    'total' => $cultosSeamana->sum('totales.total_general'),
-                ];
+                ]);
             }
         } elseif ($tipoReporte == 'mes') {
-            $meses = $cultos->groupBy(function($culto) {
-                return $culto->fecha->format('Y-m');
-            });
-
+            $meses = $cultos->groupBy(fn($culto) => $culto->fecha->format('Y-m'));
             foreach ($meses as $mes => $cultosMes) {
                 $fecha = Carbon::parse($mes . '-01');
-                $registros[] = [
+                $registros[] = $this->buildRegistroFromGroup($cultosMes, $slugs, [
                     'fecha' => $fecha->locale('es')->translatedFormat('F Y'),
                     'tipo' => 'Mensual',
-                    'diezmo' => $cultosMes->sum('totales.total_diezmo'),
-                    'ofrenda_especial' => $cultosMes->sum('totales.total_ofrenda_especial'),
-                    'misiones' => $cultosMes->sum('totales.total_misiones'),
-                    'seminario' => $cultosMes->sum('totales.total_seminario'),
-                    'campa' => $cultosMes->sum('totales.total_campa'),
-                    'construccion' => $cultosMes->sum('totales.total_construccion'),
-                    'prestamo' => $cultosMes->sum('totales.total_prestamo'),
-                    'micro' => $cultosMes->sum('totales.total_micro'),
-                    'suelto' => $cultosMes->sum('totales.total_suelto'),
-                    'total' => $cultosMes->sum('totales.total_general'),
-                ];
+                ]);
             }
         }
 
-        return view('ingresos-asistencia.ingresos', compact('registros'));
+        return view('ingresos-asistencia.ingresos', compact('registros', 'categories'));
     }
 
     public function pdfAsistencia(Request $request)
     {
-        $query = Culto::with('asistencia')->orderBy('fecha', 'asc');
+        $query = Culto::with(['asistencia.detallesClases.claseAsistencia'])->orderBy('fecha', 'asc');
 
         if ($request->filled('fecha_inicio')) {
             $query->where('fecha', '>=', $request->fecha_inicio);
@@ -215,7 +212,7 @@ class IngresosAsistenciaController extends Controller
 
     public function pdfAsistenciaCulto(Culto $culto)
     {
-        $culto->load('asistencia');
+        $culto->load(['asistencia.detallesClases.claseAsistencia']);
         $pdf = Pdf::loadView('pdfs.asistencia-culto', compact('culto'));
         $nombreArchivo = 'asistencia_' . $culto->fecha->locale('es')->isoFormat('dddd_D-M-Y');
         return $pdf->download($nombreArchivo . '.pdf');
@@ -226,7 +223,7 @@ class IngresosAsistenciaController extends Controller
         $mes = $request->get('mes');
         $año = $request->get('año');
 
-        $cultos = Culto::with('asistencia')
+        $cultos = Culto::with(['asistencia.detallesClases.claseAsistencia'])
             ->whereYear('fecha', $año)
             ->whereMonth('fecha', $mes)
             ->orderBy('fecha', 'asc')
@@ -240,6 +237,8 @@ class IngresosAsistenciaController extends Controller
 
     public function pdfIngresos(Request $request)
     {
+        $categories = tenant_categories();
+        $slugs = $categories->pluck('slug')->toArray();
         $tipoReporte = $request->get('tipo_reporte', 'culto');
         $query = Culto::with('totales')->orderBy('fecha', 'asc');
 
@@ -256,73 +255,38 @@ class IngresosAsistenciaController extends Controller
 
         if ($tipoReporte == 'culto') {
             foreach ($cultos as $culto) {
-                $t = $culto->totales; // puede ser null
-                $registros[] = [
+                $registros[] = $this->buildRegistroFromTotales($culto->totales, $slugs, [
                     'fecha' => $culto->fecha->format('d/m/Y'),
                     'tipo' => ucfirst($culto->tipo_culto),
-                    'diezmo' => $t->total_diezmo ?? 0,
-                    'ofrenda_especial' => $t->total_ofrenda_especial ?? 0,
-                    'misiones' => $t->total_misiones ?? 0,
-                    'seminario' => $t->total_seminario ?? 0,
-                    'campa' => $t->total_campa ?? 0,
-                    'construccion' => $t->total_construccion ?? 0,
-                    'prestamo' => $t->total_prestamo ?? 0,
-                    'micro' => $t->total_micro ?? 0,
-                    'suelto' => $t->total_suelto ?? 0,
-                    'total' => $t->total_general ?? 0,
-                ];
+                ]);
             }
         } elseif ($tipoReporte == 'semana') {
-            $semanas = $cultos->groupBy(function($culto) {
-                return $culto->fecha->startOfWeek()->format('d/m/Y');
-            });
-
+            $semanas = $cultos->groupBy(fn($culto) => $culto->fecha->startOfWeek()->format('d/m/Y'));
             foreach ($semanas as $semana => $cultosSeamana) {
-                $registros[] = [
+                $registros[] = $this->buildRegistroFromGroup($cultosSeamana, $slugs, [
                     'fecha' => 'Semana del ' . $semana,
                     'tipo' => 'Semanal',
-                    'diezmo' => $cultosSeamana->sum('totales.total_diezmo'),
-                    'ofrenda_especial' => $cultosSeamana->sum('totales.total_ofrenda_especial'),
-                    'misiones' => $cultosSeamana->sum('totales.total_misiones'),
-                    'seminario' => $cultosSeamana->sum('totales.total_seminario'),
-                    'campa' => $cultosSeamana->sum('totales.total_campa'),
-                    'construccion' => $cultosSeamana->sum('totales.total_construccion'),
-                    'prestamo' => $cultosSeamana->sum('totales.total_prestamo'),
-                    'micro' => $cultosSeamana->sum('totales.total_micro'),
-                    'suelto' => $cultosSeamana->sum('totales.total_suelto'),
-                    'total' => $cultosSeamana->sum('totales.total_general'),
-                ];
+                ]);
             }
         } elseif ($tipoReporte == 'mes') {
-            $meses = $cultos->groupBy(function($culto) {
-                return $culto->fecha->format('Y-m');
-            });
-
+            $meses = $cultos->groupBy(fn($culto) => $culto->fecha->format('Y-m'));
             foreach ($meses as $mes => $cultosMes) {
                 $fecha = Carbon::parse($mes . '-01');
-                $registros[] = [
+                $registros[] = $this->buildRegistroFromGroup($cultosMes, $slugs, [
                     'fecha' => $fecha->locale('es')->translatedFormat('F Y'),
                     'tipo' => 'Mensual',
-                    'diezmo' => $cultosMes->sum('totales.total_diezmo'),
-                    'ofrenda_especial' => $cultosMes->sum('totales.total_ofrenda_especial'),
-                    'misiones' => $cultosMes->sum('totales.total_misiones'),
-                    'seminario' => $cultosMes->sum('totales.total_seminario'),
-                    'campa' => $cultosMes->sum('totales.total_campa'),
-                    'construccion' => $cultosMes->sum('totales.total_construccion'),
-                    'prestamo' => $cultosMes->sum('totales.total_prestamo'),
-                    'micro' => $cultosMes->sum('totales.total_micro'),
-                    'suelto' => $cultosMes->sum('totales.total_suelto'),
-                    'total' => $cultosMes->sum('totales.total_general'),
-                ];
+                ]);
             }
         }
 
-        $pdf = Pdf::loadView('pdfs.ingresos', compact('registros', 'tipoReporte'));
+        $pdf = Pdf::loadView('pdfs.ingresos', compact('registros', 'tipoReporte', 'categories'));
         return $pdf->download('ingresos_' . $tipoReporte . '_' . now()->format('Y-m-d') . '.pdf');
     }
 
     public function pdfIngresosTransferencias(Request $request)
     {
+        $categories = tenant_categories();
+        $slugs = $categories->pluck('slug')->toArray();
         $tipoReporte = $request->get('tipo_reporte', 'culto');
         $query = Culto::with(['sobres' => function ($q) { $q->where('metodo_pago', 'transferencia'); }, 'totales'])->orderBy('fecha', 'asc');
 
@@ -337,66 +301,29 @@ class IngresosAsistenciaController extends Controller
         $cultos = $query->get();
         $registros = [];
 
-        $sumCategorias = function ($sobres, $categoria) {
-            return $sobres->flatMap->detalles->where('categoria', $categoria)->sum('monto');
-        };
-
         if ($tipoReporte == 'culto') {
             foreach ($cultos as $culto) {
-                $sobres = $culto->sobres ?? collect();
-                $registros[] = [
+                $registros[] = $this->buildRegistroFromSobres($culto->sobres ?? collect(), $slugs, [
                     'fecha' => $culto->fecha->format('d/m/Y'),
                     'tipo' => ucfirst($culto->tipo_culto),
-                    'diezmo' => $sumCategorias($sobres, 'diezmo'),
-                    'ofrenda_especial' => $sumCategorias($sobres, 'ofrenda_especial'),
-                    'misiones' => $sumCategorias($sobres, 'misiones'),
-                    'seminario' => $sumCategorias($sobres, 'seminario'),
-                    'campa' => $sumCategorias($sobres, 'campa'),
-                    'construccion' => $sumCategorias($sobres, 'construccion'),
-                    'prestamo' => $sumCategorias($sobres, 'prestamo'),
-                    'micro' => $sumCategorias($sobres, 'micro'),
-                    'suelto' => 0,
-                    'total' => $sobres->flatMap->detalles->sum('monto'),
-                ];
+                ]);
             }
         } elseif ($tipoReporte == 'semana') {
-            $semanas = $cultos->groupBy(function($culto) { return $culto->fecha->startOfWeek()->format('d/m/Y'); });
+            $semanas = $cultos->groupBy(fn($culto) => $culto->fecha->startOfWeek()->format('d/m/Y'));
             foreach ($semanas as $semana => $cultosSemana) {
-                $sobresSemana = $cultosSemana->flatMap->sobres;
-                $registros[] = [
+                $registros[] = $this->buildRegistroFromSobres($cultosSemana->flatMap->sobres, $slugs, [
                     'fecha' => 'Semana del ' . $semana,
                     'tipo' => 'Semanal',
-                    'diezmo' => $sumCategorias($sobresSemana, 'diezmo'),
-                    'ofrenda_especial' => $sumCategorias($sobresSemana, 'ofrenda_especial'),
-                    'misiones' => $sumCategorias($sobresSemana, 'misiones'),
-                    'seminario' => $sumCategorias($sobresSemana, 'seminario'),
-                    'campa' => $sumCategorias($sobresSemana, 'campa'),
-                    'construccion' => $sumCategorias($sobresSemana, 'construccion'),
-                    'prestamo' => $sumCategorias($sobresSemana, 'prestamo'),
-                    'micro' => $sumCategorias($sobresSemana, 'micro'),
-                    'suelto' => 0,
-                    'total' => $sobresSemana->flatMap->detalles->sum('monto'),
-                ];
+                ]);
             }
         } elseif ($tipoReporte == 'mes') {
-            $meses = $cultos->groupBy(function($culto) { return $culto->fecha->format('Y-m'); });
+            $meses = $cultos->groupBy(fn($culto) => $culto->fecha->format('Y-m'));
             foreach ($meses as $mes => $cultosMes) {
                 $fecha = Carbon::parse($mes . '-01');
-                $sobresMes = $cultosMes->flatMap->sobres;
-                $registros[] = [
+                $registros[] = $this->buildRegistroFromSobres($cultosMes->flatMap->sobres, $slugs, [
                     'fecha' => $fecha->locale('es')->translatedFormat('F Y'),
                     'tipo' => 'Mensual',
-                    'diezmo' => $sumCategorias($sobresMes, 'diezmo'),
-                    'ofrenda_especial' => $sumCategorias($sobresMes, 'ofrenda_especial'),
-                    'misiones' => $sumCategorias($sobresMes, 'misiones'),
-                    'seminario' => $sumCategorias($sobresMes, 'seminario'),
-                    'campa' => $sumCategorias($sobresMes, 'campa'),
-                    'construccion' => $sumCategorias($sobresMes, 'construccion'),
-                    'prestamo' => $sumCategorias($sobresMes, 'prestamo'),
-                    'micro' => $sumCategorias($sobresMes, 'micro'),
-                    'suelto' => 0,
-                    'total' => $sobresMes->flatMap->detalles->sum('monto'),
-                ];
+                ]);
             }
         }
 
@@ -425,62 +352,52 @@ class IngresosAsistenciaController extends Controller
             });
         }
 
-        $pdf = Pdf::loadView('pdfs.ingresos', ['registros' => $registros, 'tipoReporte' => $tipoReporte, 'soloTransferencias' => true, 'tesorerosPorFecha' => $tesorerosPorFecha]);
+        $pdf = Pdf::loadView('pdfs.ingresos', ['registros' => $registros, 'tipoReporte' => $tipoReporte, 'soloTransferencias' => true, 'tesorerosPorFecha' => $tesorerosPorFecha, 'categories' => $categories]);
         return $pdf->download('ingresos_transferencias_' . $tipoReporte . '_' . now()->format('Y-m-d') . '.pdf');
     }
 
     public function pdfRecuentoIndividual(Culto $culto)
     {
         $culto->load(['sobres.persona', 'sobres.detalles', 'ofrendasSueltas', 'totales']);
+        $categories = tenant_categories();
 
-        // Preparar datos de sobres agrupados por categoría
-        $totalesPorCategoria = [
-            'diezmo' => 0,
-            'ofrenda_especial' => 0,
-            'misiones' => 0,
-            'seminario' => 0,
-            'campa' => 0,
-            'prestamo' => 0,
-            'construccion' => 0,
-            'micro' => 0,
-        ];
-
+        // Build totalesPorCategoria dynamically
+        $totalesPorCategoria = [];
+        foreach ($categories as $cat) {
+            $totalesPorCategoria[$cat->slug] = 0;
+        }
         foreach ($culto->sobres as $sobre) {
             foreach ($sobre->detalles as $detalle) {
-                if (isset($totalesPorCategoria[$detalle->categoria])) {
-                    $totalesPorCategoria[$detalle->categoria] += $detalle->monto;
+                $slug = strtolower($detalle->categoria);
+                if (isset($totalesPorCategoria[$slug])) {
+                    $totalesPorCategoria[$slug] += $detalle->monto;
                 }
             }
         }
 
-        $pdf = Pdf::loadView('pdfs.recuento-individual', compact('culto', 'totalesPorCategoria'));
+        $pdf = Pdf::loadView('pdfs.recuento-individual', compact('culto', 'totalesPorCategoria', 'categories'));
         return $pdf->download('recuento_' . $culto->fecha->format('Y-m-d') . '_' . $culto->tipo_culto . '.pdf');
     }
 
     public function pdfRecuentoTransferencias(Culto $culto)
     {
         $culto->load(['sobres' => function ($q) { $q->where('metodo_pago', 'transferencia'); }, 'sobres.persona', 'sobres.detalles', 'totales']);
+        $categories = tenant_categories();
 
-        $totalesPorCategoria = [
-            'diezmo' => 0,
-            'ofrenda_especial' => 0,
-            'misiones' => 0,
-            'seminario' => 0,
-            'campa' => 0,
-            'prestamo' => 0,
-            'construccion' => 0,
-            'micro' => 0,
-        ];
-
+        $totalesPorCategoria = [];
+        foreach ($categories as $cat) {
+            $totalesPorCategoria[$cat->slug] = 0;
+        }
         foreach ($culto->sobres as $sobre) {
             foreach ($sobre->detalles as $detalle) {
-                if (isset($totalesPorCategoria[$detalle->categoria])) {
-                    $totalesPorCategoria[$detalle->categoria] += $detalle->monto;
+                $slug = strtolower($detalle->categoria);
+                if (isset($totalesPorCategoria[$slug])) {
+                    $totalesPorCategoria[$slug] += $detalle->monto;
                 }
             }
         }
 
-        $pdf = Pdf::loadView('pdfs.recuento-individual', ['culto' => $culto, 'totalesPorCategoria' => $totalesPorCategoria, 'transferenciasOnly' => true]);
+        $pdf = Pdf::loadView('pdfs.recuento-individual', ['culto' => $culto, 'totalesPorCategoria' => $totalesPorCategoria, 'transferenciasOnly' => true, 'categories' => $categories]);
         return $pdf->download('recuento_transferencias_' . $culto->fecha->format('Y-m-d') . '_' . $culto->tipo_culto . '.pdf');
     }
 }

@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Persona extends Model
 {
+    use BelongsToTenant;
     protected $table = 'personas';
 
     protected $fillable = [
@@ -18,6 +20,7 @@ class Persona extends Model
         'user_id',
         'activo',
         'notas',
+        'tenant_id',
     ];
 
     protected $casts = [

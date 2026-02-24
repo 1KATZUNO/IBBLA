@@ -36,10 +36,13 @@
     </style>
 </head>
 <body>
+    @php extract(tenant_pdf_data()); @endphp
     <div class="header">
-        <img src="data:image/png;base64,{{ base64_encode(file_get_contents(public_path('images/Logo2.png'))) }}" alt="Logo IBBSC">
+        <div style="background-color: {{ $tenantColor }}; border-radius: 50%; width: 70px; height: 70px; text-align: center; padding-left: 3px; margin-right: 15px;">
+            <img src="data:image/png;base64,{{ $tenantLogoBase64 }}" style="width: 50px; height: 50px; margin-top: 10px;" alt="Logo">
+        </div>
         <div class="header-text">
-            <h1>IBBSC - Iglesia Bíblica Bautista en Santa Cruz</h1>
+            <h1>{{ $tenantSiglas }} - {{ $tenantNombre }}</h1>
             <h2>Reporte de Promesas - {{ \Carbon\Carbon::create($año, $mes, 1)->locale('es')->translatedFormat('F Y') }}</h2>
             <p><strong>Generado:</strong> {{ now()->format('d/m/Y H:i') }}</p>
         </div>
@@ -109,7 +112,7 @@
     </div>
     
     <div class="footer">
-        <p>Sistema de Administración - IBBSC - Iglesia Bíblica Bautista en Santa Cruz</p>
+        <p>Sistema de Administracion - {{ $tenantSiglas }} - {{ $tenantNombre }}</p>
     </div>
 </body>
 </html>

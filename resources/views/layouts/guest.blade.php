@@ -5,12 +5,12 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        <title>IBBSC - Iniciar Sesión</title>
+        <title>Iniciar Sesion - Sistema de Administracion</title>
 
         <!-- Favicon -->
-        <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('images/Logo.png') }}">
-        <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('images/Logo.png') }}">
-        <link rel="shortcut icon" href="{{ asset('images/Logo.png') }}">
+        <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('images/Logo_ANGEDA_azul.png') }}">
+        <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('images/Logo_ANGEDA_azul.png') }}">
+        <link rel="shortcut icon" href="{{ asset('images/Logo_ANGEDA_azul.png') }}">
 
         <!-- Google Fonts -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -21,31 +21,31 @@
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="font-sans antialiased">
-        <!-- Background con imagen del banner -->
-        <div class="fixed inset-0 bg-cover bg-center bg-no-repeat" style="background-image: url('{{ asset('images/Banner.png') }}');"></div>
+        <!-- Background degradado -->
+        <div class="fixed inset-0 bg-gradient-to-br from-slate-900 via-blue-900 to-cyan-800"></div>
 
-        <!-- Overlay azul simple -->
-        <div class="fixed inset-0 bg-blue-900/60"></div>
+        <!-- Patron decorativo sutil -->
+        <div class="fixed inset-0 opacity-10" style="background-image: radial-gradient(circle at 25% 25%, rgba(255,255,255,0.2) 1px, transparent 1px), radial-gradient(circle at 75% 75%, rgba(255,255,255,0.15) 1px, transparent 1px); background-size: 50px 50px;"></div>
 
         <div class="min-h-screen flex flex-col sm:justify-center items-center px-4 py-6 sm:pt-0 relative z-10">
-            <!-- Logo principal -->
+            <!-- Logo y Titulo -->
             <div class="mb-8 text-center animate-fade-in">
-                <img src="{{ asset('images/Logo.png') }}" alt="IBBSC" class="w-20 h-20 mx-auto drop-shadow-lg">
-                <div class="mt-4 inline-block px-6 py-3 rounded-xl bg-white shadow-lg">
-                    <h1 class="text-2xl font-display font-bold text-blue-700">IBBSC Admin</h1>
-                    <p class="text-gray-600 font-medium mt-1 text-sm">Sistema de Administración</p>
+                <div class="inline-block p-4">
+                    <img src="{{ asset('images/Logo_ANGEDA_azul.png') }}" alt="Logo" class="w-20 h-20 mx-auto mb-4 drop-shadow-lg">
+                    <h1 class="text-2xl font-bold text-white">Sistema Admin</h1>
+                    <p class="text-cyan-200 font-medium mt-1 text-sm">Administracion de Iglesia</p>
                 </div>
             </div>
 
             <!-- Tarjeta de login -->
             <div class="w-full sm:max-w-md animate-fade-in-up">
-                <div class="bg-white rounded-xl p-8 shadow-xl border-t-4 border-blue-600">
+                <div class="bg-white/95 backdrop-blur-sm rounded-xl p-8 shadow-2xl border-t-4 border-cyan-500">
                     {{ $slot }}
                 </div>
 
                 <!-- Footer -->
-                <div class="text-center mt-6 text-sm text-blue-100">
-                    <p>© {{ date('Y') }} IBBSC. Todos los derechos reservados.</p>
+                <div class="text-center mt-6 text-sm text-cyan-200/70">
+                    <p>&copy; {{ date('Y') }} Sistema de Administracion. Todos los derechos reservados.</p>
                 </div>
             </div>
         </div>

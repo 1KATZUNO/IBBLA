@@ -4,37 +4,90 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use App\Models\User;
+use App\Models\Tenant;
+use App\Models\TenantEmailDomain;
+use App\Models\TenantCategory;
+use App\Models\TenantServiceType;
+use App\Models\TenantRole;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class AdminUserSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        // Usuario Admin
+        // Create default tenant (IBBSC)
+        $tenant = Tenant::create([
+            'nombre' => 'Iglesia Biblica Bautista Santa Cruz',
+            'siglas' => 'IBBSC',
+            'slug' => 'ibbsc',
+            'color_theme' => 'blue',
+            'timezone' => 'America/Costa_Rica',
+            'locale' => 'es',
+            'moneda_codigo' => 'CRC',
+            'moneda_simbolo' => '₡',
+            'redes_sociales' => [
+                'instagram' => 'https://www.instagram.com/ibb_santacruz',
+                'facebook' => 'https://www.facebook.com/iglesia.biblica.bautista.santa.cruz',
+            ],
+            'activo' => true,
+        ]);
+
+        // Create email domain
+        TenantEmailDomain::create([
+            'tenant_id' => $tenant->id,
+            'dominio' => 'ibbsc.com',
+            'principal' => true,
+            'activo' => true,
+        ]);
+
+        // Create default categories
+        foreach (Tenant::defaultCategories() as $cat) {
+            TenantCategory::create(array_merge($cat, ['tenant_id' => $tenant->id]));
+        }
+
+        // Create default service types
+        foreach (Tenant::defaultServiceTypes() as $st) {
+            TenantServiceType::create(array_merge($st, ['tenant_id' => $tenant->id]));
+        }
+
+        // Create default roles
+        $roles = [];
+        foreach (Tenant::defaultRoles() as $role) {
+            $roles[$role['slug']] = TenantRole::create(array_merge($role, ['tenant_id' => $tenant->id]));
+        }
+
+        // Super Admin (no tenant)
+        User::create([
+            'name' => 'Super Admin',
+            'email' => 'super@admin.com',
+            'password' => Hash::make('admin123'),
+            'rol' => 'admin',
+            'is_super_admin' => true,
+            'tenant_id' => null,
+            'tenant_role_id' => null,
+        ]);
+
+        // Tenant Admin
         User::create([
             'name' => 'Administrador',
             'email' => 'admin@ibbsc.com',
             'password' => Hash::make('admin123'),
             'rol' => 'admin',
+            'is_super_admin' => false,
+            'tenant_id' => $tenant->id,
+            'tenant_role_id' => $roles['admin']->id,
         ]);
 
-        // Usuario Tesorero
+        // Tenant Tesorero
         User::create([
             'name' => 'Tesorero',
             'email' => 'tesorero@ibbsc.com',
             'password' => Hash::make('tesorero123'),
             'rol' => 'tesorero',
-        ]);
-
-        // Usuario General
-        User::create([
-            'name' => 'Usuario General',
-            'email' => 'general@ibbsc.com',
-            'password' => Hash::make('general123'),
-            'rol' => 'general',
+            'is_super_admin' => false,
+            'tenant_id' => $tenant->id,
+            'tenant_role_id' => $roles['tesorero']->id,
         ]);
     }
 }

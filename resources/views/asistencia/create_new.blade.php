@@ -11,7 +11,7 @@
 
             <div class="mb-6">
                 <label for="culto_id" class="block text-sm font-medium text-gray-700 mb-2">Seleccionar Culto *</label>
-                <select name="culto_id" id="culto_id" 
+                <select name="culto_id" id="culto_id"
                         class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
                     <option value="">-- Seleccione un culto --</option>
                     @foreach($cultos as $culto)
@@ -69,7 +69,7 @@
                             </select>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Jóvenes Masculinos</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Jovenes Masculinos</label>
                             <select name="chapel_jovenes_masculinos" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 asistencia-input" required>
                                 @for($i = 0; $i <= 100; $i++)
                                     <option value="{{ $i }}" {{ old('chapel_jovenes_masculinos', 0) == $i ? 'selected' : '' }}>{{ $i }}</option>
@@ -77,7 +77,7 @@
                             </select>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Jóvenes Femeninas</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Jovenes Femeninas</label>
                             <select name="chapel_jovenes_femeninas" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 asistencia-input" required>
                                 @for($i = 0; $i <= 100; $i++)
                                     <option value="{{ $i }}" {{ old('chapel_jovenes_femeninas', 0) == $i ? 'selected' : '' }}>{{ $i }}</option>
@@ -104,194 +104,60 @@
                     </div>
                 </div>
 
-                <!-- Clase 0-1 -->
+                <!-- Clases Dinamicas -->
+                @foreach($clases as $clase)
                 <div class="border rounded-lg overflow-hidden">
-                    <button type="button" onclick="toggleSection('clase01')" class="w-full px-4 py-3 bg-green-50 hover:bg-green-100 flex justify-between items-center">
-                        <h3 class="text-lg font-semibold text-green-900">Clase 0-1 Años</h3>
-                        <svg id="clase01-icon" class="w-5 h-5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <button type="button" onclick="toggleSection('clase-{{ $clase->id }}')" class="w-full px-4 py-3 hover:opacity-80 flex justify-between items-center" style="background-color: {{ $clase->color }}15;">
+                        <h3 class="text-lg font-semibold text-gray-900">{{ $clase->nombre }}</h3>
+                        <svg id="clase-{{ $clase->id }}-icon" class="w-5 h-5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                         </svg>
                     </button>
-                    <div id="clase01-content" class="p-4 hidden">
+                    <div id="clase-{{ $clase->id }}-content" class="p-4 hidden">
                         <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Niños</label>
-                            <select name="clase_0_1_hombres" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 asistencia-input" required>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Hombres</label>
+                            <select name="clase[{{ $clase->id }}][hombres]" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 asistencia-input" required>
                                 @for($i = 0; $i <= 100; $i++)
-                                    <option value="{{ $i }}" {{ old('clase_0_1_hombres', 0) == $i ? 'selected' : '' }}>{{ $i }}</option>
+                                    <option value="{{ $i }}" {{ old("clase.{$clase->id}.hombres", 0) == $i ? 'selected' : '' }}>{{ $i }}</option>
                                 @endfor
                             </select>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Niñas</label>
-                            <select name="clase_0_1_mujeres" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 asistencia-input" required>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Mujeres</label>
+                            <select name="clase[{{ $clase->id }}][mujeres]" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 asistencia-input" required>
                                 @for($i = 0; $i <= 100; $i++)
-                                    <option value="{{ $i }}" {{ old('clase_0_1_mujeres', 0) == $i ? 'selected' : '' }}>{{ $i }}</option>
+                                    <option value="{{ $i }}" {{ old("clase.{$clase->id}.mujeres", 0) == $i ? 'selected' : '' }}>{{ $i }}</option>
                                 @endfor
                             </select>
                         </div>
+                        @if($clase->tiene_maestros)
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Maestros (H)</label>
-                            <select name="clase_0_1_maestros_hombres" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 asistencia-input" required>
+                            <select name="clase[{{ $clase->id }}][maestros_hombres]" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 asistencia-input" required>
                                 @for($i = 0; $i <= 100; $i++)
-                                    <option value="{{ $i }}" {{ old('clase_0_1_maestros_hombres', 0) == $i ? 'selected' : '' }}>{{ $i }}</option>
+                                    <option value="{{ $i }}" {{ old("clase.{$clase->id}.maestros_hombres", 0) == $i ? 'selected' : '' }}>{{ $i }}</option>
                                 @endfor
                             </select>
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Maestras (M)</label>
-                            <select name="clase_0_1_maestros_mujeres" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 asistencia-input" required>
+                            <select name="clase[{{ $clase->id }}][maestros_mujeres]" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 asistencia-input" required>
                                 @for($i = 0; $i <= 100; $i++)
-                                    <option value="{{ $i }}" {{ old('clase_0_1_maestros_mujeres', 0) == $i ? 'selected' : '' }}>{{ $i }}</option>
+                                    <option value="{{ $i }}" {{ old("clase.{$clase->id}.maestros_mujeres", 0) == $i ? 'selected' : '' }}>{{ $i }}</option>
                                 @endfor
                             </select>
                         </div>
+                        @endif
                         </div>
                     </div>
                 </div>
-
-                <!-- Clase 2-6 -->
-                <div class="border rounded-lg overflow-hidden">
-                    <button type="button" onclick="toggleSection('clase26')" class="w-full px-4 py-3 bg-yellow-50 hover:bg-yellow-100 flex justify-between items-center">
-                        <h3 class="text-lg font-semibold text-yellow-900">Clase 2-6 Años</h3>
-                        <svg id="clase26-icon" class="w-5 h-5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                        </svg>
-                    </button>
-                    <div id="clase26-content" class="p-4 hidden">
-                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Niños</label>
-                            <select name="clase_2_6_hombres" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 asistencia-input" required>
-                                @for($i = 0; $i <= 100; $i++)
-                                    <option value="{{ $i }}" {{ old('clase_2_6_hombres', 0) == $i ? 'selected' : '' }}>{{ $i }}</option>
-                                @endfor
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Niñas</label>
-                            <select name="clase_2_6_mujeres" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 asistencia-input" required>
-                                @for($i = 0; $i <= 100; $i++)
-                                    <option value="{{ $i }}" {{ old('clase_2_6_mujeres', 0) == $i ? 'selected' : '' }}>{{ $i }}</option>
-                                @endfor
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Maestros (H)</label>
-                            <select name="clase_2_6_maestros_hombres" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 asistencia-input" required>
-                                @for($i = 0; $i <= 100; $i++)
-                                    <option value="{{ $i }}" {{ old('clase_2_6_maestros_hombres', 0) == $i ? 'selected' : '' }}>{{ $i }}</option>
-                                @endfor
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Maestras (M)</label>
-                            <select name="clase_2_6_maestros_mujeres" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 asistencia-input" required>
-                                @for($i = 0; $i <= 100; $i++)
-                                    <option value="{{ $i }}" {{ old('clase_2_6_maestros_mujeres', 0) == $i ? 'selected' : '' }}>{{ $i }}</option>
-                                @endfor
-                            </select>
-                        </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Clase 7-8 -->
-                <div class="border rounded-lg overflow-hidden">
-                    <button type="button" onclick="toggleSection('clase78')" class="w-full px-4 py-3 bg-purple-50 hover:bg-purple-100 flex justify-between items-center">
-                        <h3 class="text-lg font-semibold text-purple-900">Clase 7-8 Años</h3>
-                        <svg id="clase78-icon" class="w-5 h-5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                        </svg>
-                    </button>
-                    <div id="clase78-content" class="p-4 hidden">
-                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Niños</label>
-                            <select name="clase_7_8_hombres" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 asistencia-input" required>
-                                @for($i = 0; $i <= 100; $i++)
-                                    <option value="{{ $i }}" {{ old('clase_7_8_hombres', 0) == $i ? 'selected' : '' }}>{{ $i }}</option>
-                                @endfor
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Niñas</label>
-                            <select name="clase_7_8_mujeres" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 asistencia-input" required>
-                                @for($i = 0; $i <= 100; $i++)
-                                    <option value="{{ $i }}" {{ old('clase_7_8_mujeres', 0) == $i ? 'selected' : '' }}>{{ $i }}</option>
-                                @endfor
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Maestros (H)</label>
-                            <select name="clase_7_8_maestros_hombres" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 asistencia-input" required>
-                                @for($i = 0; $i <= 100; $i++)
-                                    <option value="{{ $i }}" {{ old('clase_7_8_maestros_hombres', 0) == $i ? 'selected' : '' }}>{{ $i }}</option>
-                                @endfor
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Maestras (M)</label>
-                            <select name="clase_7_8_maestros_mujeres" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 asistencia-input" required>
-                                @for($i = 0; $i <= 100; $i++)
-                                    <option value="{{ $i }}" {{ old('clase_7_8_maestros_mujeres', 0) == $i ? 'selected' : '' }}>{{ $i }}</option>
-                                @endfor
-                            </select>
-                        </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Clase 9-11 -->
-                <div class="border rounded-lg overflow-hidden">
-                    <button type="button" onclick="toggleSection('clase911')" class="w-full px-4 py-3 bg-red-50 hover:bg-red-100 flex justify-between items-center">
-                        <h3 class="text-lg font-semibold text-red-900">Clase 9-11 Años</h3>
-                        <svg id="clase911-icon" class="w-5 h-5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                        </svg>
-                    </button>
-                    <div id="clase911-content" class="p-4 hidden">
-                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Niños</label>
-                            <select name="clase_9_11_hombres" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 asistencia-input" required>
-                                @for($i = 0; $i <= 100; $i++)
-                                    <option value="{{ $i }}" {{ old('clase_9_11_hombres', 0) == $i ? 'selected' : '' }}>{{ $i }}</option>
-                                @endfor
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Niñas</label>
-                            <select name="clase_9_11_mujeres" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 asistencia-input" required>
-                                @for($i = 0; $i <= 100; $i++)
-                                    <option value="{{ $i }}" {{ old('clase_9_11_mujeres', 0) == $i ? 'selected' : '' }}>{{ $i }}</option>
-                                @endfor
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Maestros (H)</label>
-                            <select name="clase_9_11_maestros_hombres" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 asistencia-input" required>
-                                @for($i = 0; $i <= 100; $i++)
-                                    <option value="{{ $i }}" {{ old('clase_9_11_maestros_hombres', 0) == $i ? 'selected' : '' }}>{{ $i }}</option>
-                                @endfor
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Maestras (M)</label>
-                            <select name="clase_9_11_maestros_mujeres" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 asistencia-input" required>
-                                @for($i = 0; $i <= 100; $i++)
-                                    <option value="{{ $i }}" {{ old('clase_9_11_maestros_mujeres', 0) == $i ? 'selected' : '' }}>{{ $i }}</option>
-                                @endfor
-                            </select>
-                        </div>
-                        </div>
-                    </div>
-                </div>
+                @endforeach
 
                 <!-- Salvos -->
                 <div class="border rounded-lg overflow-hidden border-green-300">
                     <button type="button" onclick="toggleSection('salvos')" class="w-full px-4 py-3 bg-green-50 hover:bg-green-100 flex justify-between items-center">
-                        <h3 class="text-lg font-semibold text-green-900">✝️ Salvos</h3>
+                        <h3 class="text-lg font-semibold text-green-900">Salvos</h3>
                         <svg id="salvos-icon" class="w-5 h-5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                         </svg>
@@ -331,7 +197,7 @@
                             </select>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Niño</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Nino</label>
                             <select name="salvos_nino" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
                                 @for($i = 0; $i <= 100; $i++)
                                     <option value="{{ $i }}" {{ old('salvos_nino', 0) == $i ? 'selected' : '' }}>{{ $i }}</option>
@@ -339,7 +205,7 @@
                             </select>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Niña</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Nina</label>
                             <select name="salvos_nina" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
                                 @for($i = 0; $i <= 100; $i++)
                                     <option value="{{ $i }}" {{ old('salvos_nina', 0) == $i ? 'selected' : '' }}>{{ $i }}</option>
@@ -353,7 +219,7 @@
                 <!-- Bautismos -->
                 <div class="border rounded-lg overflow-hidden border-blue-300">
                     <button type="button" onclick="toggleSection('bautismos')" class="w-full px-4 py-3 bg-blue-50 hover:bg-blue-100 flex justify-between items-center">
-                        <h3 class="text-lg font-semibold text-blue-900">💧 Bautismos</h3>
+                        <h3 class="text-lg font-semibold text-blue-900">Bautismos</h3>
                         <svg id="bautismos-icon" class="w-5 h-5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                         </svg>
@@ -393,7 +259,7 @@
                             </select>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Niño</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Nino</label>
                             <select name="bautismos_nino" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
                                 @for($i = 0; $i <= 100; $i++)
                                     <option value="{{ $i }}" {{ old('bautismos_nino', 0) == $i ? 'selected' : '' }}>{{ $i }}</option>
@@ -401,7 +267,7 @@
                             </select>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Niña</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Nina</label>
                             <select name="bautismos_nina" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
                                 @for($i = 0; $i <= 100; $i++)
                                     <option value="{{ $i }}" {{ old('bautismos_nina', 0) == $i ? 'selected' : '' }}>{{ $i }}</option>
@@ -415,7 +281,7 @@
                 <!-- Visitas -->
                 <div class="border rounded-lg overflow-hidden border-purple-300">
                     <button type="button" onclick="toggleSection('visitas')" class="w-full px-4 py-3 bg-purple-50 hover:bg-purple-100 flex justify-between items-center">
-                        <h3 class="text-lg font-semibold text-purple-900">👥 Visitas</h3>
+                        <h3 class="text-lg font-semibold text-purple-900">Visitas</h3>
                         <svg id="visitas-icon" class="w-5 h-5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                         </svg>
@@ -455,7 +321,7 @@
                             </select>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Niño</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Nino</label>
                             <select name="visitas_nino" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
                                 @for($i = 0; $i <= 100; $i++)
                                     <option value="{{ $i }}" {{ old('visitas_nino', 0) == $i ? 'selected' : '' }}>{{ $i }}</option>
@@ -463,7 +329,7 @@
                             </select>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Niña</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Nina</label>
                             <select name="visitas_nina" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
                                 @for($i = 0; $i <= 100; $i++)
                                     <option value="{{ $i }}" {{ old('visitas_nina', 0) == $i ? 'selected' : '' }}>{{ $i }}</option>
@@ -478,7 +344,7 @@
                 <div class="bg-blue-50 rounded-lg p-6">
                     <div class="flex justify-between items-center">
                         <label for="total_asistencia" class="text-lg font-semibold text-gray-700">Total Asistencia *</label>
-                        <input type="number" name="total_asistencia" id="total_asistencia" step="1" min="0" value="{{ old('total_asistencia', 0) }}" 
+                        <input type="number" name="total_asistencia" id="total_asistencia" step="1" min="0" value="{{ old('total_asistencia', 0) }}"
                                class="w-32 text-2xl font-bold text-center rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required readonly>
                     </div>
                 </div>
@@ -501,7 +367,7 @@
     function toggleSection(sectionId) {
         const content = document.getElementById(sectionId + '-content');
         const icon = document.getElementById(sectionId + '-icon');
-        
+
         content.classList.toggle('hidden');
         icon.classList.toggle('rotate-180');
     }
