@@ -124,13 +124,7 @@
 
             <!-- Buttons -->
             <div class="flex items-center justify-between pt-4 border-t border-gray-200">
-                <form method="POST" action="{{ route('super-admin.tenants.destroy', $tenant) }}" onsubmit="return confirm('Esta seguro que desea eliminar esta iglesia? Esta accion no se puede deshacer.')">
-                    @csrf
-                    @method('DELETE')
-                    <button type="submit" class="px-4 py-2 text-sm font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors">
-                        Eliminar Iglesia
-                    </button>
-                </form>
+                <div><!-- Delete button is outside this form --></div>
                 <div class="flex gap-3">
                     <a href="{{ route('super-admin.tenants.index') }}" class="px-6 py-2.5 text-sm font-medium text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
                         Cancelar
@@ -141,6 +135,17 @@
                 </div>
             </div>
         </form>
+
+        <!-- Delete form - must be OUTSIDE the edit form to avoid nested forms -->
+        <div class="px-6 pb-6">
+            <form method="POST" action="{{ route('super-admin.tenants.destroy', $tenant) }}" onsubmit="return confirm('Esta seguro que desea eliminar esta iglesia? Esta accion no se puede deshacer.')">
+                @csrf
+                @method('DELETE')
+                <button type="submit" class="px-4 py-2 text-sm font-medium text-red-600 bg-red-50 rounded-lg hover:bg-red-100 transition-colors">
+                    Eliminar Iglesia
+                </button>
+            </form>
+        </div>
     </div>
 </div>
 @endsection
