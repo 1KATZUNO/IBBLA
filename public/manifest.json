@@ -1,0 +1,18 @@
+{
+    "name": "ANGEDA - Sistema de Administracion",
+    "short_name": "ANGEDA",
+    "description": "Sistema de administracion de iglesias",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#0f172a",
+    "theme_color": "#0e7490",
+    "orientation": "portrait",
+    "icons": [
+        {
+            "src": "/images/angeda_deep_ocean.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ]
+}

@@ -5,9 +5,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
+    <meta name="theme-color" content="#334155">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+
     <title>Super Admin - @yield('title', 'Dashboard')</title>
 
+    <link rel="manifest" href="{{ asset('manifest.json') }}">
     <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('images/Logo.png') }}">
+    <link rel="apple-touch-icon" href="{{ asset('images/angeda_deep_ocean.png') }}">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

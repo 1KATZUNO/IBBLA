@@ -5,12 +5,20 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
+        <meta name="theme-color" content="#0e7490">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
         <title>Iniciar Sesion - Sistema de Administracion</title>
 
-        <!-- Favicon -->
+        <!-- PWA Manifest -->
+        <link rel="manifest" href="{{ asset('manifest.json') }}">
+
+        <!-- Favicon & App Icons -->
         <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('images/Logo_ANGEDA_azul.png') }}">
         <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('images/Logo_ANGEDA_azul.png') }}">
         <link rel="shortcut icon" href="{{ asset('images/Logo_ANGEDA_azul.png') }}">
+        <link rel="apple-touch-icon" href="{{ asset('images/angeda_deep_ocean.png') }}">
 
         <!-- Google Fonts -->
         <link rel="preconnect" href="https://fonts.googleapis.com">

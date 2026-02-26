@@ -12,18 +12,20 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1{{ isset($isMobileApp) && $isMobileApp ? ', maximum-scale=1, user-scalable=no' : '' }}">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    @if(isset($isMobileApp) && $isMobileApp)
     <meta name="theme-color" content="{{ $tenantColors['700'] }}">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    @endif
 
     <title>{{ $tenantName }} - @yield('page-title', 'Sistema de Administracion')</title>
 
-    <!-- Favicon -->
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="{{ asset('manifest.json') }}">
+
+    <!-- Favicon & App Icons -->
     <link rel="icon" type="image/png" sizes="32x32" href="{{ $tenantLogo }}">
     <link rel="icon" type="image/png" sizes="16x16" href="{{ $tenantLogo }}">
     <link rel="shortcut icon" href="{{ $tenantLogo }}">
+    <link rel="apple-touch-icon" href="{{ asset('images/angeda_deep_ocean.png') }}">
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">

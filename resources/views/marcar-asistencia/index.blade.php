@@ -127,9 +127,33 @@ function marcarAsistencia() {
         mensaje: '',
         loading: false,
 
-        abrirScanner() {
+        async abrirScanner() {
             this.resultado = null;
             this.mensaje = '';
+
+            // Verificar soporte de camara
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                this.resultado = 'error';
+                this.mensaje = 'Tu navegador no soporta acceso a la camara. Asegurate de usar HTTPS.';
+                return;
+            }
+
+            // Solicitar permiso de camara explicitamente antes de abrir el scanner
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+                stream.getTracks().forEach(track => track.stop());
+            } catch (err) {
+                this.resultado = 'error';
+                if (err.name === 'NotAllowedError') {
+                    this.mensaje = 'Permiso de camara denegado. Ve a Configuracion del navegador > Permisos del sitio y permite el acceso a la camara.';
+                } else if (err.name === 'NotFoundError') {
+                    this.mensaje = 'No se encontro una camara en este dispositivo.';
+                } else {
+                    this.mensaje = 'No se pudo acceder a la camara: ' + err.message;
+                }
+                return;
+            }
+
             this.showScanner = true;
 
             this.$nextTick(() => {
@@ -141,7 +165,7 @@ function marcarAsistencia() {
                     (errorMessage) => {}
                 ).catch(err => {
                     this.resultado = 'error';
-                    this.mensaje = 'No se pudo acceder a la camara. Verifica los permisos.';
+                    this.mensaje = 'No se pudo iniciar el scanner. Intenta recargar la pagina.';
                 });
             });
         },
