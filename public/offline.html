@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Sin conexion - ANGEDA</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', -apple-system, sans-serif; min-height: 100vh; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #0f172a, #164e63, #0e7490); color: white; padding: 2rem; }
+        .container { text-align: center; max-width: 400px; }
+        .icon { width: 80px; height: 80px; margin: 0 auto 1.5rem; opacity: 0.8; }
+        h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.75rem; }
+        p { font-size: 0.95rem; opacity: 0.8; line-height: 1.6; margin-bottom: 1.5rem; }
+        button { padding: 0.75rem 2rem; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); border-radius: 0.5rem; color: white; font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+        button:hover { background: rgba(255,255,255,0.25); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <svg class="icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M18.364 5.636a9 9 0 010 12.728M5.636 18.364a9 9 0 010-12.728m12.728 0L5.636 18.364M12 9v4m0 4h.01"></path></svg>
+        <h1>Sin conexion</h1>
+        <p>No hay conexion a internet. Verifica tu red e intenta de nuevo.</p>
+        <button onclick="window.location.reload()">Reintentar</button>
+    </div>
+</body>
+</html>
