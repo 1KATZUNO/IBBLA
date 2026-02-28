@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Persona;
 use App\Models\Promesa;
 use App\Models\Compromiso;
+use App\Models\ClaseAsistencia;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
@@ -16,9 +17,13 @@ class PersonaController extends Controller
     {
         $query = Persona::withCount(['sobres', 'promesas']);
         
-        // Búsqueda por nombre
+        // Búsqueda por nombre o pin
         if ($request->filled('buscar')) {
-            $query->where('nombre', 'like', '%' . $request->buscar . '%');
+            $buscar = $request->buscar;
+            $query->where(function ($q) use ($buscar) {
+                $q->where('nombre', 'like', '%' . $buscar . '%')
+                  ->orWhere('pin', $buscar);
+            });
         }
         
         $personas = $query->paginate(20);
@@ -29,7 +34,8 @@ class PersonaController extends Controller
     public function create()
     {
         $categorias = tenant_categories(['excluir_de_promesas' => false]);
-        return view('personas.create', compact('categorias'));
+        $clases = ClaseAsistencia::activas()->ordenadas()->get();
+        return view('personas.create', compact('categorias', 'clases'));
     }
 
     public function store(Request $request)
@@ -38,6 +44,10 @@ class PersonaController extends Controller
             'nombre' => 'required|string|max:255',
             'telefono' => 'nullable|string|max:20',
             'correo' => 'nullable|email|max:255|unique:users,email',
+            'fecha_nacimiento' => 'nullable|date',
+            'pin' => 'nullable|string|max:20',
+            'clase_asistencia_id' => 'nullable|exists:clases_asistencia,id',
+            'es_maestro' => 'boolean',
             'password' => 'required_with:correo|nullable|string|min:8',
             'activo' => 'boolean',
             'notas' => 'nullable|string',
@@ -69,6 +79,10 @@ class PersonaController extends Controller
             'nombre' => $validated['nombre'],
             'telefono' => $validated['telefono'] ?? null,
             'correo' => $validated['correo'] ?? null,
+            'fecha_nacimiento' => $validated['fecha_nacimiento'] ?? null,
+            'pin' => $validated['pin'] ?? null,
+            'clase_asistencia_id' => $validated['clase_asistencia_id'] ?? null,
+            'es_maestro' => $request->boolean('es_maestro'),
             'password' => !empty($validated['password']) ? Hash::make($validated['password']) : null,
             'user_id' => $user ? $user->id : null,
             'activo' => $validated['activo'] ?? true,
@@ -160,7 +174,8 @@ class PersonaController extends Controller
     {
         $persona->load('promesas');
         $categorias = tenant_categories(['excluir_de_promesas' => false]);
-        return view('personas.edit', compact('persona', 'categorias'));
+        $clases = ClaseAsistencia::activas()->ordenadas()->get();
+        return view('personas.edit', compact('persona', 'categorias', 'clases'));
     }
 
     public function update(Request $request, Persona $persona)
@@ -169,6 +184,10 @@ class PersonaController extends Controller
             'nombre' => 'required|string|max:255',
             'telefono' => 'nullable|string|max:20',
             'correo' => 'nullable|email|unique:users,email,' . ($persona->user_id ?? 'NULL'),
+            'fecha_nacimiento' => 'nullable|date',
+            'pin' => 'nullable|string|max:20',
+            'clase_asistencia_id' => 'nullable|exists:clases_asistencia,id',
+            'es_maestro' => 'boolean',
             'password' => $persona->user_id ? 'nullable|string|min:8' : 'required_with:correo|nullable|string|min:8',
             'activo' => 'boolean',
             'notas' => 'nullable|string',
@@ -225,6 +244,10 @@ class PersonaController extends Controller
             'nombre' => $validated['nombre'],
             'telefono' => $validated['telefono'] ?? null,
             'correo' => $validated['correo'] ?? null,
+            'fecha_nacimiento' => $validated['fecha_nacimiento'] ?? null,
+            'pin' => $validated['pin'] ?? null,
+            'clase_asistencia_id' => $validated['clase_asistencia_id'] ?? null,
+            'es_maestro' => $request->boolean('es_maestro'),
             'activo' => $validated['activo'] ?? true,
             'notas' => $validated['notas'] ?? null,
         ];

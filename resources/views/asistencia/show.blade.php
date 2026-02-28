@@ -86,10 +86,15 @@
                     </tr>
                     @if($detalle->claseAsistencia->tiene_maestros)
                     <tr>
-                        <td class="px-4 py-2 text-sm text-gray-700 pl-8">Maestros {{ $detalle->claseAsistencia->nombre }}</td>
-                        <td class="px-4 py-2 text-sm text-center">{{ $detalle->maestros_hombres ?? 0 }}</td>
-                        <td class="px-4 py-2 text-sm text-center">{{ $detalle->maestros_mujeres ?? 0 }}</td>
-                        <td class="px-4 py-2 text-sm text-center font-semibold">{{ ($detalle->maestros_hombres ?? 0) + ($detalle->maestros_mujeres ?? 0) }}</td>
+                        <td class="px-4 py-2 text-sm text-gray-700 pl-8">
+                            Maestros {{ $detalle->claseAsistencia->nombre }}
+                            @if(!empty($detalle->maestros_ids))
+                                @php $maestrosNombres = \App\Models\Persona::whereIn('id', $detalle->maestros_ids)->pluck('nombre'); @endphp
+                                <div class="text-xs text-gray-400 mt-1">{{ $maestrosNombres->join(', ') }}</div>
+                            @endif
+                        </td>
+                        <td class="px-4 py-2 text-sm text-center" colspan="2"></td>
+                        <td class="px-4 py-2 text-sm text-center font-semibold">{{ count($detalle->maestros_ids ?? []) }}</td>
                     </tr>
                     @endif
                     @endforeach

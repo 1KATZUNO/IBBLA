@@ -16,6 +16,11 @@ class AsistenciaClaseDetalle extends Model
         'mujeres',
         'maestros_hombres',
         'maestros_mujeres',
+        'maestros_ids',
+    ];
+
+    protected $casts = [
+        'maestros_ids' => 'array',
     ];
 
     public function asistencia(): BelongsTo

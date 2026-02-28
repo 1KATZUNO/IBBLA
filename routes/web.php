@@ -20,6 +20,7 @@ Route::get('/', function () {
 // Principal - Para todos los usuarios autenticados
 Route::middleware(['auth'])->group(function () {
     Route::get('/principal', [PrincipalController::class, 'index'])->name('principal');
+    Route::get('/cumpleaneros', [\App\Http\Controllers\CumpleanerosController::class, 'index'])->name('cumpleaneros.index');
 });
 
 // Dashboard - Solo para Admin y Tesorero
@@ -118,6 +119,7 @@ Route::middleware(['auth', 'role:admin,tesorero'])->group(function () {
     Route::get('/ingresos-asistencia/promesas', [App\Http\Controllers\PromesasReporteController::class, 'index'])->name('ingresos-asistencia.promesas');
     Route::get('/ingresos-asistencia/pdf-promesas', [App\Http\Controllers\PromesasReporteController::class, 'pdfPromesas'])->name('ingresos-asistencia.pdf-promesas');
     Route::get('/ingresos-asistencia/pdf-promesas-anual', [App\Http\Controllers\PromesasReporteController::class, 'pdfAnual'])->name('ingresos-asistencia.pdf-promesas-anual');
+    Route::get('/ingresos-asistencia/promesas-por-clase', [App\Http\Controllers\PromesasReporteController::class, 'porClase'])->name('ingresos-asistencia.promesas-por-clase');
 });
 
 // Rutas para Admin y Asistente - Asistencia

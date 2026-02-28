@@ -6,6 +6,7 @@ use App\Models\Culto;
 use App\Models\Asistencia;
 use App\Models\ClaseAsistencia;
 use App\Models\AsistenciaClaseDetalle;
+use App\Models\Persona;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -16,6 +17,16 @@ class AsistenciaController extends Controller
         return ClaseAsistencia::activas()->regulares()->ordenadas()->get();
     }
 
+    private function getMaestrosPorClase()
+    {
+        return Persona::where('activo', true)
+            ->where('es_maestro', true)
+            ->whereNotNull('clase_asistencia_id')
+            ->orderBy('nombre')
+            ->get()
+            ->groupBy('clase_asistencia_id');
+    }
+
     private function buildClaseValidationRules($clases): array
     {
         $rules = [];
@@ -23,8 +34,8 @@ class AsistenciaController extends Controller
             $rules["clase.{$clase->id}.hombres"] = 'required|integer|min:0';
             $rules["clase.{$clase->id}.mujeres"] = 'required|integer|min:0';
             if ($clase->tiene_maestros) {
-                $rules["clase.{$clase->id}.maestros_hombres"] = 'required|integer|min:0';
-                $rules["clase.{$clase->id}.maestros_mujeres"] = 'required|integer|min:0';
+                $rules["clase.{$clase->id}.maestros_ids"] = 'nullable|array';
+                $rules["clase.{$clase->id}.maestros_ids.*"] = 'exists:personas,id';
             }
         }
         return $rules;
@@ -38,13 +49,17 @@ class AsistenciaController extends Controller
         foreach ($clases as $clase) {
             if (isset($clasesData[$clase->id])) {
                 $data = $clasesData[$clase->id];
+                $maestrosIds = $clase->tiene_maestros ? ($data['maestros_ids'] ?? []) : [];
+                $totalMaestros = count($maestrosIds);
+
                 AsistenciaClaseDetalle::create([
                     'asistencia_id' => $asistencia->id,
                     'clase_asistencia_id' => $clase->id,
                     'hombres' => $data['hombres'] ?? 0,
                     'mujeres' => $data['mujeres'] ?? 0,
-                    'maestros_hombres' => $clase->tiene_maestros ? ($data['maestros_hombres'] ?? 0) : 0,
-                    'maestros_mujeres' => $clase->tiene_maestros ? ($data['maestros_mujeres'] ?? 0) : 0,
+                    'maestros_hombres' => $totalMaestros,
+                    'maestros_mujeres' => 0,
+                    'maestros_ids' => !empty($maestrosIds) ? $maestrosIds : null,
                 ]);
             }
         }
@@ -81,7 +96,8 @@ class AsistenciaController extends Controller
     {
         $cultos = Culto::whereDoesntHave('asistencia')->orderBy('fecha', 'desc')->get();
         $clases = $this->getClasesActivas();
-        return view('asistencia.create', compact('cultos', 'clases'));
+        $maestrosPorClase = $this->getMaestrosPorClase();
+        return view('asistencia.create', compact('cultos', 'clases', 'maestrosPorClase'));
     }
 
     public function store(Request $request)
@@ -145,7 +161,8 @@ class AsistenciaController extends Controller
     {
         $asistencium->load('detallesClases.claseAsistencia');
         $clases = $this->getClasesActivas();
-        return view('asistencia.edit', ['asistencia' => $asistencium, 'clases' => $clases]);
+        $maestrosPorClase = $this->getMaestrosPorClase();
+        return view('asistencia.edit', ['asistencia' => $asistencium, 'clases' => $clases, 'maestrosPorClase' => $maestrosPorClase]);
     }
 
     public function update(Request $request, Asistencia $asistencium)

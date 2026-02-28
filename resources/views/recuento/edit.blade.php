@@ -23,7 +23,7 @@
                     <option value="">-- Anónimo --</option>
                     @foreach($personas as $persona)
                         <option value="{{ $persona->id }}" {{ old('persona_id', $sobre->persona_id) == $persona->id ? 'selected' : '' }}>
-                            {{ $persona->nombre }}
+                            {{ $persona->nombre }}{{ $persona->pin ? ' (PIN: '.$persona->pin.')' : '' }}
                         </option>
                     @endforeach
                 </select>

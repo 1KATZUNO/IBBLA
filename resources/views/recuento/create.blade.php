@@ -28,7 +28,7 @@
                         </label>
                         <div class="space-y-2">
                             <div class="relative">
-                                <input type="text" id="buscarPersona" placeholder="Buscar persona..." 
+                                <input type="text" id="buscarPersona" placeholder="Buscar por nombre o PIN..."
                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                                 <div id="resultadosBusqueda" class="hidden absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
                                 </div>
@@ -37,8 +37,8 @@
                                     class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                                 <option value="">Anónimo</option>
                                 @foreach($personas as $persona)
-                                    <option value="{{ $persona->id }}" {{ old('persona_id') == $persona->id ? 'selected' : '' }}>
-                                        {{ $persona->nombre }}
+                                    <option value="{{ $persona->id }}" data-pin="{{ $persona->pin ?? '' }}" {{ old('persona_id') == $persona->id ? 'selected' : '' }}>
+                                        {{ $persona->nombre }}{{ $persona->pin ? ' (PIN: '.$persona->pin.')' : '' }}
                                     </option>
                                 @endforeach
                             </select>
@@ -171,18 +171,20 @@
         // Initialize on load
         toggleComprobante();
 
-        // Búsqueda de personas
+        // Búsqueda de personas por nombre o PIN
         buscarInput.addEventListener('input', function() {
-            const busqueda = this.value.toLowerCase();
-            if (busqueda.length < 2) {
+            const busqueda = this.value.toLowerCase().trim();
+            if (busqueda.length < 1) {
                 resultadosDiv.classList.add('hidden');
                 return;
             }
 
             const opciones = Array.from(personaSelect.options).slice(1);
-            const resultados = opciones.filter(option => 
-                option.text.toLowerCase().includes(busqueda)
-            );
+            const resultados = opciones.filter(option => {
+                const pin = (option.dataset.pin || '').toLowerCase();
+                const nombre = option.text.toLowerCase();
+                return nombre.includes(busqueda) || (pin && pin === busqueda);
+            });
 
             if (resultados.length > 0) {
                 resultadosDiv.innerHTML = resultados.map(option => `

@@ -107,7 +107,7 @@
                         </svg>
                     </button>
                     <div id="clase-{{ $clase->id }}-content" class="p-4 hidden">
-                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div class="grid grid-cols-2 gap-4 mb-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Hombres</label>
                             <select name="clase[{{ $clase->id }}][hombres]" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 asistencia-input" required>
@@ -124,25 +124,30 @@
                                 @endfor
                             </select>
                         </div>
-                        @if($clase->tiene_maestros)
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Maestros (H)</label>
-                            <select name="clase[{{ $clase->id }}][maestros_hombres]" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 asistencia-input" required>
-                                @for($i = 0; $i <= 100; $i++)
-                                    <option value="{{ $i }}" {{ old("clase.{$clase->id}.maestros_hombres", $detalle->maestros_hombres ?? 0) == $i ? 'selected' : '' }}>{{ $i }}</option>
-                                @endfor
-                            </select>
                         </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Maestras (M)</label>
-                            <select name="clase[{{ $clase->id }}][maestros_mujeres]" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 asistencia-input" required>
-                                @for($i = 0; $i <= 100; $i++)
-                                    <option value="{{ $i }}" {{ old("clase.{$clase->id}.maestros_mujeres", $detalle->maestros_mujeres ?? 0) == $i ? 'selected' : '' }}>{{ $i }}</option>
-                                @endfor
-                            </select>
+                        @if($clase->tiene_maestros)
+                        <div class="border-t pt-4">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Maestros que dieron clase <span class="text-gray-400 font-normal" id="maestros-count-{{ $clase->id }}">(0 seleccionados)</span></label>
+                            @php
+                                $maestrosDeClase = $maestrosPorClase[$clase->id] ?? collect();
+                                $maestrosSeleccionados = old("clase.{$clase->id}.maestros_ids", $detalle->maestros_ids ?? []) ?? [];
+                            @endphp
+                            @if($maestrosDeClase->count() > 0)
+                            <div class="space-y-2 max-h-48 overflow-y-auto">
+                                @foreach($maestrosDeClase as $maestro)
+                                <label class="flex items-center p-2 rounded hover:bg-gray-50 cursor-pointer">
+                                    <input type="checkbox" name="clase[{{ $clase->id }}][maestros_ids][]" value="{{ $maestro->id }}"
+                                           class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-500 focus:ring-blue-500 maestro-check maestro-check-{{ $clase->id }}"
+                                           {{ in_array($maestro->id, $maestrosSeleccionados) ? 'checked' : '' }}>
+                                    <span class="ml-2 text-sm text-gray-700">{{ $maestro->nombre }}</span>
+                                </label>
+                                @endforeach
+                            </div>
+                            @else
+                            <p class="text-sm text-gray-400 italic">No hay maestros asignados a esta clase. Asignalos en Gestionar Personas.</p>
+                            @endif
                         </div>
                         @endif
-                        </div>
                     </div>
                 </div>
                 @endforeach
@@ -367,6 +372,7 @@
 
     document.addEventListener('DOMContentLoaded', function() {
         const inputs = document.querySelectorAll('.asistencia-input');
+        const maestroChecks = document.querySelectorAll('.maestro-check');
         const totalInput = document.getElementById('total_asistencia');
 
         function calcularTotal() {
@@ -374,12 +380,39 @@
             inputs.forEach(input => {
                 total += parseInt(input.value) || 0;
             });
+            // Sumar maestros seleccionados
+            maestroChecks.forEach(cb => {
+                if (cb.checked) total++;
+            });
             totalInput.value = total;
+        }
+
+        function updateMaestroCount(claseId) {
+            const checks = document.querySelectorAll('.maestro-check-' + claseId);
+            const count = Array.from(checks).filter(c => c.checked).length;
+            const label = document.getElementById('maestros-count-' + claseId);
+            if (label) label.textContent = '(' + count + ' seleccionados)';
         }
 
         inputs.forEach(input => {
             input.addEventListener('change', calcularTotal);
         });
+
+        maestroChecks.forEach(cb => {
+            cb.addEventListener('change', function() {
+                const claseId = this.className.match(/maestro-check-(\d+)/)?.[1];
+                if (claseId) updateMaestroCount(claseId);
+                calcularTotal();
+            });
+        });
+
+        // Inicializar conteos de maestros pre-seleccionados
+        const claseIds = new Set();
+        maestroChecks.forEach(cb => {
+            const match = cb.className.match(/maestro-check-(\d+)/);
+            if (match) claseIds.add(match[1]);
+        });
+        claseIds.forEach(id => updateMaestroCount(id));
 
         calcularTotal();
     });

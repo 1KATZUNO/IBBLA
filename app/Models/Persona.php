@@ -16,6 +16,10 @@ class Persona extends Model
         'nombre',
         'telefono',
         'correo',
+        'fecha_nacimiento',
+        'pin',
+        'clase_asistencia_id',
+        'es_maestro',
         'password',
         'user_id',
         'activo',
@@ -25,6 +29,8 @@ class Persona extends Model
 
     protected $casts = [
         'activo' => 'boolean',
+        'es_maestro' => 'boolean',
+        'fecha_nacimiento' => 'date',
     ];
 
     protected $hidden = [
@@ -49,5 +55,10 @@ class Persona extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function claseAsistencia(): BelongsTo
+    {
+        return $this->belongsTo(ClaseAsistencia::class);
     }
 }
