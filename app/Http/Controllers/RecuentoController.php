@@ -52,7 +52,9 @@ class RecuentoController extends Controller
             ? \App\Models\Egreso::where('culto_id', $cultoId)->orderBy('created_at', 'desc')->get()
             : collect();
 
-        return view('recuento.index', compact('sobres', 'cultos', 'cultoSeleccionado', 'ofrendasSueltas', 'egresos', 'cultosCerrados'));
+        $categorias = tenant_categories(['es_ofrenda_suelta' => false]);
+
+        return view('recuento.index', compact('sobres', 'cultos', 'cultoSeleccionado', 'ofrendasSueltas', 'egresos', 'cultosCerrados', 'categorias'));
     }
 
     public function create(Request $request)

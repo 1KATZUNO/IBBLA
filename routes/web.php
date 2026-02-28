@@ -46,6 +46,9 @@ Route::middleware(['auth', 'role:servidor'])->group(function () {
 
 // Rutas para Admin y Tesorero - Recuento e Ingresos
 Route::middleware(['auth', 'role:admin,tesorero'])->group(function () {
+    // Crear persona rapida (desde recuento)
+    Route::post('personas/quick-store', [PersonaController::class, 'quickStore'])->name('personas.quick-store');
+
     // Recuento (Sobres)
     Route::prefix('recuento')->name('recuento.')->group(function () {
         Route::get('/', [RecuentoController::class, 'index'])->name('index');
@@ -146,7 +149,6 @@ Route::middleware(['auth', 'role:admin', 'audit'])->group(function () {
     });
     
     // Personas y Promesas
-    Route::post('personas/quick-store', [PersonaController::class, 'quickStore'])->name('personas.quick-store');
     Route::post('personas/{persona}/reiniciar-compromisos', [PersonaController::class, 'reiniciarCompromisos'])->name('personas.reiniciar-compromisos');
     Route::post('personas/{persona}/limpiar-todo', [PersonaController::class, 'limpiarTodo'])->name('personas.limpiar-todo');
     Route::get('personas/reporte-pdf', [PersonaController::class, 'reportePdf'])->name('personas.reporte-pdf');
