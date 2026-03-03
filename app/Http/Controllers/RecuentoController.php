@@ -499,7 +499,8 @@ class RecuentoController extends Controller
 
         $sobres = $culto->sobres()->with(['persona', 'detalles'])->get();
         $ofrendasSueltas = $culto->ofrendasSueltas;
+        $categorias = tenant_categories(['es_ofrenda_suelta' => false]);
 
-        return view('recuento.partials.resumen-cerrado', compact('culto', 'sobres', 'ofrendasSueltas'));
+        return view('recuento.partials.resumen-cerrado', compact('culto', 'sobres', 'ofrendasSueltas', 'categorias'));
     }
 }

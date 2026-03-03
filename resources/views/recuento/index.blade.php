@@ -486,14 +486,12 @@
             <p class="text-sm text-gray-600">Cantidad de Sobres</p>
             <p class="text-2xl font-bold text-green-600">{{ $cultoSeleccionado->totales->cantidad_sobres }}</p>
         </div>
+        @foreach($categorias->take(2) as $cat)
         <div class="bg-white rounded-lg shadow p-4">
-            <p class="text-sm text-gray-600">Diezmos</p>
-            <p class="text-2xl font-bold text-purple-600">₡{{ number_format($cultoSeleccionado->totales->total_diezmo, 2) }}</p>
+            <p class="text-sm text-gray-600">{{ $cat->nombre }}</p>
+            <p class="text-2xl font-bold text-purple-600">₡{{ number_format($cultoSeleccionado->totales->getCategoryTotal($cat->slug), 2) }}</p>
         </div>
-            <div class="bg-white rounded-lg shadow p-4">
-                <p class="text-sm text-gray-600">Ofrenda Especial</p>
-                <p class="text-2xl font-bold text-pink-600">₡{{ number_format($cultoSeleccionado->totales->total_ofrenda_especial, 2) }}</p>
-            </div>
+        @endforeach
         <div class="bg-white rounded-lg shadow p-4">
             <p class="text-sm text-gray-600">Transferencias</p>
             <p class="text-2xl font-bold text-orange-600">{{ $cultoSeleccionado->totales->cantidad_transferencias }}</p>

@@ -73,10 +73,12 @@
                 <div class="label">Cantidad Sobres</div>
                 <div class="value">{{ $culto->totales->cantidad_sobres }}</div>
             </div>
+            @foreach($categories->where('es_ofrenda_suelta', false)->take(2) as $cat)
             <div class="summary-card">
-                <div class="label">Diezmos</div>
-                <div class="value">{{ number_format($culto->totales->total_diezmo, 2) }}</div>
+                <div class="label">{{ $cat->nombre }}</div>
+                <div class="value">{{ number_format($culto->totales->getCategoryTotal($cat->slug), 2) }}</div>
             </div>
+            @endforeach
             <div class="summary-card">
                 <div class="label">Transferencias</div>
                 <div class="value">{{ $culto->totales->cantidad_transferencias }}</div>
