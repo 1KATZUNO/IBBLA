@@ -74,16 +74,29 @@
                     </div>
                 </div>
 
+                {{-- Selector de Moneda --}}
                 <div class="border-t pt-6">
-                    <h3 class="text-lg font-semibold mb-4">Detalles del Sobre</h3>
-                    
+                    <div class="flex items-center gap-4 mb-4">
+                        <h3 class="text-lg font-semibold">Detalles del Sobre</h3>
+                        <div class="flex items-center gap-2 ml-auto">
+                            <label class="text-sm font-medium text-gray-700">Moneda:</label>
+                            <select name="moneda" id="moneda" class="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm">
+                                <option value="CRC">₡ Colones</option>
+                                <option value="USD">$ Dólares</option>
+                            </select>
+                            <span id="tipoCambioBadge" class="hidden text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full font-medium">
+                                T/C: <span id="tipoCambioValor">--</span>
+                            </span>
+                        </div>
+                    </div>
+
                     <div class="space-y-3" id="detallesContainer">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             @foreach($categorias as $index => $cat)
                             <div>
                                 <label for="{{ $cat->slug }}" class="block text-sm font-medium text-gray-700 mb-2">{{ $cat->nombre }}</label>
                                 <div class="relative">
-                                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500">₡</span>
+                                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500 simbolo-moneda">₡</span>
                                     <input type="number" name="detalles[{{ $index }}][monto]" id="{{ $cat->slug }}" step="0.01" min="0" value="0"
                                            class="w-full pl-7 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 detalle-monto">
                                     <input type="hidden" name="detalles[{{ $index }}][categoria]" value="{{ $cat->slug }}">
@@ -97,6 +110,10 @@
                         <div class="flex justify-between items-center">
                             <span class="text-lg font-medium text-gray-700">Total Declarado:</span>
                             <span class="text-2xl font-bold text-blue-600" id="totalDeclarado">₡0.00</span>
+                        </div>
+                        <div id="totalConvertido" class="hidden mt-2 flex justify-between items-center text-sm text-gray-500">
+                            <span>Equivalente en colones:</span>
+                            <span class="font-semibold text-green-700" id="totalConvertidoValor">₡0.00</span>
                         </div>
                     </div>
                 </div>
@@ -136,6 +153,29 @@
         const metodoPagoSelect = document.getElementById('metodo_pago');
         const comprobanteWrapper = document.getElementById('comprobanteWrapper');
         const comprobanteInput = document.getElementById('comprobante_numero');
+        const monedaSelect = document.getElementById('moneda');
+        const simbolos = document.querySelectorAll('.simbolo-moneda');
+        const tipoCambioBadge = document.getElementById('tipoCambioBadge');
+        const tipoCambioValor = document.getElementById('tipoCambioValor');
+        const totalConvertido = document.getElementById('totalConvertido');
+        const totalConvertidoValor = document.getElementById('totalConvertidoValor');
+
+        let tipoCambioVenta = 0;
+
+        // Obtener tipo de cambio al cargar
+        fetch('{{ route("api.tipo-cambio") }}')
+            .then(r => r.json())
+            .then(data => {
+                if (data.disponible) {
+                    tipoCambioVenta = data.venta;
+                    tipoCambioValor.textContent = '₡' + data.venta.toFixed(2);
+                }
+            })
+            .catch(() => {});
+
+        function getSimboloMoneda() {
+            return monedaSelect.value === 'USD' ? '$' : '₡';
+        }
 
         function calcularTotal() {
             let total = 0;
@@ -143,12 +183,34 @@
                 const valor = parseFloat(input.value) || 0;
                 total += valor;
             });
-            totalElement.textContent = '₡' + total.toFixed(2);
+            const simbolo = getSimboloMoneda();
+            totalElement.textContent = simbolo + total.toFixed(2);
+
+            // Mostrar equivalente en CRC si es USD
+            if (monedaSelect.value === 'USD' && tipoCambioVenta > 0) {
+                totalConvertido.classList.remove('hidden');
+                totalConvertidoValor.textContent = '₡' + (total * tipoCambioVenta).toFixed(2);
+            } else {
+                totalConvertido.classList.add('hidden');
+            }
         }
+
+        // Cambio de moneda
+        monedaSelect.addEventListener('change', function() {
+            const simbolo = getSimboloMoneda();
+            simbolos.forEach(s => s.textContent = simbolo);
+
+            if (this.value === 'USD') {
+                tipoCambioBadge.classList.remove('hidden');
+            } else {
+                tipoCambioBadge.classList.add('hidden');
+            }
+            calcularTotal();
+        });
 
         inputs.forEach(input => {
             input.addEventListener('input', calcularTotal);
-            
+
             // Seleccionar todo al hacer focus (para borrar el 0 fácilmente)
             input.addEventListener('focus', function() {
                 this.select();

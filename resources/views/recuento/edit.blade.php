@@ -52,7 +52,19 @@
             </div>
 
             <div class="space-y-4 mb-6">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4">Detalles del Sobre</h3>
+                <div class="flex items-center gap-4 mb-4">
+                    <h3 class="text-lg font-semibold text-gray-900">Detalles del Sobre</h3>
+                    <div class="flex items-center gap-2 ml-auto">
+                        <label class="text-sm font-medium text-gray-700">Moneda:</label>
+                        <select name="moneda" id="moneda" class="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm">
+                            <option value="CRC" {{ ($sobre->moneda ?? 'CRC') === 'CRC' ? 'selected' : '' }}>₡ Colones</option>
+                            <option value="USD" {{ ($sobre->moneda ?? 'CRC') === 'USD' ? 'selected' : '' }}>$ Dólares</option>
+                        </select>
+                        <span id="tipoCambioBadge" class="{{ ($sobre->moneda ?? 'CRC') === 'USD' ? '' : 'hidden' }} text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full font-medium">
+                            T/C: <span id="tipoCambioValor">{{ $sobre->tipo_cambio_venta ? '₡'.number_format((float)$sobre->tipo_cambio_venta, 2) : '--' }}</span>
+                        </span>
+                    </div>
+                </div>
 
                 @php
                     $detallesPorCategoria = $sobre->detalles->keyBy('categoria');
@@ -65,7 +77,7 @@
                     </label>
                     <div class="relative">
                         <input type="hidden" name="detalles[{{ $loop->index }}][categoria]" value="{{ $cat->slug }}">
-                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">₡</span>
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500 simbolo-moneda">{{ ($sobre->moneda ?? 'CRC') === 'USD' ? '$' : '₡' }}</span>
                         <input type="number"
                                name="detalles[{{ $loop->index }}][monto]"
                                id="detalle_{{ $cat->slug }}"
@@ -82,6 +94,10 @@
                 <div class="flex justify-between items-center">
                     <span class="text-lg font-semibold text-gray-700">Total Declarado:</span>
                     <span id="totalDeclarado" class="text-2xl font-bold text-blue-600">₡0.00</span>
+                </div>
+                <div id="totalConvertido" class="{{ ($sobre->moneda ?? 'CRC') === 'USD' ? '' : 'hidden' }} mt-2 flex justify-between items-center text-sm text-gray-500">
+                    <span>Equivalente en colones:</span>
+                    <span class="font-semibold text-green-700" id="totalConvertidoValor">₡0.00</span>
                 </div>
             </div>
 
@@ -113,22 +129,60 @@
         const metodoPagoSelect = document.getElementById('metodo_pago');
         const comprobanteWrapper = document.getElementById('comprobanteWrapper');
         const comprobanteInput = document.getElementById('comprobante_numero');
+        const monedaSelect = document.getElementById('moneda');
+        const simbolos = document.querySelectorAll('.simbolo-moneda');
+        const tipoCambioBadge = document.getElementById('tipoCambioBadge');
+        const tipoCambioValor = document.getElementById('tipoCambioValor');
+        const totalConvertido = document.getElementById('totalConvertido');
+        const totalConvertidoValor = document.getElementById('totalConvertidoValor');
+
+        let tipoCambioVenta = {{ $sobre->tipo_cambio_venta ?? 0 }};
+
+        // Obtener tipo de cambio actual
+        fetch('{{ route("api.tipo-cambio") }}')
+            .then(r => r.json())
+            .then(data => {
+                if (data.disponible) {
+                    tipoCambioVenta = data.venta;
+                    tipoCambioValor.textContent = '₡' + data.venta.toFixed(2);
+                }
+            })
+            .catch(() => {});
+
+        function getSimboloMoneda() {
+            return monedaSelect.value === 'USD' ? '$' : '₡';
+        }
 
         function calcularTotal() {
             let total = 0;
             inputs.forEach(input => {
                 total += parseFloat(input.value) || 0;
             });
-            totalDisplay.textContent = '₡' + total.toFixed(2);
+            const simbolo = getSimboloMoneda();
+            totalDisplay.textContent = simbolo + total.toFixed(2);
+
+            if (monedaSelect.value === 'USD' && tipoCambioVenta > 0) {
+                totalConvertido.classList.remove('hidden');
+                totalConvertidoValor.textContent = '₡' + (total * tipoCambioVenta).toFixed(2);
+            } else {
+                totalConvertido.classList.add('hidden');
+            }
         }
+
+        monedaSelect.addEventListener('change', function() {
+            const simbolo = getSimboloMoneda();
+            simbolos.forEach(s => s.textContent = simbolo);
+            if (this.value === 'USD') {
+                tipoCambioBadge.classList.remove('hidden');
+            } else {
+                tipoCambioBadge.classList.add('hidden');
+            }
+            calcularTotal();
+        });
 
         inputs.forEach(input => {
             input.addEventListener('input', calcularTotal);
-            
-            // Seleccionar todo al hacer focus
-            input.addEventListener('focus', function() {
-                this.select();
-            });
+            input.addEventListener('focus', function() { this.select(); });
         });
 
         calcularTotal();
