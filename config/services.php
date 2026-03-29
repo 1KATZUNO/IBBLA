@@ -35,4 +35,8 @@ return [
         ],
     ],
 
+    'bccr' => [
+        'token' => env('BCCR_TOKEN'),
+    ],
+
 ];
