@@ -35,6 +35,86 @@
         </form>
     </div>
 
+    <!-- Alertas Inteligentes -->
+    @if($alertas->count() > 0)
+    <div class="space-y-3">
+        @foreach($alertas as $alerta)
+        <div class="flex items-center gap-3 px-4 py-3 rounded-lg border
+            {{ $alerta['tipo'] === 'danger' ? 'bg-red-50 border-red-200 text-red-800' : '' }}
+            {{ $alerta['tipo'] === 'warning' ? 'bg-amber-50 border-amber-200 text-amber-800' : '' }}
+            {{ $alerta['tipo'] === 'info' ? 'bg-blue-50 border-blue-200 text-blue-800' : '' }}
+            {{ $alerta['tipo'] === 'success' ? 'bg-green-50 border-green-200 text-green-800' : '' }}
+        ">
+            @if($alerta['icono'] === 'trending-down')
+            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 17h8m0 0V9m0 8l-8-8-4 4-6-6"></path></svg>
+            @elseif($alerta['icono'] === 'trending-up')
+            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
+            @elseif($alerta['icono'] === 'alert')
+            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+            @else
+            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+            @endif
+            <span class="text-sm font-medium">{{ $alerta['mensaje'] }}</span>
+        </div>
+        @endforeach
+    </div>
+    @endif
+
+    <!-- Comparativo con mes anterior -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="glass-card p-5">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-500">Ingresos este mes</p>
+                    <p class="text-2xl font-bold text-gray-900">₡{{ number_format($totalesMes['total_general'], 0) }}</p>
+                </div>
+                <div class="text-right">
+                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-sm font-semibold
+                        {{ $comparativo['diferencia'] >= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700' }}">
+                        @if($comparativo['diferencia'] >= 0)
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg>
+                        @else
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
+                        @endif
+                        {{ $comparativo['porcentaje'] >= 0 ? '+' : '' }}{{ $comparativo['porcentaje'] }}%
+                    </span>
+                    <p class="text-xs text-gray-400 mt-1">vs {{ $comparativo['mes_anterior_nombre'] }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="glass-card p-5">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-500">Asistencia promedio</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ $comparativo['asistencia_actual'] }}</p>
+                </div>
+                <div class="text-right">
+                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-sm font-semibold
+                        {{ $comparativo['asistencia_diff'] >= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700' }}">
+                        {{ $comparativo['asistencia_diff'] >= 0 ? '+' : '' }}{{ $comparativo['asistencia_diff'] }}%
+                    </span>
+                    <p class="text-xs text-gray-400 mt-1">vs {{ $comparativo['mes_anterior_nombre'] }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="glass-card p-5">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-500">Promesas cumplidas</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ $promesasStatus['cumplidas'] }} / {{ $promesasStatus['cumplidas'] + $promesasStatus['pendientes'] }}</p>
+                </div>
+                <div class="text-right">
+                    @php $pctCumplidas = ($promesasStatus['cumplidas'] + $promesasStatus['pendientes']) > 0 ? round($promesasStatus['cumplidas'] / ($promesasStatus['cumplidas'] + $promesasStatus['pendientes']) * 100) : 0; @endphp
+                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-sm font-semibold
+                        {{ $pctCumplidas >= 70 ? 'bg-green-100 text-green-700' : ($pctCumplidas >= 40 ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700') }}">
+                        {{ $pctCumplidas }}%
+                    </span>
+                    <p class="text-xs text-gray-400 mt-1">cumplimiento</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Estadísticas Rápidas -->
     <div>
         <h3 class="text-lg font-display font-bold text-gray-900 mb-4">Estadísticas del Mes</h3>
@@ -105,6 +185,16 @@
                 <div style="height: 300px; position: relative;">
                     <canvas id="distribucionChart"></canvas>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tendencia 12 Meses -->
+    <div>
+        <h3 class="text-lg font-display font-bold text-gray-900 mb-4">Tendencia 12 Meses</h3>
+        <div class="glass-card p-6">
+            <div style="height: 350px; position: relative;">
+                <canvas id="tendencia12Chart"></canvas>
             </div>
         </div>
     </div>
@@ -279,6 +369,69 @@
                         display: false
                     }
                 }
+            }
+        }
+    });
+
+    // Gráfico Tendencia 12 Meses
+    const tendencia12Ctx = document.getElementById('tendencia12Chart').getContext('2d');
+    const ingresosGradient12 = tendencia12Ctx.createLinearGradient(0, 0, 0, 350);
+    ingresosGradient12.addColorStop(0, 'rgba(37, 99, 235, 0.2)');
+    ingresosGradient12.addColorStop(1, 'rgba(37, 99, 235, 0)');
+    new Chart(tendencia12Ctx, {
+        type: 'line',
+        data: {
+            labels: @json($tendencia12->pluck('label')),
+            datasets: [{
+                label: 'Ingresos',
+                data: @json($tendencia12->pluck('ingresos')),
+                borderColor: 'rgba(37, 99, 235, 1)',
+                backgroundColor: ingresosGradient12,
+                borderWidth: 3,
+                tension: 0.4,
+                fill: true,
+                yAxisID: 'y',
+                pointBackgroundColor: 'rgba(37, 99, 235, 1)',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2,
+                pointRadius: 4,
+            }, {
+                label: 'Asistencia Promedio',
+                data: @json($tendencia12->pluck('asistencia')->map(fn($v) => round($v))),
+                borderColor: 'rgba(34, 197, 94, 1)',
+                backgroundColor: 'transparent',
+                borderWidth: 3,
+                tension: 0.4,
+                fill: false,
+                yAxisID: 'y1',
+                pointBackgroundColor: 'rgba(34, 197, 94, 1)',
+                pointBorderColor: '#fff',
+                pointBorderWidth: 2,
+                pointRadius: 4,
+                borderDash: [5, 5],
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { mode: 'index', intersect: false },
+            plugins: {
+                legend: { position: 'top', labels: { usePointStyle: true, pointStyle: 'circle', padding: 15 } }
+            },
+            scales: {
+                y: {
+                    type: 'linear', display: true, position: 'left',
+                    beginAtZero: true,
+                    grid: { color: 'rgba(0,0,0,0.05)' },
+                    ticks: { callback: v => '₡' + (v >= 1000 ? (v/1000).toFixed(0) + 'k' : v) }
+                },
+                y1: {
+                    type: 'linear', display: true, position: 'right',
+                    beginAtZero: true,
+                    grid: { drawOnChartArea: false },
+                    ticks: { callback: v => v + ' pers.' }
+                },
+                x: { grid: { display: false } }
             }
         }
     });

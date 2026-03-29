@@ -2,15 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ClaseAsistencia;
 use App\Models\Persona;
 use App\Models\Promesa;
 use App\Models\SobreDetalle;
-use App\Models\Compromiso;
-use App\Models\ClaseAsistencia;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
+use App\Models\TipoCambio;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 
 class PromesasReporteController extends Controller
 {
@@ -47,7 +46,8 @@ class PromesasReporteController extends Controller
         $totales = $this->calcularTotales($año, $mes, $categoria);
 
         $pdf = Pdf::loadView('pdfs.promesas', compact('totales', 'año', 'mes', 'categoria'));
-        return $pdf->download('reporte_promesas_' . $año . '_' . $mes . '.pdf');
+
+        return $pdf->download('reporte_promesas_'.$año.'_'.$mes.'.pdf');
     }
 
     public function pdfAnual(Request $request)
@@ -66,7 +66,7 @@ class PromesasReporteController extends Controller
 
         for ($mes = 1; $mes <= 12; $mes++) {
             $totalesMes = $this->calcularTotales($año, $mes, $categoria);
-            
+
             $totalesPorMes[] = [
                 'mes' => Carbon::create($año, $mes, 1)->locale('es')->translatedFormat('F'),
                 'totales' => $totalesMes['grand_total'],
@@ -79,7 +79,8 @@ class PromesasReporteController extends Controller
         }
 
         $pdf = Pdf::loadView('pdfs.promesas-anual', compact('totalesPorMes', 'grandTotal', 'año', 'categoria'));
-        return $pdf->download('reporte_promesas_anual_' . $año . '.pdf');
+
+        return $pdf->download('reporte_promesas_anual_'.$año.'.pdf');
     }
 
     public function porClase(Request $request)
@@ -99,18 +100,18 @@ class PromesasReporteController extends Controller
         if ($claseId !== null) {
             // Filtrar personas por clase
             if ($claseId === 'capilla') {
-                // Capilla = personas sin clase asignada
+                // Capilla = personas sin clase asignada (via pivot)
                 $personaIds = Persona::where('activo', true)
-                    ->whereNull('clase_asistencia_id')
+                    ->whereDoesntHave('clasesAsistencia')
                     ->pluck('id')
                     ->toArray();
                 $claseNombre = 'Capilla (Adultos)';
             } else {
                 $clase = ClaseAsistencia::find($claseId);
                 if ($clase) {
-                    $personaIds = Persona::where('activo', true)
-                        ->where('clase_asistencia_id', $claseId)
-                        ->pluck('id')
+                    $personaIds = $clase->personas()
+                        ->where('activo', true)
+                        ->pluck('personas.id')
                         ->toArray();
                     $claseNombre = $clase->nombre;
                 } else {
@@ -139,15 +140,17 @@ class PromesasReporteController extends Controller
         $grandTotal = ['prometido' => 0, 'dado' => 0, 'faltante' => 0, 'profit' => 0];
 
         $categoriasExcluidas = tenant_categories(['excluir_de_promesas' => true])
-            ->pluck('slug')->map(fn($s) => strtolower($s))->toArray();
+            ->pluck('slug')->map(fn ($s) => strtolower($s))->toArray();
 
         // Prometido
         foreach ($personas as $persona) {
             foreach ($persona->promesas as $promesa) {
-                if (in_array(strtolower($promesa->categoria), $categoriasExcluidas)) continue;
+                if (in_array(strtolower($promesa->categoria), $categoriasExcluidas)) {
+                    continue;
+                }
 
                 $cat = $promesa->categoria;
-                if (!isset($totalesPorCategoria[$cat])) {
+                if (! isset($totalesPorCategoria[$cat])) {
                     $totalesPorCategoria[$cat] = [
                         'categoria' => ucfirst($cat),
                         'total_prometido' => 0,
@@ -173,17 +176,19 @@ class PromesasReporteController extends Controller
         $categoriasPromesa = tenant_categories(['excluir_de_promesas' => false])->pluck('slug')->toArray();
 
         foreach ($categoriasPromesa as $cat) {
-            $query = SobreDetalle::whereHas('sobre', function($q) use ($año, $mes, $personaIds) {
-                $q->whereYear('created_at', $año)
-                  ->whereIn('persona_id', $personaIds);
-                if ($mes) {
-                    $q->whereMonth('created_at', $mes);
-                }
+            $query = SobreDetalle::whereHas('sobre', function ($q) use ($año, $mes, $personaIds) {
+                $q->whereIn('persona_id', $personaIds)
+                    ->whereHas('culto', function ($cq) use ($año, $mes) {
+                        $cq->whereYear('fecha', $año);
+                        if ($mes) {
+                            $cq->whereMonth('fecha', $mes);
+                        }
+                    });
             })->where('categoria', $cat);
 
             $montoDado = $query->sum('monto');
 
-            if ($montoDado > 0 && !isset($totalesPorCategoria[$cat])) {
+            if ($montoDado > 0 && ! isset($totalesPorCategoria[$cat])) {
                 $totalesPorCategoria[$cat] = [
                     'categoria' => ucfirst($cat),
                     'total_prometido' => 0,
@@ -202,6 +207,7 @@ class PromesasReporteController extends Controller
         foreach ($totalesPorCategoria as $cat => $datos) {
             if (in_array(strtolower($cat), $categoriasExcluidas)) {
                 unset($totalesPorCategoria[$cat]);
+
                 continue;
             }
             $saldo = $datos['total_dado'] - $datos['total_prometido'];
@@ -239,7 +245,7 @@ class PromesasReporteController extends Controller
             foreach ($persona->promesas as $promesa) {
                 // Excluir categorías marcadas como excluir_de_promesas
                 $catLower = strtolower($promesa->categoria);
-                $categoriasExcluidas = tenant_categories(['excluir_de_promesas' => true])->pluck('slug')->map(fn($s) => strtolower($s))->toArray();
+                $categoriasExcluidas = tenant_categories(['excluir_de_promesas' => true])->pluck('slug')->map(fn ($s) => strtolower($s))->toArray();
                 if (in_array($catLower, $categoriasExcluidas)) {
                     continue;
                 }
@@ -249,8 +255,8 @@ class PromesasReporteController extends Controller
                 }
 
                 $cat = $promesa->categoria;
-                
-                if (!isset($totalesPorCategoria[$cat])) {
+
+                if (! isset($totalesPorCategoria[$cat])) {
                     $totalesPorCategoria[$cat] = [
                         'categoria' => ucfirst($cat),
                         'total_prometido' => 0,
@@ -267,26 +273,51 @@ class PromesasReporteController extends Controller
         }
 
         // PASO 2: Calcular TODOS los montos dados en el mes (incluyendo anónimos)
+        // Convertir USD a CRC para comparación uniforme
         $categoriasPromesa = tenant_categories(['excluir_de_promesas' => false])->pluck('slug')->toArray();
         $categorias = $categoria ? [$categoria] : $categoriasPromesa;
         // Sanear cuando piden una categoría excluida
-        $categoriasExcluidasSlugs = tenant_categories(['excluir_de_promesas' => true])->pluck('slug')->map(fn($s) => strtolower($s))->toArray();
+        $categoriasExcluidasSlugs = tenant_categories(['excluir_de_promesas' => true])->pluck('slug')->map(fn ($s) => strtolower($s))->toArray();
         if ($categoria && in_array(strtolower($categoria), $categoriasExcluidasSlugs)) {
             $categorias = [];
             $totalesPorCategoria = [];
         }
-        
+
+        $tipoCambioActual = TipoCambio::hoy();
+        $tcVenta = $tipoCambioActual ? (float) $tipoCambioActual->venta : 0;
+
         foreach ($categorias as $cat) {
-            // Obtener TODOS los sobres del mes en esta categoría (con o sin persona)
-            $montoDadoTotal = SobreDetalle::whereHas('sobre', function($query) use ($año, $mes) {
-                    $query->whereYear('created_at', $año)
-                          ->whereMonth('created_at', $mes);
-                })
+            // Sobres CRC
+            $montoDadoCrc = SobreDetalle::whereHas('sobre', function ($query) use ($año, $mes) {
+                $query->where('moneda', '!=', 'USD')
+                    ->whereHas('culto', function ($q) use ($año, $mes) {
+                        $q->whereYear('fecha', $año)->whereMonth('fecha', $mes);
+                    });
+            })
                 ->where('categoria', $cat)
                 ->sum('monto');
 
+            // Sobres USD - convertir cada uno con su tipo de cambio
+            $detallesUsd = SobreDetalle::whereHas('sobre', function ($query) use ($año, $mes) {
+                $query->where('moneda', 'USD')
+                    ->whereHas('culto', function ($q) use ($año, $mes) {
+                        $q->whereYear('fecha', $año)->whereMonth('fecha', $mes);
+                    });
+            })
+                ->where('categoria', $cat)
+                ->with('sobre')
+                ->get();
+
+            $montoDadoUsdConvertido = 0;
+            foreach ($detallesUsd as $detalle) {
+                $tc = (float) ($detalle->sobre->tipo_cambio_venta ?? $tcVenta);
+                $montoDadoUsdConvertido += $tc > 0 ? round((float) $detalle->monto * $tc, 2) : (float) $detalle->monto;
+            }
+
+            $montoDadoTotal = $montoDadoCrc + $montoDadoUsdConvertido;
+
             // Si hay dinero dado pero no hay promesas en esta categoría, crear el registro
-            if ($montoDadoTotal > 0 && !isset($totalesPorCategoria[$cat])) {
+            if ($montoDadoTotal > 0 && ! isset($totalesPorCategoria[$cat])) {
                 $totalesPorCategoria[$cat] = [
                     'categoria' => ucfirst($cat),
                     'total_prometido' => 0,
@@ -296,7 +327,7 @@ class PromesasReporteController extends Controller
                 ];
             }
 
-            // Actualizar el total dado
+            // Actualizar el total dado (en CRC)
             if (isset($totalesPorCategoria[$cat])) {
                 $totalesPorCategoria[$cat]['total_dado'] = $montoDadoTotal;
             }
@@ -307,10 +338,11 @@ class PromesasReporteController extends Controller
             $catKey = strtolower($cat);
             if (in_array($catKey, $categoriasExcluidasSlugs)) {
                 unset($totalesPorCategoria[$cat]);
+
                 continue;
             }
             $saldo = $datos['total_dado'] - $datos['total_prometido'];
-            
+
             if ($saldo < 0) {
                 // Faltante (debe)
                 $totalesPorCategoria[$cat]['faltante'] = abs($saldo);
@@ -320,7 +352,7 @@ class PromesasReporteController extends Controller
                 $totalesPorCategoria[$cat]['profit'] = $saldo;
                 $totalesPorCategoria[$cat]['faltante'] = 0;
             }
-            
+
             $grandTotal['prometido'] += $datos['total_prometido'];
             $grandTotal['dado'] += $datos['total_dado'];
             $grandTotal['faltante'] += $totalesPorCategoria[$cat]['faltante'];
@@ -334,35 +366,48 @@ class PromesasReporteController extends Controller
     }
 
     /**
-     * Calcula el monto prometido en un mes específico según la frecuencia
+     * Calcula el monto prometido en un mes específico según la frecuencia.
+     * Retorna en CRC (convierte si la promesa es en USD).
      */
     private function calcularMontoPrometidoMes($promesa, $año, $mes): float
     {
         $fechaMes = Carbon::create($año, $mes, 1);
-        
+        $montoBase = (float) $promesa->monto;
+
         switch ($promesa->frecuencia) {
             case 'semanal':
-                // Contar domingos en el mes
                 $domingos = 0;
                 $fecha = $fechaMes->copy()->startOfMonth();
                 $finMes = $fechaMes->copy()->endOfMonth();
-                
+
                 while ($fecha->lte($finMes)) {
                     if ($fecha->dayOfWeek === Carbon::SUNDAY) {
                         $domingos++;
                     }
                     $fecha->addDay();
                 }
-                
-                return $promesa->monto * $domingos;
-                
+
+                $montoTotal = $montoBase * $domingos;
+                break;
+
             case 'quincenal':
-                return $promesa->monto * 2;
-                
+                $montoTotal = $montoBase * 2;
+                break;
+
             case 'mensual':
             default:
-                return $promesa->monto;
+                $montoTotal = $montoBase;
         }
+
+        // Si la promesa es en USD, convertir a CRC
+        if (($promesa->moneda ?? 'CRC') === 'USD') {
+            $tipoCambio = TipoCambio::hoy();
+            if ($tipoCambio) {
+                $montoTotal = round($montoTotal * (float) $tipoCambio->venta, 2);
+            }
+        }
+
+        return $montoTotal;
     }
 
     /**
@@ -381,12 +426,12 @@ class PromesasReporteController extends Controller
         // Sumar todos los meses del año
         for ($mes = 1; $mes <= 12; $mes++) {
             $totalesMes = $this->calcularTotales($año, $mes, $categoria);
-            
+
             // Sumar por categoría
             foreach ($totalesMes['categorias'] as $catData) {
                 $cat = strtolower(str_replace(' ', '_', $catData['categoria']));
-                
-                if (!isset($totalesPorCategoria[$cat])) {
+
+                if (! isset($totalesPorCategoria[$cat])) {
                     $totalesPorCategoria[$cat] = [
                         'categoria' => $catData['categoria'],
                         'total_prometido' => 0,
@@ -395,13 +440,13 @@ class PromesasReporteController extends Controller
                         'profit' => 0,
                     ];
                 }
-                
+
                 $totalesPorCategoria[$cat]['total_prometido'] += $catData['total_prometido'];
                 $totalesPorCategoria[$cat]['total_dado'] += $catData['total_dado'];
                 $totalesPorCategoria[$cat]['faltante'] += $catData['faltante'];
                 $totalesPorCategoria[$cat]['profit'] += $catData['profit'];
             }
-            
+
             // Sumar totales generales
             $grandTotal['prometido'] += $totalesMes['grand_total']['prometido'];
             $grandTotal['dado'] += $totalesMes['grand_total']['dado'];

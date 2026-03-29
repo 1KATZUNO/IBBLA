@@ -35,7 +35,8 @@ class PersonaController extends Controller
     {
         $categorias = tenant_categories(['excluir_de_promesas' => false]);
         $clases = ClaseAsistencia::activas()->ordenadas()->get();
-        return view('personas.create', compact('categorias', 'clases'));
+        $clasesAsignadas = [];
+        return view('personas.create', compact('categorias', 'clases', 'clasesAsignadas'));
     }
 
     public function store(Request $request)
@@ -46,8 +47,9 @@ class PersonaController extends Controller
             'correo' => 'nullable|email|max:255|unique:users,email',
             'fecha_nacimiento' => 'nullable|date',
             'pin' => 'nullable|string|max:20',
-            'clase_asistencia_id' => 'nullable|exists:clases_asistencia,id',
-            'es_maestro' => 'boolean',
+            'clases' => 'nullable|array|max:4',
+            'clases.*.clase_id' => 'required|exists:clases_asistencia,id',
+            'clases.*.es_maestro' => 'boolean',
             'password' => 'required_with:correo|nullable|string|min:8',
             'activo' => 'boolean',
             'notas' => 'nullable|string',
@@ -81,8 +83,6 @@ class PersonaController extends Controller
             'correo' => $validated['correo'] ?? null,
             'fecha_nacimiento' => $validated['fecha_nacimiento'] ?? null,
             'pin' => $validated['pin'] ?? null,
-            'clase_asistencia_id' => $validated['clase_asistencia_id'] ?? null,
-            'es_maestro' => $request->boolean('es_maestro'),
             'password' => !empty($validated['password']) ? Hash::make($validated['password']) : null,
             'user_id' => $user ? $user->id : null,
             'activo' => $validated['activo'] ?? true,
@@ -90,6 +90,17 @@ class PersonaController extends Controller
         ];
 
         $persona = Persona::create($personaData);
+
+        // Sync clases via pivot
+        if (!empty($validated['clases'])) {
+            $syncData = [];
+            foreach ($validated['clases'] as $claseEntry) {
+                $syncData[$claseEntry['clase_id']] = [
+                    'es_maestro' => !empty($claseEntry['es_maestro']),
+                ];
+            }
+            $persona->clasesAsistencia()->sync($syncData);
+        }
 
         // Guardar promesas si existen
         if ($request->has('promesas')) {
@@ -151,7 +162,10 @@ class PersonaController extends Controller
                 ->whereHas('detalles', function ($query) use ($promesa) {
                     $query->where('categoria', $promesa->categoria);
                 })
-                ->whereMonth('created_at', Carbon::now()->month)
+                ->whereHas('culto', function ($query) {
+                    $query->whereMonth('fecha', Carbon::now()->month)
+                          ->whereYear('fecha', Carbon::now()->year);
+                })
                 ->get()
                 ->sum(function ($sobre) use ($promesa) {
                     return $sobre->detalles()
@@ -172,10 +186,13 @@ class PersonaController extends Controller
 
     public function edit(Persona $persona)
     {
-        $persona->load('promesas');
+        $persona->load(['promesas', 'clasesAsistencia']);
         $categorias = tenant_categories(['excluir_de_promesas' => false]);
         $clases = ClaseAsistencia::activas()->ordenadas()->get();
-        return view('personas.edit', compact('persona', 'categorias', 'clases'));
+        $clasesAsignadas = $persona->clasesAsistencia->map(function ($clase) {
+            return ['clase_id' => $clase->id, 'es_maestro' => $clase->pivot->es_maestro];
+        })->values()->toArray();
+        return view('personas.edit', compact('persona', 'categorias', 'clases', 'clasesAsignadas'));
     }
 
     public function update(Request $request, Persona $persona)
@@ -186,8 +203,9 @@ class PersonaController extends Controller
             'correo' => 'nullable|email|unique:users,email,' . ($persona->user_id ?? 'NULL'),
             'fecha_nacimiento' => 'nullable|date',
             'pin' => 'nullable|string|max:20',
-            'clase_asistencia_id' => 'nullable|exists:clases_asistencia,id',
-            'es_maestro' => 'boolean',
+            'clases' => 'nullable|array|max:4',
+            'clases.*.clase_id' => 'required|exists:clases_asistencia,id',
+            'clases.*.es_maestro' => 'boolean',
             'password' => $persona->user_id ? 'nullable|string|min:8' : 'required_with:correo|nullable|string|min:8',
             'activo' => 'boolean',
             'notas' => 'nullable|string',
@@ -246,8 +264,6 @@ class PersonaController extends Controller
             'correo' => $validated['correo'] ?? null,
             'fecha_nacimiento' => $validated['fecha_nacimiento'] ?? null,
             'pin' => $validated['pin'] ?? null,
-            'clase_asistencia_id' => $validated['clase_asistencia_id'] ?? null,
-            'es_maestro' => $request->boolean('es_maestro'),
             'activo' => $validated['activo'] ?? true,
             'notas' => $validated['notas'] ?? null,
         ];
@@ -258,6 +274,17 @@ class PersonaController extends Controller
         }
 
         $persona->update($personaData);
+
+        // Sync clases via pivot
+        $syncData = [];
+        if (!empty($validated['clases'])) {
+            foreach ($validated['clases'] as $claseEntry) {
+                $syncData[$claseEntry['clase_id']] = [
+                    'es_maestro' => !empty($claseEntry['es_maestro']),
+                ];
+            }
+        }
+        $persona->clasesAsistencia()->sync($syncData);
 
         // Sincronizar promesas
         $persona->promesas()->delete(); // Eliminar promesas anteriores
