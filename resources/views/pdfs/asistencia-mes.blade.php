@@ -46,10 +46,17 @@
                 <th>Visitas</th>
                 <th>Salvos</th>
                 <th>Bautismos</th>
+                @if(isset($registroExtraTipos))
+                @foreach($registroExtraTipos as $tipo)
+                    @foreach($tipo->subcampos as $subcampo)
+                    <th style="background-color: {{ $tipo->color }};">{{ ucfirst($subcampo) }}</th>
+                    @endforeach
+                @endforeach
+                @endif
             </tr>
         </thead>
         <tbody>
-            @php 
+            @php
                 $totalMes = 0;
                 $totalHombres = 0;
                 $totalMujeres = 0;
@@ -58,6 +65,14 @@
                 $totalVisitasGeneral = 0;
                 $totalSalvosGeneral = 0;
                 $totalBautismosGeneral = 0;
+                $totalesExtra = [];
+                if (isset($registroExtraTipos)) {
+                    foreach ($registroExtraTipos as $tipo) {
+                        foreach ($tipo->subcampos as $subcampo) {
+                            $totalesExtra[$tipo->id . '_' . $subcampo] = 0;
+                        }
+                    }
+                }
             @endphp
             @foreach($cultos as $culto)
             @if($culto->asistencia)
@@ -90,6 +105,18 @@
                 <td style="text-align: center;">{{ $totalVisitas }}</td>
                 <td style="text-align: center;">{{ $totalSalvos }}</td>
                 <td style="text-align: center;">{{ $totalBautismos }}</td>
+                @if(isset($registroExtraTipos))
+                @foreach($registroExtraTipos as $tipo)
+                    @php $registro = $culto->asistencia->registrosExtra->firstWhere('registro_extra_tipo_id', $tipo->id); @endphp
+                    @foreach($tipo->subcampos as $subcampo)
+                    @php
+                        $val = $registro ? ($registro->valores[$subcampo] ?? 0) : 0;
+                        $totalesExtra[$tipo->id . '_' . $subcampo] += $val;
+                    @endphp
+                    <td style="text-align: center;">{{ $val }}</td>
+                    @endforeach
+                @endforeach
+                @endif
             </tr>
             @endif
             @endforeach
@@ -103,6 +130,13 @@
                 <td style="text-align: center;">{{ $totalVisitasGeneral }}</td>
                 <td style="text-align: center;">{{ $totalSalvosGeneral }}</td>
                 <td style="text-align: center;">{{ $totalBautismosGeneral }}</td>
+                @if(isset($registroExtraTipos))
+                @foreach($registroExtraTipos as $tipo)
+                    @foreach($tipo->subcampos as $subcampo)
+                    <td style="text-align: center;">{{ $totalesExtra[$tipo->id . '_' . $subcampo] }}</td>
+                    @endforeach
+                @endforeach
+                @endif
             </tr>
             <tr class="total-row">
                 <td colspan="2">PROMEDIO DEL MES</td>
@@ -114,6 +148,14 @@
                 <td style="text-align: center;">-</td>
                 <td style="text-align: center;">-</td>
                 <td style="text-align: center;">-</td>
+                @if(isset($registroExtraTipos))
+                @foreach($registroExtraTipos as $tipo)
+                    @foreach($tipo->subcampos as $subcampo)
+                    @php $count = $cultos->filter(fn($c) => $c->asistencia)->count(); @endphp
+                    <td style="text-align: center;">{{ $count > 0 ? round($totalesExtra[$tipo->id . '_' . $subcampo] / $count, 1) : 0 }}</td>
+                    @endforeach
+                @endforeach
+                @endif
             </tr>
         </tbody>
     </table>

@@ -1,21 +1,42 @@
 <?php
 
-use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\PrincipalController;
-use App\Http\Controllers\RecuentoController;
 use App\Http\Controllers\AsistenciaController;
-use App\Http\Controllers\PersonaController;
-use App\Http\Controllers\PromesaController;
 use App\Http\Controllers\CultoController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\IngresosAsistenciaController;
+use App\Http\Controllers\PersonaController;
+use App\Http\Controllers\PrincipalController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\PromesaController;
+use App\Http\Controllers\RecuentoController;
 use App\Http\Controllers\SuperAdmin\DashboardController as SADashboardController;
 use App\Http\Controllers\SuperAdmin\TenantController as SATenantController;
+use App\Services\BccrExchangeRateService;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return redirect()->route('login');
 });
+
+// API interna - Tipo de cambio
+Route::middleware(['auth'])->get('/api/tipo-cambio', function (BccrExchangeRateService $service) {
+    $tipoCambio = $service->obtenerHoy();
+
+    if (! $tipoCambio) {
+        return response()->json([
+            'disponible' => false,
+            'mensaje' => 'No hay tipo de cambio disponible. Configure las credenciales BCCR o ingrese uno manualmente.',
+        ]);
+    }
+
+    return response()->json([
+        'disponible' => true,
+        'fecha' => $tipoCambio->fecha->format('Y-m-d'),
+        'compra' => (float) $tipoCambio->compra,
+        'venta' => (float) $tipoCambio->venta,
+        'source' => $tipoCambio->source,
+    ]);
+})->name('api.tipo-cambio');
 
 // Principal - Para todos los usuarios autenticados
 Route::middleware(['auth'])->group(function () {
@@ -34,8 +55,8 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-// Ruta para miembros y servidores - Mi Perfil
-Route::middleware(['auth', 'role:miembro,servidor'])->group(function () {
+// Ruta Mi Perfil - accesible para miembros, servidores, tesorero y asistente
+Route::middleware(['auth', 'role:miembro,servidor,tesorero,asistente'])->group(function () {
     Route::get('/mi-perfil', [App\Http\Controllers\MiPerfilController::class, 'index'])->name('mi-perfil.index');
 });
 
@@ -82,11 +103,11 @@ Route::middleware(['auth', 'role:admin,tesorero'])->group(function () {
             // Procesar tesoreros (filtrar vacíos)
             $tesoreros = [];
             $tesorerosImagenes = [];
-            if (!empty($data['firmas_tesoreros'])) {
+            if (! empty($data['firmas_tesoreros'])) {
                 foreach ($data['firmas_tesoreros'] as $t) {
                     $nombre = $t['nombre'] ?? '';
                     $imagen = $t['imagen'] ?? '';
-                    if (!empty($nombre) || !empty($imagen)) {
+                    if (! empty($nombre) || ! empty($imagen)) {
                         $tesoreros[] = $nombre;
                         $tesorerosImagenes[] = [
                             'nombre' => $nombre,
@@ -102,11 +123,12 @@ Route::middleware(['auth', 'role:admin,tesorero'])->group(function () {
                 'firmas_tesoreros' => $tesoreros,
                 'firmas_tesoreros_imagenes' => $tesorerosImagenes,
             ]);
+
             return redirect()->route('recuento.index', ['culto_id' => $culto->id])
                 ->with('success', 'Firmas de recuento actualizadas.');
         })->name('firmas.update');
     });
-    
+
     // Reportes de ingresos
     Route::get('/ingresos-asistencia', [IngresosAsistenciaController::class, 'index'])->name('ingresos-asistencia.index');
     Route::get('/ingresos-asistencia/ingresos', [IngresosAsistenciaController::class, 'ingresos'])->name('ingresos-asistencia.ingresos');
@@ -114,7 +136,7 @@ Route::middleware(['auth', 'role:admin,tesorero'])->group(function () {
     Route::get('/ingresos-asistencia/pdf-ingresos-transferencias', [IngresosAsistenciaController::class, 'pdfIngresosTransferencias'])->name('ingresos-asistencia.pdf-ingresos-transferencias');
     Route::get('/ingresos-asistencia/pdf-recuento/{culto}', [IngresosAsistenciaController::class, 'pdfRecuentoIndividual'])->name('ingresos-asistencia.pdf-recuento-individual');
     Route::get('/ingresos-asistencia/pdf-recuento-transferencias/{culto}', [IngresosAsistenciaController::class, 'pdfRecuentoTransferencias'])->name('ingresos-asistencia.pdf-recuento-transferencias');
-    
+
     // Reporte de Promesas
     Route::get('/ingresos-asistencia/promesas', [App\Http\Controllers\PromesasReporteController::class, 'index'])->name('ingresos-asistencia.promesas');
     Route::get('/ingresos-asistencia/pdf-promesas', [App\Http\Controllers\PromesasReporteController::class, 'pdfPromesas'])->name('ingresos-asistencia.pdf-promesas');
@@ -127,7 +149,7 @@ Route::middleware(['auth', 'role:admin,asistente', 'audit'])->group(function () 
     // Asistencia
     Route::post('asistencia/{asistencium}/cerrar', [AsistenciaController::class, 'cerrarAsistencia'])->name('asistencia.cerrar');
     Route::resource('asistencia', AsistenciaController::class);
-    
+
     // Reportes de asistencia
     Route::get('/ingresos-asistencia/asistencia', [IngresosAsistenciaController::class, 'asistencia'])->name('ingresos-asistencia.asistencia');
     Route::get('/ingresos-asistencia/pdf-asistencia', [IngresosAsistenciaController::class, 'pdfAsistencia'])->name('ingresos-asistencia.pdf-asistencia');
@@ -139,7 +161,7 @@ Route::middleware(['auth', 'role:admin,asistente', 'audit'])->group(function () 
 Route::middleware(['auth', 'role:admin', 'audit'])->group(function () {
     // Cultos
     Route::resource('cultos', CultoController::class);
-    
+
     // Administración de Clases de Asistencia
     Route::prefix('admin/clases')->name('admin.clases.')->group(function () {
         Route::get('/', [App\Http\Controllers\ClaseAsistenciaController::class, 'index'])->name('index');
@@ -149,7 +171,7 @@ Route::middleware(['auth', 'role:admin', 'audit'])->group(function () {
         Route::put('/{clase}', [App\Http\Controllers\ClaseAsistenciaController::class, 'update'])->name('update');
         Route::delete('/{clase}', [App\Http\Controllers\ClaseAsistenciaController::class, 'destroy'])->name('destroy');
     });
-    
+
     // Personas y Promesas
     Route::post('personas/{persona}/reiniciar-compromisos', [PersonaController::class, 'reiniciarCompromisos'])->name('personas.reiniciar-compromisos');
     Route::post('personas/{persona}/limpiar-todo', [PersonaController::class, 'limpiarTodo'])->name('personas.limpiar-todo');
@@ -157,15 +179,15 @@ Route::middleware(['auth', 'role:admin', 'audit'])->group(function () {
     Route::get('personas/reporte-general', [PersonaController::class, 'reporteGeneral'])->name('personas.reporte-general');
     Route::resource('personas', PersonaController::class);
     Route::resource('promesas', PromesaController::class);
-    
+
     // Compromisos
     Route::get('personas/{persona}/compromisos', [App\Http\Controllers\CompromisoController::class, 'show'])->name('compromisos.show');
     Route::post('compromisos/recalcular', [App\Http\Controllers\CompromisoController::class, 'recalcular'])->name('compromisos.recalcular');
-    
+
     // Limpieza de personas inactivas (temporal)
     Route::post('personas/limpiar-inactivas', [PersonaController::class, 'limpiarInactivas'])->name('personas.limpiar-inactivas');
     Route::post('personas/resetear-promesas', [PersonaController::class, 'resetearPromesas'])->name('personas.resetear-promesas');
-    
+
     // Gestión de Usuarios
     Route::resource('usuarios', App\Http\Controllers\UserController::class);
 
@@ -195,6 +217,22 @@ Route::middleware(['auth', 'super_admin'])->prefix('super-admin')->name('super-a
     Route::delete('tenants/{tenant}/domains/{domain}', [SATenantController::class, 'destroyDomain'])->name('tenants.destroy-domain');
     Route::get('tenants/{tenant}/users', [SATenantController::class, 'users'])->name('tenants.users');
     Route::post('tenants/{tenant}/toggle', [SATenantController::class, 'toggle'])->name('tenants.toggle');
+});
+
+// Asistencia App (React SPA)
+Route::get('/app/asistencia', fn () => view('asistencia-app.shell'));
+
+Route::post('/asistencia-app/login', [App\Http\Controllers\AsistenciaAppController::class, 'login']);
+
+Route::middleware(['auth'])->prefix('asistencia-app')->group(function () {
+    Route::get('/user', [App\Http\Controllers\AsistenciaAppController::class, 'user']);
+    Route::get('/cultos', [App\Http\Controllers\AsistenciaAppController::class, 'cultos']);
+    Route::get('/cultos/{culto}/resumen', [App\Http\Controllers\AsistenciaAppController::class, 'resumenCulto']);
+    Route::get('/clases', [App\Http\Controllers\AsistenciaAppController::class, 'clases']);
+    Route::get('/clases/{clase}/cumpleaneros', [App\Http\Controllers\AsistenciaAppController::class, 'cumpleaneros']);
+    Route::post('/asistencia/clase', [App\Http\Controllers\AsistenciaAppController::class, 'guardarAsistenciaClase']);
+    Route::post('/asistencia/capilla', [App\Http\Controllers\AsistenciaAppController::class, 'guardarAsistenciaCapilla']);
+    Route::post('/personas/quick-add', [App\Http\Controllers\AsistenciaAppController::class, 'quickAddPersona']);
 });
 
 require __DIR__.'/auth.php';

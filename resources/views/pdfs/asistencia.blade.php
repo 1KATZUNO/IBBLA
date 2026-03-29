@@ -50,6 +50,13 @@
                 <th>Hombres</th>
                 <th>Mujeres</th>
                 <th>Niños</th>
+                @if(isset($registroExtraTipos))
+                @foreach($registroExtraTipos as $tipo)
+                    @foreach($tipo->subcampos as $subcampo)
+                    <th style="background-color: {{ $tipo->color }};">{{ ucfirst($subcampo) }}</th>
+                    @endforeach
+                @endforeach
+                @endif
             </tr>
         </thead>
         <tbody>
@@ -58,6 +65,14 @@
                 $totalHombres = 0;
                 $totalMujeres = 0;
                 $totalNinos = 0;
+                $totalesExtra = [];
+                if (isset($registroExtraTipos)) {
+                    foreach ($registroExtraTipos as $tipo) {
+                        foreach ($tipo->subcampos as $subcampo) {
+                            $totalesExtra[$tipo->id . '_' . $subcampo] = 0;
+                        }
+                    }
+                }
             @endphp
             @foreach($cultos as $culto)
             @if($culto->asistencia)
@@ -78,6 +93,18 @@
                 <td style="text-align: center;">{{ $hombres }}</td>
                 <td style="text-align: center;">{{ $mujeres }}</td>
                 <td style="text-align: center;">{{ $ninos }}</td>
+                @if(isset($registroExtraTipos))
+                @foreach($registroExtraTipos as $tipo)
+                    @php $registro = $culto->asistencia->registrosExtra->firstWhere('registro_extra_tipo_id', $tipo->id); @endphp
+                    @foreach($tipo->subcampos as $subcampo)
+                    @php
+                        $val = $registro ? ($registro->valores[$subcampo] ?? 0) : 0;
+                        $totalesExtra[$tipo->id . '_' . $subcampo] += $val;
+                    @endphp
+                    <td style="text-align: center;">{{ $val }}</td>
+                    @endforeach
+                @endforeach
+                @endif
             </tr>
             @endif
             @endforeach
@@ -87,6 +114,13 @@
                 <td style="text-align: center;">{{ $totalHombres }}</td>
                 <td style="text-align: center;">{{ $totalMujeres }}</td>
                 <td style="text-align: center;">{{ $totalNinos }}</td>
+                @if(isset($registroExtraTipos))
+                @foreach($registroExtraTipos as $tipo)
+                    @foreach($tipo->subcampos as $subcampo)
+                    <td style="text-align: center;">{{ $totalesExtra[$tipo->id . '_' . $subcampo] }}</td>
+                    @endforeach
+                @endforeach
+                @endif
             </tr>
         </tbody>
     </table>

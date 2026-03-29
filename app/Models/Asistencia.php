@@ -64,6 +64,23 @@ class Asistencia extends Model
         return $this->hasMany(AsistenciaClaseDetalle::class);
     }
 
+    public function registrosEspeciales(): HasMany
+    {
+        return $this->hasMany(RegistroEspecial::class);
+    }
+
+    public function registrosExtra(): HasMany
+    {
+        return $this->hasMany(AsistenciaRegistroExtra::class);
+    }
+
+    public function getRegistroExtra(string $tipoSlug): ?AsistenciaRegistroExtra
+    {
+        return $this->registrosExtra->first(function ($registro) use ($tipoSlug) {
+            return $registro->tipo && $registro->tipo->slug === $tipoSlug;
+        });
+    }
+
     public function detalleClase(string $slug): ?AsistenciaClaseDetalle
     {
         return $this->detallesClases->first(function ($detalle) use ($slug) {
@@ -75,12 +92,8 @@ class Asistencia extends Model
     {
         return ($this->chapel_adultos_hombres ?? 0) +
                ($this->chapel_adultos_mujeres ?? 0) +
-               ($this->chapel_adultos_mayores_hombres ?? 0) +
-               ($this->chapel_adultos_mayores_mujeres ?? 0) +
                ($this->chapel_jovenes_masculinos ?? 0) +
-               ($this->chapel_jovenes_femeninas ?? 0) +
-               ($this->chapel_maestros_hombres ?? 0) +
-               ($this->chapel_maestros_mujeres ?? 0);
+               ($this->chapel_jovenes_femeninas ?? 0);
     }
 
     public function getTotalClases(): int
@@ -121,18 +134,14 @@ class Asistencia extends Model
     public function getTotalHombres(): int
     {
         return ($this->chapel_adultos_hombres ?? 0) +
-               ($this->chapel_adultos_mayores_hombres ?? 0) +
                ($this->chapel_jovenes_masculinos ?? 0) +
-               ($this->chapel_maestros_hombres ?? 0) +
                $this->getTotalClasesHombres();
     }
 
     public function getTotalMujeres(): int
     {
         return ($this->chapel_adultos_mujeres ?? 0) +
-               ($this->chapel_adultos_mayores_mujeres ?? 0) +
                ($this->chapel_jovenes_femeninas ?? 0) +
-               ($this->chapel_maestros_mujeres ?? 0) +
                $this->getTotalClasesMujeres();
     }
 

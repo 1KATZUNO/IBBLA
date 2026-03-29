@@ -99,8 +99,8 @@
                     <span class="font-medium">Cumpleañeros</span>
                 </a>
 
-                @if(Auth::user()->isMiembro() || Auth::user()->rol === 'servidor')
-                <!-- Yo - Menu exclusivo para miembros y servidores -->
+                @if(Auth::user()->isMiembro() || in_array(Auth::user()->rol, ['servidor', 'tesorero', 'asistente']))
+                <!-- Yo - Menu para usuarios con persona asociada -->
                 <a href="{{ route('mi-perfil.index') }}" class="nav-link group flex items-center px-4 py-3 rounded-lg transition-colors duration-200 {{ request()->routeIs('mi-perfil.*') ? 'nav-item-active' : 'nav-item-default' }}">
                     <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>

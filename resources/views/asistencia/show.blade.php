@@ -55,22 +55,10 @@
                         <td class="px-4 py-2 text-sm text-center font-semibold">{{ ($asistencia->chapel_adultos_hombres ?? 0) + ($asistencia->chapel_adultos_mujeres ?? 0) }}</td>
                     </tr>
                     <tr>
-                        <td class="px-4 py-2 text-sm text-gray-700 pl-8">Adultos Mayores</td>
-                        <td class="px-4 py-2 text-sm text-center">{{ $asistencia->chapel_adultos_mayores_hombres ?? 0 }}</td>
-                        <td class="px-4 py-2 text-sm text-center">{{ $asistencia->chapel_adultos_mayores_mujeres ?? 0 }}</td>
-                        <td class="px-4 py-2 text-sm text-center font-semibold">{{ ($asistencia->chapel_adultos_mayores_hombres ?? 0) + ($asistencia->chapel_adultos_mayores_mujeres ?? 0) }}</td>
-                    </tr>
-                    <tr>
                         <td class="px-4 py-2 text-sm text-gray-700 pl-8">Jovenes</td>
                         <td class="px-4 py-2 text-sm text-center">{{ $asistencia->chapel_jovenes_masculinos ?? 0 }}</td>
                         <td class="px-4 py-2 text-sm text-center">{{ $asistencia->chapel_jovenes_femeninas ?? 0 }}</td>
                         <td class="px-4 py-2 text-sm text-center font-semibold">{{ ($asistencia->chapel_jovenes_masculinos ?? 0) + ($asistencia->chapel_jovenes_femeninas ?? 0) }}</td>
-                    </tr>
-                    <tr>
-                        <td class="px-4 py-2 text-sm text-gray-700 pl-8">Maestros</td>
-                        <td class="px-4 py-2 text-sm text-center">{{ $asistencia->chapel_maestros_hombres ?? 0 }}</td>
-                        <td class="px-4 py-2 text-sm text-center">{{ $asistencia->chapel_maestros_mujeres ?? 0 }}</td>
-                        <td class="px-4 py-2 text-sm text-center font-semibold">{{ ($asistencia->chapel_maestros_hombres ?? 0) + ($asistencia->chapel_maestros_mujeres ?? 0) }}</td>
                     </tr>
 
                     <!-- CLASES -->
@@ -176,7 +164,7 @@
             <div class="bg-blue-50 rounded-lg p-4 border-2 border-blue-200">
                 <div class="text-sm text-gray-600 mb-1">Total Capilla</div>
                 <div class="text-3xl font-bold text-blue-600">{{ $asistencia->getTotalCapilla() }}</div>
-                <div class="text-xs text-gray-500 mt-1">Con maestros capilla</div>
+                <div class="text-xs text-gray-500 mt-1">Adultos + Jóvenes</div>
             </div>
 
             <div class="bg-green-50 rounded-lg p-4 border-2 border-green-200">

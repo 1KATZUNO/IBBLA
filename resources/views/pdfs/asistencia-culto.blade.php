@@ -47,20 +47,14 @@
         <tr>
             <th>Adultos Hombres</th>
             <th>Adultos Mujeres</th>
-            <th>Adultos Mayores Hombres</th>
-            <th>Adultos Mayores Mujeres</th>
             <th>Jóvenes Masculinos</th>
             <th>Jóvenes Femeninas</th>
-            <th>Maestros Hombres</th>
         </tr>
         <tr>
             <td>{{ $culto->asistencia->chapel_adultos_hombres }}</td>
             <td>{{ $culto->asistencia->chapel_adultos_mujeres }}</td>
-            <td>{{ $culto->asistencia->chapel_adultos_mayores_hombres }}</td>
-            <td>{{ $culto->asistencia->chapel_adultos_mayores_mujeres }}</td>
             <td>{{ $culto->asistencia->chapel_jovenes_masculinos }}</td>
             <td>{{ $culto->asistencia->chapel_jovenes_femeninas }}</td>
-            <td>{{ $culto->asistencia->chapel_maestros_hombres }}</td>
         </tr>
     </table>
 

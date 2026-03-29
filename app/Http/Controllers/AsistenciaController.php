@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Culto;
 use App\Models\Asistencia;
-use App\Models\ClaseAsistencia;
 use App\Models\AsistenciaClaseDetalle;
-use App\Models\Persona;
+use App\Models\AsistenciaRegistroExtra;
+use App\Models\ClaseAsistencia;
+use App\Models\Culto;
+use App\Models\RegistroExtraTipo;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -19,12 +20,59 @@ class AsistenciaController extends Controller
 
     private function getMaestrosPorClase()
     {
-        return Persona::where('activo', true)
-            ->where('es_maestro', true)
-            ->whereNotNull('clase_asistencia_id')
-            ->orderBy('nombre')
-            ->get()
-            ->groupBy('clase_asistencia_id');
+        $clases = ClaseAsistencia::activas()->regulares()->ordenadas()
+            ->with(['maestros' => function ($q) {
+                $q->where('activo', true)->orderBy('nombre');
+            }])
+            ->get();
+
+        $grouped = collect();
+        foreach ($clases as $clase) {
+            if ($clase->maestros->isNotEmpty()) {
+                $grouped[$clase->id] = $clase->maestros;
+            }
+        }
+
+        return $grouped;
+    }
+
+    private function getRegistroExtraTipos()
+    {
+        return RegistroExtraTipo::activos()->ordenados()->get();
+    }
+
+    private function buildRegistroExtraValidationRules($tipos): array
+    {
+        $rules = [];
+        foreach ($tipos as $tipo) {
+            foreach ($tipo->subcampos as $subcampo) {
+                $rules["registro_extra.{$tipo->id}.{$subcampo}"] = 'nullable|integer|min:0';
+            }
+        }
+
+        return $rules;
+    }
+
+    private function saveRegistrosExtra(Asistencia $asistencia, array $registroExtraData, $tipos): void
+    {
+        $asistencia->registrosExtra()->delete();
+
+        foreach ($tipos as $tipo) {
+            if (isset($registroExtraData[$tipo->id])) {
+                $valores = [];
+                foreach ($tipo->subcampos as $subcampo) {
+                    $valores[$subcampo] = (int) ($registroExtraData[$tipo->id][$subcampo] ?? 0);
+                }
+
+                if (array_sum($valores) > 0) {
+                    AsistenciaRegistroExtra::create([
+                        'asistencia_id' => $asistencia->id,
+                        'registro_extra_tipo_id' => $tipo->id,
+                        'valores' => $valores,
+                    ]);
+                }
+            }
+        }
     }
 
     private function buildClaseValidationRules($clases): array
@@ -38,6 +86,7 @@ class AsistenciaController extends Controller
                 $rules["clase.{$clase->id}.maestros_ids.*"] = 'exists:personas,id';
             }
         }
+
         return $rules;
     }
 
@@ -59,7 +108,7 @@ class AsistenciaController extends Controller
                     'mujeres' => $data['mujeres'] ?? 0,
                     'maestros_hombres' => $totalMaestros,
                     'maestros_mujeres' => 0,
-                    'maestros_ids' => !empty($maestrosIds) ? $maestrosIds : null,
+                    'maestros_ids' => ! empty($maestrosIds) ? $maestrosIds : null,
                 ]);
             }
         }
@@ -68,7 +117,7 @@ class AsistenciaController extends Controller
     public function index(Request $request)
     {
         $query = Culto::with(['asistencia.detallesClases.claseAsistencia'])
-            ->whereHas('asistencia', function($query) {
+            ->whereHas('asistencia', function ($query) {
                 $query->where('cerrado', false);
             });
 
@@ -97,23 +146,22 @@ class AsistenciaController extends Controller
         $cultos = Culto::whereDoesntHave('asistencia')->orderBy('fecha', 'desc')->get();
         $clases = $this->getClasesActivas();
         $maestrosPorClase = $this->getMaestrosPorClase();
-        return view('asistencia.create', compact('cultos', 'clases', 'maestrosPorClase'));
+        $registroExtraTipos = $this->getRegistroExtraTipos();
+
+        return view('asistencia.create', compact('cultos', 'clases', 'maestrosPorClase', 'registroExtraTipos'));
     }
 
     public function store(Request $request)
     {
         $clases = $this->getClasesActivas();
+        $registroExtraTipos = $this->getRegistroExtraTipos();
 
         $rules = [
             'culto_id' => 'required|exists:cultos,id|unique:asistencia,culto_id',
             'chapel_adultos_hombres' => 'required|integer|min:0',
             'chapel_adultos_mujeres' => 'required|integer|min:0',
-            'chapel_adultos_mayores_hombres' => 'required|integer|min:0',
-            'chapel_adultos_mayores_mujeres' => 'required|integer|min:0',
             'chapel_jovenes_masculinos' => 'required|integer|min:0',
             'chapel_jovenes_femeninas' => 'required|integer|min:0',
-            'chapel_maestros_hombres' => 'required|integer|min:0',
-            'chapel_maestros_mujeres' => 'required|integer|min:0',
             'total_asistencia' => 'required|integer|min:0',
             'salvos_adulto_hombre' => 'required|integer|min:0',
             'salvos_adulto_mujer' => 'required|integer|min:0',
@@ -136,15 +184,17 @@ class AsistenciaController extends Controller
         ];
 
         $rules = array_merge($rules, $this->buildClaseValidationRules($clases));
+        $rules = array_merge($rules, $this->buildRegistroExtraValidationRules($registroExtraTipos));
         $validated = $request->validate($rules);
 
-        DB::transaction(function () use ($validated, $request, $clases) {
-            // Extraer datos de clases antes de crear asistencia
+        DB::transaction(function () use ($validated, $request, $clases, $registroExtraTipos) {
             $clasesData = $request->input('clase', []);
-            unset($validated['clase']);
+            $registroExtraData = $request->input('registro_extra', []);
+            unset($validated['clase'], $validated['registro_extra']);
 
             $asistencia = Asistencia::create($validated);
             $this->saveClaseDetalles($asistencia, $clasesData, $clases);
+            $this->saveRegistrosExtra($asistencia, $registroExtraData, $registroExtraTipos);
         });
 
         return redirect()->route('asistencia.index')
@@ -154,15 +204,18 @@ class AsistenciaController extends Controller
     public function show(Asistencia $asistencium)
     {
         $asistencium->load(['culto', 'detallesClases.claseAsistencia']);
+
         return view('asistencia.show', ['asistencia' => $asistencium]);
     }
 
     public function edit(Asistencia $asistencium)
     {
-        $asistencium->load('detallesClases.claseAsistencia');
+        $asistencium->load(['detallesClases.claseAsistencia', 'registrosExtra.tipo']);
         $clases = $this->getClasesActivas();
         $maestrosPorClase = $this->getMaestrosPorClase();
-        return view('asistencia.edit', ['asistencia' => $asistencium, 'clases' => $clases, 'maestrosPorClase' => $maestrosPorClase]);
+        $registroExtraTipos = $this->getRegistroExtraTipos();
+
+        return view('asistencia.edit', ['asistencia' => $asistencium, 'clases' => $clases, 'maestrosPorClase' => $maestrosPorClase, 'registroExtraTipos' => $registroExtraTipos]);
     }
 
     public function update(Request $request, Asistencia $asistencium)
@@ -177,12 +230,8 @@ class AsistenciaController extends Controller
         $rules = [
             'chapel_adultos_hombres' => 'required|integer|min:0',
             'chapel_adultos_mujeres' => 'required|integer|min:0',
-            'chapel_adultos_mayores_hombres' => 'required|integer|min:0',
-            'chapel_adultos_mayores_mujeres' => 'required|integer|min:0',
             'chapel_jovenes_masculinos' => 'required|integer|min:0',
             'chapel_jovenes_femeninas' => 'required|integer|min:0',
-            'chapel_maestros_hombres' => 'required|integer|min:0',
-            'chapel_maestros_mujeres' => 'required|integer|min:0',
             'total_asistencia' => 'required|integer|min:0',
             'salvos_adulto_hombre' => 'required|integer|min:0',
             'salvos_adulto_mujer' => 'required|integer|min:0',
@@ -204,15 +253,19 @@ class AsistenciaController extends Controller
             'visitas_nina' => 'required|integer|min:0',
         ];
 
+        $registroExtraTipos = $this->getRegistroExtraTipos();
         $rules = array_merge($rules, $this->buildClaseValidationRules($clases));
+        $rules = array_merge($rules, $this->buildRegistroExtraValidationRules($registroExtraTipos));
         $validated = $request->validate($rules);
 
-        DB::transaction(function () use ($validated, $request, $asistencium, $clases) {
+        DB::transaction(function () use ($validated, $request, $asistencium, $clases, $registroExtraTipos) {
             $clasesData = $request->input('clase', []);
-            unset($validated['clase']);
+            $registroExtraData = $request->input('registro_extra', []);
+            unset($validated['clase'], $validated['registro_extra']);
 
             $asistencium->update($validated);
             $this->saveClaseDetalles($asistencium, $clasesData, $clases);
+            $this->saveRegistrosExtra($asistencium, $registroExtraData, $registroExtraTipos);
         });
 
         return redirect()->route('asistencia.index')
@@ -222,7 +275,7 @@ class AsistenciaController extends Controller
     public function destroy(Asistencia $asistencium)
     {
         // Solo admin y asistente pueden eliminar asistencias
-        if (!in_array(auth()->user()->rol, ['admin', 'asistente'])) {
+        if (! in_array(auth()->user()->rol, ['admin', 'asistente'])) {
             return redirect()->route('asistencia.index')
                 ->with('error', 'No tienes permiso para eliminar asistencias.');
         }

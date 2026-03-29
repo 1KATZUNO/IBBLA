@@ -53,22 +53,6 @@
                             </select>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Adultos Mayores Hombres</label>
-                            <select name="chapel_adultos_mayores_hombres" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 asistencia-input" required>
-                                @for($i = 0; $i <= 100; $i++)
-                                    <option value="{{ $i }}" {{ old('chapel_adultos_mayores_hombres', 0) == $i ? 'selected' : '' }}>{{ $i }}</option>
-                                @endfor
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Adultos Mayores Mujeres</label>
-                            <select name="chapel_adultos_mayores_mujeres" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 asistencia-input" required>
-                                @for($i = 0; $i <= 100; $i++)
-                                    <option value="{{ $i }}" {{ old('chapel_adultos_mayores_mujeres', 0) == $i ? 'selected' : '' }}>{{ $i }}</option>
-                                @endfor
-                            </select>
-                        </div>
-                        <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Jovenes Masculinos</label>
                             <select name="chapel_jovenes_masculinos" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 asistencia-input" required>
                                 @for($i = 0; $i <= 100; $i++)
@@ -81,22 +65,6 @@
                             <select name="chapel_jovenes_femeninas" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 asistencia-input" required>
                                 @for($i = 0; $i <= 100; $i++)
                                     <option value="{{ $i }}" {{ old('chapel_jovenes_femeninas', 0) == $i ? 'selected' : '' }}>{{ $i }}</option>
-                                @endfor
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Maestros Hombres</label>
-                            <select name="chapel_maestros_hombres" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 asistencia-input" required>
-                                @for($i = 0; $i <= 100; $i++)
-                                    <option value="{{ $i }}" {{ old('chapel_maestros_hombres', 0) == $i ? 'selected' : '' }}>{{ $i }}</option>
-                                @endfor
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Maestras Mujeres</label>
-                            <select name="chapel_maestros_mujeres" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 asistencia-input" required>
-                                @for($i = 0; $i <= 100; $i++)
-                                    <option value="{{ $i }}" {{ old('chapel_maestros_mujeres', 0) == $i ? 'selected' : '' }}>{{ $i }}</option>
                                 @endfor
                             </select>
                         </div>
@@ -341,6 +309,35 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Registros Extra (no suman a personas) -->
+                @foreach($registroExtraTipos as $tipo)
+                <div class="border rounded-lg overflow-hidden" style="border-color: {{ $tipo->color }}40;">
+                    <button type="button" onclick="toggleSection('extra-{{ $tipo->id }}')" class="w-full px-4 py-3 hover:opacity-80 flex justify-between items-center" style="background-color: {{ $tipo->color }}15;">
+                        <h3 class="text-lg font-semibold" style="color: {{ $tipo->color }};">
+                            {{ $tipo->nombre }}
+                            <span class="text-xs font-normal text-gray-500 ml-2">(no suma a personas)</span>
+                        </h3>
+                        <svg id="extra-{{ $tipo->id }}-icon" class="w-5 h-5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                    </button>
+                    <div id="extra-{{ $tipo->id }}-content" class="p-4 hidden">
+                        <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                            @foreach($tipo->subcampos as $subcampo)
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">{{ ucfirst($subcampo) }}</label>
+                                <select name="registro_extra[{{ $tipo->id }}][{{ $subcampo }}]" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                    @for($i = 0; $i <= 500; $i++)
+                                        <option value="{{ $i }}" {{ old("registro_extra.{$tipo->id}.{$subcampo}", 0) == $i ? 'selected' : '' }}>{{ $i }}</option>
+                                    @endfor
+                                </select>
+                            </div>
+                            @endforeach
+                        </div>
+                    </div>
+                </div>
+                @endforeach
 
                 <!-- Total Asistencia -->
                 <div class="bg-blue-50 rounded-lg p-6">
