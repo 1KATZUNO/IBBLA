@@ -109,7 +109,7 @@
                 @enderror
             </div>
 
-            <div class="flex justify-end gap-3 sticky bottom-0 bg-white py-4 border-t border-gray-200 -mx-6 px-6 z-10">
+            <div class="flex justify-end gap-3 sticky bottom-0 bg-white pb-[env(safe-area-inset-bottom,16px)] pt-4 border-t border-gray-200 -mx-6 px-6 z-10" style="padding-bottom: max(1rem, env(safe-area-inset-bottom));">
                 <a href="{{ route('recuento.index', ['culto_id' => $sobre->culto_id]) }}" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
                     Cancelar
                 </a>
@@ -117,6 +117,7 @@
                     Actualizar Sobre
                 </button>
             </div>
+            <div class="h-2"></div>
         </form>
     </div>
 </div>
