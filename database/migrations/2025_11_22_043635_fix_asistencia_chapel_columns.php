@@ -17,10 +17,10 @@ return new class extends Migration
                 $table->renameColumn('chapel_jovenes', 'chapel_jovenes_masculinos');
             }
             // Si no existe chapel_jovenes_masculinos, crearla
-            if (!Schema::hasColumn('asistencia', 'chapel_jovenes_masculinos')) {
+            if (! Schema::hasColumn('asistencia', 'chapel_jovenes_masculinos')) {
                 $table->integer('chapel_jovenes_masculinos')->default(0)->after('chapel_adultos');
             }
-            if (!Schema::hasColumn('asistencia', 'chapel_jovenes_femeninas')) {
+            if (! Schema::hasColumn('asistencia', 'chapel_jovenes_femeninas')) {
                 $table->integer('chapel_jovenes_femeninas')->default(0)->after('chapel_jovenes_masculinos');
             }
         });

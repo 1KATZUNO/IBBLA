@@ -3,14 +3,15 @@
 namespace App\Models;
 
 use App\Models\Traits\BelongsToTenant;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
-use Carbon\Carbon;
 
 class Culto extends Model
 {
     use BelongsToTenant;
+
     protected $table = 'cultos';
 
     protected $fillable = [
@@ -26,6 +27,7 @@ class Culto extends Model
         'cerrado',
         'cerrado_at',
         'cerrado_por',
+        'tipo_cambio_venta',
         'tenant_id',
         'service_type_id',
     ];
@@ -111,6 +113,7 @@ class Culto extends Model
             'sabado' => 'Sabado',
             'especial' => 'Especial',
         ];
+
         return $map[$this->tipo_culto] ?? ucfirst($this->tipo_culto ?? '');
     }
 }

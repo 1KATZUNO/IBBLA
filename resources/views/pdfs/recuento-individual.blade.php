@@ -27,6 +27,7 @@
         .badge { display: inline-block; padding: 2px 6px; border-radius: 3px; font-size: 8px; }
         .badge-efectivo { background-color: #d1fae5; color: #065f46; }
         .badge-transferencia { background-color: #dbeafe; color: #1e40af; }
+        .badge-usd { background-color: #fef3c7; color: #92400e; font-size: 7px; padding: 1px 4px; border-radius: 3px; display: inline-block; }
         
         /* Resumen por categorías */
         .resumen-box { margin-top: 20px; padding: 10px; background-color: #fef3c7; border-radius: 5px; }
@@ -140,7 +141,12 @@
                 @foreach($categories as $cat)
                 <td class="text-right">{{ number_format($detallesPorCategoria->get($cat->slug)->monto ?? 0, 2) }}</td>
                 @endforeach
-                <td class="text-right subtotal">{{ number_format($sobre->total_declarado, 2) }}</td>
+                <td class="text-right subtotal">
+                    {{ number_format($sobre->total_declarado, 2) }}
+                    @if(($sobre->moneda ?? 'CRC') === 'USD')
+                        <br><span class="badge-usd">USD ${{ number_format($sobre->monto_original_usd ?? $sobre->total_declarado, 2) }}</span>
+                    @endif
+                </td>
             </tr>
             @endforeach
 
@@ -263,6 +269,13 @@
             </tr>
         </table>
     </div>
+
+    @php $tipoCambio = \App\Models\TipoCambio::hoy(); @endphp
+    @if($tipoCambio && $culto->sobres->where('moneda', 'USD')->count() > 0)
+    <div style="background-color: #fef3c7; padding: 8px; border-radius: 5px; margin-top: 10px; font-size: 8px; border-left: 4px solid #f59e0b;">
+        <strong>Nota:</strong> Los sobres en USD fueron convertidos a ₡ colones usando tipo de cambio ₡{{ number_format($tipoCambio->venta, 2) }} ({{ $tipoCambio->fecha->format('d/m/Y') }}).
+    </div>
+    @endif
 
     <div class="footer">
         <p>Sistema de Administracion - {{ $tenantSiglas }} - {{ $tenantNombre }}</p>

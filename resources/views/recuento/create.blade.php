@@ -128,12 +128,12 @@
                 </div>
             </div>
 
-            <div class="mt-6 flex justify-end gap-3">
-                <a href="{{ route('recuento.index', ['culto_id' => $culto ? $culto->id : '']) }}" 
+            <div class="mt-6 flex justify-end gap-3 sticky bottom-0 bg-white py-4 border-t border-gray-200 -mx-6 px-6 z-10">
+                <a href="{{ route('recuento.index', ['culto_id' => $culto ? $culto->id : '']) }}"
                    class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
                     Cancelar
                 </a>
-                <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                <button type="submit" id="btnGuardarSobre" class="px-5 py-2.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-medium min-w-[140px]">
                     Guardar Sobre
                 </button>
             </div>
@@ -144,6 +144,20 @@
 @push('scripts')
 <script>
     document.addEventListener('DOMContentLoaded', function() {
+        // Prevenir doble envío del formulario
+        const sobreForm = document.getElementById('sobreForm');
+        let isSubmitting = false;
+        sobreForm.addEventListener('submit', function(e) {
+            if (isSubmitting) {
+                e.preventDefault();
+                return false;
+            }
+            isSubmitting = true;
+            const btn = document.getElementById('btnGuardarSobre');
+            btn.disabled = true;
+            btn.innerHTML = '<svg class="animate-spin h-5 w-5 inline mr-2" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Guardando...';
+        });
+
         const inputs = document.querySelectorAll('.detalle-monto');
         const totalElement = document.getElementById('totalDeclarado');
         const buscarInput = document.getElementById('buscarPersona');

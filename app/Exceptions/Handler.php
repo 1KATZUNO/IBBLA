@@ -2,8 +2,8 @@
 
 namespace App\Exceptions;
 
-use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Illuminate\Auth\AuthenticationException;
+use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Throwable;
 
@@ -34,7 +34,6 @@ class Handler extends ExceptionHandler
      * Render an exception into an HTTP response.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @param  \Throwable  $e
      * @return \Symfony\Component\HttpFoundation\Response
      *
      * @throws \Throwable
@@ -52,7 +51,7 @@ class Handler extends ExceptionHandler
         }
 
         // Manejar errores 500 (Server Error) solo en producción
-        if ($e instanceof HttpException && $e->getStatusCode() === 500 && !config('app.debug')) {
+        if ($e instanceof HttpException && $e->getStatusCode() === 500 && ! config('app.debug')) {
             return response()->view('errors.500', [], 500);
         }
 

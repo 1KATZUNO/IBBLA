@@ -11,12 +11,14 @@ class PromesaController extends Controller
     public function index()
     {
         $promesas = Promesa::with('persona')->paginate(20);
+
         return view('promesas.index', compact('promesas'));
     }
 
     public function create()
     {
         $personas = Persona::where('activo', true)->get();
+
         return view('promesas.create', compact('personas'));
     }
 
@@ -26,8 +28,11 @@ class PromesaController extends Controller
             'persona_id' => 'required|exists:personas,id',
             'categoria' => 'required|string',
             'monto' => 'required|numeric|min:0',
+            'moneda' => 'nullable|in:CRC,USD',
             'frecuencia' => 'required|in:semanal,quincenal,mensual',
         ]);
+
+        $validated['moneda'] = $validated['moneda'] ?? 'CRC';
 
         Promesa::create($validated);
 
@@ -38,12 +43,14 @@ class PromesaController extends Controller
     public function show(Promesa $promesa)
     {
         $promesa->load('persona');
+
         return view('promesas.show', compact('promesa'));
     }
 
     public function edit(Promesa $promesa)
     {
         $personas = Persona::where('activo', true)->get();
+
         return view('promesas.edit', compact('promesa', 'personas'));
     }
 
@@ -53,8 +60,11 @@ class PromesaController extends Controller
             'persona_id' => 'required|exists:personas,id',
             'categoria' => 'required|string',
             'monto' => 'required|numeric|min:0',
+            'moneda' => 'nullable|in:CRC,USD',
             'frecuencia' => 'required|in:semanal,quincenal,mensual',
         ]);
+
+        $validated['moneda'] = $validated['moneda'] ?? 'CRC';
 
         $promesa->update($validated);
 

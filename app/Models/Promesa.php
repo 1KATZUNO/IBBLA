@@ -13,6 +13,7 @@ class Promesa extends Model
         'persona_id',
         'categoria',
         'monto',
+        'moneda',
         'frecuencia',
     ];
 
@@ -23,5 +24,15 @@ class Promesa extends Model
     public function persona(): BelongsTo
     {
         return $this->belongsTo(Persona::class);
+    }
+
+    public function esUsd(): bool
+    {
+        return $this->moneda === 'USD';
+    }
+
+    public function getSimboloMonedaAttribute(): string
+    {
+        return $this->moneda === 'USD' ? '$' : '₡';
     }
 }

@@ -107,8 +107,12 @@
 
     <!-- Nota Informativa -->
     <div class="nota">
-        <strong>Nota:</strong> Este reporte muestra los datos del mes seleccionado. El profit representa el monto extra 
+        <strong>Nota:</strong> Este reporte muestra los datos del mes seleccionado. El profit representa el monto extra
         dado por encima de lo prometido en ese mes específico.
+        @php $tipoCambio = \App\Models\TipoCambio::hoy(); @endphp
+        @if($tipoCambio)
+        <br><strong>Tipo de cambio:</strong> Los montos en USD fueron convertidos a ₡ colones usando el tipo de cambio de ₡{{ number_format($tipoCambio->venta, 2) }} ({{ $tipoCambio->fecha->format('d/m/Y') }}).
+        @endif
     </div>
     
     <div class="footer">

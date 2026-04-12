@@ -13,7 +13,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
-use Illuminate\Validation\Rule;
 
 class TenantController extends Controller
 {
@@ -24,8 +23,8 @@ class TenantController extends Controller
         if ($search = $request->get('search')) {
             $query->where(function ($q) use ($search) {
                 $q->where('nombre', 'like', "%{$search}%")
-                  ->orWhere('siglas', 'like', "%{$search}%")
-                  ->orWhere('slug', 'like', "%{$search}%");
+                    ->orWhere('siglas', 'like', "%{$search}%")
+                    ->orWhere('slug', 'like', "%{$search}%");
             });
         }
 
@@ -70,7 +69,7 @@ class TenantController extends Controller
             'nombre' => 'required|string|max:255',
             'siglas' => 'required|string|max:20',
             'dominio' => 'required|string|max:255|unique:tenant_email_domains,dominio',
-            'color_theme' => 'required|string|in:' . implode(',', array_keys(Tenant::COLOR_THEMES)),
+            'color_theme' => 'required|string|in:'.implode(',', array_keys(Tenant::COLOR_THEMES)),
             'moneda_codigo' => 'required|string|in:CRC,USD,EUR',
             'timezone' => 'required|string|max:50',
             'admin_email' => 'required|email|unique:users,email',
@@ -88,7 +87,7 @@ class TenantController extends Controller
         $originalSlug = $slug;
         $counter = 1;
         while (Tenant::where('slug', $slug)->exists()) {
-            $slug = $originalSlug . '-' . $counter++;
+            $slug = $originalSlug.'-'.$counter++;
         }
 
         // Create tenant
@@ -206,7 +205,7 @@ class TenantController extends Controller
             'telefono' => $validated['telefono'],
             'email_contacto' => $validated['email_contacto'],
             'sitio_web' => $validated['sitio_web'],
-            'redes_sociales' => !empty($redes) ? $redes : null,
+            'redes_sociales' => ! empty($redes) ? $redes : null,
         ]);
 
         return redirect()->route('super-admin.tenants.index')
@@ -224,7 +223,7 @@ class TenantController extends Controller
 
     public function toggle(Tenant $tenant)
     {
-        $tenant->update(['activo' => !$tenant->activo]);
+        $tenant->update(['activo' => ! $tenant->activo]);
         $estado = $tenant->activo ? 'activada' : 'desactivada';
 
         return redirect()->back()
@@ -236,13 +235,14 @@ class TenantController extends Controller
     public function branding(Tenant $tenant)
     {
         $themes = Tenant::COLOR_THEMES;
+
         return view('super-admin.tenants.branding', compact('tenant', 'themes'));
     }
 
     public function updateBranding(Request $request, Tenant $tenant)
     {
         $validated = $request->validate([
-            'color_theme' => 'required|string|in:' . implode(',', array_keys(Tenant::COLOR_THEMES)),
+            'color_theme' => 'required|string|in:'.implode(',', array_keys(Tenant::COLOR_THEMES)),
             'logo' => 'nullable|image|max:2048',
         ]);
 
@@ -267,6 +267,7 @@ class TenantController extends Controller
     public function categories(Tenant $tenant)
     {
         $categories = $tenant->categories()->orderBy('orden')->get();
+
         return view('super-admin.tenants.categories', compact('tenant', 'categories'));
     }
 
@@ -284,7 +285,7 @@ class TenantController extends Controller
         $originalSlug = $slug;
         $counter = 1;
         while ($tenant->categories()->where('slug', $slug)->exists()) {
-            $slug = $originalSlug . '_' . $counter++;
+            $slug = $originalSlug.'_'.$counter++;
         }
 
         $tenant->categories()->create([
@@ -335,6 +336,7 @@ class TenantController extends Controller
     public function domains(Tenant $tenant)
     {
         $domains = $tenant->emailDomains()->orderByDesc('principal')->get();
+
         return view('super-admin.tenants.domains', compact('tenant', 'domains'));
     }
 

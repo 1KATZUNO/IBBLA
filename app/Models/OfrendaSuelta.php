@@ -12,15 +12,42 @@ class OfrendaSuelta extends Model
     protected $fillable = [
         'culto_id',
         'monto',
+        'moneda',
+        'tipo_cambio_venta',
         'metodo_pago',
     ];
 
     protected $casts = [
         'monto' => 'decimal:2',
+        'tipo_cambio_venta' => 'decimal:4',
     ];
 
     public function culto(): BelongsTo
     {
         return $this->belongsTo(Culto::class);
+    }
+
+    public function esUsd(): bool
+    {
+        return $this->moneda === 'USD';
+    }
+
+    public function getSimboloMonedaAttribute(): string
+    {
+        return $this->moneda === 'USD' ? '$' : '₡';
+    }
+
+    /**
+     * Monto convertido a colones.
+     */
+    public function getMontoCrcAttribute(): float
+    {
+        if ($this->moneda !== 'USD') {
+            return (float) $this->monto;
+        }
+
+        $tc = (float) ($this->tipo_cambio_venta ?? 0);
+
+        return $tc > 0 ? round((float) $this->monto * $tc, 2) : (float) $this->monto;
     }
 }

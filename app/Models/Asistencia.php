@@ -2,16 +2,20 @@
 
 namespace App\Models;
 
+use App\Models\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Asistencia extends Model
 {
+    use BelongsToTenant;
+
     protected $table = 'asistencia';
 
     protected $fillable = [
         'culto_id',
+        'tenant_id',
         'chapel_adultos_hombres',
         'chapel_adultos_mujeres',
         'chapel_adultos_mayores_hombres',

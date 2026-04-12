@@ -40,7 +40,7 @@ class AuthenticatedSessionController extends Controller
         // Verify tenant is active
         if ($user->tenant_id) {
             $tenant = $user->tenant;
-            if (!$tenant || !$tenant->activo) {
+            if (! $tenant || ! $tenant->activo) {
                 Auth::logout();
                 $request->session()->invalidate();
                 $request->session()->regenerateToken();

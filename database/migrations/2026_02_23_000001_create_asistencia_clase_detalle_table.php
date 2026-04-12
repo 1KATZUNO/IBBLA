@@ -2,8 +2,8 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -37,7 +37,9 @@ return new class extends Migration
         foreach ($asistencias as $asistencia) {
             foreach ($slugMapping as $slug => $columns) {
                 $clase = $clases->get($slug);
-                if (!$clase) continue;
+                if (! $clase) {
+                    continue;
+                }
 
                 $hombres = $asistencia->{$columns['hombres']} ?? 0;
                 $mujeres = $asistencia->{$columns['mujeres']} ?? 0;

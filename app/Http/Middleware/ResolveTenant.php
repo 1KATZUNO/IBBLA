@@ -20,7 +20,7 @@ class ResolveTenant
             } else {
                 $tenant = $user->tenant;
 
-                if (!$tenant || !$tenant->activo) {
+                if (! $tenant || ! $tenant->activo) {
                     auth()->logout();
                     $request->session()->invalidate();
                     $request->session()->regenerateToken();

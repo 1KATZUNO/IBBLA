@@ -4,12 +4,14 @@ namespace App\Models;
 
 use App\Models\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Persona extends Model
 {
     use BelongsToTenant;
+
     protected $table = 'personas';
 
     protected $fillable = [
@@ -18,8 +20,6 @@ class Persona extends Model
         'correo',
         'fecha_nacimiento',
         'pin',
-        'clase_asistencia_id',
-        'es_maestro',
         'password',
         'user_id',
         'activo',
@@ -29,7 +29,6 @@ class Persona extends Model
 
     protected $casts = [
         'activo' => 'boolean',
-        'es_maestro' => 'boolean',
         'fecha_nacimiento' => 'date',
     ];
 
@@ -57,8 +56,18 @@ class Persona extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function claseAsistencia(): BelongsTo
+    public function clasesAsistencia(): BelongsToMany
     {
-        return $this->belongsTo(ClaseAsistencia::class);
+        return $this->belongsToMany(ClaseAsistencia::class, 'clase_persona')
+            ->withPivot('es_maestro')
+            ->withTimestamps();
+    }
+
+    public function esMaestroEn($claseId): bool
+    {
+        return $this->clasesAsistencia()
+            ->wherePivot('clase_asistencia_id', $claseId)
+            ->wherePivot('es_maestro', true)
+            ->exists();
     }
 }

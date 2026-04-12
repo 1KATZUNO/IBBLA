@@ -20,6 +20,7 @@ class CultoController extends Controller
     public function create()
     {
         $serviceTypes = $this->getServiceTypes();
+
         return view('cultos.create', compact('serviceTypes'));
     }
 
@@ -31,7 +32,7 @@ class CultoController extends Controller
         $validated = $request->validate([
             'fecha' => 'required|date',
             'hora' => 'required',
-            'tipo_culto' => 'required|in:' . $validSlugs,
+            'tipo_culto' => 'required|in:'.$validSlugs,
             'notas' => 'nullable|string',
         ]);
 
@@ -61,13 +62,14 @@ class CultoController extends Controller
             'cultos' => Culto::where('cerrado', false)->orderBy('fecha', 'desc')->get(),
             'cultoSeleccionado' => $culto,
             'ofrendasSueltas' => $ofrendasSueltas,
-            'cultosCerrados' => Culto::where('cerrado', true)->with('totales')->orderBy('cerrado_at', 'desc')->get()
+            'cultosCerrados' => Culto::where('cerrado', true)->with('totales')->orderBy('cerrado_at', 'desc')->get(),
         ]);
     }
 
     public function edit(Culto $culto)
     {
         $serviceTypes = $this->getServiceTypes();
+
         return view('cultos.edit', compact('culto', 'serviceTypes'));
     }
 
@@ -79,7 +81,7 @@ class CultoController extends Controller
         $validated = $request->validate([
             'fecha' => 'required|date',
             'hora' => 'required',
-            'tipo_culto' => 'required|in:' . $validSlugs,
+            'tipo_culto' => 'required|in:'.$validSlugs,
             'notas' => 'nullable|string',
         ]);
 

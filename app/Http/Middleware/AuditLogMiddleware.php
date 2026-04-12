@@ -2,9 +2,9 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\AuditLog;
 use Closure;
 use Illuminate\Http\Request;
-use App\Models\AuditLog;
 
 class AuditLogMiddleware
 {

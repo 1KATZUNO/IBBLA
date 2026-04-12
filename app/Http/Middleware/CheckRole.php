@@ -20,7 +20,7 @@ class CheckRole
      */
     public function handle(Request $request, Closure $next, ...$roles): Response
     {
-        if (!auth()->check()) {
+        if (! auth()->check()) {
             return redirect('login');
         }
 
@@ -57,7 +57,7 @@ class CheckRole
         }
 
         // Legacy fallback: check the `rol` column directly
-        if (!in_array($user->rol, $roles)) {
+        if (! in_array($user->rol, $roles)) {
             abort(403, 'No tienes permiso para acceder a esta pagina.');
         }
 

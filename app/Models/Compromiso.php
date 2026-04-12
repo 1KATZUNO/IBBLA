@@ -16,6 +16,10 @@ class Compromiso extends Model
         'monto_dado',
         'saldo_anterior',
         'saldo_actual',
+        'moneda_promesa',
+        'monto_prometido_crc',
+        'monto_dado_crc',
+        'tipo_cambio_usado',
     ];
 
     protected $casts = [
@@ -23,6 +27,9 @@ class Compromiso extends Model
         'monto_dado' => 'decimal:2',
         'saldo_anterior' => 'decimal:2',
         'saldo_actual' => 'decimal:2',
+        'monto_prometido_crc' => 'decimal:2',
+        'monto_dado_crc' => 'decimal:2',
+        'tipo_cambio_usado' => 'decimal:4',
     ];
 
     public function persona(): BelongsTo

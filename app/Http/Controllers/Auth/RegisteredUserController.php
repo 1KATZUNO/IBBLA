@@ -45,14 +45,14 @@ class RegisteredUserController extends Controller
             ->where('activo', true)
             ->first();
 
-        if (!$emailDomain) {
+        if (! $emailDomain) {
             return back()->withErrors([
                 'email' => 'El dominio de tu email no esta registrado en ninguna iglesia. Contacta al administrador.',
             ])->withInput();
         }
 
         $tenant = $emailDomain->tenant;
-        if (!$tenant || !$tenant->activo) {
+        if (! $tenant || ! $tenant->activo) {
             return back()->withErrors([
                 'email' => 'La iglesia asociada a tu email no esta activa. Contacta al administrador.',
             ])->withInput();

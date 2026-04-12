@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\AuditLog;
+use Illuminate\Http\Request;
 
 class AuditLogController extends Controller
 {
@@ -13,9 +13,9 @@ class AuditLogController extends Controller
 
         if ($request->filled('user')) {
             $user = $request->string('user');
-            $query->where(function($q) use ($user) {
+            $query->where(function ($q) use ($user) {
                 $q->where('user_name', 'like', "%{$user}%")
-                  ->orWhere('user_email', 'like', "%{$user}%");
+                    ->orWhere('user_email', 'like', "%{$user}%");
             });
         }
         if ($request->filled('action')) {
@@ -38,6 +38,7 @@ class AuditLogController extends Controller
         }
 
         $logs = $query->paginate(25)->appends($request->query());
+
         return view('admin.audit.index', compact('logs'));
     }
 }

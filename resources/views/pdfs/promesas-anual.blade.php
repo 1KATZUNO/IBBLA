@@ -259,6 +259,13 @@
         </tbody>
     </table>
 
+    @php $tipoCambio = \App\Models\TipoCambio::hoy(); @endphp
+    @if($tipoCambio)
+    <div style="background-color: #dbeafe; padding: 8px; border-radius: 5px; margin-top: 15px; font-size: 8pt; border-left: 4px solid #3b82f6;">
+        <strong>Nota:</strong> Los montos en USD fueron convertidos a ₡ colones usando el tipo de cambio de ₡{{ number_format($tipoCambio->venta, 2) }} ({{ $tipoCambio->fecha->format('d/m/Y') }}).
+    </div>
+    @endif
+
     <div class="footer">
         <p><strong>{{ $tenantSiglas }} - {{ $tenantNombre }}</strong></p>
         <p>Sistema de Administracion - {{ $tenantSiglas }}</p>

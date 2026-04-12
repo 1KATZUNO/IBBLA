@@ -125,28 +125,36 @@
                     </div>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label for="clase_asistencia_id" class="block text-sm font-medium text-gray-700 mb-2">Clase</label>
-                        <select name="clase_asistencia_id" id="clase_asistencia_id"
-                                class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                            <option value="">Capilla (Adultos)</option>
-                            @foreach($clases as $clase)
-                                <option value="{{ $clase->id }}" {{ old('clase_asistencia_id', $persona->clase_asistencia_id) == $clase->id ? 'selected' : '' }}>
-                                    {{ $clase->nombre }}
-                                </option>
-                            @endforeach
-                        </select>
-                        <p class="mt-1 text-xs text-gray-500">Si no se selecciona, pertenece a Capilla</p>
+                <!-- Clases (hasta 4) -->
+                <div x-data="clasesManager()" class="space-y-3">
+                    <div class="flex items-center justify-between">
+                        <label class="block text-sm font-medium text-gray-700">Clases</label>
+                        <button type="button" x-show="entries.length < 4" @click="addEntry()"
+                                class="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                            Agregar clase
+                        </button>
                     </div>
-
-                    <div class="flex items-end pb-1">
-                        <label class="flex items-center">
-                            <input type="checkbox" name="es_maestro" value="1" {{ old('es_maestro', $persona->es_maestro) ? 'checked' : '' }}
-                                   class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                            <span class="ml-2 text-sm text-gray-700">Es maestro(a) de esta clase</span>
-                        </label>
-                    </div>
+                    <p class="text-xs text-gray-500">Si no se asigna clase, pertenece a Capilla. Hasta 4 clases.</p>
+                    <template x-for="(entry, idx) in entries" :key="idx">
+                        <div class="flex items-center gap-3 bg-gray-50 p-3 rounded-lg">
+                            <select :name="'clases['+idx+'][clase_id]'" x-model="entry.clase_id"
+                                    class="flex-1 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm">
+                                <option value="">-- Seleccionar --</option>
+                                @foreach($clases as $clase)
+                                    <option value="{{ $clase->id }}">{{ $clase->nombre }}</option>
+                                @endforeach
+                            </select>
+                            <label class="flex items-center whitespace-nowrap">
+                                <input type="checkbox" :name="'clases['+idx+'][es_maestro]'" value="1" x-model="entry.es_maestro"
+                                       class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                <span class="ml-1 text-sm text-gray-700">Maestro(a)</span>
+                            </label>
+                            <button type="button" @click="removeEntry(idx)" class="text-red-500 hover:text-red-700">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                            </button>
+                        </div>
+                    </template>
                 </div>
 
                 <div>
@@ -182,7 +190,7 @@
                         @endphp
                         <div class="bg-gray-50 p-4 rounded-lg">
                             <h4 class="text-sm font-medium text-gray-700 mb-3">{{ $cat->nombre }}</h4>
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
                                 <div>
                                     <label class="block text-xs text-gray-600 mb-1">Monto</label>
                                     <input type="number"
@@ -191,6 +199,14 @@
                                            min="0"
                                            value="{{ old('promesas.'.$index.'.monto', $promesaExistente->monto ?? 0) }}"
                                            class="w-full rounded-md border-gray-300 text-sm">
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-gray-600 mb-1">Moneda</label>
+                                    <select name="promesas[{{$index}}][moneda]"
+                                            class="w-full rounded-md border-gray-300 text-sm">
+                                        <option value="CRC" {{ old('promesas.'.$index.'.moneda', $promesaExistente->moneda ?? 'CRC') == 'CRC' ? 'selected' : '' }}>₡ CRC</option>
+                                        <option value="USD" {{ old('promesas.'.$index.'.moneda', $promesaExistente->moneda ?? 'CRC') == 'USD' ? 'selected' : '' }}>$ USD</option>
+                                    </select>
                                 </div>
                                 <div>
                                     <label class="block text-xs text-gray-600 mb-1">Frecuencia</label>
@@ -358,6 +374,14 @@
 </div>
 
 <script>
+    function clasesManager() {
+        return {
+            entries: @json($clasesAsignadas ?? []),
+            addEntry() { this.entries.push({ clase_id: '', es_maestro: false }); },
+            removeEntry(idx) { this.entries.splice(idx, 1); }
+        };
+    }
+
     // Mostrar/ocultar campo de contraseña según si hay correo
     const correoInput = document.getElementById('correo');
     const passwordSection = document.getElementById('password-section');

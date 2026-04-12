@@ -32,6 +32,6 @@ class TenantRole extends Model
 
     public function hasPermission(string $permission): bool
     {
-        return !empty($this->permisos[$permission]);
+        return ! empty($this->permisos[$permission]);
     }
 }

@@ -12,17 +12,17 @@ trait BelongsToTenant
     public static function bootBelongsToTenant(): void
     {
         static::addGlobalScope('tenant', function (Builder $builder) {
-            if (app()->runningInConsole() && !app()->runningUnitTests()) {
+            if (app()->runningInConsole() && ! app()->runningUnitTests()) {
                 return;
             }
-            if (!auth()->check()) {
+            if (! auth()->check()) {
                 return;
             }
             if (auth()->user()->isSuperAdmin()) {
                 return;
             }
             if (auth()->user()->tenant_id) {
-                $builder->where($builder->getModel()->getTable() . '.tenant_id', auth()->user()->tenant_id);
+                $builder->where($builder->getModel()->getTable().'.tenant_id', auth()->user()->tenant_id);
             }
         });
 

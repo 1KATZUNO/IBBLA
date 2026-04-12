@@ -111,6 +111,13 @@
     </table>
     @endif
 
+    @php $tipoCambio = \App\Models\TipoCambio::hoy(); @endphp
+    @if($tipoCambio)
+    <div style="background-color: #fef3c7; padding: 6px; border-radius: 4px; margin-top: 10px; font-size: 8px; border-left: 3px solid #f59e0b;">
+        <strong>Nota:</strong> Los montos incluyen conversiones de USD a ₡ colones (tipo de cambio ₡{{ number_format($tipoCambio->venta, 2) }} al {{ $tipoCambio->fecha->format('d/m/Y') }}).
+    </div>
+    @endif
+
     <div class="footer">
         <p>Sistema de Administracion - {{ $tenantSiglas }} - {{ $tenantNombre }}</p>
     </div>

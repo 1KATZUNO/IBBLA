@@ -3,16 +3,16 @@
 namespace App\Http\Controllers\SuperAdmin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Tenant;
-use App\Models\User;
-use App\Models\Persona;
 use App\Models\Culto;
-use App\Models\SobreDetalle;
-use App\Models\OfrendaSuelta;
 use App\Models\Egreso;
+use App\Models\OfrendaSuelta;
+use App\Models\Persona;
+use App\Models\SobreDetalle;
+use App\Models\Tenant;
 use App\Models\TenantCategory;
-use Illuminate\Http\Request;
+use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 
 class DashboardController extends Controller
 {
@@ -75,7 +75,7 @@ class DashboardController extends Controller
                 }
 
                 // Sumar por categoria desde SobreDetalle
-                $detalles = SobreDetalle::whereHas('sobre', fn($q) => $q->whereIn('culto_id', $cultoIds))
+                $detalles = SobreDetalle::whereHas('sobre', fn ($q) => $q->whereIn('culto_id', $cultoIds))
                     ->selectRaw('categoria, SUM(monto) as total')
                     ->groupBy('categoria')
                     ->pluck('total', 'categoria');
@@ -100,7 +100,7 @@ class DashboardController extends Controller
                 $resumen['total_general'] = $sumaIngresos + $totalSuelto - $totalEgresos;
 
                 // Filtrar categorias con total 0
-                $datosPorCategoria = array_filter($datosPorCategoria, fn($d) => $d['total'] > 0);
+                $datosPorCategoria = array_filter($datosPorCategoria, fn ($d) => $d['total'] > 0);
             }
         } else {
             // Modo: todas las iglesias - calcular desde datos fuente
@@ -112,7 +112,7 @@ class DashboardController extends Controller
                 $cantidadCultos = $cultoIds->count();
 
                 // Suma de sobres por categoria
-                $sumaIngresos = (float) SobreDetalle::whereHas('sobre', fn($q) => $q->whereIn('culto_id', $cultoIds))
+                $sumaIngresos = (float) SobreDetalle::whereHas('sobre', fn ($q) => $q->whereIn('culto_id', $cultoIds))
                     ->sum('monto');
 
                 $totalSuelto = (float) OfrendaSuelta::whereIn('culto_id', $cultoIds)->sum('monto');
@@ -145,7 +145,7 @@ class DashboardController extends Controller
             }
             $mesCultoIds = $query->pluck('id');
 
-            $mesIngresos = (float) SobreDetalle::whereHas('sobre', fn($q) => $q->whereIn('culto_id', $mesCultoIds))
+            $mesIngresos = (float) SobreDetalle::whereHas('sobre', fn ($q) => $q->whereIn('culto_id', $mesCultoIds))
                 ->sum('monto');
             $mesSuelto = (float) OfrendaSuelta::whereIn('culto_id', $mesCultoIds)->sum('monto');
             $mesEgresos = (float) Egreso::whereIn('culto_id', $mesCultoIds)->sum('monto');
@@ -236,7 +236,7 @@ class DashboardController extends Controller
             ->where('activa', true)
             ->where('excluir_de_promesas', true)
             ->pluck('slug')
-            ->map(fn($s) => strtolower($s))
+            ->map(fn ($s) => strtolower($s))
             ->toArray();
 
         $categoriasPromesa = TenantCategory::where('tenant_id', $tenant->id)
@@ -257,7 +257,7 @@ class DashboardController extends Controller
                 }
 
                 $cat = $promesa->categoria;
-                if (!isset($totalesPorCategoria[$cat])) {
+                if (! isset($totalesPorCategoria[$cat])) {
                     $totalesPorCategoria[$cat] = [
                         'categoria' => ucfirst($cat),
                         'total_prometido' => 0,
@@ -286,7 +286,7 @@ class DashboardController extends Controller
                 ->where('categoria', $cat)
                 ->sum('monto');
 
-            if ($montoDado > 0 && !isset($totalesPorCategoria[$cat])) {
+            if ($montoDado > 0 && ! isset($totalesPorCategoria[$cat])) {
                 $totalesPorCategoria[$cat] = [
                     'categoria' => ucfirst($cat),
                     'total_prometido' => 0,
@@ -305,6 +305,7 @@ class DashboardController extends Controller
         foreach ($totalesPorCategoria as $cat => $datos) {
             if (in_array(strtolower($cat), $categoriasExcluidas)) {
                 unset($totalesPorCategoria[$cat]);
+
                 continue;
             }
 
@@ -342,7 +343,7 @@ class DashboardController extends Controller
 
             foreach ($totalesMes['categorias'] as $catData) {
                 $key = strtolower(str_replace(' ', '_', $catData['categoria']));
-                if (!isset($totalesPorCategoria[$key])) {
+                if (! isset($totalesPorCategoria[$key])) {
                     $totalesPorCategoria[$key] = [
                         'categoria' => $catData['categoria'],
                         'total_prometido' => 0,
@@ -387,6 +388,7 @@ class DashboardController extends Controller
                     }
                     $fecha->addDay();
                 }
+
                 return $promesa->monto * $domingos;
 
             case 'quincenal':

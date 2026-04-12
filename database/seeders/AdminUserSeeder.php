@@ -2,15 +2,14 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
-use App\Models\User;
 use App\Models\Tenant;
-use App\Models\TenantEmailDomain;
 use App\Models\TenantCategory;
-use App\Models\TenantServiceType;
+use App\Models\TenantEmailDomain;
 use App\Models\TenantRole;
+use App\Models\TenantServiceType;
+use App\Models\User;
+use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 
 class AdminUserSeeder extends Seeder
 {

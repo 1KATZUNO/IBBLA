@@ -1,6 +1,6 @@
 <?php
 
-if (!function_exists('tenant')) {
+if (! function_exists('tenant')) {
     /**
      * Get the current tenant instance.
      */
@@ -18,7 +18,7 @@ if (!function_exists('tenant')) {
     }
 }
 
-if (!function_exists('tenant_pdf_data')) {
+if (! function_exists('tenant_pdf_data')) {
     /**
      * Get tenant data for PDF views (nombre, siglas, color, logo base64).
      */
@@ -30,10 +30,10 @@ if (!function_exists('tenant_pdf_data')) {
         $tenantColor = $t ? ($t->colors['600'] ?? '#3b82f6') : '#3b82f6';
 
         $logoFile = null;
-        if ($t && $t->logo_pdf_path && file_exists(storage_path('app/public/' . $t->logo_pdf_path))) {
-            $logoFile = storage_path('app/public/' . $t->logo_pdf_path);
-        } elseif ($t && $t->logo_path && file_exists(storage_path('app/public/' . $t->logo_path))) {
-            $logoFile = storage_path('app/public/' . $t->logo_path);
+        if ($t && $t->logo_pdf_path && file_exists(storage_path('app/public/'.$t->logo_pdf_path))) {
+            $logoFile = storage_path('app/public/'.$t->logo_pdf_path);
+        } elseif ($t && $t->logo_path && file_exists(storage_path('app/public/'.$t->logo_path))) {
+            $logoFile = storage_path('app/public/'.$t->logo_path);
         } else {
             $logoFile = public_path('images/Logo2.png');
         }
@@ -43,7 +43,7 @@ if (!function_exists('tenant_pdf_data')) {
     }
 }
 
-if (!function_exists('tenant_categories')) {
+if (! function_exists('tenant_categories')) {
     /**
      * Get active categories for the current tenant.
      * Falls back to default categories if no tenant is set.

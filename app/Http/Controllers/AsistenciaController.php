@@ -157,7 +157,11 @@ class AsistenciaController extends Controller
         $registroExtraTipos = $this->getRegistroExtraTipos();
 
         $rules = [
-            'culto_id' => 'required|exists:cultos,id|unique:asistencia,culto_id',
+            'culto_id' => [
+                'required',
+                'exists:cultos,id',
+                'unique:asistencia,culto_id,NULL,id,tenant_id,'.(auth()->user()->tenant_id ?? ''),
+            ],
             'chapel_adultos_hombres' => 'required|integer|min:0',
             'chapel_adultos_mujeres' => 'required|integer|min:0',
             'chapel_jovenes_masculinos' => 'required|integer|min:0',

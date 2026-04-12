@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\ClaseAsistencia;
 use App\Models\AsistenciaClaseDetalle;
+use App\Models\ClaseAsistencia;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -12,6 +12,7 @@ class ClaseAsistenciaController extends Controller
     public function index()
     {
         $clases = ClaseAsistencia::orderBy('orden')->get();
+
         return view('admin.clases.index', compact('clases'));
     }
 
@@ -32,12 +33,12 @@ class ClaseAsistenciaController extends Controller
         // Generar slug automático
         $slug = Str::slug($validated['nombre'], '_');
         $slug = str_replace('-', '_', $slug);
-        
+
         // Asegurar que sea único
         $originalSlug = $slug;
         $counter = 1;
         while (ClaseAsistencia::where('slug', $slug)->exists()) {
-            $slug = $originalSlug . '_' . $counter;
+            $slug = $originalSlug.'_'.$counter;
             $counter++;
         }
 

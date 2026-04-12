@@ -19,7 +19,7 @@ return new class extends Migration
                 'chapel_adultos_mayores',
                 'chapel_adultos',
             ]);
-            
+
             // Agregar nuevas columnas para capilla con categorías por género
             $table->integer('chapel_adultos_hombres')->default(0)->after('culto_id');
             $table->integer('chapel_adultos_mujeres')->default(0)->after('chapel_adultos_hombres');
@@ -43,7 +43,7 @@ return new class extends Migration
                 'chapel_adultos_mayores_mujeres',
                 'chapel_maestros_hombres',
             ]);
-            
+
             // Restaurar columnas antiguas
             $table->integer('chapel_hombres')->default(0);
             $table->integer('chapel_mujeres')->default(0);

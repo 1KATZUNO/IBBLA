@@ -4,12 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Models\AsistenciaServidor;
 use App\Models\Culto;
-use App\Models\User;
 use App\Models\Promesa;
+use App\Models\User;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
-use Barryvdh\DomPDF\Facade\Pdf;
 
 class ServidorController extends Controller
 {
@@ -28,11 +28,11 @@ class ServidorController extends Controller
 
         // Servidores (usuarios con rol servidor)
         $servidores = User::where(function ($q) {
-                $q->where('rol', 'servidor')
-                  ->orWhereHas('tenantRole', function ($q2) {
-                      $q2->whereRaw("JSON_EXTRACT(permisos, '$.marcar_asistencia') = true");
-                  });
-            })
+            $q->where('rol', 'servidor')
+                ->orWhereHas('tenantRole', function ($q2) {
+                    $q2->whereRaw("JSON_EXTRACT(permisos, '$.marcar_asistencia') = true");
+                });
+        })
             ->where('tenant_id', auth()->user()->tenant_id)
             ->get();
 
@@ -60,11 +60,11 @@ class ServidorController extends Controller
 
         // Servidores del tenant
         $servidores = User::where(function ($q) {
-                $q->where('rol', 'servidor')
-                  ->orWhereHas('tenantRole', function ($q2) {
-                      $q2->whereRaw("JSON_EXTRACT(permisos, '$.marcar_asistencia') = true");
-                  });
-            })
+            $q->where('rol', 'servidor')
+                ->orWhereHas('tenantRole', function ($q2) {
+                    $q2->whereRaw("JSON_EXTRACT(permisos, '$.marcar_asistencia') = true");
+                });
+        })
             ->where('tenant_id', auth()->user()->tenant_id)
             ->with('persona')
             ->get();
@@ -128,6 +128,6 @@ class ServidorController extends Controller
             'qrBase64' => $qrBase64,
         ])->setPaper('a4', 'landscape');
 
-        return $pdf->stream('qr-culto-' . $culto->id . '.pdf');
+        return $pdf->stream('qr-culto-'.$culto->id.'.pdf');
     }
 }

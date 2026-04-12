@@ -2,12 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AuditLog;
 use App\Models\Culto;
+use App\Models\OfrendaSuelta;
 use App\Models\Persona;
 use App\Models\Sobre;
 use App\Models\SobreDetalle;
-use App\Models\OfrendaSuelta;
-use App\Models\AuditLog;
+use App\Models\TipoCambio;
 use App\Services\CalculoTotalesCultoService;
 use Illuminate\Http\Request;
 
@@ -24,23 +25,23 @@ class RecuentoController extends Controller
     {
         $cultoId = $request->get('culto_id');
         $verCerrado = $request->has('ver_cerrado');
-        
+
         // Traer cultos no cerrados para el selector
         $cultos = Culto::where('cerrado', false)->orderBy('fecha', 'desc')->get();
-        
+
         // Traer cultos cerrados para la lista de solo lectura
         $cultosCerrados = Culto::where('cerrado', true)
             ->with('totales')
             ->orderBy('cerrado_at', 'desc')
             ->get();
-        
+
         // Si hay un culto seleccionado
         $cultoSeleccionado = null;
         if ($cultoId) {
             $cultoSeleccionado = Culto::find($cultoId);
         }
-        
-        $sobres = $cultoId 
+
+        $sobres = $cultoId
             ? Sobre::where('culto_id', $cultoId)->with(['persona', 'detalles'])->get()
             : collect();
 
@@ -74,6 +75,7 @@ class RecuentoController extends Controller
             'persona_id' => 'nullable|exists:personas,id',
             'metodo_pago' => 'required|in:efectivo,transferencia',
             'comprobante_numero' => 'nullable|string|max:100',
+            'moneda' => 'nullable|in:CRC,USD',
             'notas' => 'nullable|string',
             'detalles' => 'required|array',
             'detalles.*.categoria' => 'required|string',
@@ -93,8 +95,32 @@ class RecuentoController extends Controller
                 ->with('error', 'No se pueden agregar sobres a un culto cerrado.');
         }
 
+        // Prevenir duplicados: verificar si ya existe un sobre idéntico creado en los últimos 30 segundos
+        $duplicado = Sobre::where('culto_id', $validated['culto_id'])
+            ->where('persona_id', $validated['persona_id'] ?? null)
+            ->where('created_at', '>=', now()->subSeconds(30))
+            ->exists();
+
+        if ($duplicado) {
+            return redirect()->route('recuento.index', ['culto_id' => $culto->id])
+                ->with('warning', 'Ya se registró un sobre para esta persona en este culto hace unos segundos. Verifique que no sea duplicado.');
+        }
+
         // Calcular total declarado
         $totalDeclarado = collect($validated['detalles'])->sum('monto');
+
+        // Moneda y tipo de cambio
+        $moneda = $validated['moneda'] ?? 'CRC';
+        $tipoCambioVenta = null;
+        $tipoCambioId = null;
+
+        if ($moneda === 'USD') {
+            $tipoCambio = TipoCambio::hoy();
+            if ($tipoCambio) {
+                $tipoCambioVenta = $tipoCambio->venta;
+                $tipoCambioId = $tipoCambio->id;
+            }
+        }
 
         $sobre = Sobre::create([
             'culto_id' => $validated['culto_id'],
@@ -102,6 +128,9 @@ class RecuentoController extends Controller
             'metodo_pago' => $validated['metodo_pago'],
             'comprobante_numero' => $validated['comprobante_numero'] ?? null,
             'total_declarado' => $totalDeclarado,
+            'moneda' => $moneda,
+            'tipo_cambio_venta' => $tipoCambioVenta,
+            'tipo_cambio_id' => $tipoCambioId,
             'notas' => $validated['notas'] ?? null,
         ]);
 
@@ -147,7 +176,7 @@ class RecuentoController extends Controller
     {
         $user = auth()->user();
         $isAdmin = $user && method_exists($user, 'isAdmin') ? $user->isAdmin() : ($user && $user->rol === 'admin');
-        if ($sobre->culto->cerrado && !$isAdmin) {
+        if ($sobre->culto->cerrado && ! $isAdmin) {
             return redirect()->route('recuento.index', ['culto_id' => $sobre->culto_id])
                 ->with('error', 'No se puede editar un sobre de un culto cerrado.');
         }
@@ -163,7 +192,7 @@ class RecuentoController extends Controller
     {
         $user = auth()->user();
         $isAdmin = $user && method_exists($user, 'isAdmin') ? $user->isAdmin() : ($user && $user->rol === 'admin');
-        if ($sobre->culto->cerrado && !$isAdmin) {
+        if ($sobre->culto->cerrado && ! $isAdmin) {
             return redirect()->route('recuento.index', ['culto_id' => $sobre->culto_id])
                 ->with('error', 'No se puede editar un sobre de un culto cerrado.');
         }
@@ -172,6 +201,7 @@ class RecuentoController extends Controller
             'persona_id' => 'nullable|exists:personas,id',
             'metodo_pago' => 'required|in:efectivo,transferencia',
             'comprobante_numero' => 'nullable|string|max:100',
+            'moneda' => 'nullable|in:CRC,USD',
             'notas' => 'nullable|string',
             'detalles' => 'required|array',
             'detalles.*.categoria' => 'required|string',
@@ -186,11 +216,27 @@ class RecuentoController extends Controller
 
         $totalDeclarado = collect($validated['detalles'])->sum('monto');
 
+        // Moneda y tipo de cambio
+        $moneda = $validated['moneda'] ?? 'CRC';
+        $tipoCambioVenta = null;
+        $tipoCambioId = null;
+
+        if ($moneda === 'USD') {
+            $tipoCambio = TipoCambio::hoy();
+            if ($tipoCambio) {
+                $tipoCambioVenta = $tipoCambio->venta;
+                $tipoCambioId = $tipoCambio->id;
+            }
+        }
+
         $sobre->update([
             'persona_id' => $validated['persona_id'] ?? null,
             'metodo_pago' => $validated['metodo_pago'],
             'comprobante_numero' => $validated['comprobante_numero'] ?? null,
             'total_declarado' => $totalDeclarado,
+            'moneda' => $moneda,
+            'tipo_cambio_venta' => $tipoCambioVenta,
+            'tipo_cambio_id' => $tipoCambioId,
             'notas' => $validated['notas'] ?? null,
         ]);
 
@@ -237,7 +283,7 @@ class RecuentoController extends Controller
     {
         // Solo admin y tesorero pueden eliminar sobres (con null-guard)
         $currentUser = auth()->user();
-        if (!$currentUser || !in_array($currentUser->rol, ['admin', 'tesorero'])) {
+        if (! $currentUser || ! in_array($currentUser->rol, ['admin', 'tesorero'])) {
             return redirect()->route('recuento.index', ['culto_id' => $sobre->culto_id])
                 ->with('error', 'No tienes permiso para eliminar sobres.');
         }
@@ -289,6 +335,7 @@ class RecuentoController extends Controller
         $validated = $request->validate([
             'culto_id' => 'required|exists:cultos,id',
             'monto' => 'required|numeric|min:0.01',
+            'moneda' => 'nullable|in:CRC,USD',
             'descripcion' => 'nullable|string|max:500',
         ]);
 
@@ -299,10 +346,19 @@ class RecuentoController extends Controller
                 ->with('error', 'No se puede agregar dinero suelto a un culto cerrado.');
         }
 
+        $moneda = $validated['moneda'] ?? 'CRC';
+        $tipoCambioVenta = null;
+        if ($moneda === 'USD') {
+            $tc = TipoCambio::hoy();
+            $tipoCambioVenta = $tc?->venta;
+        }
+
         OfrendaSuelta::create([
             'culto_id' => $validated['culto_id'],
             'monto' => $validated['monto'],
-            'metodo_pago' => 'efectivo', // Dinero suelto siempre es efectivo
+            'moneda' => $moneda,
+            'tipo_cambio_venta' => $tipoCambioVenta,
+            'metodo_pago' => 'efectivo',
             'descripcion' => $validated['descripcion'] ?? null,
         ]);
 
@@ -322,6 +378,7 @@ class RecuentoController extends Controller
         $validated = $request->validate([
             'culto_id' => 'required|exists:cultos,id',
             'monto' => 'required|numeric|min:0.01',
+            'moneda' => 'nullable|in:CRC,USD',
             'descripcion' => 'nullable|string|max:500',
         ]);
 
@@ -332,9 +389,18 @@ class RecuentoController extends Controller
                 ->with('error', 'No se puede agregar egresos a un culto cerrado.');
         }
 
+        $moneda = $validated['moneda'] ?? 'CRC';
+        $tipoCambioVenta = null;
+        if ($moneda === 'USD') {
+            $tc = TipoCambio::hoy();
+            $tipoCambioVenta = $tc?->venta;
+        }
+
         \App\Models\Egreso::create([
             'culto_id' => $validated['culto_id'],
             'monto' => $validated['monto'],
+            'moneda' => $moneda,
+            'tipo_cambio_venta' => $tipoCambioVenta,
             'descripcion' => $validated['descripcion'] ?? null,
         ]);
 
@@ -388,7 +454,7 @@ class RecuentoController extends Controller
     public function destroyEgreso(\App\Models\Egreso $egreso)
     {
         // Solo admin y tesorero pueden eliminar egresos
-        if (!in_array(auth()->user()->rol, ['admin', 'tesorero'])) {
+        if (! in_array(auth()->user()->rol, ['admin', 'tesorero'])) {
             return redirect()->route('recuento.index', ['culto_id' => $egreso->culto_id])
                 ->with('error', 'No tienes permiso para eliminar egresos.');
         }
@@ -451,7 +517,7 @@ class RecuentoController extends Controller
     public function destroySuelto(OfrendaSuelta $suelto)
     {
         // Solo admin y tesorero pueden eliminar dinero suelto
-        if (!in_array(auth()->user()->rol, ['admin', 'tesorero'])) {
+        if (! in_array(auth()->user()->rol, ['admin', 'tesorero'])) {
             return redirect()->route('recuento.index', ['culto_id' => $suelto->culto_id])
                 ->with('error', 'No tienes permiso para eliminar dinero suelto.');
         }
@@ -481,19 +547,27 @@ class RecuentoController extends Controller
                 ->with('error', 'Este culto ya está cerrado.');
         }
 
+        // Congelar tipo de cambio al cerrar
+        $tipoCambio = TipoCambio::hoy();
+        $tipoCambioVenta = $tipoCambio?->venta;
+
         $culto->update([
             'cerrado' => true,
             'cerrado_at' => now(),
             'cerrado_por' => auth()->id(),
+            'tipo_cambio_venta' => $tipoCambioVenta,
         ]);
 
+        // Recalcular totales finales con tipo de cambio congelado
+        $this->calculoService->recalcular($culto);
+
         return redirect()->route('recuento.index')
-            ->with('success', 'Culto cerrado correctamente. Ahora aparece en la lista de cultos cerrados.');
+            ->with('success', 'Culto cerrado correctamente. Tipo de cambio congelado: ₡'.($tipoCambioVenta ? number_format((float) $tipoCambioVenta, 2) : 'N/A'));
     }
 
     public function verCultoCerrado(Culto $culto)
     {
-        if (!$culto->cerrado) {
+        if (! $culto->cerrado) {
             return response()->json(['error' => 'Este culto no está cerrado'], 400);
         }
 

@@ -73,6 +73,7 @@ class User extends Authenticatable
         if ($this->tenantRole) {
             return empty($this->tenantRole->permisos);
         }
+
         return $this->rol === 'invitado';
     }
 
@@ -80,9 +81,11 @@ class User extends Authenticatable
     {
         if ($this->tenantRole) {
             $permisos = $this->tenantRole->permisos ?? [];
+
             // Miembro: only has mi_perfil permission
-            return !empty($permisos['mi_perfil']) && empty($permisos['recuento']) && empty($permisos['asistencia']) && empty($permisos['admin']);
+            return ! empty($permisos['mi_perfil']) && empty($permisos['recuento']) && empty($permisos['asistencia']) && empty($permisos['admin']);
         }
+
         return $this->rol === 'miembro';
     }
 
@@ -161,6 +164,7 @@ class User extends Authenticatable
             'servidor' => 'Servidor',
             'invitado' => 'Invitado',
         ];
+
         return $map[$this->rol] ?? ucfirst($this->rol ?? 'Sin rol');
     }
 

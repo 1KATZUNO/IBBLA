@@ -92,6 +92,7 @@ class Tenant extends Model
         }
 
         $theme = self::COLOR_THEMES[$this->color_theme] ?? self::COLOR_THEMES['blue'];
+
         return collect($theme)->except('label')->all();
     }
 

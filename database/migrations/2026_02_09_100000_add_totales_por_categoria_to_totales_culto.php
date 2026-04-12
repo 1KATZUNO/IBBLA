@@ -2,8 +2,8 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -11,7 +11,7 @@ return new class extends Migration
     {
         Schema::table('totales_culto', function (Blueprint $table) {
             $table->json('totales_por_categoria')->nullable()->after('cantidad_transferencias');
-            if (!Schema::hasColumn('totales_culto', 'total_egresos')) {
+            if (! Schema::hasColumn('totales_culto', 'total_egresos')) {
                 $table->decimal('total_egresos', 10, 2)->default(0)->after('total_general');
             }
         });

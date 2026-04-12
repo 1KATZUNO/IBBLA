@@ -26,6 +26,10 @@ class TotalesCulto extends Model
         'cantidad_transferencias',
         'totales_por_categoria',
         'notas',
+        'tipo_cambio_venta',
+        'totales_usd',
+        'total_general_usd',
+        'total_general_crc_convertido',
     ];
 
     protected $casts = [
@@ -41,6 +45,10 @@ class TotalesCulto extends Model
         'total_egresos' => 'decimal:2',
         'total_general' => 'decimal:2',
         'totales_por_categoria' => 'array',
+        'tipo_cambio_venta' => 'decimal:4',
+        'totales_usd' => 'array',
+        'total_general_usd' => 'decimal:2',
+        'total_general_crc_convertido' => 'decimal:2',
     ];
 
     // Legacy column mapping for backward compatibility

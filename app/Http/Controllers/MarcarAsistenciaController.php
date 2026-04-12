@@ -33,7 +33,7 @@ class MarcarAsistenciaController extends Controller
             ->where('tenant_id', $tenantId)
             ->first();
 
-        if (!$culto) {
+        if (! $culto) {
             return response()->json([
                 'success' => false,
                 'message' => 'Culto no encontrado o no pertenece a su congregacion.',
@@ -60,7 +60,7 @@ class MarcarAsistenciaController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Asistencia marcada correctamente para ' . $culto->tipo_nombre . ' - ' . $culto->fecha->format('d/m/Y'),
+            'message' => 'Asistencia marcada correctamente para '.$culto->tipo_nombre.' - '.$culto->fecha->format('d/m/Y'),
         ]);
     }
 }

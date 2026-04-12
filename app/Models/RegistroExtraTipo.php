@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Traits\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class RegistroExtraTipo extends Model
 {
+    use BelongsToTenant;
+
     protected $table = 'registro_extra_tipos';
 
     protected $fillable = [
@@ -16,6 +19,7 @@ class RegistroExtraTipo extends Model
         'subcampos',
         'orden',
         'activo',
+        'tenant_id',
     ];
 
     protected $casts = [

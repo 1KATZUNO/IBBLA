@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::table('personas', function (Blueprint $table) {
             $table->foreignId('clase_asistencia_id')->nullable()->after('pin')
-                  ->constrained('clases_asistencia')->nullOnDelete();
+                ->constrained('clases_asistencia')->nullOnDelete();
             $table->boolean('es_maestro')->default(false)->after('clase_asistencia_id');
         });
 

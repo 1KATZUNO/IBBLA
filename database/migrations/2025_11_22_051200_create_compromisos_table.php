@@ -22,7 +22,7 @@ return new class extends Migration
             $table->decimal('saldo_anterior', 10, 2)->default(0); // excedente o deuda del mes anterior
             $table->decimal('saldo_actual', 10, 2)->default(0); // saldo después de aplicar lo dado este mes
             $table->timestamps();
-            
+
             // Índice único para evitar duplicados
             $table->unique(['persona_id', 'categoria', 'año', 'mes']);
         });
