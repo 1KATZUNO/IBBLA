@@ -50,6 +50,10 @@
                 <th>Hombres</th>
                 <th>Mujeres</th>
                 <th>Niños</th>
+                <th>Capilla</th>
+                <th>Visitas</th>
+                <th>Salvos</th>
+                <th>Bautismos</th>
                 @if(isset($registroExtraTipos))
                 @foreach($registroExtraTipos as $tipo)
                     @foreach($tipo->subcampos as $subcampo)
@@ -65,6 +69,10 @@
                 $totalHombres = 0;
                 $totalMujeres = 0;
                 $totalNinos = 0;
+                $totalCapillaGeneral = 0;
+                $totalVisitasGeneral = 0;
+                $totalSalvosGeneral = 0;
+                $totalBautismosGeneral = 0;
                 $totalesExtra = [];
                 if (isset($registroExtraTipos)) {
                     foreach ($registroExtraTipos as $tipo) {
@@ -80,11 +88,19 @@
                 $hombres = $culto->asistencia->getTotalHombres();
                 $mujeres = $culto->asistencia->getTotalMujeres();
                 $ninos = $culto->asistencia->getTotalNinos();
+                $totalCapilla = $culto->asistencia->getTotalCapilla();
+                $totalVisitas = $culto->asistencia->getTotalVisitas();
+                $totalSalvos = $culto->asistencia->getTotalSalvos();
+                $totalBautismos = $culto->asistencia->getTotalBautismos();
 
                 $totalGeneral += $culto->asistencia->total_asistencia;
                 $totalHombres += $hombres;
                 $totalMujeres += $mujeres;
                 $totalNinos += $ninos;
+                $totalCapillaGeneral += $totalCapilla;
+                $totalVisitasGeneral += $totalVisitas;
+                $totalSalvosGeneral += $totalSalvos;
+                $totalBautismosGeneral += $totalBautismos;
             @endphp
             <tr>
                 <td>{{ $culto->fecha->locale('es')->isoFormat('dddd D [de] MMMM, YYYY') }}</td>
@@ -93,6 +109,10 @@
                 <td style="text-align: center;">{{ $hombres }}</td>
                 <td style="text-align: center;">{{ $mujeres }}</td>
                 <td style="text-align: center;">{{ $ninos }}</td>
+                <td style="text-align: center;">{{ $totalCapilla }}</td>
+                <td style="text-align: center;">{{ $totalVisitas }}</td>
+                <td style="text-align: center;">{{ $totalSalvos }}</td>
+                <td style="text-align: center;">{{ $totalBautismos }}</td>
                 @if(isset($registroExtraTipos))
                 @foreach($registroExtraTipos as $tipo)
                     @php $registro = $culto->asistencia->registrosExtra->firstWhere('registro_extra_tipo_id', $tipo->id); @endphp
@@ -114,6 +134,10 @@
                 <td style="text-align: center;">{{ $totalHombres }}</td>
                 <td style="text-align: center;">{{ $totalMujeres }}</td>
                 <td style="text-align: center;">{{ $totalNinos }}</td>
+                <td style="text-align: center;">{{ $totalCapillaGeneral }}</td>
+                <td style="text-align: center;">{{ $totalVisitasGeneral }}</td>
+                <td style="text-align: center;">{{ $totalSalvosGeneral }}</td>
+                <td style="text-align: center;">{{ $totalBautismosGeneral }}</td>
                 @if(isset($registroExtraTipos))
                 @foreach($registroExtraTipos as $tipo)
                     @foreach($tipo->subcampos as $subcampo)
