@@ -191,6 +191,11 @@ Route::middleware(['auth', 'role:admin', 'audit'])->group(function () {
     // Gestión de Usuarios
     Route::resource('usuarios', App\Http\Controllers\UserController::class);
 
+    // Carga retroactiva de asistencias (import Excel)
+    Route::get('/admin/asistencia/importar', [App\Http\Controllers\AsistenciaImportController::class, 'index'])->name('asistencia.importar.index');
+    Route::get('/admin/asistencia/importar/plantilla', [App\Http\Controllers\AsistenciaImportController::class, 'descargarPlantilla'])->name('asistencia.importar.plantilla');
+    Route::post('/admin/asistencia/importar', [App\Http\Controllers\AsistenciaImportController::class, 'procesar'])->name('asistencia.importar.procesar');
+
     // Servidores
     Route::get('/admin/servidores', [App\Http\Controllers\ServidorController::class, 'index'])->name('admin.servidores.index');
     Route::get('/admin/servidores/reporte', [App\Http\Controllers\ServidorController::class, 'reporte'])->name('admin.servidores.reporte');

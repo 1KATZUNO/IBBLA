@@ -47,6 +47,9 @@
                     <x-nav-link :href="route('usuarios.index')" :active="request()->routeIs('usuarios.*')">
                         {{ __('Usuarios') }}
                     </x-nav-link>
+                    <x-nav-link :href="route('asistencia.importar.index')" :active="request()->routeIs('asistencia.importar.*')">
+                        {{ __('Cargar Histórico') }}
+                    </x-nav-link>
                     @endif
                 </div>
             </div>

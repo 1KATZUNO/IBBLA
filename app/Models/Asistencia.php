@@ -44,11 +44,16 @@ class Asistencia extends Model
         'cerrado',
         'cerrado_at',
         'cerrado_por',
+        'cargado_retroactivo',
+        'cargado_retroactivo_at',
+        'cargado_retroactivo_por',
     ];
 
     protected $casts = [
         'cerrado' => 'boolean',
         'cerrado_at' => 'datetime',
+        'cargado_retroactivo' => 'boolean',
+        'cargado_retroactivo_at' => 'datetime',
     ];
 
     public function culto(): BelongsTo
