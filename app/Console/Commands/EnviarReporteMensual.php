@@ -12,7 +12,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Storage;
+use Maatwebsite\Excel\Excel as ExcelFormat;
 use Maatwebsite\Excel\Facades\Excel;
 
 /**
@@ -75,11 +75,17 @@ class EnviarReporteMensual extends Command
             $this->error('PDF asistencia falló: '.$e->getMessage());
         }
 
-        // Excel asistencia
+        // Excel asistencia — usamos Excel::raw para escribir el archivo en un
+        // path absoluto conocido, evitando depender del disk config (Laravel 12
+        // por defecto pone disco 'local' en storage/app/private).
         try {
             $cultos = $cultos ?? collect();
             $path = "{$dir}/asistencia_{$slug}.xlsx";
-            Excel::store(new AsistenciaExport($cultos, $registroExtraTipos ?? collect(), ucfirst($nombreMes).' '.$año), 'reportes-mensuales/asistencia_'.$slug.'.xlsx');
+            $raw = Excel::raw(
+                new AsistenciaExport($cultos, $registroExtraTipos ?? collect(), ucfirst($nombreMes).' '.$año),
+                ExcelFormat::XLSX,
+            );
+            file_put_contents($path, $raw);
             $adjuntos[] = ['path' => $path, 'filename' => "asistencia_{$slug}.xlsx"];
         } catch (\Throwable $e) {
             $this->error('Excel asistencia falló: '.$e->getMessage());
@@ -108,16 +114,20 @@ class EnviarReporteMensual extends Command
                     $registros[] = $row;
                 }
             }
-            Excel::store(new IngresosExport($registros, $categories, 'culto'), 'reportes-mensuales/ingresos_'.$slug.'.xlsx');
-            $adjuntos[] = ['path' => "{$dir}/ingresos_{$slug}.xlsx", 'filename' => "ingresos_{$slug}.xlsx"];
+            $path = "{$dir}/ingresos_{$slug}.xlsx";
+            $raw = Excel::raw(new IngresosExport($registros, $categories, 'culto'), ExcelFormat::XLSX);
+            file_put_contents($path, $raw);
+            $adjuntos[] = ['path' => $path, 'filename' => "ingresos_{$slug}.xlsx"];
         } catch (\Throwable $e) {
             $this->error('Excel ingresos falló: '.$e->getMessage());
         }
 
         // Excel promesas (año en curso)
         try {
-            Excel::store(new PromesasExport($año, $mes), 'reportes-mensuales/promesas_'.$slug.'.xlsx');
-            $adjuntos[] = ['path' => "{$dir}/promesas_{$slug}.xlsx", 'filename' => "promesas_{$slug}.xlsx"];
+            $path = "{$dir}/promesas_{$slug}.xlsx";
+            $raw = Excel::raw(new PromesasExport($año, $mes), ExcelFormat::XLSX);
+            file_put_contents($path, $raw);
+            $adjuntos[] = ['path' => $path, 'filename' => "promesas_{$slug}.xlsx"];
         } catch (\Throwable $e) {
             $this->error('Excel promesas falló: '.$e->getMessage());
         }
