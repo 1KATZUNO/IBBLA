@@ -2,10 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\AsistenciaExport;
+use App\Exports\IngresosExport;
+use App\Exports\PromesasExport;
 use App\Models\Culto;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Maatwebsite\Excel\Facades\Excel;
 
 class IngresosAsistenciaController extends Controller
 {
@@ -242,6 +246,49 @@ class IngresosAsistenciaController extends Controller
         return $pdf->download('asistencia_'.$nombreMes.'_'.$año.'.pdf');
     }
 
+    /**
+     * Excel de asistencias (Fase 2).
+     * Roy usa este Excel para gráficos propios y comparativos entre meses.
+     */
+    public function excelAsistencia(Request $request)
+    {
+        $query = Culto::with(['asistencia.detallesClases.claseAsistencia', 'asistencia.registrosExtra.tipo'])
+            ->orderBy('fecha', 'asc');
+
+        if ($request->filled('fecha_inicio')) {
+            $query->where('fecha', '>=', $request->fecha_inicio);
+        }
+        if ($request->filled('fecha_fin')) {
+            $query->where('fecha', '<=', $request->fecha_fin);
+        }
+
+        $cultos = $query->get();
+        $registroExtraTipos = \App\Models\RegistroExtraTipo::activos()->ordenados()->get();
+        $titulo = 'Asistencias';
+        $fechaInicio = $request->filled('fecha_inicio') ? Carbon::parse($request->fecha_inicio) : ($cultos->first()?->fecha ?? now());
+        $nombreArchivo = 'asistencia_'.$fechaInicio->locale('es')->isoFormat('YYYY-MM-DD').'.xlsx';
+
+        return Excel::download(new AsistenciaExport($cultos, $registroExtraTipos, $titulo), $nombreArchivo);
+    }
+
+    public function excelAsistenciaMes(Request $request)
+    {
+        $mes = (int) $request->get('mes');
+        $año = (int) $request->get('año');
+        $cultos = Culto::with(['asistencia.detallesClases.claseAsistencia', 'asistencia.registrosExtra.tipo'])
+            ->whereYear('fecha', $año)
+            ->whereMonth('fecha', $mes)
+            ->orderBy('fecha', 'asc')
+            ->get();
+        $nombreMes = Carbon::createFromDate($año, $mes, 1)->locale('es')->translatedFormat('F');
+        $registroExtraTipos = \App\Models\RegistroExtraTipo::activos()->ordenados()->get();
+
+        return Excel::download(
+            new AsistenciaExport($cultos, $registroExtraTipos, ucfirst($nombreMes).' '.$año),
+            'asistencia_'.strtolower($nombreMes).'_'.$año.'.xlsx'
+        );
+    }
+
     public function pdfIngresos(Request $request)
     {
         $categories = tenant_categories();
@@ -289,6 +336,68 @@ class IngresosAsistenciaController extends Controller
         $pdf = Pdf::loadView('pdfs.ingresos', compact('registros', 'tipoReporte', 'categories'));
 
         return $pdf->download('ingresos_'.$tipoReporte.'_'.now()->format('Y-m-d').'.pdf');
+    }
+
+    /**
+     * Excel de ingresos (Fase 2). Espejo de pdfIngresos.
+     */
+    public function excelIngresos(Request $request)
+    {
+        $categories = tenant_categories();
+        $slugs = $categories->pluck('slug')->toArray();
+        $tipoReporte = $request->get('tipo_reporte', 'culto');
+        $query = Culto::with(['totales', 'sobres.detalles', 'ofrendasSueltas'])->orderBy('fecha', 'asc');
+
+        if ($request->filled('fecha_inicio')) {
+            $query->where('fecha', '>=', $request->fecha_inicio);
+        }
+        if ($request->filled('fecha_fin')) {
+            $query->where('fecha', '<=', $request->fecha_fin);
+        }
+
+        $cultos = $query->get();
+        $registros = [];
+
+        if ($tipoReporte === 'culto') {
+            foreach ($cultos as $culto) {
+                $registros[] = $this->buildRegistroFromTotales($culto->totales, $slugs, [
+                    'fecha' => $culto->fecha->format('d/m/Y'),
+                    'tipo' => ucfirst($culto->tipo_culto),
+                ]);
+            }
+        } elseif ($tipoReporte === 'semana') {
+            foreach ($cultos->groupBy(fn ($c) => $c->fecha->startOfWeek()->format('d/m/Y')) as $semana => $grupo) {
+                $registros[] = $this->buildRegistroFromGroup($grupo, $slugs, [
+                    'fecha' => 'Semana del '.$semana,
+                    'tipo' => 'Semanal',
+                ]);
+            }
+        } elseif ($tipoReporte === 'mes') {
+            foreach ($cultos->groupBy(fn ($c) => $c->fecha->format('Y-m')) as $mes => $grupo) {
+                $fecha = Carbon::parse($mes.'-01');
+                $registros[] = $this->buildRegistroFromGroup($grupo, $slugs, [
+                    'fecha' => $fecha->locale('es')->translatedFormat('F Y'),
+                    'tipo' => 'Mensual',
+                ]);
+            }
+        }
+
+        return Excel::download(
+            new IngresosExport($registros, $categories, $tipoReporte),
+            'ingresos_'.$tipoReporte.'_'.now()->format('Y-m-d').'.xlsx'
+        );
+    }
+
+    /**
+     * Excel de promesas con cumplimiento (Fase 2).
+     */
+    public function excelPromesas(Request $request)
+    {
+        $año = $request->filled('año') ? (int) $request->get('año') : (int) now()->year;
+        $mes = $request->filled('mes') ? (int) $request->get('mes') : null;
+        $nombre = 'promesas_'.$año.($mes ? '_'.str_pad((string) $mes, 2, '0', STR_PAD_LEFT) : '').'.xlsx';
+
+        return Excel::download(new PromesasExport($año, $mes), $nombre);
     }
 
     public function pdfIngresosTransferencias(Request $request)

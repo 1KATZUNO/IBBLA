@@ -155,6 +155,12 @@ Route::middleware(['auth', 'role:admin,asistente', 'audit'])->group(function () 
     Route::get('/ingresos-asistencia/pdf-asistencia', [IngresosAsistenciaController::class, 'pdfAsistencia'])->name('ingresos-asistencia.pdf-asistencia');
     Route::get('/ingresos-asistencia/pdf-asistencia-culto/{culto}', [IngresosAsistenciaController::class, 'pdfAsistenciaCulto'])->name('ingresos-asistencia.pdf-asistencia-culto');
     Route::get('/ingresos-asistencia/pdf-asistencia-mes', [IngresosAsistenciaController::class, 'pdfAsistenciaMes'])->name('ingresos-asistencia.pdf-asistencia-mes');
+
+    // Excel exports (Fase 2): paralelos a los PDFs
+    Route::get('/ingresos-asistencia/excel-asistencia', [IngresosAsistenciaController::class, 'excelAsistencia'])->name('ingresos-asistencia.excel-asistencia');
+    Route::get('/ingresos-asistencia/excel-asistencia-mes', [IngresosAsistenciaController::class, 'excelAsistenciaMes'])->name('ingresos-asistencia.excel-asistencia-mes');
+    Route::get('/ingresos-asistencia/excel-ingresos', [IngresosAsistenciaController::class, 'excelIngresos'])->name('ingresos-asistencia.excel-ingresos');
+    Route::get('/ingresos-asistencia/excel-promesas', [IngresosAsistenciaController::class, 'excelPromesas'])->name('ingresos-asistencia.excel-promesas');
 });
 
 // Solo admin

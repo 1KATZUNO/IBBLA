@@ -37,17 +37,21 @@
         </form>
     </div>
 
-    <!-- Botón de Descarga PDF -->
-    <div class="flex justify-end">
-        <a href="{{ route('ingresos-asistencia.pdf-ingresos', ['tipo_reporte' => request('tipo_reporte', 'culto'), 'fecha_inicio' => request('fecha_inicio'), 'fecha_fin' => request('fecha_fin')]) }}" 
+    <!-- Botones de Descarga -->
+    <div class="flex justify-end gap-2">
+        <a href="{{ route('ingresos-asistencia.pdf-ingresos', ['tipo_reporte' => request('tipo_reporte', 'culto'), 'fecha_inicio' => request('fecha_inicio'), 'fecha_fin' => request('fecha_fin')]) }}"
            class="px-6 py-3 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors font-semibold" target="_blank">
-            Descargar PDF Completo
+            PDF Completo
         </a>
-            <a href="{{ route('ingresos-asistencia.pdf-ingresos-transferencias', ['tipo_reporte' => request('tipo_reporte', 'culto'), 'fecha_inicio' => request('fecha_inicio'), 'fecha_fin' => request('fecha_fin')]) }}" 
-                target="_blank"
-                class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors ml-2">
-                Solo Transferencias (PDF)
-            </a>
+        <a href="{{ route('ingresos-asistencia.excel-ingresos', ['tipo_reporte' => request('tipo_reporte', 'culto'), 'fecha_inicio' => request('fecha_inicio'), 'fecha_fin' => request('fecha_fin')]) }}"
+           class="px-6 py-3 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-colors font-semibold" target="_blank">
+            Excel
+        </a>
+        <a href="{{ route('ingresos-asistencia.pdf-ingresos-transferencias', ['tipo_reporte' => request('tipo_reporte', 'culto'), 'fecha_inicio' => request('fecha_inicio'), 'fecha_fin' => request('fecha_fin')]) }}"
+            target="_blank"
+            class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+            Solo Transferencias (PDF)
+        </a>
     </div>
 
     <!-- Tabla de Ingresos -->
