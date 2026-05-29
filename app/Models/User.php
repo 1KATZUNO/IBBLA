@@ -24,6 +24,7 @@ class User extends Authenticatable
         'rol',
         'tenant_id',
         'tenant_role_id',
+        'clase_asistencia_id',
         'is_super_admin',
     ];
 

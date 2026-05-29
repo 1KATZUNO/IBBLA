@@ -246,6 +246,20 @@ Route::middleware(['auth', 'super_admin'])->prefix('super-admin')->name('super-a
     Route::post('tenants/{tenant}/toggle', [SATenantController::class, 'toggle'])->name('tenants.toggle');
 });
 
+// App de Clase (Registro Horeb genérico - Fase 6)
+Route::middleware(['auth'])->group(function () {
+    Route::get('/app/clase/{slug}', [App\Http\Controllers\ClaseAppController::class, 'shell'])->name('clase-app.shell');
+    Route::prefix('clase-app/{slug}')->group(function () {
+        Route::get('/data', [App\Http\Controllers\ClaseAppController::class, 'data']);
+        Route::post('/personas/{tipo}', [App\Http\Controllers\ClaseAppController::class, 'storePersona']);
+        Route::put('/personas/{personaId}', [App\Http\Controllers\ClaseAppController::class, 'updatePersona']);
+        Route::delete('/personas/{personaId}', [App\Http\Controllers\ClaseAppController::class, 'destroyPersona']);
+        Route::post('/personas/{personaId}/convertir', [App\Http\Controllers\ClaseAppController::class, 'convertirVisita']);
+        Route::post('/asistencia/toggle', [App\Http\Controllers\ClaseAppController::class, 'toggleAsistencia']);
+        Route::post('/visitacion', [App\Http\Controllers\ClaseAppController::class, 'upsertVisitacion']);
+    });
+});
+
 // Asistencia App (React SPA)
 Route::get('/app/asistencia', fn () => view('asistencia-app.shell'));
 

@@ -18,6 +18,7 @@ class Persona extends Model
         'nombre',
         'telefono',
         'correo',
+        'direccion',
         'fecha_nacimiento',
         'pin',
         'password',
@@ -74,7 +75,7 @@ class Persona extends Model
     public function clasesAsistencia(): BelongsToMany
     {
         return $this->belongsToMany(ClaseAsistencia::class, 'clase_persona')
-            ->withPivot('es_maestro')
+            ->withPivot(['es_maestro', 'tipo', 'convertida_de_visita_at', 'notas_clase'])
             ->withTimestamps();
     }
 
@@ -84,5 +85,15 @@ class Persona extends Model
             ->wherePivot('clase_asistencia_id', $claseId)
             ->wherePivot('es_maestro', true)
             ->exists();
+    }
+
+    public function asistenciasIndividuales(): HasMany
+    {
+        return $this->hasMany(AsistenciaPersonaCulto::class);
+    }
+
+    public function visitacionesPastorales(): HasMany
+    {
+        return $this->hasMany(VisitacionPastoral::class);
     }
 }

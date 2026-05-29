@@ -9,6 +9,7 @@ export default defineConfig({
                 'resources/css/app.css',
                 'resources/js/app.js',
                 'resources/js/asistencia-app/main.jsx',
+                'resources/js/clase-app/main.jsx',
             ],
             refresh: true,
         }),

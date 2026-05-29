@@ -37,7 +37,7 @@ class ClaseAsistencia extends Model
     public function personas(): BelongsToMany
     {
         return $this->belongsToMany(Persona::class, 'clase_persona')
-            ->withPivot('es_maestro')
+            ->withPivot(['es_maestro', 'tipo', 'convertida_de_visita_at', 'notas_clase'])
             ->withTimestamps();
     }
 
@@ -49,6 +49,28 @@ class ClaseAsistencia extends Model
     public function estudiantes(): BelongsToMany
     {
         return $this->personas()->wherePivot('es_maestro', false);
+    }
+
+    /** Personas con tipo=miembro en la clase. */
+    public function miembros(): BelongsToMany
+    {
+        return $this->personas()->wherePivot('tipo', 'miembro');
+    }
+
+    /** Personas con tipo=visita en la clase. */
+    public function visitas(): BelongsToMany
+    {
+        return $this->personas()->wherePivot('tipo', 'visita');
+    }
+
+    public function asistenciasIndividuales(): HasMany
+    {
+        return $this->hasMany(AsistenciaPersonaCulto::class);
+    }
+
+    public function visitacionesPastorales(): HasMany
+    {
+        return $this->hasMany(VisitacionPastoral::class);
     }
 
     public function scopeActivas(Builder $query): Builder
