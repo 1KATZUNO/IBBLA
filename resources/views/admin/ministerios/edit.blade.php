@@ -1,6 +1,6 @@
 @extends('layouts.admin')
 
-@section('title', 'IBBSC - Editar Ministerio')
+@section('title', tenant_title('Editar Ministerio'))
 @section('page-title', 'Editar Ministerio')
 
 @section('content')

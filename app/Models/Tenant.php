@@ -17,6 +17,7 @@ class Tenant extends Model
         'timezone', 'locale', 'moneda_codigo', 'moneda_simbolo',
         'direccion', 'telefono', 'email_contacto', 'sitio_web',
         'redes_sociales',
+        'mision', 'vision', 'valores',
         'activo', 'max_usuarios',
     ];
 
@@ -24,6 +25,7 @@ class Tenant extends Model
     {
         return [
             'redes_sociales' => 'array',
+            'valores' => 'array',
             'activo' => 'boolean',
             'use_custom_colors' => 'boolean',
         ];

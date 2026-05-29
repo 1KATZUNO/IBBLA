@@ -18,6 +18,20 @@ if (! function_exists('tenant')) {
     }
 }
 
+if (! function_exists('tenant_title')) {
+    /**
+     * Construye el título de página con las siglas del tenant actual.
+     * Usado en @section('title', tenant_title('Asistencia')) en blades.
+     * Fallback 'IBBSC' si no hay tenant (rutas públicas / login).
+     */
+    function tenant_title(string $suffix = ''): string
+    {
+        $siglas = tenant()?->siglas ?? 'IBBSC';
+
+        return $suffix === '' ? $siglas : $siglas.' - '.$suffix;
+    }
+}
+
 if (! function_exists('tenant_pdf_data')) {
     /**
      * Get tenant data for PDF views (nombre, siglas, color, logo base64).

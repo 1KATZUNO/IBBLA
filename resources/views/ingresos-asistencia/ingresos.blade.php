@@ -1,6 +1,6 @@
 @extends('layouts.admin')
 
-@section('title', 'IBBSC - Reportes de Ingresos')
+@section('title', tenant_title('Reportes de Ingresos'))
 @section('page-title', 'Reportes de Ingresos')
 
 @section('content')

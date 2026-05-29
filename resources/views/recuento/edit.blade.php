@@ -1,6 +1,6 @@
 @extends('layouts.admin')
 
-@section('title', 'IBBSC - Editar Sobre')
+@section('title', tenant_title('Editar Sobre'))
 @section('page-title', 'Editar Sobre #' . $sobre->numero_sobre)
 
 @section('content')

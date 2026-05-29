@@ -1,6 +1,6 @@
 @extends('layouts.admin')
 
-@section('title', 'IBBSC - Recuento de Sobres')
+@section('title', tenant_title('Recuento de Sobres'))
 @section('page-title', 'Recuento de Sobres')
 
 @section('content')

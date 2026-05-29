@@ -1,6 +1,6 @@
 @extends('layouts.admin')
 
-@section('title', 'IBBSC - Importar Asistencia')
+@section('title', tenant_title('Importar Asistencia'))
 @section('page-title', 'Carga Retroactiva de Asistencias')
 
 @section('content')

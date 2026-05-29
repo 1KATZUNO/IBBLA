@@ -1,6 +1,6 @@
 @extends('layouts.admin')
 
-@section('title', 'IBBSC - Personas')
+@section('title', tenant_title('Personas'))
 @section('page-title', 'Gestión de Personas')
 
 @section('content')

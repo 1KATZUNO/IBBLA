@@ -8,6 +8,7 @@ use App\Exports\PromesasExport;
 use App\Mail\ReporteMensualMail;
 use App\Models\Culto;
 use App\Models\RegistroExtraTipo;
+use App\Models\Tenant;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
@@ -31,7 +32,7 @@ use Maatwebsite\Excel\Facades\Excel;
  */
 class EnviarReporteMensual extends Command
 {
-    protected $signature = 'reporte:enviar-mensual {--mes=} {--año=} {--dry-run}';
+    protected $signature = 'reporte:enviar-mensual {--mes=} {--año=} {--tenant=} {--dry-run}';
 
     protected $description = 'Envía por correo los reportes del mes (PDF + Excel) a los destinatarios configurados.';
 
@@ -41,6 +42,19 @@ class EnviarReporteMensual extends Command
         $mes = (int) ($this->option('mes') ?: $hoy->copy()->subMonth()->month);
         $año = (int) ($this->option('año') ?: $hoy->copy()->subMonth()->year);
         $nombreMes = Carbon::createFromDate($año, $mes, 1)->locale('es')->translatedFormat('F');
+
+        // En consola no hay auth()->user(). Bindear el tenant manualmente para
+        // que tenant() funcione en views (email, PDF) y BelongsToTenant scopes.
+        // Por defecto: tenant id=7 (IBBLA). Override con --tenant=N.
+        $tenantId = (int) ($this->option('tenant') ?: env('REPORTE_MENSUAL_TENANT_ID', 7));
+        $tenant = Tenant::find($tenantId);
+        if (! $tenant) {
+            $this->error("Tenant id={$tenantId} no encontrado.");
+
+            return self::FAILURE;
+        }
+        app()->instance('current_tenant', $tenant);
+        $this->info("Tenant activo: {$tenant->siglas} - {$tenant->nombre}");
 
         $destinatarios = $this->parseDestinatarios();
         if (empty($destinatarios)) {
@@ -62,11 +76,12 @@ class EnviarReporteMensual extends Command
         // PDF asistencia
         try {
             $cultos = Culto::with(['asistencia.detallesClases.claseAsistencia', 'asistencia.registrosExtra.tipo'])
+                ->where('tenant_id', $tenant->id) // En consola el global scope se desactiva
                 ->whereYear('fecha', $año)
                 ->whereMonth('fecha', $mes)
                 ->orderBy('fecha', 'asc')
                 ->get();
-            $registroExtraTipos = RegistroExtraTipo::activos()->ordenados()->get();
+            $registroExtraTipos = RegistroExtraTipo::where('tenant_id', $tenant->id)->activos()->ordenados()->get();
             $pdf = Pdf::loadView('pdfs.asistencia-mes', compact('cultos', 'nombreMes', 'año', 'registroExtraTipos'));
             $path = "{$dir}/asistencia_{$slug}.pdf";
             $pdf->save($path);
@@ -96,6 +111,7 @@ class EnviarReporteMensual extends Command
             $categories = tenant_categories();
             $slugs = $categories->pluck('slug')->toArray();
             $cultosIngresos = Culto::with(['totales', 'sobres.detalles', 'ofrendasSueltas'])
+                ->where('tenant_id', $tenant->id)
                 ->whereYear('fecha', $año)
                 ->whereMonth('fecha', $mes)
                 ->orderBy('fecha', 'asc')

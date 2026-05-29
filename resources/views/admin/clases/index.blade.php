@@ -1,6 +1,6 @@
 @extends('layouts.admin')
 
-@section('title', 'IBBSC - Gestión de Clases')
+@section('title', tenant_title('Gestión de Clases'))
 @section('page-title', 'Administrar Clases de Asistencia')
 
 @section('content')

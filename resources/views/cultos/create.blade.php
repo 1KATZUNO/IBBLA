@@ -1,6 +1,6 @@
 @extends('layouts.admin')
 
-@section('title', 'IBBSC - Nuevo Culto')
+@section('title', tenant_title('Nuevo Culto'))
 @section('page-title', 'Registrar Nuevo Culto')
 
 @section('content')
