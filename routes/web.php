@@ -172,6 +172,16 @@ Route::middleware(['auth', 'role:admin', 'audit'])->group(function () {
     // Cultos
     Route::resource('cultos', CultoController::class);
 
+    // Administración de Ministerios / Áreas de Servicio
+    Route::prefix('admin/ministerios')->name('admin.ministerios.')->group(function () {
+        Route::get('/', [App\Http\Controllers\MinisterioController::class, 'index'])->name('index');
+        Route::get('/create', [App\Http\Controllers\MinisterioController::class, 'create'])->name('create');
+        Route::post('/', [App\Http\Controllers\MinisterioController::class, 'store'])->name('store');
+        Route::get('/{ministerio}/edit', [App\Http\Controllers\MinisterioController::class, 'edit'])->name('edit');
+        Route::put('/{ministerio}', [App\Http\Controllers\MinisterioController::class, 'update'])->name('update');
+        Route::delete('/{ministerio}', [App\Http\Controllers\MinisterioController::class, 'destroy'])->name('destroy');
+    });
+
     // Administración de Clases de Asistencia
     Route::prefix('admin/clases')->name('admin.clases.')->group(function () {
         Route::get('/', [App\Http\Controllers\ClaseAsistenciaController::class, 'index'])->name('index');

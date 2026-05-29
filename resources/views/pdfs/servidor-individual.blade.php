@@ -36,6 +36,19 @@
         </div>
     </div>
 
+    {{-- Ministerios --}}
+    @php $mins = $servidor->persona?->ministerios ?? collect(); @endphp
+    @if($mins->isNotEmpty())
+    <p style="margin: 8px 0;">
+        <strong>Ministerios:</strong>
+        @foreach($mins as $min)
+            <span style="background:{{ $min->color }}22; color:{{ $min->color }}; padding:2px 8px; border-radius:10px; font-weight:bold; font-size:9px; margin-right:4px;">
+                {{ $min->nombre }}{{ $min->pivot->es_lider ? ' (Líder)' : '' }}
+            </span>
+        @endforeach
+    </p>
+    @endif
+
     {{-- KPIs --}}
     <div class="kpis">
         <div class="kpi">

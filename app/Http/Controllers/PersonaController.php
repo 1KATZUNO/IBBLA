@@ -6,6 +6,7 @@ use App\Models\Persona;
 use App\Models\Promesa;
 use App\Models\Compromiso;
 use App\Models\ClaseAsistencia;
+use App\Models\Ministerio;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
@@ -36,7 +37,9 @@ class PersonaController extends Controller
         $categorias = tenant_categories(['excluir_de_promesas' => false]);
         $clases = ClaseAsistencia::activas()->ordenadas()->get();
         $clasesAsignadas = [];
-        return view('personas.create', compact('categorias', 'clases', 'clasesAsignadas'));
+        $ministerios = Ministerio::activos()->ordenados()->get();
+        $ministeriosAsignados = [];
+        return view('personas.create', compact('categorias', 'clases', 'clasesAsignadas', 'ministerios', 'ministeriosAsignados'));
     }
 
     public function store(Request $request)
@@ -50,6 +53,9 @@ class PersonaController extends Controller
             'clases' => 'nullable|array|max:4',
             'clases.*.clase_id' => 'required|exists:clases_asistencia,id',
             'clases.*.es_maestro' => 'boolean',
+            'ministerios' => 'nullable|array',
+            'ministerios.*.ministerio_id' => 'required|exists:ministerios,id',
+            'ministerios.*.es_lider' => 'boolean',
             'password' => 'required_with:correo|nullable|string|min:8',
             'activo' => 'boolean',
             'notas' => 'nullable|string',
@@ -100,6 +106,18 @@ class PersonaController extends Controller
                 ];
             }
             $persona->clasesAsistencia()->sync($syncData);
+        }
+
+        // Sync ministerios via pivot
+        if (!empty($validated['ministerios'])) {
+            $syncMin = [];
+            foreach ($validated['ministerios'] as $m) {
+                $syncMin[$m['ministerio_id']] = [
+                    'es_lider' => !empty($m['es_lider']),
+                    'desde' => now()->toDateString(),
+                ];
+            }
+            $persona->ministerios()->sync($syncMin);
         }
 
         // Guardar promesas si existen
@@ -186,13 +204,17 @@ class PersonaController extends Controller
 
     public function edit(Persona $persona)
     {
-        $persona->load(['promesas', 'clasesAsistencia']);
+        $persona->load(['promesas', 'clasesAsistencia', 'ministerios']);
         $categorias = tenant_categories(['excluir_de_promesas' => false]);
         $clases = ClaseAsistencia::activas()->ordenadas()->get();
         $clasesAsignadas = $persona->clasesAsistencia->map(function ($clase) {
             return ['clase_id' => $clase->id, 'es_maestro' => $clase->pivot->es_maestro];
         })->values()->toArray();
-        return view('personas.edit', compact('persona', 'categorias', 'clases', 'clasesAsignadas'));
+        $ministerios = Ministerio::activos()->ordenados()->get();
+        $ministeriosAsignados = $persona->ministerios->map(function ($m) {
+            return ['ministerio_id' => $m->id, 'es_lider' => (bool) $m->pivot->es_lider];
+        })->values()->toArray();
+        return view('personas.edit', compact('persona', 'categorias', 'clases', 'clasesAsignadas', 'ministerios', 'ministeriosAsignados'));
     }
 
     public function update(Request $request, Persona $persona)
@@ -206,6 +228,9 @@ class PersonaController extends Controller
             'clases' => 'nullable|array|max:4',
             'clases.*.clase_id' => 'required|exists:clases_asistencia,id',
             'clases.*.es_maestro' => 'boolean',
+            'ministerios' => 'nullable|array',
+            'ministerios.*.ministerio_id' => 'required|exists:ministerios,id',
+            'ministerios.*.es_lider' => 'boolean',
             'password' => $persona->user_id ? 'nullable|string|min:8' : 'required_with:correo|nullable|string|min:8',
             'activo' => 'boolean',
             'notas' => 'nullable|string',
@@ -285,6 +310,22 @@ class PersonaController extends Controller
             }
         }
         $persona->clasesAsistencia()->sync($syncData);
+
+        // Sync ministerios via pivot. Mantener `desde` original si ya existía.
+        $syncMin = [];
+        $existingMin = $persona->ministerios()->get()->keyBy('id');
+        if (! empty($validated['ministerios'])) {
+            foreach ($validated['ministerios'] as $m) {
+                $id = $m['ministerio_id'];
+                $prev = $existingMin->get($id);
+                $syncMin[$id] = [
+                    'es_lider' => ! empty($m['es_lider']),
+                    'desde' => $prev?->pivot->desde ?? now()->toDateString(),
+                    'hasta' => null,
+                ];
+            }
+        }
+        $persona->ministerios()->sync($syncMin);
 
         // Sincronizar promesas
         $persona->promesas()->delete(); // Eliminar promesas anteriores

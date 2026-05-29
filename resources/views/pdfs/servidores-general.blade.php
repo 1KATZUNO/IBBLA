@@ -34,7 +34,10 @@
         </div>
         <div>
             <h1>{{ $tenantSiglas }} — Reporte General de Servidores</h1>
-            <h2>{{ $meses[$mes] }} {{ $ano }}</h2>
+            <h2>
+                {{ $meses[$mes] }} {{ $ano }}
+                @if(!empty($ministerioFiltro)) — {{ $ministerioFiltro->nombre }} @endif
+            </h2>
             <p>Generado: {{ now()->format('d/m/Y H:i') }}</p>
         </div>
     </div>
@@ -67,14 +70,15 @@
     <table>
         <thead>
             <tr>
-                <th style="width:24%">Servidor</th>
-                <th style="width:8%">Asist.</th>
-                <th style="width:8%">% Asist.</th>
-                <th style="width:18%">Promesas</th>
-                <th style="width:11%">Prometido {{ $ano }}</th>
-                <th style="width:11%">Dado {{ $ano }}</th>
-                <th style="width:11%">Saldo</th>
-                <th style="width:9%">% Cumpl.</th>
+                <th style="width:18%">Servidor</th>
+                <th style="width:16%">Ministerios</th>
+                <th style="width:7%">Asist.</th>
+                <th style="width:7%">% A.</th>
+                <th style="width:14%">Promesas</th>
+                <th style="width:10%">Prom. {{ $ano }}</th>
+                <th style="width:10%">Dado {{ $ano }}</th>
+                <th style="width:10%">Saldo</th>
+                <th style="width:8%">% C.</th>
             </tr>
         </thead>
         <tbody>
@@ -89,6 +93,14 @@
             @endphp
             <tr>
                 <td>{{ $s->name }}<br><span class="small" style="color:#9ca3af">{{ $s->email }}</span></td>
+                <td class="small">
+                    @php $mins = $s->persona?->ministerios ?? collect(); @endphp
+                    @forelse($mins as $min)
+                        <span style="color:{{ $min->color }}; font-weight:bold;">{{ $min->nombre }}</span>@if(!$loop->last), @endif
+                    @empty
+                        <span style="color:#9ca3af">—</span>
+                    @endforelse
+                </td>
                 <td style="text-align:center;">{{ $asist }}/{{ $totalCultosMes }}</td>
                 <td style="text-align:center;" class="{{ $pctClass }}">{{ $pctAsist }}%</td>
                 <td>

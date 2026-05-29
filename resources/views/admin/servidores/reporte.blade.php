@@ -8,7 +8,7 @@
     <!-- Filtros -->
     <div class="bg-white rounded-lg shadow p-6">
         <form method="GET" action="{{ route('admin.servidores.reporte') }}" class="space-y-4">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div>
                     <label for="mes" class="block text-sm font-medium text-gray-700 mb-2">Mes</label>
                     <select name="mes" id="mes" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
@@ -18,11 +18,20 @@
                     </select>
                 </div>
                 <div>
-                    <label for="ano" class="block text-sm font-medium text-gray-700 mb-2">Ano</label>
+                    <label for="ano" class="block text-sm font-medium text-gray-700 mb-2">Año</label>
                     <select name="ano" id="ano" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                         @for($y = now()->year; $y >= now()->year - 3; $y--)
                             <option value="{{ $y }}" {{ $ano == $y ? 'selected' : '' }}>{{ $y }}</option>
                         @endfor
+                    </select>
+                </div>
+                <div>
+                    <label for="ministerio_id" class="block text-sm font-medium text-gray-700 mb-2">Ministerio</label>
+                    <select name="ministerio_id" id="ministerio_id" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        <option value="">Todos los ministerios</option>
+                        @foreach($ministerios as $min)
+                            <option value="{{ $min->id }}" {{ ($ministerioFiltro?->id ?? null) == $min->id ? 'selected' : '' }}>{{ $min->nombre }}</option>
+                        @endforeach
                     </select>
                 </div>
                 <div class="flex items-end">
@@ -33,10 +42,10 @@
             </div>
         </form>
         <div class="mt-4">
-            <a href="{{ route('admin.servidores.reporte.pdf', ['mes' => $mes, 'ano' => $ano]) }}"
+            <a href="{{ route('admin.servidores.reporte.pdf', ['mes' => $mes, 'ano' => $ano, 'ministerio_id' => $ministerioFiltro?->id]) }}"
                target="_blank"
                class="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 font-semibold gap-2">
-                Descargar PDF general (1 página)
+                Descargar PDF general (1 página){{ $ministerioFiltro ? ' — '.$ministerioFiltro->nombre : '' }}
             </a>
         </div>
     </div>
@@ -73,6 +82,7 @@
                 <thead class="bg-gray-50">
                     <tr>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Servidor</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ministerios</th>
                         <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Asistencia</th>
                         <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">% Asistencia</th>
                         <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Promesas</th>
@@ -98,6 +108,17 @@
                                     <div class="text-xs text-gray-500">{{ $servidor->email }}</div>
                                 </div>
                             </div>
+                        </td>
+                        <td class="px-6 py-4 text-xs">
+                            @php $mins = $servidor->persona?->ministerios ?? collect(); @endphp
+                            @forelse($mins as $min)
+                                <span class="inline-block px-2 py-0.5 rounded-full text-xs font-medium mr-1 mb-1"
+                                      style="background:{{ $min->color }}22; color:{{ $min->color }};">
+                                    {{ $min->nombre }}{{ $min->pivot->es_lider ? ' (Líder)' : '' }}
+                                </span>
+                            @empty
+                                <span class="text-gray-400">—</span>
+                            @endforelse
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-center text-sm">
                             <span class="font-semibold">{{ $asist }}</span> / {{ $totalCultosMes }}
@@ -149,8 +170,12 @@
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="6" class="px-6 py-12 text-center text-gray-500">
-                            No hay servidores registrados
+                        <td colspan="7" class="px-6 py-12 text-center text-gray-500">
+                            @if($ministerioFiltro)
+                                No hay servidores en el ministerio <strong>{{ $ministerioFiltro->nombre }}</strong>.
+                            @else
+                                No hay servidores registrados
+                            @endif
                         </td>
                     </tr>
                     @endforelse

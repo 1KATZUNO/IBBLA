@@ -56,6 +56,21 @@ class Persona extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function ministerios(): BelongsToMany
+    {
+        return $this->belongsToMany(Ministerio::class, 'persona_ministerio')
+            ->withPivot(['desde', 'hasta', 'es_lider'])
+            ->withTimestamps();
+    }
+
+    /**
+     * Ministerios donde la persona está actualmente activa (pivot.hasta is null).
+     */
+    public function ministeriosActivos(): BelongsToMany
+    {
+        return $this->ministerios()->wherePivotNull('hasta');
+    }
+
     public function clasesAsistencia(): BelongsToMany
     {
         return $this->belongsToMany(ClaseAsistencia::class, 'clase_persona')

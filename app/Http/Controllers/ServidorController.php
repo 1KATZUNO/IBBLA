@@ -58,8 +58,9 @@ class ServidorController extends Controller
     {
         $mes = (int) $request->input('mes', now()->month);
         $ano = (int) $request->input('ano', now()->year);
+        $ministerioId = $request->filled('ministerio_id') ? (int) $request->input('ministerio_id') : null;
 
-        return view('admin.servidores.reporte', $this->cargarDataReporte($mes, $ano));
+        return view('admin.servidores.reporte', $this->cargarDataReporte($mes, $ano, $ministerioId));
     }
 
     public function qrCulto(Culto $culto)
@@ -92,14 +93,16 @@ class ServidorController extends Controller
     {
         $mes = (int) $request->input('mes', now()->month);
         $ano = (int) $request->input('ano', now()->year);
-        $data = $this->cargarDataReporte($mes, $ano);
+        $ministerioId = $request->filled('ministerio_id') ? (int) $request->input('ministerio_id') : null;
+        $data = $this->cargarDataReporte($mes, $ano, $ministerioId);
 
         $pdf = Pdf::loadView('pdfs.servidores-general', $data)
             ->setPaper('a4', 'portrait');
 
         $nombreMes = $data['meses'][$mes] ?? '';
+        $sufijo = $ministerioId && $data['ministerioFiltro'] ? '_'.$data['ministerioFiltro']->slug : '';
 
-        return $pdf->download("servidores_{$nombreMes}_{$ano}.pdf");
+        return $pdf->download("servidores_{$nombreMes}_{$ano}{$sufijo}.pdf");
     }
 
     /**
@@ -115,6 +118,8 @@ class ServidorController extends Controller
         if ($servidor->tenant_id !== auth()->user()->tenant_id) {
             abort(403);
         }
+
+        $servidor->load('persona.ministerios');
 
         // Cultos del año
         $cultosAño = Culto::whereYear('fecha', $ano)->orderBy('fecha')->get();
@@ -181,17 +186,29 @@ class ServidorController extends Controller
         return $pdf->download("servidor_{$nombre}_{$ano}.pdf");
     }
 
-    protected function cargarDataReporte(int $mes, int $ano): array
+    protected function cargarDataReporte(int $mes, int $ano, ?int $ministerioId = null): array
     {
-        $servidores = User::where(function ($q) {
+        $ministerios = \App\Models\Ministerio::activos()->ordenados()->get();
+        $ministerioFiltro = $ministerioId ? $ministerios->firstWhere('id', $ministerioId) : null;
+
+        $servidoresQuery = User::where(function ($q) {
             $q->where('rol', 'servidor')
                 ->orWhereHas('tenantRole', function ($q2) {
                     $q2->whereRaw("JSON_EXTRACT(permisos, '$.marcar_asistencia') = true");
                 });
         })
             ->where('tenant_id', auth()->user()->tenant_id)
-            ->with('persona')
-            ->get();
+            ->with(['persona.ministerios']);
+
+        // Filtro por ministerio: solo servidores cuya persona esté en ese ministerio
+        if ($ministerioFiltro) {
+            $servidoresQuery->whereHas('persona.ministerios', function ($q) use ($ministerioFiltro) {
+                $q->where('ministerios.id', $ministerioFiltro->id)
+                    ->whereNull('persona_ministerio.hasta');
+            });
+        }
+
+        $servidores = $servidoresQuery->get();
 
         $cultosMes = Culto::whereMonth('fecha', $mes)
             ->whereYear('fecha', $ano)
@@ -242,6 +259,8 @@ class ServidorController extends Controller
             'mes',
             'ano',
             'meses',
+            'ministerios',
+            'ministerioFiltro',
         );
     }
 }

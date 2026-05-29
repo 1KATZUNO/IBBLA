@@ -137,6 +137,38 @@
                     </template>
                 </div>
 
+                <!-- Ministerios / Áreas de servicio -->
+                <div x-data="ministeriosManager()" class="space-y-3 bg-violet-50 border border-violet-200 rounded-lg p-4">
+                    <div class="flex items-center justify-between">
+                        <label class="block text-sm font-medium text-gray-700">Ministerios / Áreas de servicio</label>
+                        <button type="button" @click="addEntry()"
+                                class="text-sm text-violet-700 hover:text-violet-900 flex items-center gap-1">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                            Agregar ministerio
+                        </button>
+                    </div>
+                    <p class="text-xs text-gray-500">Una persona puede pertenecer a varios ministerios.</p>
+                    <template x-for="(entry, idx) in entries" :key="idx">
+                        <div class="flex items-center gap-3 bg-white p-3 rounded-lg border border-violet-100">
+                            <select :name="'ministerios['+idx+'][ministerio_id]'" x-model="entry.ministerio_id"
+                                    class="flex-1 rounded-md border-gray-300 shadow-sm focus:border-violet-500 focus:ring-violet-500 text-sm">
+                                <option value="">-- Seleccionar --</option>
+                                @foreach($ministerios as $min)
+                                    <option value="{{ $min->id }}">{{ $min->nombre }}</option>
+                                @endforeach
+                            </select>
+                            <label class="flex items-center whitespace-nowrap">
+                                <input type="checkbox" :name="'ministerios['+idx+'][es_lider]'" value="1" x-model="entry.es_lider"
+                                       class="rounded border-gray-300 text-violet-600 shadow-sm focus:border-violet-500 focus:ring-violet-500">
+                                <span class="ml-1 text-sm text-gray-700">Líder</span>
+                            </label>
+                            <button type="button" @click="removeEntry(idx)" class="text-red-500 hover:text-red-700">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                            </button>
+                        </div>
+                    </template>
+                </div>
+
                 <div>
                     <label class="flex items-center">
                         <input type="checkbox" name="activo" value="1" {{ old('activo', true) ? 'checked' : '' }}
@@ -221,6 +253,14 @@
         return {
             entries: @json($clasesAsignadas ?? []),
             addEntry() { this.entries.push({ clase_id: '', es_maestro: false }); },
+            removeEntry(idx) { this.entries.splice(idx, 1); }
+        };
+    }
+
+    function ministeriosManager() {
+        return {
+            entries: @json($ministeriosAsignados ?? []),
+            addEntry() { this.entries.push({ ministerio_id: '', es_lider: false }); },
             removeEntry(idx) { this.entries.splice(idx, 1); }
         };
     }
