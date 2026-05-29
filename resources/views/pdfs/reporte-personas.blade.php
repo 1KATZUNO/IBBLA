@@ -20,7 +20,7 @@
         }
         
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            font-family: 'DejaVu Sans', sans-serif;
             font-size: 9px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #4facfe 75%, #00f2fe 100%);
             background-size: 400% 400%;
@@ -135,7 +135,7 @@
         }
         
         .header-text h1 {
-            font-family: 'Google Sans', 'Inter', sans-serif;
+            font-family: 'DejaVu Sans', sans-serif;
             font-size: 28px;
             font-weight: 700;
             color: #ffffff;
@@ -145,7 +145,7 @@
         }
         
         .header-text h2 {
-            font-family: 'Inter', sans-serif;
+            font-family: 'DejaVu Sans', sans-serif;
             font-size: 13px;
             font-weight: 400;
             color: rgba(255, 255, 255, 0.95);
@@ -188,7 +188,7 @@
         
         .periodo p {
             margin: 0;
-            font-family: 'Google Sans', 'Inter', sans-serif;
+            font-family: 'DejaVu Sans', sans-serif;
             font-size: 14px;
             font-weight: 600;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
@@ -226,7 +226,7 @@
             text-align: center;
             font-weight: 600;
             font-size: 9px;
-            font-family: 'Google Sans', 'Inter', sans-serif;
+            font-family: 'DejaVu Sans', sans-serif;
             letter-spacing: 0.5px;
             text-transform: uppercase;
             position: relative;
@@ -269,7 +269,7 @@
             font-weight: 600;
             color: #1a1a2e;
             font-size: 9px;
-            font-family: 'Google Sans', 'Inter', sans-serif;
+            font-family: 'DejaVu Sans', sans-serif;
         }
         
         .cumple {
@@ -324,7 +324,7 @@
         .total-row td {
             padding: 12px 8px !important;
             border-top: 2px solid rgba(102, 126, 234, 0.4) !important;
-            font-family: 'Google Sans', 'Inter', sans-serif;
+            font-family: 'DejaVu Sans', sans-serif;
         }
         
         /* Resumen Final - Estilo Gemini Avanzado */
@@ -364,7 +364,7 @@
         
         .resumen-final h3 {
             margin: 0 0 16px 0;
-            font-family: 'Google Sans', 'Inter', sans-serif;
+            font-family: 'DejaVu Sans', sans-serif;
             font-size: 16px;
             font-weight: 700;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
@@ -431,7 +431,7 @@
             text-transform: uppercase;
             letter-spacing: 0.5px;
             margin-bottom: 8px;
-            font-family: 'Inter', sans-serif;
+            font-family: 'DejaVu Sans', sans-serif;
         }
         
         .resumen-item value {
@@ -442,7 +442,7 @@
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            font-family: 'Google Sans', 'Inter', sans-serif;
+            font-family: 'DejaVu Sans', sans-serif;
             letter-spacing: -0.5px;
         }
         
@@ -455,7 +455,7 @@
             padding: 16px;
             background: rgba(102, 126, 234, 0.05);
             border-radius: 12px;
-            font-family: 'Inter', sans-serif;
+            font-family: 'DejaVu Sans', sans-serif;
             border: 1px solid rgba(102, 126, 234, 0.1);
         }
         
@@ -474,7 +474,7 @@
             color: rgba(102, 126, 234, 0.6);
             font-style: italic;
             font-size: 14px;
-            font-family: 'Google Sans', 'Inter', sans-serif;
+            font-family: 'DejaVu Sans', sans-serif;
             background: rgba(102, 126, 234, 0.05);
             border-radius: 16px;
             border: 2px dashed rgba(102, 126, 234, 0.3);

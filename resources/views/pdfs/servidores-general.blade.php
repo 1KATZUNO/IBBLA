@@ -5,7 +5,7 @@
     <title>Reporte General de Servidores</title>
     <style>
         @page { size: A4 portrait; margin: 12mm; }
-        body { font-family: Arial, sans-serif; font-size: 9px; margin: 0; padding: 0; color: #1f2937; }
+        body { font-family: 'DejaVu Sans', sans-serif; font-size: 9px; margin: 0; padding: 0; color: #1f2937; }
         .header { display: flex; align-items: center; margin-bottom: 14px; border-bottom: 3px solid #3b82f6; padding-bottom: 8px; }
         .header img { width: 50px; height: 50px; margin-right: 12px; }
         .header h1 { margin: 0; font-size: 16px; color: #1f2937; }

@@ -5,7 +5,7 @@
     <title>Reporte de Ingresos</title>
     <style>
         @page { size: landscape; margin: 15mm; }
-        body { font-family: Arial, sans-serif; font-size: 10px; margin: 0; padding: 0; }
+        body { font-family: 'DejaVu Sans', sans-serif; font-size: 10px; margin: 0; padding: 0; }
         .header { display: flex; align-items: center; margin-bottom: 20px; border-bottom: 3px solid #3b82f6; padding-bottom: 10px; }
         .header img { width: 60px; height: 60px; margin-right: 15px; }
         .header-text { flex: 1; }

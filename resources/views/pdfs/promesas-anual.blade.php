@@ -10,7 +10,7 @@
             box-sizing: border-box;
         }
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'DejaVu Sans', sans-serif;
             font-size: 10pt;
             line-height: 1.4;
             color: #1f2937;
@@ -130,7 +130,7 @@
         }
         td.number {
             text-align: right;
-            font-family: 'Courier New', monospace;
+            font-family: 'DejaVu Sans Mono', monospace;
         }
         
         .grand-total-row {

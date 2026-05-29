@@ -5,7 +5,7 @@
     <title>QR Culto - {{ $culto->fecha->format('d/m/Y') }}</title>
     <style>
         @page { size: landscape; margin: 20mm; }
-        body { font-family: Arial, sans-serif; margin: 0; padding: 0; text-align: center; }
+        body { font-family: 'DejaVu Sans', sans-serif; margin: 0; padding: 0; text-align: center; }
         .header { margin-bottom: 30px; border-bottom: 3px solid #3b82f6; padding-bottom: 15px; }
         .header img { width: 60px; height: 60px; }
         .header h1 { margin: 10px 0 0 0; color: #1f2937; font-size: 24px; }

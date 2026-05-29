@@ -5,7 +5,7 @@
     <title>Reporte Individual — {{ $servidor->name }}</title>
     <style>
         @page { size: A4 portrait; margin: 15mm; }
-        body { font-family: Arial, sans-serif; font-size: 10px; margin: 0; padding: 0; color: #1f2937; }
+        body { font-family: 'DejaVu Sans', sans-serif; font-size: 10px; margin: 0; padding: 0; color: #1f2937; }
         .header { display: flex; align-items: center; margin-bottom: 14px; border-bottom: 3px solid #8b5cf6; padding-bottom: 10px; }
         .header img { width: 60px; height: 60px; margin-right: 14px; }
         .header h1 { margin: 0; font-size: 18px; }
