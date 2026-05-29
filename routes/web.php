@@ -248,6 +248,7 @@ Route::middleware(['auth', 'super_admin'])->prefix('super-admin')->name('super-a
 
 // App de Clase (Registro Horeb genérico - Fase 6)
 Route::middleware(['auth'])->group(function () {
+    Route::get('/app/clase', [App\Http\Controllers\ClaseAppController::class, 'index'])->name('clase-app.index');
     Route::get('/app/clase/{slug}', [App\Http\Controllers\ClaseAppController::class, 'shell'])->name('clase-app.shell');
     Route::prefix('clase-app/{slug}')->group(function () {
         Route::get('/data', [App\Http\Controllers\ClaseAppController::class, 'data']);

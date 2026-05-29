@@ -26,6 +26,33 @@ use Illuminate\View\View;
  */
 class ClaseAppController extends Controller
 {
+    /** Selector de clases: maestra ve solo SU clase, admin ve todas. */
+    public function index(): View
+    {
+        $user = auth()->user();
+        $clasesQuery = ClaseAsistencia::where('tenant_id', $user->tenant_id)->activas()->ordenadas();
+
+        if (! $user->isAdmin() && ! $user->is_super_admin) {
+            // Maestra: solo su clase asignada o las clases donde es maestro
+            $clasesIds = collect([$user->clase_asistencia_id])->filter();
+            if ($user->persona) {
+                $clasesIds = $clasesIds->merge(
+                    $user->persona->clasesAsistencia()->wherePivot('es_maestro', true)->pluck('clases_asistencia.id')
+                );
+            }
+            $clasesQuery->whereIn('id', $clasesIds->unique());
+        }
+
+        $clases = $clasesQuery->get();
+
+        // Si solo hay una clase visible, redirigir directo
+        if ($clases->count() === 1) {
+            return redirect()->route('clase-app.shell', $clases->first()->slug);
+        }
+
+        return view('clase-app.index', compact('clases'));
+    }
+
     /** Vista shell que monta la app React. */
     public function shell(string $slug): View
     {

@@ -47,6 +47,10 @@
                     </x-nav-link>
                     @endif
 
+                    <x-nav-link :href="route('clase-app.index')" :active="request()->routeIs('clase-app.*')">
+                        {{ __('App Clase') }}
+                    </x-nav-link>
+
                     @if(Auth::user()->canAccessAdmin())
                     <!-- Menú solo para Admin -->
                     <x-nav-link :href="route('admin.clases.index')" :active="request()->routeIs('admin.clases.*')">
