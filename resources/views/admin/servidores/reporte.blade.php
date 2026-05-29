@@ -32,6 +32,13 @@
                 </div>
             </div>
         </form>
+        <div class="mt-4">
+            <a href="{{ route('admin.servidores.reporte.pdf', ['mes' => $mes, 'ano' => $ano]) }}"
+               target="_blank"
+               class="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 font-semibold gap-2">
+                Descargar PDF general (1 página)
+            </a>
+        </div>
     </div>
 
     <!-- Resumen -->
@@ -69,6 +76,8 @@
                         <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Asistencia</th>
                         <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">% Asistencia</th>
                         <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Promesas</th>
+                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Cumplimiento {{ $ano }}</th>
+                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">PDF</th>
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
@@ -117,10 +126,30 @@
                                 <span class="text-gray-400 text-xs">Sin promesas</span>
                             @endif
                         </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-center text-xs">
+                            @php $c = $cumplimientoPorServidor[$servidor->id] ?? null; @endphp
+                            @if($c && $c['prometido'] > 0)
+                                <div class="font-semibold {{ $c['pct'] >= 80 ? 'text-green-600' : ($c['pct'] >= 50 ? 'text-yellow-600' : 'text-red-600') }}">
+                                    {{ $c['pct'] }}%
+                                </div>
+                                <div class="text-xs text-gray-500">
+                                    ₡{{ number_format($c['dado'], 0, '.', ',') }} / ₡{{ number_format($c['prometido'], 0, '.', ',') }}
+                                </div>
+                            @else
+                                <span class="text-gray-400">—</span>
+                            @endif
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-center">
+                            <a href="{{ route('admin.servidores.pdf-individual', ['servidor' => $servidor->id, 'ano' => $ano, 'mes' => $mes]) }}"
+                               target="_blank"
+                               class="inline-flex items-center px-3 py-1 bg-purple-600 text-white rounded-md text-xs hover:bg-purple-700">
+                                PDF
+                            </a>
+                        </td>
                     </tr>
                     @empty
                     <tr>
-                        <td colspan="4" class="px-6 py-12 text-center text-gray-500">
+                        <td colspan="6" class="px-6 py-12 text-center text-gray-500">
                             No hay servidores registrados
                         </td>
                     </tr>

@@ -209,6 +209,8 @@ Route::middleware(['auth', 'role:admin', 'audit'])->group(function () {
     // Servidores
     Route::get('/admin/servidores', [App\Http\Controllers\ServidorController::class, 'index'])->name('admin.servidores.index');
     Route::get('/admin/servidores/reporte', [App\Http\Controllers\ServidorController::class, 'reporte'])->name('admin.servidores.reporte');
+    Route::get('/admin/servidores/reporte/pdf', [App\Http\Controllers\ServidorController::class, 'pdfReporteGeneral'])->name('admin.servidores.reporte.pdf');
+    Route::get('/admin/servidores/{servidor}/pdf', [App\Http\Controllers\ServidorController::class, 'pdfIndividual'])->name('admin.servidores.pdf-individual');
     Route::get('/admin/servidores/qr/{culto}', [App\Http\Controllers\ServidorController::class, 'qrCulto'])->name('admin.servidores.qr');
 
     // Auditoría
