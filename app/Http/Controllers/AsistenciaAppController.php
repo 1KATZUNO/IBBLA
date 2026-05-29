@@ -158,8 +158,6 @@ class AsistenciaAppController extends Controller
         $capilla = [
             'adultos_hombres' => $asistencia->chapel_adultos_hombres ?? 0,
             'adultos_mujeres' => $asistencia->chapel_adultos_mujeres ?? 0,
-            'jovenes_masculinos' => $asistencia->chapel_jovenes_masculinos ?? 0,
-            'jovenes_femeninas' => $asistencia->chapel_jovenes_femeninas ?? 0,
             'total' => $asistencia->getTotalCapilla(),
         ];
 
@@ -254,8 +252,6 @@ class AsistenciaAppController extends Controller
             'culto_id' => 'required|exists:cultos,id',
             'chapel_adultos_hombres' => 'required|integer|min:0',
             'chapel_adultos_mujeres' => 'required|integer|min:0',
-            'chapel_jovenes_masculinos' => 'required|integer|min:0',
-            'chapel_jovenes_femeninas' => 'required|integer|min:0',
             'salvos_adulto_hombre' => 'nullable|integer|min:0',
             'salvos_adulto_mujer' => 'nullable|integer|min:0',
             'salvos_joven_hombre' => 'nullable|integer|min:0',
@@ -340,9 +336,11 @@ class AsistenciaAppController extends Controller
     private function recalcularTotal(Asistencia $asistencia): void
     {
         $asistencia->refresh();
-        $asistencia->load('detallesClases');
+        $asistencia->load(['detallesClases', 'registrosExtra.tipo']);
 
-        $total = $asistencia->getTotalCapilla() + $asistencia->getTotalClases();
+        $total = $asistencia->getTotalCapilla()
+            + $asistencia->getTotalClases()
+            + $asistencia->getTotalRegistrosExtraAsistencia();
         $asistencia->update(['total_asistencia' => $total]);
     }
 }

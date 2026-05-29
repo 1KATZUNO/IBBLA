@@ -164,8 +164,6 @@ class AsistenciaController extends Controller
             ],
             'chapel_adultos_hombres' => 'required|integer|min:0',
             'chapel_adultos_mujeres' => 'required|integer|min:0',
-            'chapel_jovenes_masculinos' => 'required|integer|min:0',
-            'chapel_jovenes_femeninas' => 'required|integer|min:0',
             'total_asistencia' => 'required|integer|min:0',
             'salvos_adulto_hombre' => 'required|integer|min:0',
             'salvos_adulto_mujer' => 'required|integer|min:0',
@@ -234,8 +232,6 @@ class AsistenciaController extends Controller
         $rules = [
             'chapel_adultos_hombres' => 'required|integer|min:0',
             'chapel_adultos_mujeres' => 'required|integer|min:0',
-            'chapel_jovenes_masculinos' => 'required|integer|min:0',
-            'chapel_jovenes_femeninas' => 'required|integer|min:0',
             'total_asistencia' => 'required|integer|min:0',
             'salvos_adulto_hombre' => 'required|integer|min:0',
             'salvos_adulto_mujer' => 'required|integer|min:0',

@@ -19,12 +19,14 @@ class RegistroExtraTipo extends Model
         'subcampos',
         'orden',
         'activo',
+        'cuenta_en_asistencia',
         'tenant_id',
     ];
 
     protected $casts = [
         'subcampos' => 'array',
         'activo' => 'boolean',
+        'cuenta_en_asistencia' => 'boolean',
     ];
 
     public function scopeActivos($query)

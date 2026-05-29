@@ -44,22 +44,6 @@
                                 @endfor
                             </select>
                         </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Jovenes Masculinos</label>
-                            <select name="chapel_jovenes_masculinos" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 asistencia-input" required>
-                                @for($i = 0; $i <= 100; $i++)
-                                    <option value="{{ $i }}" {{ old('chapel_jovenes_masculinos', $asistencia->chapel_jovenes_masculinos) == $i ? 'selected' : '' }}>{{ $i }}</option>
-                                @endfor
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Jovenes Femeninas</label>
-                            <select name="chapel_jovenes_femeninas" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 asistencia-input" required>
-                                @for($i = 0; $i <= 100; $i++)
-                                    <option value="{{ $i }}" {{ old('chapel_jovenes_femeninas', $asistencia->chapel_jovenes_femeninas) == $i ? 'selected' : '' }}>{{ $i }}</option>
-                                @endfor
-                            </select>
-                        </div>
                         </div>
                     </div>
                 </div>

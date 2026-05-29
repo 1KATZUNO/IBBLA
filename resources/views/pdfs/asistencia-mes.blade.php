@@ -49,7 +49,7 @@
                 @if(isset($registroExtraTipos))
                 @foreach($registroExtraTipos as $tipo)
                     @foreach($tipo->subcampos as $subcampo)
-                    <th style="background-color: {{ $tipo->color }};">{{ ucfirst($subcampo) }}</th>
+                    <th style="background-color: {{ $tipo->color }};">{{ count($tipo->subcampos) === 1 ? $tipo->nombre : ucfirst($subcampo) }}</th>
                     @endforeach
                 @endforeach
                 @endif

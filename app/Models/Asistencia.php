@@ -20,8 +20,6 @@ class Asistencia extends Model
         'chapel_adultos_mujeres',
         'chapel_adultos_mayores_hombres',
         'chapel_adultos_mayores_mujeres',
-        'chapel_jovenes_masculinos',
-        'chapel_jovenes_femeninas',
         'chapel_maestros_hombres',
         'chapel_maestros_mujeres',
         'total_asistencia',
@@ -95,9 +93,7 @@ class Asistencia extends Model
     public function getTotalCapilla(): int
     {
         return ($this->chapel_adultos_hombres ?? 0) +
-               ($this->chapel_adultos_mujeres ?? 0) +
-               ($this->chapel_jovenes_masculinos ?? 0) +
-               ($this->chapel_jovenes_femeninas ?? 0);
+               ($this->chapel_adultos_mujeres ?? 0);
     }
 
     public function getTotalClases(): int
@@ -138,14 +134,12 @@ class Asistencia extends Model
     public function getTotalHombres(): int
     {
         return ($this->chapel_adultos_hombres ?? 0) +
-               ($this->chapel_jovenes_masculinos ?? 0) +
                $this->getTotalClasesHombres();
     }
 
     public function getTotalMujeres(): int
     {
         return ($this->chapel_adultos_mujeres ?? 0) +
-               ($this->chapel_jovenes_femeninas ?? 0) +
                $this->getTotalClasesMujeres();
     }
 
@@ -168,5 +162,21 @@ class Asistencia extends Model
         return ($this->visitas_adulto_hombre ?? 0) + ($this->visitas_adulto_mujer ?? 0) +
                ($this->visitas_joven_hombre ?? 0) + ($this->visitas_joven_mujer ?? 0) +
                ($this->visitas_nino ?? 0) + ($this->visitas_nina ?? 0);
+    }
+
+    /**
+     * Suma todos los valores de los RegistroExtra cuyo tipo está marcado
+     * como `cuenta_en_asistencia = true` (por ejemplo, Transmisión).
+     * Vehículos y similares quedan fuera porque son objetos, no personas.
+     */
+    public function getTotalRegistrosExtraAsistencia(): int
+    {
+        return $this->registrosExtra
+            ->filter(fn ($registro) => $registro->tipo && $registro->tipo->cuenta_en_asistencia)
+            ->sum(function ($registro) {
+                $valores = $registro->valores ?? [];
+
+                return array_sum(array_map('intval', is_array($valores) ? $valores : []));
+            });
     }
 }

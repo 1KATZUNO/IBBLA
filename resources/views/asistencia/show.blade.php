@@ -54,13 +54,6 @@
                         <td class="px-4 py-2 text-sm text-center">{{ $asistencia->chapel_adultos_mujeres ?? 0 }}</td>
                         <td class="px-4 py-2 text-sm text-center font-semibold">{{ ($asistencia->chapel_adultos_hombres ?? 0) + ($asistencia->chapel_adultos_mujeres ?? 0) }}</td>
                     </tr>
-                    <tr>
-                        <td class="px-4 py-2 text-sm text-gray-700 pl-8">Jovenes</td>
-                        <td class="px-4 py-2 text-sm text-center">{{ $asistencia->chapel_jovenes_masculinos ?? 0 }}</td>
-                        <td class="px-4 py-2 text-sm text-center">{{ $asistencia->chapel_jovenes_femeninas ?? 0 }}</td>
-                        <td class="px-4 py-2 text-sm text-center font-semibold">{{ ($asistencia->chapel_jovenes_masculinos ?? 0) + ($asistencia->chapel_jovenes_femeninas ?? 0) }}</td>
-                    </tr>
-
                     <!-- CLASES -->
                     <tr class="bg-green-50 font-semibold">
                         <td class="px-4 py-2 text-sm" colspan="4">CLASES</td>

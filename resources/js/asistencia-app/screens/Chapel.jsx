@@ -8,8 +8,6 @@ export default function Chapel({ culto, navigate, showToast }) {
     const [data, setData] = useState({
         chapel_adultos_hombres: 0,
         chapel_adultos_mujeres: 0,
-        chapel_jovenes_masculinos: 0,
-        chapel_jovenes_femeninas: 0,
     });
 
     const [salvos, setSalvos] = useState({ adulto_hombre: 0, adulto_mujer: 0, joven_hombre: 0, joven_mujer: 0, nino: 0, nina: 0 });
@@ -64,8 +62,6 @@ export default function Chapel({ culto, navigate, showToast }) {
     const countersLabels = [
         ['chapel_adultos_hombres', 'Adultos Hombres'],
         ['chapel_adultos_mujeres', 'Adultos Mujeres'],
-        ['chapel_jovenes_masculinos', 'Jovenes Masculinos'],
-        ['chapel_jovenes_femeninas', 'Jovenes Femeninas'],
     ];
 
     const salvosLabels = [

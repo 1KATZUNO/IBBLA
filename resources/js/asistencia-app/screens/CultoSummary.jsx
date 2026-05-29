@@ -81,8 +81,6 @@ export default function CultoSummary({ culto, navigate }) {
                 <div className="card" style={{ margin: 0 }}>
                     <div className="detail-row"><span className="label">Adultos H</span><span className="value">{capilla.adultos_hombres}</span></div>
                     <div className="detail-row"><span className="label">Adultos M</span><span className="value">{capilla.adultos_mujeres}</span></div>
-                    <div className="detail-row"><span className="label">Jovenes M</span><span className="value">{capilla.jovenes_masculinos}</span></div>
-                    <div className="detail-row"><span className="label">Jovenes F</span><span className="value">{capilla.jovenes_femeninas}</span></div>
                 </div>
             </div>
 

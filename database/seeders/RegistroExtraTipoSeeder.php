@@ -17,6 +17,7 @@ class RegistroExtraTipoSeeder extends Seeder
                 'subcampos' => ['miembros'],
                 'orden' => 1,
                 'activo' => true,
+                'cuenta_en_asistencia' => true, // personas viendo online → suman al total
             ],
             [
                 'nombre' => 'Vehículos',
@@ -25,6 +26,7 @@ class RegistroExtraTipoSeeder extends Seeder
                 'subcampos' => ['autos', 'motos'],
                 'orden' => 2,
                 'activo' => true,
+                'cuenta_en_asistencia' => false, // objetos, no personas
             ],
         ];
 

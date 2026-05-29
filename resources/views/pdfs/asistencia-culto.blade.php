@@ -47,14 +47,10 @@
         <tr>
             <th>Adultos Hombres</th>
             <th>Adultos Mujeres</th>
-            <th>Jóvenes Masculinos</th>
-            <th>Jóvenes Femeninas</th>
         </tr>
         <tr>
             <td>{{ $culto->asistencia->chapel_adultos_hombres }}</td>
             <td>{{ $culto->asistencia->chapel_adultos_mujeres }}</td>
-            <td>{{ $culto->asistencia->chapel_jovenes_masculinos }}</td>
-            <td>{{ $culto->asistencia->chapel_jovenes_femeninas }}</td>
         </tr>
     </table>
 
