@@ -47,6 +47,10 @@ Route::middleware(['auth'])->group(function () {
 // Dashboard - Solo para Admin y Tesorero
 Route::middleware(['auth', 'role:admin,tesorero', 'audit'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+    // Dashboards específicos (Fase 4) — además del general, no en su lugar
+    Route::get('/dashboard/promesas', [App\Http\Controllers\DashboardPromesasController::class, 'index'])->name('dashboard.promesas');
+    Route::get('/dashboard/asistencia', [App\Http\Controllers\DashboardAsistenciaController::class, 'index'])->name('dashboard.asistencia');
 });
 
 Route::middleware(['auth'])->group(function () {

@@ -15,6 +15,14 @@
                     <x-nav-link :href="route('dashboard')" :active="request()->routeIs('dashboard')">
                         {{ __('Dashboard') }}
                     </x-nav-link>
+                    @if(Auth::user()->canAccessRecuento())
+                    <x-nav-link :href="route('dashboard.promesas')" :active="request()->routeIs('dashboard.promesas')">
+                        {{ __('Dash Promesas') }}
+                    </x-nav-link>
+                    <x-nav-link :href="route('dashboard.asistencia')" :active="request()->routeIs('dashboard.asistencia')">
+                        {{ __('Dash Asistencia') }}
+                    </x-nav-link>
+                    @endif
 
                     @if(Auth::user()->canAccessRecuento())
                     <!-- Menú para Admin y Tesorero -->
