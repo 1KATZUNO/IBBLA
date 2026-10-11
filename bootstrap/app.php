@@ -3,6 +3,8 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Request;
+use Illuminate\Routing\Exceptions\InvalidSignatureException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -24,5 +26,11 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        // El informe de una persona se comparte por WhatsApp y lo abre gente sin sesión: si el enlace
+        // venció o está alterado se explica en español, en vez del «Acceso denegado» de la intranet.
+        $exceptions->render(function (InvalidSignatureException $e, Request $request) {
+            if ($request->routeIs('informe.persona')) {
+                return response()->view('errors.informe-no-valido', [], 403);
+            }
+        });
     })->create();
