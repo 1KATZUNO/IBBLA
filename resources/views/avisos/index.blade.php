@@ -54,19 +54,19 @@
                     </div>
                     <div class="flex flex-wrap items-center gap-2">
                         <a href="{{ $aviso->enlace_whatsapp }}" target="_blank" rel="noopener"
-                           class="px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 transition-colors">
+                           class="inline-flex items-center justify-center min-h-[44px] px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 transition-colors">
                             Abrir WhatsApp
                         </a>
                         <form action="{{ route('avisos.enviado', $aviso) }}" method="POST">
                             @csrf
-                            <button type="submit" class="px-4 py-2 border border-gray-300 text-sm text-gray-700 rounded-md hover:bg-gray-50 transition-colors">
+                            <button type="submit" class="inline-flex items-center justify-center min-h-[44px] px-4 py-2 border border-gray-300 text-sm text-gray-700 rounded-md hover:bg-gray-50 transition-colors">
                                 Marcar enviado
                             </button>
                         </form>
                         <form action="{{ route('avisos.descartar', $aviso) }}" method="POST"
                               onsubmit="return confirm('¿Descartar este aviso? No se enviará.');">
                             @csrf
-                            <button type="submit" class="px-4 py-2 text-sm text-red-600 rounded-md hover:bg-red-50 transition-colors">
+                            <button type="submit" class="inline-flex items-center justify-center min-h-[44px] px-4 py-2 text-sm text-red-600 rounded-md hover:bg-red-50 transition-colors">
                                 Descartar
                             </button>
                         </form>

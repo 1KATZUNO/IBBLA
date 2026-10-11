@@ -9,6 +9,7 @@ use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Blade;
+use Illuminate\View\ComponentAttributeBag;
 use Tests\Concerns\CreaEscenarioWhatsApp;
 use Tests\TestCase;
 
@@ -255,6 +256,20 @@ class PanelAvisosWhatsAppTest extends TestCase
             $this->crearAviso();
         }
         $this->assertStringContainsString('>99+</span>', Blade::render('<x-avisos-pendientes-badge />'));
+    }
+
+    public function test_el_contador_tambien_se_puede_incluir_como_vista_pasando_attributes(): void
+    {
+        // Así lo incluye el menú lateral (@includeWhen con una ComponentAttributeBag): el contrato no debe romperse.
+        $this->actingAs($this->admin);
+        $this->crearAviso();
+        $this->crearAviso();
+
+        $html = view('components.avisos-pendientes-badge', ['attributes' => new ComponentAttributeBag(['class' => 'ml-auto'])])->render();
+
+        $this->assertStringContainsString('ml-auto', $html);
+        $this->assertStringContainsString('bg-red-600', $html);
+        $this->assertStringContainsString('>2</span>', $html);
     }
 
     // ---------------------------------------------------------------- teléfono del usuario
