@@ -185,6 +185,7 @@ Route::middleware(['auth', 'role:admin', 'audit'])->group(function () {
         Route::post('/', [App\Http\Controllers\MinisterioController::class, 'store'])->name('store');
         Route::get('/{ministerio}/edit', [App\Http\Controllers\MinisterioController::class, 'edit'])->name('edit');
         Route::put('/{ministerio}', [App\Http\Controllers\MinisterioController::class, 'update'])->name('update');
+        Route::patch('/{ministerio}/toggle', [App\Http\Controllers\MinisterioController::class, 'toggle'])->name('toggle');
         Route::delete('/{ministerio}', [App\Http\Controllers\MinisterioController::class, 'destroy'])->name('destroy');
     });
 
@@ -231,6 +232,10 @@ Route::middleware(['auth', 'role:admin', 'audit'])->group(function () {
 
     // Auditoría
     Route::get('/admin/auditoria', [App\Http\Controllers\AuditLogController::class, 'index'])->name('admin.auditoria.index');
+
+    // Historial de ingresos a la plataforma: quién entró, cuándo y a qué hora (+ CSV)
+    Route::get('/admin/auditoria/ingresos', [App\Http\Controllers\HistorialIngresosController::class, 'index'])->name('admin.auditoria.ingresos');
+    Route::get('/admin/auditoria/ingresos/exportar', [App\Http\Controllers\HistorialIngresosController::class, 'exportar'])->name('admin.auditoria.ingresos.exportar');
 });
 
 // Super Admin Panel
