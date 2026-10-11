@@ -264,6 +264,17 @@
     }
 
     document.addEventListener('DOMContentLoaded', function() {
+        // Una casilla inválida dentro de una sección plegada no se puede enfocar y el navegador
+        // bloquea el envío sin avisar: se abre la sección para que se vea el mensaje.
+        document.getElementById('asistenciaForm').addEventListener('invalid', function(e) {
+            const seccion = e.target.closest('[id$="-content"]');
+            if (seccion && seccion.classList.contains('hidden')) {
+                seccion.classList.remove('hidden');
+                const icono = document.getElementById(seccion.id.replace(/-content$/, '-icon'));
+                if (icono) icono.classList.add('rotate-180');
+            }
+        }, true);
+
         const inputs = document.querySelectorAll('.asistencia-input');
         const maestroChecks = document.querySelectorAll('.maestro-check');
         const totalInput = document.getElementById('total_asistencia');

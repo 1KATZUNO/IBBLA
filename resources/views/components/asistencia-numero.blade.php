@@ -11,6 +11,7 @@
     - onfocus select(): al tocar la casilla el 0 queda seleccionado y el primer dígito lo reemplaza.
     - oninput: si alguien escribe "05" se limpia el cero (la regla `integer` de Laravel rechaza ceros a la izquierda).
     - onwheel blur(): evita que la rueda del ratón cambie la cantidad mientras se baja por la página.
+    - onblur: una casilla que se deja vacía vuelve a 0, igual que cuando el desplegable siempre traía un valor.
 --}}
 <input type="number"
        name="{{ $name }}"
@@ -22,5 +23,6 @@
        @if($requerido) required @endif
        onfocus="this.select()"
        onwheel="this.blur()"
+       onblur="if (this.value === '') this.value = '0'"
        oninput="if (/^0\d/.test(this.value)) this.value = this.value.replace(/^0+(?=\d)/, '')"
        {{ $attributes->class(['w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500', 'asistencia-input' => $suma]) }}>
