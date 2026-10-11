@@ -5,12 +5,7 @@
 
 @section('content')
 <div class="space-y-6 max-w-5xl mx-auto">
-
-    @if(session('success'))
-    <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
-        {{ session('success') }}
-    </div>
-    @endif
+    {{-- El mensaje de exito lo muestra el layout (antes salia dos veces) --}}
 
     {{-- Resumen del último import (session flash) --}}
     @if(session('creadas') || session('actualizadas'))

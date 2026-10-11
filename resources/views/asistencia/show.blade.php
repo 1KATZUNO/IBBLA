@@ -20,12 +20,12 @@
                     </span>
                 @endif
             </div>
-            <div class="flex gap-2">
-                <a href="{{ route('asistencia.index') }}" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+            <div class="flex flex-wrap gap-2">
+                <a href="{{ route('asistencia.index') }}" class="btn-secondary">
                     Volver
                 </a>
                 @if(!$asistencia->cerrado)
-                <a href="{{ route('asistencia.edit', $asistencia) }}" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                <a href="{{ route('asistencia.edit', $asistencia) }}" class="btn-primary">
                     Editar
                 </a>
                 @endif
@@ -33,7 +33,7 @@
         </div>
 
         <!-- Tabla de Detalles -->
-        <div class="overflow-x-auto">
+        <div class="table-scroll">
             <table class="min-w-full divide-y divide-gray-200 border">
                 <thead class="bg-blue-50">
                     <tr>
@@ -153,7 +153,7 @@
         </div>
 
         <!-- Totales Finales -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 mt-6">
+        <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4 mt-6">
             <div class="bg-blue-50 rounded-lg p-4 border-2 border-blue-200">
                 <div class="text-sm text-gray-600 mb-1">Total Capilla</div>
                 <div class="text-3xl font-bold text-blue-600">{{ $asistencia->getTotalCapilla() }}</div>
