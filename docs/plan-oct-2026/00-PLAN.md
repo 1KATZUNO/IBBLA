@@ -68,7 +68,7 @@ Del lider del proyecto (David):
   toggle, bloqueo al eliminar con personas), historial de ingresos (RegistrarAccesoSubscriber ->
   audit_logs con tenant_id nuevo, pantalla admin/auditoria/ingresos + CSV, audit:purge conserva 365 dias).
   Repo principal ahora con .env local (ibbla_int / ibbla_int_test; el .env copiado de IBBSC quedo en
-  .env.ibbsc-copia.bak, ignorado). Servidor de integracion: php artisan serve --port=8100.
+  .env.backup, ignorado por git). Servidor de integracion: php artisan serve --port=8100.
   PENDIENTE al entrar B: su menu de layouts/admin es una lista por rol; agregar ahi
   ingresos-asistencia.asistencia-clases, admin.auditoria.ingresos y lo de E (avisos). Luego npm run build.
   Deploy: migrate --force (audit_logs.tenant_id) + config:clear + db:seed --class=MinisterioSeeder --force
