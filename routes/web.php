@@ -160,6 +160,12 @@ Route::middleware(['auth', 'role:admin,asistente', 'audit'])->group(function () 
     Route::get('/ingresos-asistencia/pdf-asistencia-culto/{culto}', [IngresosAsistenciaController::class, 'pdfAsistenciaCulto'])->name('ingresos-asistencia.pdf-asistencia-culto');
     Route::get('/ingresos-asistencia/pdf-asistencia-mes', [IngresosAsistenciaController::class, 'pdfAsistenciaMes'])->name('ingresos-asistencia.pdf-asistencia-mes');
 
+    // Asistencia por clase en un rango de fechas, con promedio (pantalla, PDF, CSV y Excel)
+    Route::get('/ingresos-asistencia/asistencia-clases', [App\Http\Controllers\AsistenciaClasesReporteController::class, 'index'])->name('ingresos-asistencia.asistencia-clases');
+    Route::get('/ingresos-asistencia/asistencia-clases/pdf', [App\Http\Controllers\AsistenciaClasesReporteController::class, 'pdf'])->name('ingresos-asistencia.asistencia-clases.pdf');
+    Route::get('/ingresos-asistencia/asistencia-clases/csv', [App\Http\Controllers\AsistenciaClasesReporteController::class, 'csv'])->name('ingresos-asistencia.asistencia-clases.csv');
+    Route::get('/ingresos-asistencia/asistencia-clases/excel', [App\Http\Controllers\AsistenciaClasesReporteController::class, 'excel'])->name('ingresos-asistencia.asistencia-clases.excel');
+
     // Excel exports (Fase 2): paralelos a los PDFs
     Route::get('/ingresos-asistencia/excel-asistencia', [IngresosAsistenciaController::class, 'excelAsistencia'])->name('ingresos-asistencia.excel-asistencia');
     Route::get('/ingresos-asistencia/excel-asistencia-mes', [IngresosAsistenciaController::class, 'excelAsistenciaMes'])->name('ingresos-asistencia.excel-asistencia-mes');
