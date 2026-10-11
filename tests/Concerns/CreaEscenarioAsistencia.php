@@ -52,6 +52,38 @@ trait CreaEscenarioAsistencia
         ]);
     }
 
+    /** Segunda iglesia, sin usuarios: sirve para comprobar que sus datos no se mezclan con los de la primera. */
+    protected function crearOtraIglesia(string $slug = 'otra-iglesia'): Tenant
+    {
+        return Tenant::create([
+            'nombre' => 'Otra Iglesia',
+            'siglas' => 'OTR',
+            'slug' => $slug,
+            'color_theme' => 'blue',
+            'timezone' => 'America/Costa_Rica',
+            'locale' => 'es',
+            'moneda_codigo' => 'CRC',
+            'moneda_simbolo' => '₡',
+            'activo' => true,
+        ]);
+    }
+
+    /** Usuario de la iglesia con uno de los roles por defecto (admin, tesorero, asistente...). */
+    protected function crearUsuarioConRol(string $slugRol): User
+    {
+        $rol = TenantRole::where('tenant_id', $this->iglesia->id)->where('slug', $slugRol)->firstOrFail();
+
+        return User::create([
+            'name' => ucfirst($slugRol).' de Prueba',
+            'email' => "{$slugRol}@{$this->iglesia->slug}.test",
+            'password' => 'secreto-123',
+            'rol' => $slugRol,
+            'is_super_admin' => false,
+            'tenant_id' => $this->iglesia->id,
+            'tenant_role_id' => $rol->id,
+        ]);
+    }
+
     protected function crearClase(string $nombre, string $slug, int $orden = 1, array $extra = []): ClaseAsistencia
     {
         return ClaseAsistencia::create($extra + [
@@ -83,7 +115,7 @@ trait CreaEscenarioAsistencia
     {
         return Culto::create([
             'fecha' => $fecha,
-            'hora' => '09:00:00',
+            'hora' => $tipo === 'domingo_pm' ? '18:00:00' : '09:00:00',
             'tipo_culto' => $tipo,
             'cerrado' => false,
             'tenant_id' => $tenantId ?? $this->iglesia->id,
