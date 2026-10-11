@@ -30,19 +30,11 @@
                         <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Adultos Hombres</label>
-                            <select name="chapel_adultos_hombres" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 asistencia-input" required>
-                                @for($i = 0; $i <= 100; $i++)
-                                    <option value="{{ $i }}" {{ old('chapel_adultos_hombres', $asistencia->chapel_adultos_hombres) == $i ? 'selected' : '' }}>{{ $i }}</option>
-                                @endfor
-                            </select>
+                            <x-asistencia-numero name="chapel_adultos_hombres" :value="old('chapel_adultos_hombres', $asistencia->chapel_adultos_hombres)" suma />
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Adultos Mujeres</label>
-                            <select name="chapel_adultos_mujeres" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 asistencia-input" required>
-                                @for($i = 0; $i <= 100; $i++)
-                                    <option value="{{ $i }}" {{ old('chapel_adultos_mujeres', $asistencia->chapel_adultos_mujeres) == $i ? 'selected' : '' }}>{{ $i }}</option>
-                                @endfor
-                            </select>
+                            <x-asistencia-numero name="chapel_adultos_mujeres" :value="old('chapel_adultos_mujeres', $asistencia->chapel_adultos_mujeres)" suma />
                         </div>
                         </div>
                     </div>
@@ -62,19 +54,11 @@
                         <div class="grid grid-cols-2 gap-4 mb-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Hombres</label>
-                            <select name="clase[{{ $clase->id }}][hombres]" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 asistencia-input" required>
-                                @for($i = 0; $i <= 100; $i++)
-                                    <option value="{{ $i }}" {{ old("clase.{$clase->id}.hombres", $detalle->hombres ?? 0) == $i ? 'selected' : '' }}>{{ $i }}</option>
-                                @endfor
-                            </select>
+                            <x-asistencia-numero name="clase[{{ $clase->id }}][hombres]" :value='old("clase.{$clase->id}.hombres", $detalle->hombres ?? 0)' suma />
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Mujeres</label>
-                            <select name="clase[{{ $clase->id }}][mujeres]" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 asistencia-input" required>
-                                @for($i = 0; $i <= 100; $i++)
-                                    <option value="{{ $i }}" {{ old("clase.{$clase->id}.mujeres", $detalle->mujeres ?? 0) == $i ? 'selected' : '' }}>{{ $i }}</option>
-                                @endfor
-                            </select>
+                            <x-asistencia-numero name="clase[{{ $clase->id }}][mujeres]" :value='old("clase.{$clase->id}.mujeres", $detalle->mujeres ?? 0)' suma />
                         </div>
                         </div>
                         @if($clase->tiene_maestros)
@@ -116,51 +100,27 @@
                         <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Adulto Hombre</label>
-                            <select name="salvos_adulto_hombre" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
-                                @for($i = 0; $i <= 100; $i++)
-                                    <option value="{{ $i }}" {{ old('salvos_adulto_hombre', $asistencia->salvos_adulto_hombre ?? 0) == $i ? 'selected' : '' }}>{{ $i }}</option>
-                                @endfor
-                            </select>
+                            <x-asistencia-numero name="salvos_adulto_hombre" :value="old('salvos_adulto_hombre', $asistencia->salvos_adulto_hombre ?? 0)" />
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Adulto Mujer</label>
-                            <select name="salvos_adulto_mujer" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
-                                @for($i = 0; $i <= 100; $i++)
-                                    <option value="{{ $i }}" {{ old('salvos_adulto_mujer', $asistencia->salvos_adulto_mujer ?? 0) == $i ? 'selected' : '' }}>{{ $i }}</option>
-                                @endfor
-                            </select>
+                            <x-asistencia-numero name="salvos_adulto_mujer" :value="old('salvos_adulto_mujer', $asistencia->salvos_adulto_mujer ?? 0)" />
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Joven Hombre</label>
-                            <select name="salvos_joven_hombre" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
-                                @for($i = 0; $i <= 100; $i++)
-                                    <option value="{{ $i }}" {{ old('salvos_joven_hombre', $asistencia->salvos_joven_hombre ?? 0) == $i ? 'selected' : '' }}>{{ $i }}</option>
-                                @endfor
-                            </select>
+                            <x-asistencia-numero name="salvos_joven_hombre" :value="old('salvos_joven_hombre', $asistencia->salvos_joven_hombre ?? 0)" />
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Joven Mujer</label>
-                            <select name="salvos_joven_mujer" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
-                                @for($i = 0; $i <= 100; $i++)
-                                    <option value="{{ $i }}" {{ old('salvos_joven_mujer', $asistencia->salvos_joven_mujer ?? 0) == $i ? 'selected' : '' }}>{{ $i }}</option>
-                                @endfor
-                            </select>
+                            <x-asistencia-numero name="salvos_joven_mujer" :value="old('salvos_joven_mujer', $asistencia->salvos_joven_mujer ?? 0)" />
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Nino</label>
-                            <select name="salvos_nino" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
-                                @for($i = 0; $i <= 100; $i++)
-                                    <option value="{{ $i }}" {{ old('salvos_nino', $asistencia->salvos_nino ?? 0) == $i ? 'selected' : '' }}>{{ $i }}</option>
-                                @endfor
-                            </select>
+                            <x-asistencia-numero name="salvos_nino" :value="old('salvos_nino', $asistencia->salvos_nino ?? 0)" />
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Nina</label>
-                            <select name="salvos_nina" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
-                                @for($i = 0; $i <= 100; $i++)
-                                    <option value="{{ $i }}" {{ old('salvos_nina', $asistencia->salvos_nina ?? 0) == $i ? 'selected' : '' }}>{{ $i }}</option>
-                                @endfor
-                            </select>
+                            <x-asistencia-numero name="salvos_nina" :value="old('salvos_nina', $asistencia->salvos_nina ?? 0)" />
                         </div>
                         </div>
                     </div>
@@ -178,51 +138,27 @@
                         <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Adulto Hombre</label>
-                            <select name="bautismos_adulto_hombre" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
-                                @for($i = 0; $i <= 100; $i++)
-                                    <option value="{{ $i }}" {{ old('bautismos_adulto_hombre', $asistencia->bautismos_adulto_hombre ?? 0) == $i ? 'selected' : '' }}>{{ $i }}</option>
-                                @endfor
-                            </select>
+                            <x-asistencia-numero name="bautismos_adulto_hombre" :value="old('bautismos_adulto_hombre', $asistencia->bautismos_adulto_hombre ?? 0)" />
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Adulto Mujer</label>
-                            <select name="bautismos_adulto_mujer" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
-                                @for($i = 0; $i <= 100; $i++)
-                                    <option value="{{ $i }}" {{ old('bautismos_adulto_mujer', $asistencia->bautismos_adulto_mujer ?? 0) == $i ? 'selected' : '' }}>{{ $i }}</option>
-                                @endfor
-                            </select>
+                            <x-asistencia-numero name="bautismos_adulto_mujer" :value="old('bautismos_adulto_mujer', $asistencia->bautismos_adulto_mujer ?? 0)" />
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Joven Hombre</label>
-                            <select name="bautismos_joven_hombre" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
-                                @for($i = 0; $i <= 100; $i++)
-                                    <option value="{{ $i }}" {{ old('bautismos_joven_hombre', $asistencia->bautismos_joven_hombre ?? 0) == $i ? 'selected' : '' }}>{{ $i }}</option>
-                                @endfor
-                            </select>
+                            <x-asistencia-numero name="bautismos_joven_hombre" :value="old('bautismos_joven_hombre', $asistencia->bautismos_joven_hombre ?? 0)" />
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Joven Mujer</label>
-                            <select name="bautismos_joven_mujer" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
-                                @for($i = 0; $i <= 100; $i++)
-                                    <option value="{{ $i }}" {{ old('bautismos_joven_mujer', $asistencia->bautismos_joven_mujer ?? 0) == $i ? 'selected' : '' }}>{{ $i }}</option>
-                                @endfor
-                            </select>
+                            <x-asistencia-numero name="bautismos_joven_mujer" :value="old('bautismos_joven_mujer', $asistencia->bautismos_joven_mujer ?? 0)" />
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Nino</label>
-                            <select name="bautismos_nino" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
-                                @for($i = 0; $i <= 100; $i++)
-                                    <option value="{{ $i }}" {{ old('bautismos_nino', $asistencia->bautismos_nino ?? 0) == $i ? 'selected' : '' }}>{{ $i }}</option>
-                                @endfor
-                            </select>
+                            <x-asistencia-numero name="bautismos_nino" :value="old('bautismos_nino', $asistencia->bautismos_nino ?? 0)" />
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Nina</label>
-                            <select name="bautismos_nina" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
-                                @for($i = 0; $i <= 100; $i++)
-                                    <option value="{{ $i }}" {{ old('bautismos_nina', $asistencia->bautismos_nina ?? 0) == $i ? 'selected' : '' }}>{{ $i }}</option>
-                                @endfor
-                            </select>
+                            <x-asistencia-numero name="bautismos_nina" :value="old('bautismos_nina', $asistencia->bautismos_nina ?? 0)" />
                         </div>
                         </div>
                     </div>
@@ -240,51 +176,27 @@
                         <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Adulto Hombre</label>
-                            <select name="visitas_adulto_hombre" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
-                                @for($i = 0; $i <= 100; $i++)
-                                    <option value="{{ $i }}" {{ old('visitas_adulto_hombre', $asistencia->visitas_adulto_hombre ?? 0) == $i ? 'selected' : '' }}>{{ $i }}</option>
-                                @endfor
-                            </select>
+                            <x-asistencia-numero name="visitas_adulto_hombre" :value="old('visitas_adulto_hombre', $asistencia->visitas_adulto_hombre ?? 0)" />
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Adulto Mujer</label>
-                            <select name="visitas_adulto_mujer" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
-                                @for($i = 0; $i <= 100; $i++)
-                                    <option value="{{ $i }}" {{ old('visitas_adulto_mujer', $asistencia->visitas_adulto_mujer ?? 0) == $i ? 'selected' : '' }}>{{ $i }}</option>
-                                @endfor
-                            </select>
+                            <x-asistencia-numero name="visitas_adulto_mujer" :value="old('visitas_adulto_mujer', $asistencia->visitas_adulto_mujer ?? 0)" />
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Joven Hombre</label>
-                            <select name="visitas_joven_hombre" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
-                                @for($i = 0; $i <= 100; $i++)
-                                    <option value="{{ $i }}" {{ old('visitas_joven_hombre', $asistencia->visitas_joven_hombre ?? 0) == $i ? 'selected' : '' }}>{{ $i }}</option>
-                                @endfor
-                            </select>
+                            <x-asistencia-numero name="visitas_joven_hombre" :value="old('visitas_joven_hombre', $asistencia->visitas_joven_hombre ?? 0)" />
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Joven Mujer</label>
-                            <select name="visitas_joven_mujer" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
-                                @for($i = 0; $i <= 100; $i++)
-                                    <option value="{{ $i }}" {{ old('visitas_joven_mujer', $asistencia->visitas_joven_mujer ?? 0) == $i ? 'selected' : '' }}>{{ $i }}</option>
-                                @endfor
-                            </select>
+                            <x-asistencia-numero name="visitas_joven_mujer" :value="old('visitas_joven_mujer', $asistencia->visitas_joven_mujer ?? 0)" />
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Nino</label>
-                            <select name="visitas_nino" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
-                                @for($i = 0; $i <= 100; $i++)
-                                    <option value="{{ $i }}" {{ old('visitas_nino', $asistencia->visitas_nino ?? 0) == $i ? 'selected' : '' }}>{{ $i }}</option>
-                                @endfor
-                            </select>
+                            <x-asistencia-numero name="visitas_nino" :value="old('visitas_nino', $asistencia->visitas_nino ?? 0)" />
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Nina</label>
-                            <select name="visitas_nina" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
-                                @for($i = 0; $i <= 100; $i++)
-                                    <option value="{{ $i }}" {{ old('visitas_nina', $asistencia->visitas_nina ?? 0) == $i ? 'selected' : '' }}>{{ $i }}</option>
-                                @endfor
-                            </select>
+                            <x-asistencia-numero name="visitas_nina" :value="old('visitas_nina', $asistencia->visitas_nina ?? 0)" />
                         </div>
                         </div>
                     </div>
@@ -311,11 +223,7 @@
                             @foreach($tipo->subcampos as $subcampo)
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">{{ ucfirst($subcampo) }}</label>
-                                <select name="registro_extra[{{ $tipo->id }}][{{ $subcampo }}]" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                    @for($i = 0; $i <= 500; $i++)
-                                        <option value="{{ $i }}" {{ old("registro_extra.{$tipo->id}.{$subcampo}", $valoresExistentes[$subcampo] ?? 0) == $i ? 'selected' : '' }}>{{ $i }}</option>
-                                    @endfor
-                                </select>
+                                <x-asistencia-numero name="registro_extra[{{ $tipo->id }}][{{ $subcampo }}]" :value='old("registro_extra.{$tipo->id}.{$subcampo}", $valoresExistentes[$subcampo] ?? 0)' :requerido="false" />
                             </div>
                             @endforeach
                         </div>
@@ -356,6 +264,17 @@
     }
 
     document.addEventListener('DOMContentLoaded', function() {
+        // Una casilla inválida dentro de una sección plegada no se puede enfocar y el navegador
+        // bloquea el envío sin avisar: se abre la sección para que se vea el mensaje.
+        document.getElementById('asistenciaForm').addEventListener('invalid', function(e) {
+            const seccion = e.target.closest('[id$="-content"]');
+            if (seccion && seccion.classList.contains('hidden')) {
+                seccion.classList.remove('hidden');
+                const icono = document.getElementById(seccion.id.replace(/-content$/, '-icon'));
+                if (icono) icono.classList.add('rotate-180');
+            }
+        }, true);
+
         const inputs = document.querySelectorAll('.asistencia-input');
         const maestroChecks = document.querySelectorAll('.maestro-check');
         const totalInput = document.getElementById('total_asistencia');
@@ -380,6 +299,7 @@
         }
 
         inputs.forEach(input => {
+            input.addEventListener('input', calcularTotal);
             input.addEventListener('change', calcularTotal);
         });
 

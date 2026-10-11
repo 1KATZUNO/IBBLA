@@ -41,12 +41,60 @@ class AsistenciaController extends Controller
         return RegistroExtraTipo::activos()->ordenados()->get();
     }
 
+    /**
+     * Regla de una casilla de cantidad de personas: entero entre 0 y Asistencia::MAX_CANTIDAD.
+     */
+    private function reglaCantidad(bool $requerida = true): string
+    {
+        return ($requerida ? 'required' : 'nullable').'|integer|min:0|max:'.Asistencia::MAX_CANTIDAD;
+    }
+
+    /**
+     * Reglas de las casillas fijas del formulario (capilla, salvos, bautismos y visitas).
+     * El total de asistencia no lleva tope: lo suma el formulario (capilla + clases + maestros)
+     * y puede pasar de Asistencia::MAX_CANTIDAD.
+     */
+    private function reglasCantidadesFijas(): array
+    {
+        $rules = [
+            'chapel_adultos_hombres' => $this->reglaCantidad(),
+            'chapel_adultos_mujeres' => $this->reglaCantidad(),
+            'total_asistencia' => 'required|integer|min:0',
+        ];
+
+        foreach (['salvos', 'bautismos', 'visitas'] as $grupo) {
+            foreach (['adulto_hombre', 'adulto_mujer', 'joven_hombre', 'joven_mujer', 'nino', 'nina'] as $subgrupo) {
+                $rules["{$grupo}_{$subgrupo}"] = $this->reglaCantidad();
+            }
+        }
+
+        return $rules;
+    }
+
+    /**
+     * Las casillas son <input type="number">: si alguien escribe un dígito detrás del 0 inicial el
+     * navegador manda "05", y la regla `integer` rechaza los ceros a la izquierda. Se limpian aquí
+     * para que el formulario no rebote en silencio aunque falle el JS de la casilla.
+     */
+    private function normalizarCantidades(Request $request): void
+    {
+        $limpiar = function ($valor) use (&$limpiar) {
+            if (is_array($valor)) {
+                return array_map($limpiar, $valor);
+            }
+
+            return is_string($valor) && ctype_digit($valor) ? preg_replace('/^0+(?=\d)/', '', $valor) : $valor;
+        };
+
+        $request->merge($limpiar($request->input()));
+    }
+
     private function buildRegistroExtraValidationRules($tipos): array
     {
         $rules = [];
         foreach ($tipos as $tipo) {
             foreach ($tipo->subcampos as $subcampo) {
-                $rules["registro_extra.{$tipo->id}.{$subcampo}"] = 'nullable|integer|min:0';
+                $rules["registro_extra.{$tipo->id}.{$subcampo}"] = $this->reglaCantidad(false);
             }
         }
 
@@ -79,8 +127,8 @@ class AsistenciaController extends Controller
     {
         $rules = [];
         foreach ($clases as $clase) {
-            $rules["clase.{$clase->id}.hombres"] = 'required|integer|min:0';
-            $rules["clase.{$clase->id}.mujeres"] = 'required|integer|min:0';
+            $rules["clase.{$clase->id}.hombres"] = $this->reglaCantidad();
+            $rules["clase.{$clase->id}.mujeres"] = $this->reglaCantidad();
             if ($clase->tiene_maestros) {
                 $rules["clase.{$clase->id}.maestros_ids"] = 'nullable|array';
                 $rules["clase.{$clase->id}.maestros_ids.*"] = 'exists:personas,id';
@@ -156,34 +204,15 @@ class AsistenciaController extends Controller
         $clases = $this->getClasesActivas();
         $registroExtraTipos = $this->getRegistroExtraTipos();
 
-        $rules = [
+        $this->normalizarCantidades($request);
+
+        $rules = array_merge([
             'culto_id' => [
                 'required',
                 'exists:cultos,id',
                 'unique:asistencia,culto_id,NULL,id,tenant_id,'.(auth()->user()->tenant_id ?? ''),
             ],
-            'chapel_adultos_hombres' => 'required|integer|min:0',
-            'chapel_adultos_mujeres' => 'required|integer|min:0',
-            'total_asistencia' => 'required|integer|min:0',
-            'salvos_adulto_hombre' => 'required|integer|min:0',
-            'salvos_adulto_mujer' => 'required|integer|min:0',
-            'salvos_joven_hombre' => 'required|integer|min:0',
-            'salvos_joven_mujer' => 'required|integer|min:0',
-            'salvos_nino' => 'required|integer|min:0',
-            'salvos_nina' => 'required|integer|min:0',
-            'bautismos_adulto_hombre' => 'required|integer|min:0',
-            'bautismos_adulto_mujer' => 'required|integer|min:0',
-            'bautismos_joven_hombre' => 'required|integer|min:0',
-            'bautismos_joven_mujer' => 'required|integer|min:0',
-            'bautismos_nino' => 'required|integer|min:0',
-            'bautismos_nina' => 'required|integer|min:0',
-            'visitas_adulto_hombre' => 'required|integer|min:0',
-            'visitas_adulto_mujer' => 'required|integer|min:0',
-            'visitas_joven_hombre' => 'required|integer|min:0',
-            'visitas_joven_mujer' => 'required|integer|min:0',
-            'visitas_nino' => 'required|integer|min:0',
-            'visitas_nina' => 'required|integer|min:0',
-        ];
+        ], $this->reglasCantidadesFijas());
 
         $rules = array_merge($rules, $this->buildClaseValidationRules($clases));
         $rules = array_merge($rules, $this->buildRegistroExtraValidationRules($registroExtraTipos));
@@ -229,29 +258,9 @@ class AsistenciaController extends Controller
 
         $clases = $this->getClasesActivas();
 
-        $rules = [
-            'chapel_adultos_hombres' => 'required|integer|min:0',
-            'chapel_adultos_mujeres' => 'required|integer|min:0',
-            'total_asistencia' => 'required|integer|min:0',
-            'salvos_adulto_hombre' => 'required|integer|min:0',
-            'salvos_adulto_mujer' => 'required|integer|min:0',
-            'salvos_joven_hombre' => 'required|integer|min:0',
-            'salvos_joven_mujer' => 'required|integer|min:0',
-            'salvos_nino' => 'required|integer|min:0',
-            'salvos_nina' => 'required|integer|min:0',
-            'bautismos_adulto_hombre' => 'required|integer|min:0',
-            'bautismos_adulto_mujer' => 'required|integer|min:0',
-            'bautismos_joven_hombre' => 'required|integer|min:0',
-            'bautismos_joven_mujer' => 'required|integer|min:0',
-            'bautismos_nino' => 'required|integer|min:0',
-            'bautismos_nina' => 'required|integer|min:0',
-            'visitas_adulto_hombre' => 'required|integer|min:0',
-            'visitas_adulto_mujer' => 'required|integer|min:0',
-            'visitas_joven_hombre' => 'required|integer|min:0',
-            'visitas_joven_mujer' => 'required|integer|min:0',
-            'visitas_nino' => 'required|integer|min:0',
-            'visitas_nina' => 'required|integer|min:0',
-        ];
+        $this->normalizarCantidades($request);
+
+        $rules = $this->reglasCantidadesFijas();
 
         $registroExtraTipos = $this->getRegistroExtraTipos();
         $rules = array_merge($rules, $this->buildClaseValidationRules($clases));

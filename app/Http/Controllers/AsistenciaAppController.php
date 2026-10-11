@@ -200,11 +200,14 @@ class AsistenciaAppController extends Controller
 
     public function guardarAsistenciaClase(Request $request)
     {
+        // Mismo tope que el formulario web (Asistencia::MAX_CANTIDAD)
+        $cantidad = 'integer|min:0|max:'.Asistencia::MAX_CANTIDAD;
+
         $validated = $request->validate([
             'culto_id' => 'required|exists:cultos,id',
             'clase_asistencia_id' => 'required|exists:clases_asistencia,id',
-            'hombres' => 'required|integer|min:0',
-            'mujeres' => 'required|integer|min:0',
+            'hombres' => 'required|'.$cantidad,
+            'mujeres' => 'required|'.$cantidad,
             'maestros_ids' => 'nullable|array',
             'maestros_ids.*' => 'exists:personas,id',
             'estudiantes_presentes_ids' => 'nullable|array',
@@ -248,28 +251,31 @@ class AsistenciaAppController extends Controller
 
     public function guardarAsistenciaCapilla(Request $request)
     {
+        // Mismo tope que el formulario web (Asistencia::MAX_CANTIDAD)
+        $cantidad = 'integer|min:0|max:'.Asistencia::MAX_CANTIDAD;
+
         $validated = $request->validate([
             'culto_id' => 'required|exists:cultos,id',
-            'chapel_adultos_hombres' => 'required|integer|min:0',
-            'chapel_adultos_mujeres' => 'required|integer|min:0',
-            'salvos_adulto_hombre' => 'nullable|integer|min:0',
-            'salvos_adulto_mujer' => 'nullable|integer|min:0',
-            'salvos_joven_hombre' => 'nullable|integer|min:0',
-            'salvos_joven_mujer' => 'nullable|integer|min:0',
-            'salvos_nino' => 'nullable|integer|min:0',
-            'salvos_nina' => 'nullable|integer|min:0',
-            'bautismos_adulto_hombre' => 'nullable|integer|min:0',
-            'bautismos_adulto_mujer' => 'nullable|integer|min:0',
-            'bautismos_joven_hombre' => 'nullable|integer|min:0',
-            'bautismos_joven_mujer' => 'nullable|integer|min:0',
-            'bautismos_nino' => 'nullable|integer|min:0',
-            'bautismos_nina' => 'nullable|integer|min:0',
-            'visitas_adulto_hombre' => 'nullable|integer|min:0',
-            'visitas_adulto_mujer' => 'nullable|integer|min:0',
-            'visitas_joven_hombre' => 'nullable|integer|min:0',
-            'visitas_joven_mujer' => 'nullable|integer|min:0',
-            'visitas_nino' => 'nullable|integer|min:0',
-            'visitas_nina' => 'nullable|integer|min:0',
+            'chapel_adultos_hombres' => 'required|'.$cantidad,
+            'chapel_adultos_mujeres' => 'required|'.$cantidad,
+            'salvos_adulto_hombre' => 'nullable|'.$cantidad,
+            'salvos_adulto_mujer' => 'nullable|'.$cantidad,
+            'salvos_joven_hombre' => 'nullable|'.$cantidad,
+            'salvos_joven_mujer' => 'nullable|'.$cantidad,
+            'salvos_nino' => 'nullable|'.$cantidad,
+            'salvos_nina' => 'nullable|'.$cantidad,
+            'bautismos_adulto_hombre' => 'nullable|'.$cantidad,
+            'bautismos_adulto_mujer' => 'nullable|'.$cantidad,
+            'bautismos_joven_hombre' => 'nullable|'.$cantidad,
+            'bautismos_joven_mujer' => 'nullable|'.$cantidad,
+            'bautismos_nino' => 'nullable|'.$cantidad,
+            'bautismos_nina' => 'nullable|'.$cantidad,
+            'visitas_adulto_hombre' => 'nullable|'.$cantidad,
+            'visitas_adulto_mujer' => 'nullable|'.$cantidad,
+            'visitas_joven_hombre' => 'nullable|'.$cantidad,
+            'visitas_joven_mujer' => 'nullable|'.$cantidad,
+            'visitas_nino' => 'nullable|'.$cantidad,
+            'visitas_nina' => 'nullable|'.$cantidad,
             'registros_especiales' => 'nullable|array',
             'registros_especiales.*.tipo' => 'required|in:visita,salvo,bautismo',
             'registros_especiales.*.nombre' => 'required|string|max:255',
