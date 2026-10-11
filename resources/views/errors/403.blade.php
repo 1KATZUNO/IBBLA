@@ -6,7 +6,7 @@
     <title>403 - Acceso Denegado</title>
     @vite(['resources/css/app.css'])
 </head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+<body class="bg-gray-100 flex items-center justify-center min-h-screen min-h-dvh">
     <div class="text-center">
         <div class="mb-8">
             <svg class="mx-auto h-32 w-32 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">

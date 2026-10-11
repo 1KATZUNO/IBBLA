@@ -23,7 +23,7 @@
     @stack('styles')
 </head>
 <body class="font-sans antialiased bg-gray-50 overflow-hidden">
-    <div class="flex h-screen overflow-hidden relative z-10">
+    <div class="flex h-screen h-dvh overflow-hidden relative z-10">
         <!-- Sidebar - Slate color scheme -->
         <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-72 bg-slate-800 text-white transform transition-transform duration-300 ease-out -translate-x-full lg:translate-x-0 lg:static lg:inset-0 flex flex-col shadow-xl">
             <div class="flex items-center justify-between h-20 px-6 border-b border-slate-700 flex-shrink-0">
@@ -38,7 +38,7 @@
                         <p class="text-xs text-slate-400">Panel de Control</p>
                     </div>
                 </div>
-                <button id="closeSidebar" class="lg:hidden text-white hover:text-slate-200 transition-colors p-2">
+                <button id="closeSidebar" type="button" class="lg:hidden inline-flex items-center justify-center w-11 h-11 rounded-lg text-white hover:text-slate-200 hover:bg-white/10 transition-colors" aria-label="Cerrar menu">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                     </svg>
@@ -117,7 +117,7 @@
             <!-- Top Bar -->
             <header class="bg-white border-b border-gray-200 shadow-sm z-10">
                 <div class="flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8">
-                    <button id="openSidebar" class="lg:hidden p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors">
+                    <button id="openSidebar" type="button" class="lg:hidden inline-flex items-center justify-center w-11 h-11 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors" aria-label="Abrir menu">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
                         </svg>

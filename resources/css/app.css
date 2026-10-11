@@ -26,11 +26,80 @@
         @apply shadow-card-hover;
     }
 
-    /* Primary Button - Azul corporativo */
+    /* ------------------------------------------------------------------
+       Botones. Todos miden al menos 44px de alto (area tactil para tablet).
+       Colores con significado fijo en toda la app:
+         primario  = accion principal de la pantalla (azul)
+         secundario = cancelar, volver, filtros (blanco con borde)
+         peligro   = eliminar / acciones destructivas (rojo)
+         exito     = registrar dinero o confirmar algo positivo (verde)
+         aviso     = cerrar/bloquear un culto o una asistencia (naranja)
+       ------------------------------------------------------------------ */
+    .btn {
+        @apply inline-flex items-center justify-center gap-2 min-h-[44px] px-4 py-2 rounded-lg;
+        @apply text-sm font-semibold leading-5 whitespace-nowrap select-none;
+        @apply transition-colors duration-150;
+        @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2;
+        @apply disabled:opacity-60 disabled:cursor-not-allowed;
+    }
+
     .btn-primary {
-        @apply relative bg-blue-600 text-white font-semibold px-6 py-3 rounded-lg;
-        @apply shadow-sm transition-all duration-200;
-        @apply hover:bg-blue-700 hover:shadow-md active:bg-blue-800;
+        @apply btn bg-blue-600 text-white shadow-sm hover:bg-blue-700 active:bg-blue-800 focus-visible:ring-blue-500;
+    }
+
+    .btn-secondary {
+        @apply btn bg-white text-gray-700 border border-gray-300 shadow-sm hover:bg-gray-50 active:bg-gray-100 focus-visible:ring-gray-400;
+    }
+
+    .btn-danger {
+        @apply btn bg-red-600 text-white shadow-sm hover:bg-red-700 active:bg-red-800 focus-visible:ring-red-500;
+    }
+
+    .btn-danger-soft {
+        @apply btn bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 active:bg-red-200 focus-visible:ring-red-400;
+    }
+
+    .btn-success {
+        @apply btn bg-green-700 text-white shadow-sm hover:bg-green-800 active:bg-green-900 focus-visible:ring-green-600;
+    }
+
+    .btn-warning {
+        @apply btn bg-orange-700 text-white shadow-sm hover:bg-orange-800 active:bg-orange-900 focus-visible:ring-orange-600;
+    }
+
+    /* Boton solo-icono (acciones de fila en tablas, cerrar modales) */
+    .btn-icon {
+        @apply inline-flex items-center justify-center h-11 w-11 shrink-0 rounded-lg text-gray-500;
+        @apply transition-colors duration-150 hover:bg-gray-100 hover:text-gray-800 active:bg-gray-200;
+        @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500;
+    }
+
+    /* Accion de fila con texto (Editar, Ver...) */
+    .btn-row {
+        @apply inline-flex items-center justify-center gap-1.5 min-h-[44px] px-3 rounded-lg text-sm font-medium whitespace-nowrap;
+        @apply transition-colors duration-150 hover:bg-gray-100 active:bg-gray-200;
+        @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500;
+    }
+
+    /* Barra de acciones pegajosa al fondo de formularios largos: Guardar siempre visible.
+       Va como ultimo hijo del <form>, dentro de una tarjeta con p-6. */
+    .action-bar {
+        @apply sticky bottom-0 z-20 -mx-6 -mb-6 mt-6 px-6 pt-3 rounded-b-lg;
+        @apply flex flex-wrap items-center justify-end gap-3;
+        @apply bg-white/95 border-t border-gray-200 shadow-[0_-4px_12px_-6px_rgba(0,0,0,0.15)];
+        padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+        backdrop-filter: blur(4px);
+    }
+
+    /* Contenedor de tablas: el scroll horizontal queda dentro de la tarjeta, nunca en la pagina */
+    .table-scroll {
+        @apply overflow-x-auto overscroll-x-contain;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Barra de herramientas de una pantalla: botones que bajan de linea en vez de cortarse */
+    .toolbar {
+        @apply flex flex-wrap items-center gap-2;
     }
 
     /* Alias para compatibilidad */
@@ -272,4 +341,9 @@
 .ibbsc-mobile-app {
     -ms-overflow-style: none;
     scrollbar-width: none;
+}
+
+/* Alpine: ocultar elementos con x-cloak hasta que Alpine arranque (evita que modales se vean un instante al cargar) */
+[x-cloak] {
+    display: none !important;
 }
