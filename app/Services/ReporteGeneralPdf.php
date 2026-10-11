@@ -28,6 +28,13 @@ use Illuminate\Support\Facades\Log;
  * de la persona y el bloque de totales generales al final. Los numeros se
  * formatean igual que en la vista (number_format(x, 0) y signo + en la
  * diferencia), asi que el contenido es identico.
+ *
+ * Costo: lineal en personas x meses (~1,5 s y ~65 MB para 140 personas y 12
+ * meses en local). Si con mas volumen o una CPU lenta no alcanzara, el plan B
+ * es generarlo en cola (Job que guarda el PDF en storage y la pantalla ofrece
+ * la descarga al terminar; en Hostinger requiere cron de schedule:run o
+ * queue:work --stop-when-empty) y cachear el PDF por tenant + periodo + ultima
+ * modificacion de sobres/promesas/personas.
  */
 class ReporteGeneralPdf
 {
