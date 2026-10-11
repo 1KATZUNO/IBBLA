@@ -226,6 +226,10 @@ Route::middleware(['auth', 'role:admin', 'audit'])->group(function () {
 
     // Auditoría
     Route::get('/admin/auditoria', [App\Http\Controllers\AuditLogController::class, 'index'])->name('admin.auditoria.index');
+
+    // Historial de ingresos a la plataforma: quién entró, cuándo y a qué hora (+ CSV)
+    Route::get('/admin/auditoria/ingresos', [App\Http\Controllers\HistorialIngresosController::class, 'index'])->name('admin.auditoria.ingresos');
+    Route::get('/admin/auditoria/ingresos/exportar', [App\Http\Controllers\HistorialIngresosController::class, 'exportar'])->name('admin.auditoria.ingresos.exportar');
 });
 
 // Super Admin Panel

@@ -5,6 +5,12 @@
 
 @section('content')
 <div class="space-y-6">
+    <div class="flex justify-end">
+        <a href="{{ route('admin.auditoria.ingresos') }}" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-semibold">
+            Historial de ingresos
+        </a>
+    </div>
+
     <div class="bg-white rounded-lg shadow p-6">
         <form method="GET" class="grid grid-cols-1 md:grid-cols-6 gap-4">
             <div>
