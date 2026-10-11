@@ -78,3 +78,24 @@ Del lider del proyecto (David):
   credenciales reales de IBBSC (rotar y limpiar), vendor/ sin ignorar, login fallido muestra "auth.failed"
   (sin carpeta lang), /admin/auditoria no filtra por iglesia, N+1 en ServidorController::pdfReporteGeneral.
   Uso del plan: semanal 59% (5 h 60%). Siguen B (opus) y E (sonnet). QA solo si al terminar B queda bajo ~65%.
+- 2026-10-11 (cierre por tope de uso, 5 h al 71 %, semanal 61 %): B y E DETENIDOS a mitad de integrarse
+  entre si; nada perdido, todo commiteado en sus ramas, NADA de B ni E esta en integracion todavia.
+  B feat/ux-responsive (8 commits, 63cb2ee..eaa5467): layout con menu lateral completo por rol y ocultable,
+  recuento/asistencia con Guardar fijo y acciones de 44 px, personas con buscar/agregar arriba y formularios
+  por secciones, cultos/clases/usuarios/servidores en tablet, principal con accesos por rol, app de clases
+  con Tailwind, y el menu YA incluye "Asistencia por clase" y "Avisos de WhatsApp" (eaa5467). Capturas
+  antes/despues sin commitear en IBBLA-wt/ux-responsive/docs/ux/*.jpg.
+  E feat/whatsapp-enlace (5 commits + WIP 906f568): config/whatsapp.php con proveedor link (wa.me) y driver
+  meta listo; informe individual PDF con enlace firmado 7 dias; ruta "enviar por WhatsApp" con mensaje;
+  avisos a lideres (culto creado, sobres alcanzados) + panel; botones en personas/index, personas/show y
+  compromisos/show. El WIP adapta panel y boton al layout de B; falta correr sus tests.
+  PROXIMA SESION, en este orden: (1) merge de B en integracion; (2) merge de E encima resolviendo
+  personas/index, personas/show y compromisos/show (B reestructuro, E solo agrega el boton: conservar la
+  estructura de B e insertar el boton/parcial de E); (3) suite completa en MySQL + lint Blade; (4) npm run
+  build (D usa clases emerald/pink/sky que no estan en el build); (5) QA opus sobre integracion con
+  revision visual tablet/PC; (6) cierre: merge a main + deploy Hostinger (migrate --force, config:clear,
+  view:clear, seed de ministerios cuando llegue la lista).
+  DECISIONES ABIERTAS DEL CLIENTE: proveedor real de WhatsApp (1 Meta con otra cuenta + fijo de la iglesia,
+  recomendado; 2 puente no oficial con chip + VPS, con riesgo de bloqueo; 3 quedarse en wa.me); a que chat
+  van los avances (+506 8676 3570 pedido, pero sin numero propio de la app no hay desde donde mandar);
+  lista de 30 ministerios; preguntas de C y D.
