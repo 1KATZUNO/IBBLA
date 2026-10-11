@@ -154,6 +154,15 @@ class MinisterioSeederTest extends TestCase
         $this->assertSame(['Alabanza', 'Ujieres'], $this->nombres($otra));
     }
 
+    public function test_una_lista_vacia_de_tenant_slugs_no_siembra_ninguna_iglesia(): void
+    {
+        config(['ministerios.lista' => ['Alabanza'], 'ministerios.tenant_slugs' => []]);
+
+        $this->sembrar();
+
+        $this->assertSame(0, Ministerio::withoutGlobalScopes()->count());
+    }
+
     public function test_funciona_bajo_without_model_events_como_lo_corre_database_seeder(): void
     {
         // DatabaseSeeder usa WithoutModelEvents: el hook creating del modelo no corre,

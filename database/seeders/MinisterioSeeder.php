@@ -22,8 +22,9 @@ class MinisterioSeeder extends Seeder
         $lista = $this->normalizar((array) config('ministerios.lista', []));
         $slugs = config('ministerios.tenant_slugs');
 
+        // null = todas las iglesias; una lista = solo esas (una lista vacía no siembra ninguna).
         $iglesias = Tenant::query()
-            ->when($slugs, fn ($q) => $q->whereIn('slug', (array) $slugs))
+            ->when($slugs !== null, fn ($q) => $q->whereIn('slug', (array) $slugs))
             ->get();
 
         foreach ($iglesias as $iglesia) {
