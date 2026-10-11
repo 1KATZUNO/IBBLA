@@ -14,6 +14,22 @@ use Illuminate\Support\Facades\Hash;
 
 class PersonaController extends Controller
 {
+    /**
+     * Regla "el ministerio existe", limitada a la iglesia del usuario: con un simple
+     * exists:ministerios,id se podría asignar un ministerio de otra iglesia con solo
+     * conocer su id. El super admin (sin iglesia) no tiene ese límite.
+     */
+    private function reglaMinisterioExiste(): \Illuminate\Validation\Rules\Exists
+    {
+        $regla = \Illuminate\Validation\Rule::exists('ministerios', 'id');
+
+        if ($tenantId = auth()->user()->tenant_id) {
+            $regla->where('tenant_id', $tenantId);
+        }
+
+        return $regla;
+    }
+
     public function index(Request $request)
     {
         $query = Persona::withCount(['sobres', 'promesas']);
@@ -54,7 +70,7 @@ class PersonaController extends Controller
             'clases.*.clase_id' => 'required|exists:clases_asistencia,id',
             'clases.*.es_maestro' => 'boolean',
             'ministerios' => 'nullable|array',
-            'ministerios.*.ministerio_id' => 'required|exists:ministerios,id',
+            'ministerios.*.ministerio_id' => ['required', $this->reglaMinisterioExiste()],
             'ministerios.*.es_lider' => 'boolean',
             'password' => 'required_with:correo|nullable|string|min:8',
             'activo' => 'boolean',
@@ -210,7 +226,17 @@ class PersonaController extends Controller
         $clasesAsignadas = $persona->clasesAsistencia->map(function ($clase) {
             return ['clase_id' => $clase->id, 'es_maestro' => $clase->pivot->es_maestro];
         })->values()->toArray();
-        $ministerios = Ministerio::activos()->ordenados()->get();
+        // Un ministerio desactivado deja de ofrecerse, salvo a quienes ya están en él: si no
+        // apareciera en su selector, el <select> quedaría vacío, fallaría "ministerio_id
+        // required" y no se podría guardar la ficha de esa persona.
+        $ministerios = Ministerio::where(function ($q) use ($persona) {
+            $q->where('activo', true)->orWhereIn('id', $persona->ministerios->pluck('id'));
+        })->ordenados()->get();
+        $ministerios->each(function ($m) {
+            if (! $m->activo) {
+                $m->nombre .= ' (inactivo)'; // solo para mostrar: no se guarda
+            }
+        });
         $ministeriosAsignados = $persona->ministerios->map(function ($m) {
             return ['ministerio_id' => $m->id, 'es_lider' => (bool) $m->pivot->es_lider];
         })->values()->toArray();
@@ -229,7 +255,7 @@ class PersonaController extends Controller
             'clases.*.clase_id' => 'required|exists:clases_asistencia,id',
             'clases.*.es_maestro' => 'boolean',
             'ministerios' => 'nullable|array',
-            'ministerios.*.ministerio_id' => 'required|exists:ministerios,id',
+            'ministerios.*.ministerio_id' => ['required', $this->reglaMinisterioExiste()],
             'ministerios.*.es_lider' => 'boolean',
             'password' => $persona->user_id ? 'nullable|string|min:8' : 'required_with:correo|nullable|string|min:8',
             'activo' => 'boolean',

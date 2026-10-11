@@ -6,32 +6,96 @@ use App\Models\Ministerio;
 use App\Models\Tenant;
 use Illuminate\Database\Seeder;
 
+/**
+ * Siembra la lista de ministerios definida en config/ministerios.php
+ * (ahí se edita; ahí también está la nota de que los 30 reales los entrega el cliente).
+ *
+ * Idempotente: firstOrCreate por (iglesia, nombre). Correrlo N veces deja lo mismo, y no
+ * pisa lo que el administrador ya cambió desde la pantalla de Ministerios.
+ *
+ *     php artisan db:seed --class=MinisterioSeeder --force
+ */
 class MinisterioSeeder extends Seeder
 {
-    /**
-     * Siembra los 7 ministerios típicos para cada tenant existente.
-     * Idempotente vía updateOrCreate por (tenant_id, slug).
-     */
     public function run(): void
     {
-        $ministerios = [
-            ['nombre' => 'Alabanza', 'slug' => 'alabanza', 'color' => '#8B5CF6', 'descripcion' => 'Músicos y cantantes del ministerio de adoración.', 'orden' => 1],
-            ['nombre' => 'Transmisión', 'slug' => 'transmision', 'color' => '#F59E0B', 'descripcion' => 'Sonido, video, streaming y técnicos.', 'orden' => 2],
-            ['nombre' => 'Ujieres', 'slug' => 'ujieres', 'color' => '#10B981', 'descripcion' => 'Recepción, orden y atención al asistente.', 'orden' => 3],
-            ['nombre' => 'Niños / Escuela Dominical', 'slug' => 'ninos', 'color' => '#EC4899', 'descripcion' => 'Maestros y ayudantes de clases por edad.', 'orden' => 4],
-            ['nombre' => 'Diaconado', 'slug' => 'diaconado', 'color' => '#3B82F6', 'descripcion' => 'Diáconos y diaconisas.', 'orden' => 5],
-            ['nombre' => 'Misiones', 'slug' => 'misiones', 'color' => '#EF4444', 'descripcion' => 'Comité y equipo de misiones.', 'orden' => 6],
-            ['nombre' => 'Limpieza / Mantenimiento', 'slug' => 'mantenimiento', 'color' => '#6B7280', 'descripcion' => 'Equipo de limpieza y mantenimiento.', 'orden' => 7],
-        ];
+        $lista = $this->normalizar((array) config('ministerios.lista', []));
+        $slugs = config('ministerios.tenant_slugs');
 
-        $tenants = Tenant::all();
-        foreach ($tenants as $tenant) {
-            foreach ($ministerios as $m) {
-                Ministerio::updateOrCreate(
-                    ['tenant_id' => $tenant->id, 'slug' => $m['slug']],
-                    array_merge($m, ['activo' => true]),
-                );
+        $iglesias = Tenant::query()
+            ->when($slugs, fn ($q) => $q->whereIn('slug', (array) $slugs))
+            ->get();
+
+        foreach ($iglesias as $iglesia) {
+            $creados = 0;
+
+            foreach ($lista as $m) {
+                // Equivale a firstOrCreate por (iglesia, nombre), pero con firstOrNew + save
+                // porque DatabaseSeeder usa WithoutModelEvents: bajo ese modo el hook
+                // `creating` del modelo no corre, así que slug y orden se fijan aquí a mano.
+                $ministerio = Ministerio::withoutGlobalScopes()->firstOrNew([
+                    'tenant_id' => $iglesia->id,
+                    'nombre' => $m['nombre'],
+                ]);
+
+                if ($ministerio->exists) {
+                    continue;
+                }
+
+                $ministerio->fill([
+                    'slug' => Ministerio::slugUnico($m['nombre'], $iglesia->id),
+                    'color' => $m['color'],
+                    'descripcion' => $m['descripcion'],
+                    'activo' => true,
+                    'orden' => $m['orden'],
+                ])->save();
+                $creados++;
             }
+
+            $this->command?->info(sprintf(
+                '%s: %d ministerio(s) creado(s), %d ya existían.',
+                $iglesia->siglas ?: $iglesia->slug,
+                $creados,
+                count($lista) - $creados,
+            ));
         }
+    }
+
+    /**
+     * Acepta líneas "Nombre" o ["nombre" => ..., "descripcion" => ..., "color" => ...],
+     * descarta vacías y repetidas, y completa color y orden.
+     *
+     * @return list<array{nombre: string, descripcion: ?string, color: string, orden: int}>
+     */
+    private function normalizar(array $lista): array
+    {
+        $paleta = array_values(array_filter((array) config('ministerios.paleta', []))) ?: ['#6B7280'];
+        $vistos = [];
+        $salida = [];
+
+        foreach ($lista as $linea) {
+            $datos = is_array($linea) ? $linea : ['nombre' => $linea];
+            $nombre = trim((string) ($datos['nombre'] ?? ''));
+
+            // Mismo criterio que la base (collation sin distinguir mayúsculas ni acentos
+            // en MySQL): "alabanza" y "Alabanza" son el mismo ministerio.
+            $clave = mb_strtolower($nombre);
+            if ($nombre === '' || isset($vistos[$clave])) {
+                continue;
+            }
+            $vistos[$clave] = true;
+
+            $descripcion = mb_substr(trim((string) ($datos['descripcion'] ?? '')), 0, 255);
+
+            $posicion = count($salida);
+            $salida[] = [
+                'nombre' => mb_substr($nombre, 0, 80),
+                'descripcion' => $descripcion !== '' ? $descripcion : null,
+                'color' => $datos['color'] ?? $paleta[$posicion % count($paleta)],
+                'orden' => $posicion + 1,
+            ];
+        }
+
+        return $salida;
     }
 }

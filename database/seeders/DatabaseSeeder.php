@@ -18,6 +18,8 @@ class DatabaseSeeder extends Seeder
             AdminUserSeeder::class,
             TipoCambioSeeder::class,
             RegistroExtraTipoSeeder::class,
+            // Después de AdminUserSeeder: siembra por iglesia, y la iglesia sale de ahí.
+            MinisterioSeeder::class,
         ]);
     }
 }
