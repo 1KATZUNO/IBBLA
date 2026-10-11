@@ -82,6 +82,9 @@ Route::middleware(['auth', 'role:admin,tesorero'])->group(function () {
     // Crear persona rapida (desde recuento)
     Route::post('personas/quick-store', [PersonaController::class, 'quickStore'])->name('personas.quick-store');
 
+    // Enviar el informe de una persona por WhatsApp (abre wa.me con el enlace firmado al PDF)
+    Route::get('personas/{persona}/whatsapp', App\Http\Controllers\PersonaWhatsAppController::class)->name('personas.whatsapp');
+
     // Recuento (Sobres)
     Route::prefix('recuento')->name('recuento.')->group(function () {
         Route::get('/', [RecuentoController::class, 'index'])->name('index');
