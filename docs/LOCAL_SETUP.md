@@ -62,6 +62,9 @@ robocopy "C:\Users\rgonh\Documents\IBBLA\vendor" "C:\Users\rgonh\Documents\IBBLA
 robocopy devuelve 1 cuando copio bien (no es error). Si alguien cambia `composer.json` hay que
 correr `composer install` en el worktree en vez de copiar.
 
+**Cuidado al commitear:** `vendor/` NO esta en `.gitignore` (sale como `?? vendor/` en
+`git status`). Nunca uses `git add -A` ni `git add .`: agrega los archivos por nombre.
+
 ## 4. .env (desde el del repo principal)
 
 El `.env` del repo principal es una copia del de produccion de IBBSC (APP_ENV=production, BD remota,
@@ -98,6 +101,18 @@ php artisan migrate --seed --force --no-ansi
 `DatabaseSeeder` crea el tenant IBBSC con categorias, tipos de culto y roles, mas los usuarios de
 prueba, el tipo de cambio y los tipos de registro extra. Para empezar de cero:
 `php artisan migrate:fresh --seed --force`.
+
+### Datos de volumen (opcional, para probar reportes pesados)
+
+```bash
+php artisan db:seed --class=VolumenDevSeeder --force
+```
+
+Agrega al tenant IBBSC un anio completo (el actual): 150 personas (140 activas), 74 cultos (70 del
+anio + 4 de diciembre anterior), ~2.600 sobres con ~5.000 detalles (5% anonimos, 5% USD), 245
+promesas, compromisos mensuales sincronizados de enero al mes actual y `totales_culto`. Tarda ~6 s,
+es determinista y re-ejecutable (borra lo que creo antes; todo lleva la marca `[volumen-dev]` en
+`notas`). Se niega a correr con `APP_ENV=production`. No toca asistencia ni ministerios.
 
 ## 6. Levantar la app
 
