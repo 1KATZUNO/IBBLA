@@ -59,3 +59,22 @@ Del lider del proyecto (David):
   feat/whatsapp-enlace: boton "Enviar por WhatsApp" = PDF en enlace firmado 7 dias + wa.me con mensaje;
   panel "Avisos pendientes" para culto creado / >=10 sobres; capa de proveedor link|meta.
   Plan semanal 57% al lanzar E (tope 70%). Aun corren A, B, D.
+- 2026-10-11 (noche): A y D MERGEADOS en integracion (d8c98e9 y 214e082), sin conflictos. Suite completa
+  en MySQL: 232 tests, 217 pasan, los 15 fallos son los de Breeze de la linea base. Lint Blade limpio.
+  A: Reporte General pasa de 109-240 s a ~2 s (ReporteGeneralService + ReporteGeneralPdf dibujan sobre el
+  canvas de DomPDF; la vista pdfs/reporte-general.blade.php se borro); VolumenDevSeeder solo local;
+  docs/LOCAL_SETUP.md commiteado. D: dashboards por rango (RangoFechas, parcial dashboards/_filtro-rango,
+  pestanas General|Asistencia|Promesas), ministerios editables (config/ministerios.php + seeder idempotente,
+  toggle, bloqueo al eliminar con personas), historial de ingresos (RegistrarAccesoSubscriber ->
+  audit_logs con tenant_id nuevo, pantalla admin/auditoria/ingresos + CSV, audit:purge conserva 365 dias).
+  Repo principal ahora con .env local (ibbla_int / ibbla_int_test; el .env copiado de IBBSC quedo en
+  .env.ibbsc-copia.bak, ignorado). Servidor de integracion: php artisan serve --port=8100.
+  PENDIENTE al entrar B: su menu de layouts/admin es una lista por rol; agregar ahi
+  ingresos-asistencia.asistencia-clases, admin.auditoria.ingresos y lo de E (avisos). Luego npm run build.
+  Deploy: migrate --force (audit_logs.tenant_id) + config:clear + db:seed --class=MinisterioSeeder --force
+  cuando llegue la lista de 30 ministerios (editar config/ministerios.php).
+  Decisiones de D a confirmar con el cliente: Asistencia y Promesas abren en el anio (MODO_ANIO), general en
+  el mes; promesas se evaluan por meses completos. Hallazgos fuera de alcance: .env.example versionado con
+  credenciales reales de IBBSC (rotar y limpiar), vendor/ sin ignorar, login fallido muestra "auth.failed"
+  (sin carpeta lang), /admin/auditoria no filtra por iglesia, N+1 en ServidorController::pdfReporteGeneral.
+  Uso del plan: semanal 59% (5 h 60%). Siguen B (opus) y E (sonnet). QA solo si al terminar B queda bajo ~65%.
