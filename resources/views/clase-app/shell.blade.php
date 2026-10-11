@@ -7,7 +7,8 @@
     <title>{{ tenant_title('Clase ' . $clase->nombre) }}</title>
     <link rel="icon" href="{{ tenant()?->favicon_url ?? tenant()?->logo_url ?? asset('images/Logo.png') }}">
     @viteReactRefresh
-    @vite('resources/js/clase-app/main.jsx')
+    {{-- ClaseApp.jsx usa clases de Tailwind: sin app.css la app se veia sin estilos --}}
+    @vite(['resources/css/app.css', 'resources/js/clase-app/main.jsx'])
 </head>
 <body>
     <div

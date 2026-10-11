@@ -8,7 +8,7 @@
     "name": "index"
   },
   "resources/css/app.css": {
-    "file": "assets/app-Bk1S9qGf.css",
+    "file": "assets/app-DF-RbVwX.css",
     "src": "resources/css/app.css",
     "isEntry": true,
     "name": "app",
@@ -39,7 +39,7 @@
     ]
   },
   "resources/js/clase-app/main.jsx": {
-    "file": "assets/main-DJwLLPr7.js",
+    "file": "assets/main-C2ImnlPO.js",
     "name": "main",
     "src": "resources/js/clase-app/main.jsx",
     "isEntry": true,

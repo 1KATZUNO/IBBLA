@@ -67,6 +67,8 @@
             ['admin.servidores.index', 'Servidores', 'grupo', 'admin.servidores.*', $u->canAccessAdmin(), false],
             ['asistencia.importar.index', 'Cargar Historico', 'subir', 'asistencia.importar.*', $u->canAccessAdmin(), false],
             ['admin.auditoria.index', 'Auditoria', 'lupa', 'admin.auditoria.index', $u->canAccessAdmin(), false],
+            // Pantalla de la rama de historial de ingresos: aparece cuando su ruta exista
+            ['admin.auditoria.ingresos', 'Historial de ingresos', 'usuario', 'admin.auditoria.ingresos*', $u->canAccessAdmin() && Route::has('admin.auditoria.ingresos'), false],
         ]],
     ];
 @endphp
