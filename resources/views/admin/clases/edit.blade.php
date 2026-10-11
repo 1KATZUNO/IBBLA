@@ -52,28 +52,28 @@
                     <p class="mt-1 text-sm text-gray-500">Número menor aparece primero (después de Capilla)</p>
                 </div>
 
-                <div class="flex items-center">
+                <div class="flex items-center min-h-[44px]">
                     <input type="checkbox" name="tiene_maestros" id="tiene_maestros" value="1" {{ old('tiene_maestros', $clase->tiene_maestros) ? 'checked' : '' }}
                            class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                    <label for="tiene_maestros" class="ml-2 text-sm text-gray-700">
+                    <label for="tiene_maestros" class="ml-2 py-3 flex-1 text-sm text-gray-700 cursor-pointer">
                         Incluir campos para Maestros (H) y Maestras (M)
                     </label>
                 </div>
 
-                <div class="flex items-center">
+                <div class="flex items-center min-h-[44px]">
                     <input type="checkbox" name="activa" id="activa" value="1" {{ old('activa', $clase->activa) ? 'checked' : '' }}
                            class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                    <label for="activa" class="ml-2 text-sm text-gray-700">
+                    <label for="activa" class="ml-2 py-3 flex-1 text-sm text-gray-700 cursor-pointer">
                         Clase activa (aparece en el formulario de asistencia)
                     </label>
                 </div>
             </div>
 
             <div class="mt-6 flex justify-end gap-3">
-                <a href="{{ route('admin.clases.index') }}" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+                <a href="{{ route('admin.clases.index') }}" class="btn-secondary">
                     Cancelar
                 </a>
-                <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                <button type="submit" class="btn-primary">
                     Actualizar Clase
                 </button>
             </div>

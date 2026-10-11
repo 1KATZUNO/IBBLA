@@ -88,7 +88,7 @@
                     @endforeach
                 </select>
             </div>
-            <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+            <button type="submit" class="btn-primary">
                 Ver Asistencia
             </button>
         </form>
@@ -104,7 +104,7 @@
                 @endif
             </h3>
         </div>
-        <div class="overflow-x-auto">
+        <div class="table-scroll">
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>
