@@ -18,6 +18,13 @@ Route::get('/', function () {
     return redirect()->route('login');
 });
 
+// Informe individual de una persona por enlace firmado: se comparte por WhatsApp, no requiere
+// sesión y vence (7 días por defecto). Va fuera de los grupos con auth a propósito.
+Route::get('/informe/{persona}', App\Http\Controllers\InformePublicoController::class)
+    ->whereNumber('persona')
+    ->middleware(['throttle:30,1', 'signed'])
+    ->name('informe.persona');
+
 // API interna - Tipo de cambio
 Route::middleware(['auth'])->get('/api/tipo-cambio', function (BccrExchangeRateService $service) {
     $tipoCambio = $service->obtenerHoy();
