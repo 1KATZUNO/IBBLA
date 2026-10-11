@@ -5,129 +5,118 @@
 
 @section('content')
 <div class="space-y-6">
-    <!-- Buscador -->
+    <!-- Buscar y agregar: lo que mas se usa, arriba y en una sola fila -->
     <div class="bg-white rounded-lg shadow-md p-4">
-        <form method="GET" action="{{ route('personas.index') }}" class="flex flex-col sm:flex-row gap-3">
-            <div class="flex-1">
-                <div class="relative">
+        <div class="flex flex-col md:flex-row md:items-center gap-3">
+            <form method="GET" action="{{ route('personas.index') }}" class="flex flex-1 flex-col sm:flex-row gap-2">
+                <div class="relative flex-1">
                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
                         </svg>
                     </div>
-                    <input type="text"
+                    <input type="search"
                            name="buscar"
                            value="{{ request('buscar') }}"
                            placeholder="Buscar por nombre o PIN..."
-                           class="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                           aria-label="Buscar por nombre o PIN"
+                           class="block w-full min-h-[44px] pl-10 pr-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
                 </div>
-            </div>
-            <div class="flex gap-2">
-                <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                    </svg>
-                    Buscar
-                </button>
-                @if(request('buscar'))
-                <a href="{{ route('personas.index') }}" class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors flex items-center gap-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                    </svg>
-                    Limpiar
-                </a>
-                @endif
-            </div>
-        </form>
-    </div>
-
-    <div class="flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-3">
-        <div class="flex flex-col sm:flex-row flex-wrap gap-2">
-            @if($personasInactivas > 0)
-            <form action="{{ route('personas.limpiar-inactivas') }}" method="POST" class="inline-block"
-                  onsubmit="return confirm('¿Estás seguro de eliminar TODAS las personas inactivas y sus promesas? Los sobres se mantendrán.');">
-                @csrf
-                <button type="submit" class="w-full sm:w-auto px-3 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors text-sm whitespace-nowrap">
-                    🗑️ Limpiar Inactivas ({{ $personasInactivas }})
-                </button>
+                <div class="flex gap-2">
+                    <button type="submit" class="btn-secondary flex-1 sm:flex-none">
+                        Buscar
+                    </button>
+                    @if(request('buscar'))
+                    <a href="{{ route('personas.index') }}" class="btn-secondary flex-1 sm:flex-none">
+                        Limpiar
+                    </a>
+                    @endif
+                </div>
             </form>
-            @endif
-            
-            <form action="{{ route('personas.resetear-promesas') }}" method="POST" class="inline-block"
-                  onsubmit="return confirm('⚠️ ATENCIÓN: Esto eliminará TODAS las promesas y compromisos de TODAS las personas. Los sobres dados se mantienen como historial. ¿Estás seguro?');">
-                @csrf
-                <button type="submit" class="w-full sm:w-auto px-3 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700 transition-colors text-sm whitespace-nowrap">
-                    🔄 Resetear Promesas
-                </button>
-            </form>
+            <a href="{{ route('personas.create') }}" class="btn-primary">
+                + Nueva Persona
+            </a>
+        </div>
 
-            <button onclick="mostrarModalReporte()" class="w-full sm:w-auto px-3 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors text-sm whitespace-nowrap flex items-center gap-2">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="toolbar mt-3 pt-3 border-t border-gray-100">
+            <span class="text-sm text-gray-500 mr-1">Reportes:</span>
+            <button type="button" onclick="mostrarModalReporte()" class="btn-secondary">
+                <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                 </svg>
                 Reporte PDF
             </button>
-
-            <button onclick="mostrarModalReporteGeneral()" class="w-full sm:w-auto px-3 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors text-sm whitespace-nowrap flex items-center gap-2">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <button type="button" onclick="mostrarModalReporteGeneral()" class="btn-secondary">
+                <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"></path>
                 </svg>
                 Reporte General
             </button>
         </div>
-        <a href="{{ route('personas.create') }}" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-center whitespace-nowrap">
-            + Nueva Persona
-        </a>
     </div>
 
     <div class="bg-white rounded-lg shadow overflow-hidden">
-        <div class="overflow-x-auto">
+        <div class="table-scroll">
         <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-gray-50">
                 <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nombre</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">PIN</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Teléfono</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Correo</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Sobres</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Promesas</th>
-                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Acciones</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nombre</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase hidden xl:table-cell">PIN</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase hidden xl:table-cell">Teléfono</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase hidden 2xl:table-cell">Correo</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase hidden 2xl:table-cell">Sobres</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase hidden 2xl:table-cell">Promesas</th>
+                    <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Acciones</th>
                 </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
                 @forelse($personas as $persona)
                 <tr class="hover:bg-gray-50">
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {{ $persona->nombre }}
+                    <td class="px-4 py-3 text-sm">
+                        <a href="{{ route('personas.show', $persona) }}" class="font-medium text-gray-900 hover:text-blue-700 hover:underline">{{ $persona->nombre }}</a>
+                        @if($persona->pin || $persona->telefono)
+                        <div class="xl:hidden mt-0.5 text-xs text-gray-500">
+                            {{ collect([$persona->pin ? 'PIN ' . $persona->pin : null, $persona->telefono])->filter()->implode(' · ') }}
+                        </div>
+                        @endif
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500 hidden xl:table-cell">
                         {{ $persona->pin ?? '-' }}
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500 hidden xl:table-cell">
                         {{ $persona->telefono ?? '-' }}
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500 hidden 2xl:table-cell">
                         {{ $persona->correo ?? '-' }}
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                    <td class="px-4 py-3 whitespace-nowrap text-sm">
                         <span class="px-2 py-1 text-xs font-semibold rounded-full {{ $persona->activo ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
                             {{ $persona->activo ? 'Activo' : 'Inactivo' }}
                         </span>
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500 hidden 2xl:table-cell">
                         {{ $persona->sobres_count }}
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500 hidden 2xl:table-cell">
                         {{ $persona->promesas_count }}
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <a href="{{ route('personas.show', $persona) }}" class="text-green-600 hover:text-green-900 mr-3">Ver</a>
-                        <a href="{{ route('compromisos.show', $persona) }}" class="text-purple-600 hover:text-purple-900 mr-3">Compromiso</a>
-                        <a href="{{ route('personas.edit', $persona) }}" class="text-blue-600 hover:text-blue-900 mr-3">Editar</a>
-                        <button type="button" onclick="mostrarModalEliminar({{ $persona->id }}, '{{ $persona->nombre }}')" class="text-red-600 hover:text-red-900">
-                            Eliminar
-                        </button>
+                    <td class="px-4 py-2 whitespace-nowrap text-right text-sm font-medium">
+                        <div class="flex items-center justify-end gap-1">
+                            <a href="{{ route('personas.show', $persona) }}" class="btn-icon text-green-700 hover:bg-green-50" aria-label="Ver {{ $persona->nombre }}" title="Ver detalle">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                            </a>
+                            <a href="{{ route('compromisos.show', $persona) }}" class="btn-icon text-purple-700 hover:bg-purple-50" aria-label="Compromisos de {{ $persona->nombre }}" title="Compromisos">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+                            </a>
+                            <a href="{{ route('personas.edit', $persona) }}" class="btn-row text-blue-700 hover:bg-blue-50">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                                Editar
+                            </a>
+                            <button type="button" onclick="mostrarModalEliminar({{ $persona->id }}, @js($persona->nombre))" class="btn-icon text-red-600 hover:bg-red-50 hover:text-red-700" aria-label="Eliminar {{ $persona->nombre }}" title="Eliminar">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                            </button>
+                        </div>
                         <form id="form-eliminar-{{ $persona->id }}" action="{{ route('personas.destroy', $persona) }}" method="POST" class="hidden">
                             @csrf
                             @method('DELETE')
@@ -137,7 +126,13 @@
                 @empty
                 <tr>
                     <td colspan="8" class="px-6 py-12 text-center text-gray-500">
-                        No hay personas registradas
+                        @if(request('buscar'))
+                            <p>No se encontro a nadie con "{{ request('buscar') }}".</p>
+                            <a href="{{ route('personas.index') }}" class="btn-secondary mt-3">Ver todas las personas</a>
+                        @else
+                            <p>Todavia no hay personas registradas.</p>
+                            <a href="{{ route('personas.create') }}" class="btn-primary mt-3">+ Nueva Persona</a>
+                        @endif
                     </td>
                 </tr>
                 @endforelse
@@ -147,8 +142,40 @@
     </div>
 
     <div class="mt-4">
-        {{ $personas->links() }}
+        {{-- withQueryString: al cambiar de pagina se mantiene la busqueda --}}
+        {{ $personas->withQueryString()->links() }}
     </div>
+
+    <!-- Mantenimiento: acciones masivas e irreversibles, separadas de los botones del dia a dia -->
+    <details class="bg-white rounded-lg shadow border border-red-200">
+        <summary class="cursor-pointer select-none min-h-[44px] px-4 py-3 text-sm font-semibold text-red-800 flex items-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+            Mantenimiento (acciones que no se pueden deshacer)
+        </summary>
+        <div class="px-4 pb-4 pt-1 border-t border-red-100">
+            <p class="text-sm text-gray-600 mb-3">Afectan a todas las personas a la vez. Cada una pide confirmacion antes de ejecutarse.</p>
+            <div class="flex flex-col sm:flex-row flex-wrap gap-2">
+                @if($personasInactivas > 0)
+                <form action="{{ route('personas.limpiar-inactivas') }}" method="POST" class="inline-block"
+                      onsubmit="return confirm('¿Estás seguro de eliminar TODAS las personas inactivas y sus promesas? Los sobres se mantendrán.');">
+                    @csrf
+                    <button type="submit" class="btn-danger w-full sm:w-auto">
+                        Eliminar personas inactivas ({{ $personasInactivas }})
+                    </button>
+                </form>
+                @endif
+            
+                <form action="{{ route('personas.resetear-promesas') }}" method="POST" class="inline-block"
+                      onsubmit="return confirm('⚠️ ATENCIÓN: Esto eliminará TODAS las promesas y compromisos de TODAS las personas. Los sobres dados se mantienen como historial. ¿Estás seguro?');">
+                    @csrf
+                    <button type="submit" class="btn-danger-soft w-full sm:w-auto">
+                        Borrar todas las promesas
+                    </button>
+                </form>
+
+            </div>
+        </div>
+    </details>
 </div>
 
 <!-- Modal: Confirmar Eliminación -->
@@ -157,7 +184,7 @@
         <div class="mt-3">
             <div class="flex items-center justify-between mb-4">
                 <h3 class="text-lg font-semibold text-red-900">⚠️ Eliminar Persona</h3>
-                <button onclick="cerrarModalEliminar()" class="text-gray-400 hover:text-gray-600">
+                <button type="button" onclick="cerrarModalEliminar()" class="btn-icon" aria-label="Cerrar">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                     </svg>
@@ -171,14 +198,14 @@
             </div>
 
             <div class="flex justify-end gap-3">
-                <button type="button" 
+                <button type="button"
                         onclick="cerrarModalEliminar()"
-                        class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+                        class="btn-secondary">
                     Cancelar
                 </button>
-                <button type="button" 
+                <button type="button"
                         onclick="confirmarEliminacion()"
-                        class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">
+                        class="btn-danger">
                     Sí, Eliminar
                 </button>
             </div>
@@ -202,7 +229,7 @@
                     </svg>
                     Reporte de Contribuciones
                 </h3>
-                <button onclick="cerrarModalReporte()" class="text-gray-400 hover:text-gray-600">
+                <button type="button" onclick="cerrarModalReporte()" class="btn-icon" aria-label="Cerrar">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                     </svg>
@@ -255,7 +282,7 @@
                     </svg>
                     Reporte General
                 </h3>
-                <button onclick="cerrarModalReporteGeneral()" class="text-gray-400 hover:text-gray-600">
+                <button type="button" onclick="cerrarModalReporteGeneral()" class="btn-icon" aria-label="Cerrar">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                     </svg>

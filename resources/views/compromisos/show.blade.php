@@ -7,7 +7,7 @@
 <div class="space-y-6">
     <!-- Header con información de la persona -->
     <div class="bg-white rounded-lg shadow p-6">
-        <div class="flex justify-between items-start">
+        <div class="flex flex-wrap justify-between items-start gap-3">
             <div>
                 <h2 class="text-2xl font-bold text-gray-900">{{ $persona->nombre }}</h2>
                 <p class="text-gray-600 mt-1">
@@ -15,18 +15,23 @@
                     @if($persona->correo) • {{ $persona->correo }} @endif
                 </p>
             </div>
-            <a href="{{ route('personas.index') }}" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
-                ← Volver
-            </a>
+            <div class="flex flex-wrap gap-2">
+                <a href="{{ route('personas.index') }}" class="btn-secondary">
+                    ← Volver
+                </a>
+                <a href="{{ route('personas.edit', $persona) }}" class="btn-secondary">
+                    Editar persona
+                </a>
+            </div>
         </div>
     </div>
 
     <!-- Filtro de mes/año -->
     <div class="bg-white rounded-lg shadow p-6">
-        <form method="GET" class="flex items-end gap-4">
+        <form method="GET" class="flex flex-wrap items-end gap-4">
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Año</label>
-                <select name="año" class="rounded-md border-gray-300" onchange="this.form.submit()">
+                <select name="año" class="min-h-[44px] rounded-md border-gray-300" onchange="this.form.submit()">
                     @for($y = date('Y'); $y >= date('Y') - 2; $y--)
                         <option value="{{ $y }}" {{ $año == $y ? 'selected' : '' }}>{{ $y }}</option>
                     @endfor
@@ -34,7 +39,7 @@
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Mes</label>
-                <select name="mes" class="rounded-md border-gray-300" onchange="this.form.submit()">
+                <select name="mes" class="min-h-[44px] rounded-md border-gray-300" onchange="this.form.submit()">
                     @php
                         $meses = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
                     @endphp
@@ -69,7 +74,7 @@
         <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
             <h3 class="text-lg font-semibold text-gray-900">Detalle - {{ $meses[$mes - 1] }} {{ $año }}</h3>
         </div>
-        <div class="overflow-x-auto">
+        <div class="table-scroll">
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>

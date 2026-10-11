@@ -7,19 +7,22 @@
 <div class="space-y-6">
     <!-- Información Personal -->
     <div class="bg-white rounded-lg shadow p-6">
-        <div class="flex justify-between items-start mb-6">
+        <div class="flex flex-wrap justify-between items-start gap-3 mb-6">
             <div>
                 <h2 class="text-2xl font-bold text-gray-900">{{ $persona->nombre }}</h2>
                 <span class="inline-block mt-2 px-3 py-1 text-sm font-semibold rounded-full {{ $persona->activo ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
                     {{ $persona->activo ? 'Activo' : 'Inactivo' }}
                 </span>
             </div>
-            <div class="flex gap-2">
-                <a href="{{ route('personas.edit', $persona) }}" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
-                    Editar
-                </a>
-                <a href="{{ route('personas.index') }}" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+            <div class="flex flex-wrap gap-2">
+                <a href="{{ route('personas.index') }}" class="btn-secondary">
                     Volver
+                </a>
+                <a href="{{ route('compromisos.show', $persona) }}" class="btn-secondary">
+                    Compromisos
+                </a>
+                <a href="{{ route('personas.edit', $persona) }}" class="btn-primary">
+                    Editar
                 </a>
             </div>
         </div>
@@ -98,7 +101,7 @@
         <div class="px-6 py-4 border-b border-gray-200">
             <h3 class="text-lg font-semibold text-gray-900">Promesas</h3>
         </div>
-        <div class="overflow-x-auto">
+        <div class="table-scroll">
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>
@@ -143,7 +146,7 @@
         <!-- Filtros -->
         <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
             <form method="GET" action="{{ route('personas.show', $persona) }}" class="space-y-4">
-                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
                     <!-- Filtro de Mes -->
                     <div>
                         <label for="mes" class="block text-sm font-medium text-gray-700 mb-2">Mes</label>
@@ -191,10 +194,10 @@
 
                     <!-- Botones -->
                     <div class="flex items-end gap-2">
-                        <button type="submit" class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+                        <button type="submit" class="btn-primary flex-1">
                             Filtrar
                         </button>
-                        <a href="{{ route('personas.show', $persona) }}" class="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors">
+                        <a href="{{ route('personas.show', $persona) }}" class="btn-secondary">
                             Limpiar
                         </a>
                     </div>
@@ -202,7 +205,7 @@
             </form>
         </div>
         
-        <div class="overflow-x-auto">
+        <div class="table-scroll">
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>

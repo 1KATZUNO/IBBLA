@@ -196,7 +196,8 @@
     </div>
 
     <div class="mt-4">
-        {{ $cultos->links() }}
+        {{-- withQueryString: al cambiar de pagina se mantiene el filtro de mes/anio --}}
+        {{ $cultos->withQueryString()->links() }}
     </div>
 
     <!-- Lista de Asistencias Cerradas (Archivo) -->
