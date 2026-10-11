@@ -48,3 +48,14 @@ Del lider del proyecto (David):
 
 ## Estado
 - 2026-10-11: plan creado, vendor instalado en repo principal, rama integracion creada.
+- 2026-10-11 (tarde): C MERGEADO en integracion (4952b56). Pendiente al integrar todo: enlace de menu
+  "Asistencia por clase" (ruta ingresos-asistencia.asistencia-clases, hub Reportes es admin/tesorero y la
+  pantalla admin/asistente), `npm run build`, posible conflicto con B en asistencia create/edit (aceptar C).
+  Preguntas para el cliente (de C): fechas con todo en 0 se tratan como sin registro (hay casilla para
+  contarlas); app movil guarda todos como ninos; capilla no entra como fila; bug previo: POST
+  /asistencia-app/asistencia/capilla da 500 si el culto no tiene asistencia (total_asistencia sin default).
+  Tests: correr con MySQL (DB ibbla_<x>_test); SQLite no sirve (MODIFY COLUMN); 15 tests Breeze fallan de base.
+- 2026-10-11 (tarde): FASE 2 decidida SIN Meta (nunca llego el codigo de Facebook). Agente E (sonnet) en
+  feat/whatsapp-enlace: boton "Enviar por WhatsApp" = PDF en enlace firmado 7 dias + wa.me con mensaje;
+  panel "Avisos pendientes" para culto creado / >=10 sobres; capa de proveedor link|meta.
+  Plan semanal 57% al lanzar E (tope 70%). Aun corren A, B, D.
