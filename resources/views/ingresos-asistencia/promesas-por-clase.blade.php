@@ -8,7 +8,7 @@
     <!-- Filtros -->
     <div class="bg-white rounded-lg shadow p-6">
         <form method="GET" action="{{ route('ingresos-asistencia.promesas-por-clase') }}" class="space-y-4">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
                 <div>
                     <label for="clase_id" class="block text-sm font-medium text-gray-700 mb-2">Clase *</label>
                     <select name="clase_id" id="clase_id"
@@ -59,7 +59,7 @@
                     </select>
                 </div>
                 <div class="flex items-end">
-                    <button type="submit" class="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+                    <button type="submit" class="btn-primary w-full">
                         Buscar
                     </button>
                 </div>
@@ -91,8 +91,8 @@
     </script>
 
     <!-- Botón volver a Promesas general -->
-    <div class="flex justify-between">
-        <a href="{{ route('ingresos-asistencia.promesas') }}" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 flex items-center gap-2">
+    <div class="flex flex-wrap justify-between gap-2">
+        <a href="{{ route('ingresos-asistencia.promesas') }}" class="btn-secondary">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
             </svg>
@@ -120,7 +120,7 @@
     </div>
 
     <!-- Resumen General -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         <div class="bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl shadow-lg p-6 text-white">
             <p class="text-sm text-blue-100 font-medium mb-1">Total Prometido</p>
             <p class="text-3xl font-bold">₡{{ number_format($totales['grand_total']['prometido'], 0, ',', '.') }}</p>
@@ -144,7 +144,7 @@
         <div class="px-6 py-4 border-b border-gray-200">
             <h3 class="text-lg font-semibold">Detalle por Categoría - {{ $claseNombre }}</h3>
         </div>
-        <div class="overflow-x-auto">
+        <div class="table-scroll">
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>
