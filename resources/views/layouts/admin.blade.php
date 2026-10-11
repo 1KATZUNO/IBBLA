@@ -141,7 +141,7 @@
     <div class="flex h-screen h-dvh overflow-hidden relative z-10">
         @if(!$esAppMovil)
         <!-- Sidebar -->
-        <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-72 lg:w-64 xl:w-72 sidebar-bg text-white transform transition-transform duration-300 ease-out -translate-x-full lg:translate-x-0 lg:static lg:inset-0 flex flex-col shadow-xl" aria-label="Menu principal">
+        <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-72 lg:w-[17rem] xl:w-72 sidebar-bg text-white transform transition-transform duration-300 ease-out -translate-x-full lg:translate-x-0 lg:static lg:inset-0 flex flex-col shadow-xl" aria-label="Menu principal">
             <div class="flex items-center justify-between h-16 px-4 border-b sidebar-border flex-shrink-0">
                 <div class="flex items-center gap-3 min-w-0">
                     <div class="w-10 h-10 bg-white/10 rounded-lg p-1.5 flex-shrink-0">
@@ -167,7 +167,7 @@
                             @foreach($visibles as [$ruta, $etiqueta, $icono, $patron, $visible, $esSub])
                                 @php $activo = request()->routeIs(...explode('|', $patron)); @endphp
                                 <a href="{{ route($ruta) }}"
-                                   class="nav-link group flex items-center min-h-[44px] rounded-lg transition-colors duration-200 {{ $esSub ? 'pl-11 pr-3 py-2 text-sm' : 'px-3 py-2.5' }} {{ $activo ? 'nav-item-active' : 'nav-item-default' }}"
+                                   class="nav-link group flex items-center min-h-[44px] rounded-lg text-[15px] leading-5 transition-colors duration-200 {{ $esSub ? 'pl-11 pr-3 py-2 text-sm' : 'px-3 py-2.5' }} {{ $activo ? 'nav-item-active' : 'nav-item-default' }}"
                                    @if($activo) aria-current="page" @endif>
                                     @unless($esSub)
                                         <svg class="w-5 h-5 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">

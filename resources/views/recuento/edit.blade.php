@@ -70,9 +70,11 @@
                     $detallesPorCategoria = $sobre->detalles->keyBy('categoria');
                 @endphp
 
+                {{-- Mismo acomodo que al registrar: dos categorias por fila, la mitad de alto --}}
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 @foreach($categorias as $cat)
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
-                    <label for="detalle_{{ $cat->slug }}" class="block text-sm font-medium text-gray-700">
+                <div>
+                    <label for="detalle_{{ $cat->slug }}" class="block text-sm font-medium text-gray-700 mb-2">
                         {{ $cat->nombre }}
                     </label>
                     <div class="relative">
@@ -83,11 +85,13 @@
                                id="detalle_{{ $cat->slug }}"
                                min="0"
                                step="0.01"
+                               inputmode="decimal"
                                value="{{ old('detalles.' . $loop->index . '.monto', $detallesPorCategoria->get($cat->slug)->monto ?? 0) }}"
                                class="w-full pl-7 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 detalle-monto">
                     </div>
                 </div>
                 @endforeach
+                </div>
             </div>
 
             <div class="bg-blue-50 rounded-lg p-4 mb-6">
@@ -109,15 +113,18 @@
                 @enderror
             </div>
 
-            <div class="flex justify-end gap-3 sticky bottom-0 bg-white pb-[env(safe-area-inset-bottom,16px)] pt-4 border-t border-gray-200 -mx-6 px-6 z-10" style="padding-bottom: max(1rem, env(safe-area-inset-bottom));">
-                <a href="{{ route('recuento.index', ['culto_id' => $sobre->culto_id]) }}" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+            <!-- Barra fija: el total y Actualizar siempre a la vista -->
+            <div class="action-bar">
+                <div class="mr-auto text-sm text-gray-600">
+                    Total: <span class="text-lg font-bold text-blue-700" id="totalBarra">₡0.00</span>
+                </div>
+                <a href="{{ route('recuento.index', ['culto_id' => $sobre->culto_id]) }}" class="btn-secondary">
                     Cancelar
                 </a>
-                <button type="submit" id="btnGuardarSobre" class="px-5 py-2.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-medium min-w-[160px]">
+                <button type="submit" id="btnGuardarSobre" class="btn-primary min-w-[160px]">
                     Actualizar Sobre
                 </button>
             </div>
-            <div class="h-2"></div>
         </form>
     </div>
 </div>
@@ -168,17 +175,23 @@
             return monedaSelect.value === 'USD' ? '$' : '₡';
         }
 
+        // Mismo formato que number_format del servidor: 17,500.50
+        function formatoMonto(n) {
+            return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
         function calcularTotal() {
             let total = 0;
             inputs.forEach(input => {
                 total += parseFloat(input.value) || 0;
             });
             const simbolo = getSimboloMoneda();
-            totalDisplay.textContent = simbolo + total.toFixed(2);
+            totalDisplay.textContent = simbolo + formatoMonto(total);
+            document.getElementById('totalBarra').textContent = simbolo + formatoMonto(total);
 
             if (monedaSelect.value === 'USD' && tipoCambioVenta > 0) {
                 totalConvertido.classList.remove('hidden');
-                totalConvertidoValor.textContent = '₡' + (total * tipoCambioVenta).toFixed(2);
+                totalConvertidoValor.textContent = '₡' + formatoMonto(total * tipoCambioVenta);
             } else {
                 totalConvertido.classList.add('hidden');
             }

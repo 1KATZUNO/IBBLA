@@ -82,9 +82,10 @@
     }
 
     /* Barra de acciones pegajosa al fondo de formularios largos: Guardar siempre visible.
-       Va como ultimo hijo del <form>, dentro de una tarjeta con p-6. */
+       Va como ultimo hijo del <form>, dentro de una tarjeta con p-6. El bottom negativo
+       compensa el padding de <main> para que quede pegada al borde de la pantalla. */
     .action-bar {
-        @apply sticky bottom-0 z-20 -mx-6 -mb-6 mt-6 px-6 pt-3 rounded-b-lg;
+        @apply sticky -bottom-4 sm:-bottom-6 xl:-bottom-8 z-20 -mx-6 -mb-6 mt-6 px-6 pt-3 rounded-b-lg;
         @apply flex flex-wrap items-center justify-end gap-3;
         @apply bg-white/95 border-t border-gray-200 shadow-[0_-4px_12px_-6px_rgba(0,0,0,0.15)];
         padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
