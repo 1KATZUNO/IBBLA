@@ -15,9 +15,12 @@
                     @if($persona->correo) • {{ $persona->correo }} @endif
                 </p>
             </div>
-            <a href="{{ route('personas.index') }}" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
-                ← Volver
-            </a>
+            <div class="flex items-center gap-2">
+                <x-whatsapp-enviar :persona="$persona" :grande="true" />
+                <a href="{{ route('personas.index') }}" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+                    ← Volver
+                </a>
+            </div>
         </div>
     </div>
 
