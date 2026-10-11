@@ -68,7 +68,7 @@ return [
         'roles' => array_values(array_filter(array_map('trim', explode(',', (string) env('WHATSAPP_AVISOS_ROLES', 'admin,tesorero'))))),
         'sobres_umbral' => (int) env('WHATSAPP_AVISOS_SOBRES', 10),
         'plantillas' => [
-            'culto_creado' => "Hola {nombre}. Se creó un culto en {iglesia}: {tipo}, {fecha}, {hora}.\n\n"
+            'culto_creado' => "Hola {nombre}. Se creó un culto en {iglesia}: {tipo}, {fecha} a las {hora}.\n\n"
                 ."Recuento: {enlace}",
             'sobres_alcanzados' => "Hola {nombre}. El culto {tipo} del {fecha} ya tiene {cantidad} sobres registrados en {iglesia}.\n\n"
                 ."Recuento: {enlace}",

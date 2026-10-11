@@ -8,6 +8,9 @@ use App\Models\Sobre;
 use App\Models\SobreDetalle;
 use App\Models\Tenant;
 use App\Models\TenantCategory;
+use App\Models\TenantRole;
+use App\Models\User;
+use Illuminate\Support\Str;
 
 /**
  * Escenario común de las pruebas de WhatsApp: iglesia con admin, categorías por defecto,
@@ -31,6 +34,28 @@ trait CreaEscenarioWhatsApp
             'telefono' => $telefono,
             'activo' => true,
             'tenant_id' => $tenantId ?? $this->iglesia->id,
+        ]);
+    }
+
+    /**
+     * Usuario de la iglesia con rol y teléfono. En una iglesia sin roles dinámicos (crearOtraIglesia)
+     * queda solo con la columna rol de siempre.
+     */
+    protected function crearLider(string $slugRol, ?string $telefono, ?string $nombre = null, ?Tenant $iglesia = null): User
+    {
+        $iglesia ??= $this->iglesia;
+        $rol = TenantRole::where('tenant_id', $iglesia->id)->where('slug', $slugRol)->first();
+        $sufijo = Str::lower(Str::random(6));
+
+        return User::create([
+            'name' => $nombre ?? ucfirst($slugRol).' '.$sufijo,
+            'email' => "{$slugRol}-{$sufijo}@{$iglesia->slug}.test",
+            'password' => 'secreto-123',
+            'rol' => $slugRol,
+            'is_super_admin' => false,
+            'tenant_id' => $iglesia->id,
+            'tenant_role_id' => $rol?->id,
+            'telefono' => $telefono,
         ]);
     }
 

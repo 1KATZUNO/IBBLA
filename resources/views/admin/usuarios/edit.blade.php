@@ -31,6 +31,8 @@
                             @enderror
                         </div>
 
+                        @include('admin.usuarios._telefono', ['telefono' => $usuario->telefono])
+
                         <!-- Rol -->
                         <div class="mb-4">
                             <label for="rol" class="block text-sm font-medium text-gray-700">Rol</label>

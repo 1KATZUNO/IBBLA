@@ -85,6 +85,11 @@ Route::middleware(['auth', 'role:admin,tesorero'])->group(function () {
     // Enviar el informe de una persona por WhatsApp (abre wa.me con el enlace firmado al PDF)
     Route::get('personas/{persona}/whatsapp', App\Http\Controllers\PersonaWhatsAppController::class)->name('personas.whatsapp');
 
+    // Avisos de WhatsApp a los líderes (culto creado, sobres alcanzados): panel con pendientes e historial
+    Route::get('avisos', [App\Http\Controllers\AvisoWhatsAppController::class, 'index'])->name('avisos.index');
+    Route::post('avisos/{aviso}/enviado', [App\Http\Controllers\AvisoWhatsAppController::class, 'marcarEnviado'])->name('avisos.enviado');
+    Route::post('avisos/{aviso}/descartar', [App\Http\Controllers\AvisoWhatsAppController::class, 'descartar'])->name('avisos.descartar');
+
     // Recuento (Sobres)
     Route::prefix('recuento')->name('recuento.')->group(function () {
         Route::get('/', [RecuentoController::class, 'index'])->name('index');

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\CultoCreado;
 use App\Models\Culto;
 use App\Models\TenantServiceType;
 use Illuminate\Http\Request;
@@ -46,7 +47,10 @@ class CultoController extends Controller
             $data['tenant_id'] = auth()->user()->tenant_id;
         }
 
-        Culto::create($data);
+        $culto = Culto::create($data);
+
+        // Avisa por WhatsApp a los líderes (un fallo al preparar los avisos no impide crear el culto).
+        CultoCreado::dispatch($culto);
 
         return redirect()->route('cultos.index')
             ->with('success', 'Culto registrado correctamente.');

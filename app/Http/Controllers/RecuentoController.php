@@ -10,6 +10,7 @@ use App\Models\Sobre;
 use App\Models\SobreDetalle;
 use App\Models\TipoCambio;
 use App\Services\CalculoTotalesCultoService;
+use App\Services\WhatsApp\AvisosWhatsAppService;
 use Illuminate\Http\Request;
 
 class RecuentoController extends Controller
@@ -167,6 +168,9 @@ class RecuentoController extends Controller
 
         // Recalcular totales del culto
         $this->calculoService->recalcular($sobre->culto);
+
+        // Aviso por WhatsApp cuando el culto llega a N sobres (una sola vez por culto; nunca interrumpe el registro).
+        app(AvisosWhatsAppService::class)->sobreRegistrado($sobre->culto);
 
         return redirect()->route('recuento.index', ['culto_id' => $validated['culto_id']])
             ->with('success', 'Sobre registrado correctamente.');

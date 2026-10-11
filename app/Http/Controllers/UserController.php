@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Services\WhatsApp\WhatsAppService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
@@ -44,6 +45,7 @@ class UserController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
+            'telefono' => $this->reglaTelefono(),
             'password' => 'required|string|min:8|confirmed',
             'rol' => 'required|in:admin,tesorero,asistente,servidor,miembro,invitado',
             'tenant_role_id' => 'nullable|exists:tenant_roles,id',
@@ -91,6 +93,7 @@ class UserController extends Controller
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($usuario->id)],
+            'telefono' => $this->reglaTelefono(),
             'password' => 'nullable|string|min:8|confirmed',
             'rol' => 'required|in:admin,tesorero,asistente,servidor,miembro,invitado',
             'tenant_role_id' => 'nullable|exists:tenant_roles,id',
@@ -113,6 +116,22 @@ class UserController extends Controller
 
         return redirect()->route('usuarios.index')
             ->with('success', 'Usuario actualizado exitosamente.');
+    }
+
+    /**
+     * Teléfono opcional del usuario: se usa para los avisos de WhatsApp (culto creado, sobres alcanzados).
+     * Si se escribe, tiene que poder convertirse a un número de WhatsApp; así un dato mal tecleado se
+     * corrige al guardarlo y no cuando el aviso no llega.
+     *
+     * @return array<int, mixed>
+     */
+    private function reglaTelefono(): array
+    {
+        return ['nullable', 'string', 'max:30', function (string $attribute, mixed $value, \Closure $fail) {
+            if (WhatsAppService::normalizarTelefono($value) === null) {
+                $fail('El teléfono no es válido para WhatsApp. Escriba 8 dígitos (por ejemplo 8888-7777) o con prefijo internacional (+506 8888-7777).');
+            }
+        }];
     }
 
     /**
