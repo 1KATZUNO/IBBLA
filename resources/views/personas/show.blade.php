@@ -16,6 +16,12 @@
             </div>
             <div class="flex flex-wrap gap-2">
                 <x-whatsapp-enviar :persona="$persona" :grande="true" />
+                <a href="{{ route('personas.informe', ['persona' => $persona, 'accion' => 'ver']) }}" target="_blank" rel="noopener" class="btn-secondary">
+                    Estado de cuenta (PDF)
+                </a>
+                <a href="{{ route('personas.informe', ['persona' => $persona, 'accion' => 'descargar']) }}" class="btn-secondary">
+                    Descargar
+                </a>
                 <a href="{{ route('personas.index') }}" class="btn-secondary">
                     Volver
                 </a>
