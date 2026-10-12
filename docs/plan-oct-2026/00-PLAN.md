@@ -110,3 +110,14 @@ Del lider del proyecto (David):
   (HU-R7 motor unico + HU-R5 exportaciones), sonnet (HU-R1/R2/R4/R6 pantallas), QA opus. Plan semanal al
   66 % al escribir esto: arranque tras el reinicio del 13/10 13:00 salvo que David decida pasar del 70 %.
   Pendiente de la fase 1: QA visual de integracion, cierre a main y deploy a Hostinger.
+- 2026-10-12 (noche): HOTFIX DE REPORTES EN PRODUCCION. Por urgencia de Roy: rama hotfix/reportes-oct-2026
+  -> main 94a719f (tag v2026.10.12-reportes), desplegado por David via SSH en
+  /home/u598753224/domains/ibbla.eu/public_html (clon de git; pull + optimize:clear + config/route/view:cache).
+  Contiene solo: fix del 504 (A), informe individual de E (servicio, PDF, enlace firmado, capa proveedor
+  sin uso), InformePersonaController (personas/{id}/informe?accion=ver|descargar), mi-perfil/informe y
+  botones "Estado de cuenta (PDF)" / "Descargar" en ficha, compromisos, lista y Mi perfil; 6 tests nuevos.
+  Verificado desde fuera: rutas nuevas responden (302 a login, 403 el enlace sin firma). main ya esta
+  mergeado de vuelta en integracion (cbfbf0e) con los botones en el estilo del layout de B.
+  Nota: el primer comando de deploy cayo en ~/public_html = IBBSCMusica (musica.ibbla.eu) y solo le
+  recacheo config/rutas/vistas. Plan semanal al 67 %: paro aqui; el squad del Centro de Reportes
+  (HU-reportes.md) y el QA de integracion arrancan tras el reinicio del 13/10 13:00.
