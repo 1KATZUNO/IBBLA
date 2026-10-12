@@ -99,3 +99,14 @@ Del lider del proyecto (David):
   recomendado; 2 puente no oficial con chip + VPS, con riesgo de bloqueo; 3 quedarse en wa.me); a que chat
   van los avances (+506 8676 3570 pedido, pero sin numero propio de la app no hay desde donde mandar);
   lista de 30 ministerios; preguntas de C y D.
+- 2026-10-12: B y E INTEGRADOS (4d42c43 y 1766c44). Conflictos en personas/index, personas/show y
+  compromisos/show resueltos con la estructura de B mas el boton de E; el componente whatsapp-enviar gano
+  el modo compacto (solo icono, clase btn-icon) para la fila de la tabla. Assets reconstruidos (npm run
+  build con node_modules en junction a IBBLA-wt/ux-responsive). Suite: solo los 15 fallos de Breeze.
+  Humo con VolumenDevSeeder en ibbla_int (150 personas): lista 0,6 s, ficha y compromisos 0,8 s,
+  wa.me con mensaje listo, informe firmado PDF 2,6 s, sin firma 403, Reporte General 4,1 s, avisos 200.
+  NUEVO PEDIDO (12/10): revisar reportes por persona y hacer un Centro de Reportes con seleccion de grupo,
+  PDF individual/lote/general y Excel. Historias y diagnostico en HU-reportes.md. Squad previsto: opus
+  (HU-R7 motor unico + HU-R5 exportaciones), sonnet (HU-R1/R2/R4/R6 pantallas), QA opus. Plan semanal al
+  66 % al escribir esto: arranque tras el reinicio del 13/10 13:00 salvo que David decida pasar del 70 %.
+  Pendiente de la fase 1: QA visual de integracion, cierre a main y deploy a Hostinger.
