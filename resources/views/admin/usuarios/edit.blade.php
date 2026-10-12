@@ -73,10 +73,10 @@
                         </div>
 
                         <div class="flex items-center justify-end mt-6 gap-4">
-                            <a href="{{ route('usuarios.index') }}" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 font-medium transition-colors">
+                            <a href="{{ route('usuarios.index') }}" class="btn-secondary">
                                 Cancelar
                             </a>
-                            <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors">
+                            <button type="submit" class="btn-primary">
                                 Actualizar Usuario
                             </button>
                         </div>

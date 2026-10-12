@@ -35,7 +35,7 @@
                     </select>
                 </div>
                 <div class="flex items-end">
-                    <button type="submit" class="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+                    <button type="submit" class="btn-primary w-full">
                         Buscar
                     </button>
                 </div>
@@ -77,17 +77,17 @@
         <div class="px-6 py-4 border-b border-gray-200">
             <h3 class="text-lg font-semibold">Servidores - {{ $meses[$mes] }} {{ $ano }}</h3>
         </div>
-        <div class="overflow-x-auto">
+        <div class="table-scroll">
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Servidor</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ministerios</th>
-                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Asistencia</th>
-                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">% Asistencia</th>
-                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Promesas</th>
-                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Cumplimiento {{ $ano }}</th>
-                        <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">PDF</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Servidor</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ministerios</th>
+                        <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Asistencia</th>
+                        <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">% Asistencia</th>
+                        <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Promesas</th>
+                        <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Cumplimiento {{ $ano }}</th>
+                        <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">PDF</th>
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
@@ -98,7 +98,7 @@
                         $promesas = $promesasPorServidor[$servidor->id] ?? collect();
                     @endphp
                     <tr class="hover:bg-gray-50">
-                        <td class="px-6 py-4 whitespace-nowrap">
+                        <td class="px-4 py-3 whitespace-nowrap">
                             <div class="flex items-center">
                                 <div class="flex-shrink-0 h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
                                     <span class="text-blue-600 font-semibold text-sm">{{ strtoupper(substr($servidor->name, 0, 1)) }}</span>
@@ -109,7 +109,7 @@
                                 </div>
                             </div>
                         </td>
-                        <td class="px-6 py-4 text-xs">
+                        <td class="px-4 py-3 text-xs">
                             @php $mins = $servidor->persona?->ministerios ?? collect(); @endphp
                             @forelse($mins as $min)
                                 <span class="inline-block px-2 py-0.5 rounded-full text-xs font-medium mr-1 mb-1"
@@ -120,10 +120,10 @@
                                 <span class="text-gray-400">—</span>
                             @endforelse
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-center text-sm">
+                        <td class="px-4 py-3 whitespace-nowrap text-center text-sm">
                             <span class="font-semibold">{{ $asist }}</span> / {{ $totalCultosMes }}
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-center">
+                        <td class="px-4 py-3 whitespace-nowrap text-center">
                             <div class="flex items-center justify-center gap-2">
                                 <div class="w-24 bg-gray-200 rounded-full h-2">
                                     <div class="h-2 rounded-full {{ $porcAsist >= 80 ? 'bg-green-500' : ($porcAsist >= 50 ? 'bg-yellow-500' : 'bg-red-500') }}"
@@ -134,7 +134,7 @@
                                 </span>
                             </div>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-center text-sm">
+                        <td class="px-4 py-3 whitespace-nowrap text-center text-sm">
                             @if($promesas->count() > 0)
                                 <div class="space-y-1">
                                     @foreach($promesas as $promesa)
@@ -147,7 +147,7 @@
                                 <span class="text-gray-400 text-xs">Sin promesas</span>
                             @endif
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-center text-xs">
+                        <td class="px-4 py-3 whitespace-nowrap text-center text-xs">
                             @php $c = $cumplimientoPorServidor[$servidor->id] ?? null; @endphp
                             @if($c && $c['prometido'] > 0)
                                 <div class="font-semibold {{ $c['pct'] >= 80 ? 'text-green-600' : ($c['pct'] >= 50 ? 'text-yellow-600' : 'text-red-600') }}">
@@ -160,10 +160,10 @@
                                 <span class="text-gray-400">—</span>
                             @endif
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-center">
+                        <td class="px-4 py-3 whitespace-nowrap text-center">
                             <a href="{{ route('admin.servidores.pdf-individual', ['servidor' => $servidor->id, 'ano' => $ano, 'mes' => $mes]) }}"
                                target="_blank"
-                               class="inline-flex items-center px-3 py-1 bg-purple-600 text-white rounded-md text-xs hover:bg-purple-700">
+                               class="btn-row text-purple-700 hover:bg-purple-50">
                                 PDF
                             </a>
                         </td>
@@ -186,7 +186,7 @@
 
     <!-- Volver -->
     <div class="flex justify-start">
-        <a href="{{ route('admin.servidores.index') }}" class="px-6 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors">
+        <a href="{{ route('admin.servidores.index') }}" class="btn-secondary">
             Volver a Servidores
         </a>
     </div>

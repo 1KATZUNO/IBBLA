@@ -41,7 +41,8 @@
 
         @if(Auth::user()->canAccessRecuento() || Auth::user()->canAccessAsistencia())
             {{-- Reportes --}}
-            <a href="{{ route('ingresos-asistencia.index') }}" class="mobile-nav-item {{ request()->routeIs('ingresos-asistencia.*') ? 'text-blue-600' : 'text-gray-500' }}">
+            {{-- El indice de reportes es solo de tesoreria; quien solo maneja asistencia va directo a su reporte --}}
+            <a href="{{ route(Auth::user()->canAccessRecuento() ? 'ingresos-asistencia.index' : 'ingresos-asistencia.asistencia') }}" class="mobile-nav-item {{ request()->routeIs('ingresos-asistencia.*') ? 'text-blue-600' : 'text-gray-500' }}">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                 </svg>

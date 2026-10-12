@@ -8,7 +8,7 @@
     <!-- Filtros -->
     <div class="bg-white rounded-lg shadow p-6">
         <form method="GET" action="{{ route('ingresos-asistencia.promesas') }}" class="space-y-4">
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
                 <div>
                     <label for="año" class="block text-sm font-medium text-gray-700 mb-2">Año</label>
                     <select name="año" id="año" 
@@ -59,7 +59,7 @@
                     </select>
                 </div>
                 <div class="flex items-end">
-                    <button type="submit" class="w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+                    <button type="submit" class="btn-primary w-full">
                         Buscar
                     </button>
                 </div>
@@ -92,14 +92,14 @@
     <!-- Botones de acción -->
     <div class="flex justify-end gap-3 flex-wrap">
         <a href="{{ route('ingresos-asistencia.promesas-por-clase', ['año' => $año, 'mes' => $mes]) }}"
-           class="px-6 py-3 bg-teal-600 text-white rounded-md hover:bg-teal-700 transition-colors font-semibold flex items-center gap-2">
+           class="btn-secondary">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
             </svg>
             Promesas por Clase
         </a>
         <a href="{{ route('ingresos-asistencia.pdf-promesas-anual', ['año' => $año, 'categoria' => $categoria]) }}" 
-           class="px-6 py-3 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors font-semibold flex items-center gap-2" target="_blank">
+           class="btn-secondary" target="_blank">
             <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                 <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"></path>
                 <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"></path>
@@ -107,7 +107,7 @@
             Reporte Anual (12 meses)
         </a>
         <a href="{{ route('ingresos-asistencia.pdf-promesas', ['año' => $año, 'mes' => $mes, 'categoria' => $categoria]) }}" 
-           class="px-6 py-3 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors font-semibold flex items-center gap-2" target="_blank">
+           class="btn-secondary" target="_blank">
             <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd"></path>
             </svg>
@@ -116,7 +116,7 @@
     </div>
 
     <!-- Resumen General -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         <div class="bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl shadow-lg p-6 text-white">
             <div class="flex items-center justify-between mb-2">
                 <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -170,7 +170,7 @@
             <p class="text-sm text-gray-600 mt-1">Mostrando solo: <span class="font-semibold">{{ ucfirst($categoria) }}</span></p>
             @endif
         </div>
-        <div class="overflow-x-auto">
+        <div class="table-scroll">
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>

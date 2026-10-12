@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import {
   Calendar, Users, UserPlus, BarChart3, Cake, Phone, MapPin, Plus, Pencil,
   Trash2, Download, ArrowRightLeft, X, Check, ChevronLeft, ChevronRight,
-  Home, TrendingUp, AlertCircle, Search, BookOpen, HeartHandshake, FileText, LogOut
+  Home, TrendingUp, AlertCircle, Search, BookOpen, HeartHandshake, FileText
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line
@@ -149,10 +149,11 @@ function Header({ user, clase, tenantNombre, tenantSiglas, year }) {
           </div>
           <div className="flex flex-col items-end gap-2">
             <div className="ff-num text-3xl sm:text-5xl leading-none" style={{ color: PALETTE.amberSoft }}>{year}</div>
-            <a href="/principal" className="flex items-center gap-2 px-3 py-1.5 rounded-full transition-all hover:opacity-90"
+            {/* Vuelve al sistema (antes mostraba el nombre con un icono de "cerrar sesion" y no se entendia) */}
+            <a href="/principal" title={user.name} className="flex items-center gap-2 min-h-[44px] px-4 rounded-full transition-all hover:opacity-90"
                style={{ background: 'rgba(251, 247, 238, 0.1)', border: '1px solid rgba(251, 247, 238, 0.25)', color: PALETTE.cream }}>
-              <span className="ff-body text-xs max-w-[120px] truncate">{user.name}</span>
-              <LogOut size={12} style={{ opacity: 0.8 }} />
+              <Home size={14} style={{ opacity: 0.8 }} />
+              <span className="ff-body text-xs">Volver al sistema</span>
             </a>
           </div>
         </div>
@@ -179,7 +180,7 @@ function Nav({ tab, setTab, state }) {
             const Icon = it.icon;
             return (
               <button key={it.id} onClick={() => setTab(it.id)}
-                className="flex items-center gap-2 px-3 sm:px-4 py-2 rounded-full whitespace-nowrap transition-all"
+                className="flex items-center gap-2 min-h-[44px] px-3 sm:px-4 py-2 rounded-full whitespace-nowrap transition-all"
                 style={{
                   background: active ? PALETTE.indigoDeep : 'transparent',
                   color: active ? PALETTE.cream : PALETTE.ink,
@@ -245,14 +246,14 @@ function MonthSelector({ month, setMonth, year }) {
   return (
     <div className="flex items-center justify-between rounded-2xl p-3 sm:p-4"
          style={{ background: PALETTE.paper, border: `1px solid ${PALETTE.line}` }}>
-      <button onClick={() => setMonth((month + 11) % 12)} className="p-2 rounded-full" style={{ background: PALETTE.cream }}>
+      <button onClick={() => setMonth((month + 11) % 12)} aria-label="Mes anterior" className="w-11 h-11 flex items-center justify-center rounded-full" style={{ background: PALETTE.cream }}>
         <ChevronLeft size={18} />
       </button>
       <div className="text-center">
         <div className="ff-body text-[10px] uppercase tracking-widest" style={{ color: PALETTE.muted }}>Mes</div>
         <div className="ff-display text-2xl sm:text-3xl">{MONTHS[month]} <span style={{ color: PALETTE.amber }}>{year}</span></div>
       </div>
-      <button onClick={() => setMonth((month + 1) % 12)} className="p-2 rounded-full" style={{ background: PALETTE.cream }}>
+      <button onClick={() => setMonth((month + 1) % 12)} aria-label="Mes siguiente" className="w-11 h-11 flex items-center justify-center rounded-full" style={{ background: PALETTE.cream }}>
         <ChevronRight size={18} />
       </button>
     </div>

@@ -4,97 +4,468 @@
 @section('page-title', 'Recuento de Sobres')
 
 @section('content')
+@php
+    // /cultos/{id} (CultoController@show) reutiliza esta vista sin pasar categorias ni egresos
+    $categorias = $categorias ?? tenant_categories(['es_ofrenda_suelta' => false]);
+    $egresos = $egresos ?? collect();
+@endphp
 <div class="space-y-6">
-    <!-- Mensajes de éxito/error -->
-    @if(session('success'))
-    <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative" role="alert">
-        <span class="block sm:inline">{{ session('success') }}</span>
-    </div>
-    @endif
-    
-    @if(session('error'))
-    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
-        <span class="block sm:inline">{{ session('error') }}</span>
-    </div>
-    @endif
-
-    <!-- Filtro por Culto -->
-    <div class="bg-white rounded-lg shadow p-6">
-        <form method="GET" action="{{ route('recuento.index') }}" class="flex items-end gap-4">
-            <div class="flex-1">
-                <label for="culto_id" class="block text-sm font-medium text-gray-700 mb-2">
-                    Seleccionar Culto
-                </label>
-                <select name="culto_id" id="culto_id" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" onchange="this.form.submit()">
+    <!-- Culto y acciones: los botones bajan de linea en vez de cortarse en tablet -->
+    <div class="bg-white rounded-lg shadow p-4 sm:p-6">
+        <form method="GET" action="{{ route('recuento.index') }}">
+            <label for="culto_id" class="block text-sm font-medium text-gray-700 mb-2">
+                Seleccionar Culto
+            </label>
+            <select name="culto_id" id="culto_id" class="w-full md:max-w-md min-h-[44px] rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" onchange="this.form.submit()">
                     <option value="">-- Seleccione un culto --</option>
                     @foreach($cultos as $culto)
                         <option value="{{ $culto->id }}" {{ request('culto_id') == $culto->id ? 'selected' : '' }}>
                             {{ $culto->fecha->format('d/m/Y') }} - {{ ucfirst($culto->tipo_culto) }}
                         </option>
                     @endforeach
-                </select>
-            </div>
-            @if($cultoSeleccionado)
-            <div class="flex flex-col sm:flex-row gap-2">
+            </select>
+        </form>
+
+        @if($cultoSeleccionado)
+        <div class="toolbar mt-4 pt-4 border-t border-gray-100">
+            @if(!$cultoSeleccionado->cerrado)
+            <a href="{{ route('recuento.create', ['culto_id' => $cultoSeleccionado->id]) }}" class="btn-primary">
+                + Agregar Sobre
+            </a>
+            <button type="button" onclick="document.getElementById('modalSuelto').classList.remove('hidden')" class="btn-success">
+                + Dinero Suelto
+            </button>
+            <button type="button" onclick="document.getElementById('modalEgreso').classList.remove('hidden')" class="btn-danger-soft">
+                - Egresos
+            </button>
+            @else
+            <span class="inline-flex items-center gap-2 min-h-[44px] px-4 rounded-lg bg-gray-100 text-gray-700 border border-gray-300 text-sm font-medium">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                Culto Cerrado
+                @if($cultoSeleccionado->cerrado_at)
+                <span class="text-xs text-gray-500">({{ $cultoSeleccionado->cerrado_at->format('d/m/Y H:i') }})</span>
+                @endif
+            </span>
+            @endif
+            <div class="flex flex-wrap gap-2 md:ml-auto">
+                <a href="{{ route('ingresos-asistencia.pdf-recuento-individual', $cultoSeleccionado->id) }}" class="btn-secondary">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    Descargar PDF
+                </a>
+                <a href="{{ route('ingresos-asistencia.pdf-recuento-transferencias', $cultoSeleccionado->id) }}" class="btn-secondary">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    PDF Transferencias
+                </a>
                 @if(!$cultoSeleccionado->cerrado)
-                <a href="{{ route('recuento.create', ['culto_id' => $cultoSeleccionado->id]) }}" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-center">
-                    + Agregar Sobre
-                </a>
-                <button type="button" onclick="document.getElementById('modalSuelto').classList.remove('hidden')" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors">
-                    + Dinero Suelto
-                </button>
-                <button type="button" onclick="document.getElementById('modalEgreso').classList.remove('hidden')" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors">
-                    - Egresos
-                </button>
-                <a href="{{ route('ingresos-asistencia.pdf-recuento-individual', $cultoSeleccionado->id) }}" class="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors flex items-center justify-center gap-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                    </svg>
-                    <span class="hidden sm:inline">Descargar </span>PDF
-                </a>
-                <a href="{{ route('ingresos-asistencia.pdf-recuento-transferencias', $cultoSeleccionado->id) }}" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center justify-center gap-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                    <span class="hidden sm:inline">Transferencias</span>
-                </a>
-                <button type="button" onclick="mostrarModalCerrarCulto({{ $cultoSeleccionado->id }})" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors flex items-center justify-center gap-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
-                    </svg>
+                <button type="button" onclick="mostrarModalCerrarCulto({{ $cultoSeleccionado->id }})" class="btn-warning">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
                     Cerrar Culto
                 </button>
-                @else
-                <a href="{{ route('ingresos-asistencia.pdf-recuento-individual', $cultoSeleccionado->id) }}" class="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors flex items-center justify-center gap-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                    </svg>
-                    <span class="hidden sm:inline">Descargar </span>PDF
-                </a>
-                <a href="{{ route('ingresos-asistencia.pdf-recuento-transferencias', $cultoSeleccionado->id) }}" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center justify-center gap-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                    <span class="hidden sm:inline">Transferencias</span>
-                </a>
-                <div class="px-4 py-2 bg-gray-100 text-gray-700 rounded-md border border-gray-300 flex items-center justify-center gap-2">
-                    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"></path>
-                    </svg>
-                    <span>Culto Cerrado</span>
-                    @if($cultoSeleccionado->cerrado_at)
-                    <span class="text-xs text-gray-500">({{ $cultoSeleccionado->cerrado_at->format('d/m/Y H:i') }})</span>
-                    @endif
-                </div>
                 @endif
             </div>
-            @endif
-        </form>
+        </div>
+        @endif
     </div>
+
+    @if(!$cultoSeleccionado)
+    <!-- Sin culto seleccionado: explicar que hacer en vez de dejar la pantalla vacia -->
+    <div class="bg-white rounded-lg shadow p-6 sm:p-8 text-center">
+        @if($cultos->isEmpty())
+            <p class="text-lg font-semibold text-gray-800">No hay cultos abiertos para registrar sobres</p>
+            <p class="mt-1 text-sm text-gray-500">Primero hay que crear el culto en Gestionar Cultos.</p>
+            @if(Auth::user()->canAccessAdmin())
+            <a href="{{ route('cultos.create') }}" class="btn-primary mt-4">+ Nuevo Culto</a>
+            @endif
+        @else
+            <p class="text-lg font-semibold text-gray-800">Elige el culto para registrar sus sobres</p>
+            <p class="mt-1 text-sm text-gray-500">Toca uno de los cultos abiertos o usa el selector de arriba.</p>
+            <div class="mt-4 flex flex-wrap justify-center gap-2">
+                @foreach($cultos->take(4) as $cultoAbierto)
+                <a href="{{ route('recuento.index', ['culto_id' => $cultoAbierto->id]) }}" class="btn-secondary">
+                    {{ $cultoAbierto->fecha->format('d/m/Y') }} - {{ ucfirst($cultoAbierto->tipo_culto) }}
+                </a>
+                @endforeach
+            </div>
+        @endif
+    </div>
+    @endif
 
     @if($cultoSeleccionado && !$cultoSeleccionado->cerrado)
     <!-- MODO EDICIÓN: Culto Activo Seleccionado -->
-    <!-- Firmas de Recuento -->
+    <!-- Resumen del Culto -->
+    @if($cultoSeleccionado->totales)
+    <div class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+        <div class="bg-white rounded-lg shadow p-4 col-span-2 lg:col-span-1">
+            <p class="text-sm text-gray-600">Total General (₡)</p>
+            <p class="text-xl xl:text-2xl font-bold text-blue-600 break-words">₡{{ number_format($cultoSeleccionado->totales->total_general, 2) }}</p>
+            @if($cultoSeleccionado->totales->total_general_usd > 0)
+                <p class="text-xs text-gray-500 mt-1">
+                    Incluye ${{ number_format($cultoSeleccionado->totales->total_general_usd, 2) }} USD
+                    @if($cultoSeleccionado->totales->tipo_cambio_venta)
+                        <span class="text-yellow-600">(T/C: ₡{{ number_format($cultoSeleccionado->totales->tipo_cambio_venta, 2) }})</span>
+                    @endif
+                </p>
+            @endif
+        </div>
+        <div class="bg-white rounded-lg shadow p-4">
+            <p class="text-sm text-gray-600">Cantidad de Sobres</p>
+            <p class="text-xl xl:text-2xl font-bold text-green-600 break-words">{{ $cultoSeleccionado->totales->cantidad_sobres }}</p>
+        </div>
+        @foreach($categorias->take(2) as $cat)
+        <div class="bg-white rounded-lg shadow p-4">
+            <p class="text-sm text-gray-600">{{ $cat->nombre }}</p>
+            <p class="text-xl xl:text-2xl font-bold text-purple-600 break-words">₡{{ number_format($cultoSeleccionado->totales->getCategoryTotal($cat->slug), 2) }}</p>
+            @if($cultoSeleccionado->totales->totales_usd && isset($cultoSeleccionado->totales->totales_usd['categorias'][$cat->slug]))
+                <p class="text-xs text-gray-400">(+${{ number_format($cultoSeleccionado->totales->totales_usd['categorias'][$cat->slug], 2) }} USD)</p>
+            @endif
+        </div>
+        @endforeach
+        <div class="bg-white rounded-lg shadow p-4">
+            <p class="text-sm text-gray-600">Transferencias</p>
+            <p class="text-xl xl:text-2xl font-bold text-orange-600 break-words">{{ $cultoSeleccionado->totales->cantidad_transferencias }}</p>
+        </div>
+    </div>
+    @endif
+
+    <!-- Tabla de Sobres -->
+    <div class="bg-white rounded-lg shadow overflow-hidden">
+        <div class="table-scroll">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">N° Sobre</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Persona</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">Método Pago</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden xl:table-cell">Detalles</th>
+                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    @forelse($sobres as $sobre)
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
+                            #{{ $sobre->numero_sobre }}
+                        </td>
+                        <td class="px-4 py-3 text-sm text-gray-700">
+                            {{ $sobre->persona ? $sobre->persona->nombre : 'Anónimo' }}
+                        </td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm hidden sm:table-cell">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $sobre->metodo_pago == 'transferencia' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800' }}">
+                                {{ ucfirst($sobre->metodo_pago) }}
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 whitespace-nowrap text-sm font-semibold text-gray-900">
+                            {{ $sobre->simbolo_moneda }}{{ number_format($sobre->total_declarado, 2) }}
+                            @if($sobre->moneda === 'USD')
+                                <span class="ml-1 text-xs bg-yellow-100 text-yellow-800 px-1.5 py-0.5 rounded-full">USD</span>
+                                @if($sobre->tipo_cambio_venta)
+                                    <span class="block text-xs text-gray-400 font-normal">≈ ₡{{ number_format($sobre->total_declarado_crc, 2) }}</span>
+                                @endif
+                            @endif
+                        </td>
+                        <td class="px-4 py-3 text-sm text-gray-500 hidden xl:table-cell">
+                            @foreach($sobre->detalles as $detalle)
+                                <span class="inline-block bg-gray-100 rounded px-2 py-1 text-xs mr-1 mb-1">
+                                    {{ ucfirst($detalle->categoria) }}: {{ $sobre->simbolo_moneda }}{{ number_format($detalle->monto, 2) }}
+                                </span>
+                            @endforeach
+                            @if($sobre->metodo_pago === 'transferencia' && $sobre->comprobante_numero)
+                                <span class="inline-block bg-blue-100 text-blue-800 rounded px-2 py-1 text-xs mr-1 mb-1">
+                                    Comprobante: {{ $sobre->comprobante_numero }}
+                                </span>
+                            @endif
+                            @if($sobre->notas)
+                                <span class="block text-xs text-gray-500 mt-1">Notas: {{ $sobre->notas }}</span>
+                            @endif
+                        </td>
+                        <td class="px-4 py-2 whitespace-nowrap text-right text-sm font-medium">
+                            <!-- Desktop actions -->
+                            <div class="hidden sm:flex sm:items-center sm:justify-end sm:gap-1">
+                                <a href="{{ route('recuento.edit', $sobre) }}" class="btn-row text-blue-700 hover:bg-blue-50">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                                    Editar
+                                </a>
+                                @if(in_array(auth()->user()->rol, ['admin', 'tesorero']))
+                                <button type="button" onclick="mostrarModalEliminarSobre({{ $sobre->id }}, {{ $sobre->numero_sobre }})" class="btn-icon text-red-600 hover:bg-red-50 hover:text-red-700" aria-label="Eliminar sobre #{{ $sobre->numero_sobre }}" title="Eliminar">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                </button>
+                                @endif
+                            </div>
+                            
+                            <!-- Mobile dropdown -->
+                            <div class="relative sm:hidden">
+                                <button type="button" onclick="toggleSobreDropdown({{ $sobre->id }})" class="btn-icon rounded-full" aria-label="Acciones del sobre">
+                                    <svg class="w-5 h-5 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"></path>
+                                    </svg>
+                                </button>
+                                <div id="sobre-dropdown-{{ $sobre->id }}" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 border border-gray-200">
+                                    <div class="py-1">
+                                        <a href="{{ route('recuento.edit', $sobre) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50">
+                                            <span class="flex items-center gap-2">
+                                                <svg class="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z"></path>
+                                                    <path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd"></path>
+                                                </svg>
+                                                Editar
+                                            </span>
+                                        </a>
+                                        @if(in_array(auth()->user()->rol, ['admin', 'tesorero']))
+                                        <button type="button" onclick="mostrarModalEliminarSobre({{ $sobre->id }}, {{ $sobre->numero_sobre }}); toggleSobreDropdown({{ $sobre->id }})" class="w-full text-left block px-4 py-2 text-sm text-gray-700 hover:bg-red-50">
+                                            <span class="flex items-center gap-2">
+                                                <svg class="w-4 h-4 text-red-600" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                                                </svg>
+                                                Eliminar
+                                            </span>
+                                        </button>
+                                        @endif
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            @if(in_array(auth()->user()->rol, ['admin', 'tesorero']))
+                            <form id="form-eliminar-sobre-{{ $sobre->id }}" action="{{ route('recuento.destroy', $sobre) }}" method="POST" class="hidden">
+                                @csrf
+                                @method('DELETE')
+                            </form>
+                            @endif
+                        </td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="6" class="px-6 py-12 text-center text-gray-500">
+                            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                            <p class="mt-2">No hay sobres registrados para este culto</p>
+                            <a href="{{ route('recuento.create', ['culto_id' => $cultoSeleccionado->id]) }}" class="btn-primary mt-4">
+                                + Agregar primer sobre
+                            </a>
+                        </td>
+                    </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Tabla Resumen por Culto -->
+    @if($sobres->count() > 0)
+    @php
+        // Sobres por método de pago (convertir USD a CRC)
+        $sobresEfectivo = $sobres->where('metodo_pago', 'efectivo')->sum(function($s) {
+            return $s->total_declarado_crc;
+        });
+        $sobresTransferencias = $sobres->where('metodo_pago', 'transferencia')->sum(function($s) {
+            return $s->total_declarado_crc;
+        });
+
+        // Dinero suelto (convertir USD a CRC)
+        $totalSuelto = $ofrendasSueltas->sum(function($o) {
+            return $o->monto_crc;
+        });
+
+        // Total de egresos (convertir USD a CRC)
+        $totalEgresos = $egresos->sum(function($e) {
+            return $e->monto_crc;
+        });
+
+        // Totales finales (todo en CRC)
+        $totalEfectivo = $sobresEfectivo + $totalSuelto - $totalEgresos;
+        $totalTransferencias = $sobresTransferencias;
+        $totalGeneral = $totalEfectivo + $totalTransferencias;
+    @endphp
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+        <div class="bg-white rounded-lg shadow p-4 border-l-4 border-green-500">
+            <p class="text-sm text-gray-600">Total Efectivo</p>
+            <p class="text-xl xl:text-2xl font-bold text-green-600 break-words">₡{{ number_format($totalEfectivo, 2) }}</p>
+            <p class="text-xs text-gray-500 mt-1">Sobres + Suelto - Egresos</p>
+        </div>
+        <div class="bg-white rounded-lg shadow p-4 border-l-4 border-blue-500">
+            <p class="text-sm text-gray-600">Total Transferencias</p>
+            <p class="text-xl xl:text-2xl font-bold text-blue-600 break-words">₡{{ number_format($totalTransferencias, 2) }}</p>
+            <p class="text-xs text-gray-500 mt-1">Sobres + Suelto</p>
+        </div>
+        <div class="bg-white rounded-lg shadow p-4 border-l-4 border-purple-500">
+            <p class="text-sm text-gray-600">Total General</p>
+            <p class="text-xl xl:text-2xl font-bold text-purple-600 break-words">₡{{ number_format($totalGeneral, 2) }}</p>
+            <p class="text-xs text-gray-500 mt-1">Efectivo + Transferencias</p>
+        </div>
+    </div>
+    <div class="bg-white rounded-lg shadow overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+            <h3 class="text-lg font-semibold text-gray-900">Resumen Detallado por Categorias</h3>
+        </div>
+        <div class="table-scroll">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-100">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">N° Sobre</th>
+                        @foreach($categorias as $cat)
+                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-700 uppercase">{{ $cat->nombre }}</th>
+                        @endforeach
+                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-700 uppercase font-bold">Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    @php
+                        $totales = [];
+                        foreach($categorias as $cat) {
+                            $totales[$cat->slug] = 0;
+                        }
+                        $totales['subtotal'] = 0;
+                    @endphp
+                    @foreach($sobres as $sobre)
+                    @php
+                        $detallesPorCategoria = $sobre->detalles->keyBy('categoria');
+                        $esUsd = $sobre->moneda === 'USD';
+                        $tc = $esUsd ? (float)($sobre->tipo_cambio_venta ?? 0) : 1;
+                        $subtotalOriginal = $sobre->total_declarado;
+                        $subtotalCrc = $esUsd && $tc > 0 ? round($subtotalOriginal * $tc, 2) : $subtotalOriginal;
+                        foreach($categorias as $cat) {
+                            $montoOriginal = $detallesPorCategoria->get($cat->slug)->monto ?? 0;
+                            $montoCrc = $esUsd && $tc > 0 ? round($montoOriginal * $tc, 2) : $montoOriginal;
+                            $totales[$cat->slug] += $montoCrc;
+                        }
+                        $totales['subtotal'] += $subtotalCrc;
+                    @endphp
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-4 py-3 text-sm font-medium text-gray-900">
+                            #{{ $sobre->numero_sobre }}
+                            @if($esUsd)
+                                <span class="ml-1 text-xs bg-yellow-100 text-yellow-800 px-1.5 py-0.5 rounded-full">USD</span>
+                            @endif
+                        </td>
+                        @foreach($categorias as $cat)
+                        @php
+                            $montoOriginal = $detallesPorCategoria->get($cat->slug)->monto ?? 0;
+                            $montoCrc = $esUsd && $tc > 0 ? round($montoOriginal * $tc, 2) : $montoOriginal;
+                        @endphp
+                        <td class="px-4 py-3 text-sm text-right text-gray-700">
+                            ₡{{ number_format($montoCrc, 2) }}
+                            @if($esUsd && $montoOriginal > 0)
+                                <span class="block text-xs text-yellow-600">${{ number_format($montoOriginal, 2) }}</span>
+                            @endif
+                        </td>
+                        @endforeach
+                        <td class="px-4 py-3 text-sm text-right font-bold text-blue-600">
+                            ₡{{ number_format($subtotalCrc, 2) }}
+                            @if($esUsd)
+                                <span class="block text-xs text-yellow-600">${{ number_format($subtotalOriginal, 2) }}</span>
+                            @endif
+                        </td>
+                    </tr>
+                    @endforeach
+
+                    <!-- Filas de Dinero Suelto -->
+                    @foreach($ofrendasSueltas as $ofrenda)
+                    @php
+                        $esUsdSuelto = ($ofrenda->moneda ?? 'CRC') === 'USD';
+                        $tcSuelto = $esUsdSuelto ? (float)($ofrenda->tipo_cambio_venta ?? 0) : 1;
+                        $montoSueltoCrc = $esUsdSuelto && $tcSuelto > 0 ? round($ofrenda->monto * $tcSuelto, 2) : $ofrenda->monto;
+                        $totales['subtotal'] += $montoSueltoCrc;
+                    @endphp
+                    <tr class="hover:bg-green-50 bg-green-50/30">
+                        <td class="px-4 py-3 text-sm">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <span class="font-medium text-green-700">Dinero Suelto</span>
+                                    @if($ofrenda->descripcion)
+                                    <span class="text-xs text-gray-500 block">{{ $ofrenda->descripcion }}</span>
+                                    @endif
+                                </div>
+                                <div class="flex gap-1 ml-2">
+                                    <button type="button" onclick="editarSuelto({{ $ofrenda->id }}, {{ $ofrenda->monto }}, @js($ofrenda->descripcion))"
+                                            class="btn-icon text-blue-600 hover:bg-blue-50 hover:text-blue-800" aria-label="Editar dinero suelto" title="Editar">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                                    </button>
+                                    @if(in_array(auth()->user()->rol, ['admin', 'tesorero']))
+                                    <button type="button" onclick="mostrarModalEliminarSuelto({{ $ofrenda->id }}, @js($ofrenda->descripcion))" class="btn-icon text-red-600 hover:bg-red-50 hover:text-red-700" aria-label="Eliminar dinero suelto" title="Eliminar">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                    </button>
+                                    <form id="form-eliminar-suelto-{{ $ofrenda->id }}" action="{{ route('recuento.destroy-suelto', $ofrenda) }}" method="POST" class="hidden">
+                                        @csrf
+                                        @method('DELETE')
+                                    </form>
+                                    @endif
+                                </div>
+                            </div>
+                        </td>
+                        @foreach($categorias as $cat)
+                        <td class="px-4 py-3 text-sm text-right text-gray-400">-</td>
+                        @endforeach
+                        <td class="px-4 py-3 text-sm text-right font-bold text-green-600">
+                            ₡{{ number_format($montoSueltoCrc, 2) }}
+                            @if($esUsdSuelto)
+                                <span class="block text-xs text-yellow-600">${{ number_format($ofrenda->monto, 2) }}</span>
+                            @endif
+                        </td>
+                    </tr>
+                    @endforeach
+
+                    <!-- Filas de Egresos -->
+                    @foreach($egresos as $egreso)
+                    @php
+                        $esUsdEgreso = ($egreso->moneda ?? 'CRC') === 'USD';
+                        $tcEgreso = $esUsdEgreso ? (float)($egreso->tipo_cambio_venta ?? 0) : 1;
+                        $montoEgresoCrc = $esUsdEgreso && $tcEgreso > 0 ? round($egreso->monto * $tcEgreso, 2) : $egreso->monto;
+                        $totales['subtotal'] -= $montoEgresoCrc;
+                    @endphp
+                    <tr class="hover:bg-red-50 bg-red-50/30">
+                        <td class="px-4 py-3 text-sm">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <span class="font-medium text-red-700">Egreso</span>
+                                    @if($egreso->descripcion)
+                                    <span class="text-xs text-gray-500 block">{{ $egreso->descripcion }}</span>
+                                    @endif
+                                </div>
+                                <div class="flex gap-1 ml-2">
+                                    <button type="button" onclick="editarEgreso({{ $egreso->id }}, {{ $egreso->monto }}, @js($egreso->descripcion))"
+                                            class="btn-icon text-blue-600 hover:bg-blue-50 hover:text-blue-800" aria-label="Editar egreso" title="Editar">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                                    </button>
+                                    @if(in_array(auth()->user()->rol, ['admin', 'tesorero']))
+                                    <button type="button" onclick="mostrarModalEliminarEgreso({{ $egreso->id }}, @js($egreso->descripcion))" class="btn-icon text-red-600 hover:bg-red-50 hover:text-red-700" aria-label="Eliminar egreso" title="Eliminar">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                                    </button>
+                                    <form id="form-eliminar-egreso-{{ $egreso->id }}" action="{{ route('recuento.destroy-egreso', $egreso) }}" method="POST" class="hidden">
+                                        @csrf
+                                        @method('DELETE')
+                                    </form>
+                                    @endif
+                                </div>
+                            </div>
+                        </td>
+                        @foreach($categorias as $cat)
+                        <td class="px-4 py-3 text-sm text-right text-gray-400">-</td>
+                        @endforeach
+                        <td class="px-4 py-3 text-sm text-right font-bold text-red-600">
+                            -₡{{ number_format($montoEgresoCrc, 2) }}
+                            @if($esUsdEgreso)
+                                <span class="block text-xs text-yellow-600">-${{ number_format($egreso->monto, 2) }}</span>
+                            @endif
+                        </td>
+                    </tr>
+                    @endforeach
+
+                    <!-- Fila de Totales -->
+                    <tr class="bg-blue-50 border-t-2 border-blue-200">
+                        <td class="px-4 py-3 text-sm font-bold text-gray-900">TOTALES</td>
+                        @foreach($categorias as $cat)
+                        <td class="px-4 py-3 text-sm text-right font-bold text-blue-700">₡{{ number_format($totales[$cat->slug] ?? 0, 2) }}</td>
+                        @endforeach
+                        <td class="px-4 py-3 text-sm text-right font-bold text-green-700 text-lg">₡{{ number_format($totales['subtotal'], 2) }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    @endif
+
+    <!-- Firmas de Recuento: van despues de los sobres y totales, que es cuando se firman -->
     <div class="bg-white rounded-lg shadow p-6">
         <h3 class="text-lg font-semibold mb-4">Firmas de Recuento</h3>
         <form method="POST" action="{{ route('recuento.firmas.update', $cultoSeleccionado->id) }}" class="space-y-4" id="firmasForm">
@@ -104,14 +475,14 @@
             <div class="border rounded-lg p-4 bg-gray-50">
                 <label class="block text-sm font-medium text-gray-700 mb-2">Pastor</label>
                 <div class="flex flex-wrap gap-3 items-center">
-                    <input type="text" name="firma_pastor" id="firma_pastor_nombre"
+                    <input type="text" name="firma_pastor" id="firma_pastor_nombre" autocomplete="off"
                            value="{{ old('firma_pastor', $cultoSeleccionado->firma_pastor) }}"
                            class="flex-1 min-w-[200px] rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                            placeholder="Nombre del pastor">
                     <input type="hidden" name="firma_pastor_imagen" id="firma_pastor_imagen"
                            value="{{ old('firma_pastor_imagen', $cultoSeleccionado->firma_pastor_imagen) }}">
                     <button type="button" onclick="abrirModalFirma('pastor', document.getElementById('firma_pastor_nombre').value || 'Pastor')"
-                            class="px-4 py-2 bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 flex items-center gap-2">
+                            class="btn bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 focus-visible:ring-blue-500">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
                         </svg>
@@ -132,7 +503,7 @@
                 <div class="flex justify-between items-center mb-3">
                     <label class="block text-sm font-medium text-gray-700">Tesoreros</label>
                     <button type="button" onclick="agregarTesorero()"
-                            class="px-3 py-1 bg-green-100 text-green-700 rounded-md hover:bg-green-200 text-sm flex items-center gap-1">
+                            class="btn bg-green-50 text-green-800 border border-green-200 hover:bg-green-100 focus-visible:ring-green-600">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                         </svg>
@@ -155,7 +526,7 @@
                                    placeholder="Nombre del tesorero">
                             <input type="hidden" name="firmas_tesoreros[0][imagen]" class="tesorero-imagen">
                             <button type="button" onclick="abrirModalFirmaTesorero(this)"
-                                    class="px-4 py-2 bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 flex items-center gap-2">
+                                    class="btn bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 focus-visible:ring-blue-500">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
                                 </svg>
@@ -165,7 +536,7 @@
                                 <span class="text-xs text-gray-400">Sin firma</span>
                             </div>
                             <button type="button" onclick="quitarTesorero(this)"
-                                    class="px-3 py-2 bg-red-100 text-red-700 rounded-md hover:bg-red-200">
+                                    class="btn-icon text-red-600 hover:bg-red-50 hover:text-red-700" aria-label="Quitar tesorero" title="Quitar tesorero">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                                 </svg>
@@ -182,7 +553,7 @@
                                    class="tesorero-imagen"
                                    value="{{ is_array($t) ? ($t['imagen'] ?? '') : '' }}">
                             <button type="button" onclick="abrirModalFirmaTesorero(this)"
-                                    class="px-4 py-2 bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 flex items-center gap-2">
+                                    class="btn bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 focus-visible:ring-blue-500">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
                                 </svg>
@@ -196,7 +567,7 @@
                                 @endif
                             </div>
                             <button type="button" onclick="quitarTesorero(this)"
-                                    class="px-3 py-2 bg-red-100 text-red-700 rounded-md hover:bg-red-200">
+                                    class="btn-icon text-red-600 hover:bg-red-50 hover:text-red-700" aria-label="Quitar tesorero" title="Quitar tesorero">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                                 </svg>
@@ -208,7 +579,7 @@
             </div>
 
             <div class="flex justify-end">
-                <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center gap-2">
+                <button type="submit" class="btn-primary">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                     </svg>
@@ -225,7 +596,7 @@
                 <h4 class="text-lg font-semibold text-gray-800">
                     Firma de: <span id="modalFirmaNombre" class="text-blue-600"></span>
                 </h4>
-                <button type="button" onclick="cerrarModalFirma()" class="text-gray-500 hover:text-gray-700">
+                <button type="button" onclick="cerrarModalFirma()" class="btn-icon" aria-label="Cerrar">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                     </svg>
@@ -237,21 +608,18 @@
                 </div>
                 <p class="text-sm text-gray-500 text-center mb-4">Dibuje su firma con el mouse o dedo</p>
             </div>
-            <div class="flex justify-between p-4 border-t bg-gray-50 rounded-b-xl">
-                <button type="button" onclick="limpiarCanvas()"
-                        class="px-4 py-2 bg-yellow-100 text-yellow-700 rounded-md hover:bg-yellow-200 flex items-center gap-2">
+            <div class="flex flex-wrap justify-between gap-2 p-4 border-t bg-gray-50 rounded-b-xl">
+                <button type="button" onclick="limpiarCanvas()" class="btn-secondary">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
                     </svg>
                     Limpiar
                 </button>
                 <div class="flex gap-2">
-                    <button type="button" onclick="cerrarModalFirma()"
-                            class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-100">
+                    <button type="button" onclick="cerrarModalFirma()" class="btn-secondary">
                         Cancelar
                     </button>
-                    <button type="button" onclick="guardarFirma()"
-                            class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center gap-2">
+                    <button type="button" onclick="guardarFirma()" class="btn-primary">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                         </svg>
@@ -449,7 +817,7 @@
                        placeholder="Nombre del tesorero">
                 <input type="hidden" name="firmas_tesoreros[${tesoreroIndex}][imagen]" class="tesorero-imagen">
                 <button type="button" onclick="abrirModalFirmaTesorero(this)"
-                        class="px-4 py-2 bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200 flex items-center gap-2">
+                        class="btn bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 focus-visible:ring-blue-500">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
                     </svg>
@@ -459,7 +827,7 @@
                     <span class="text-xs text-gray-400">Sin firma</span>
                 </div>
                 <button type="button" onclick="quitarTesorero(this)"
-                        class="px-3 py-2 bg-red-100 text-red-700 rounded-md hover:bg-red-200">
+                        class="btn-icon text-red-600 hover:bg-red-50 hover:text-red-700" aria-label="Quitar tesorero" title="Quitar tesorero">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                     </svg>
@@ -475,375 +843,6 @@
         }
     </script>
     
-    <!-- Resumen del Culto -->
-    @if($cultoSeleccionado->totales)
-    <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
-        <div class="bg-white rounded-lg shadow p-4">
-            <p class="text-sm text-gray-600">Total General (₡)</p>
-            <p class="text-2xl font-bold text-blue-600">₡{{ number_format($cultoSeleccionado->totales->total_general, 2) }}</p>
-            @if($cultoSeleccionado->totales->total_general_usd > 0)
-                <p class="text-xs text-gray-500 mt-1">
-                    Incluye ${{ number_format($cultoSeleccionado->totales->total_general_usd, 2) }} USD
-                    @if($cultoSeleccionado->totales->tipo_cambio_venta)
-                        <span class="text-yellow-600">(T/C: ₡{{ number_format($cultoSeleccionado->totales->tipo_cambio_venta, 2) }})</span>
-                    @endif
-                </p>
-            @endif
-        </div>
-        <div class="bg-white rounded-lg shadow p-4">
-            <p class="text-sm text-gray-600">Cantidad de Sobres</p>
-            <p class="text-2xl font-bold text-green-600">{{ $cultoSeleccionado->totales->cantidad_sobres }}</p>
-        </div>
-        @foreach($categorias->take(2) as $cat)
-        <div class="bg-white rounded-lg shadow p-4">
-            <p class="text-sm text-gray-600">{{ $cat->nombre }}</p>
-            <p class="text-2xl font-bold text-purple-600">₡{{ number_format($cultoSeleccionado->totales->getCategoryTotal($cat->slug), 2) }}</p>
-            @if($cultoSeleccionado->totales->totales_usd && isset($cultoSeleccionado->totales->totales_usd['categorias'][$cat->slug]))
-                <p class="text-xs text-gray-400">(+${{ number_format($cultoSeleccionado->totales->totales_usd['categorias'][$cat->slug], 2) }} USD)</p>
-            @endif
-        </div>
-        @endforeach
-        <div class="bg-white rounded-lg shadow p-4">
-            <p class="text-sm text-gray-600">Transferencias</p>
-            <p class="text-2xl font-bold text-orange-600">{{ $cultoSeleccionado->totales->cantidad_transferencias }}</p>
-        </div>
-    </div>
-    @endif
-
-    <!-- Tabla de Sobres -->
-    <div class="bg-white rounded-lg shadow overflow-hidden">
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">N° Sobre</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Persona</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden sm:table-cell">Método Pago</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden lg:table-cell">Detalles</th>
-                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
-                    @forelse($sobres as $sobre)
-                    <tr class="hover:bg-gray-50">
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                            #{{ $sobre->numero_sobre }}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {{ $sobre->persona ? $sobre->persona->nombre : 'Anónimo' }}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm hidden sm:table-cell">
-                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $sobre->metodo_pago == 'transferencia' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800' }}">
-                                {{ ucfirst($sobre->metodo_pago) }}
-                            </span>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
-                            {{ $sobre->simbolo_moneda }}{{ number_format($sobre->total_declarado, 2) }}
-                            @if($sobre->moneda === 'USD')
-                                <span class="ml-1 text-xs bg-yellow-100 text-yellow-800 px-1.5 py-0.5 rounded-full">USD</span>
-                                @if($sobre->tipo_cambio_venta)
-                                    <span class="block text-xs text-gray-400 font-normal">≈ ₡{{ number_format($sobre->total_declarado_crc, 2) }}</span>
-                                @endif
-                            @endif
-                        </td>
-                        <td class="px-6 py-4 text-sm text-gray-500 hidden lg:table-cell">
-                            @foreach($sobre->detalles as $detalle)
-                                <span class="inline-block bg-gray-100 rounded px-2 py-1 text-xs mr-1 mb-1">
-                                    {{ ucfirst($detalle->categoria) }}: {{ $sobre->simbolo_moneda }}{{ number_format($detalle->monto, 2) }}
-                                </span>
-                            @endforeach
-                            @if($sobre->metodo_pago === 'transferencia' && $sobre->comprobante_numero)
-                                <span class="inline-block bg-blue-100 text-blue-800 rounded px-2 py-1 text-xs mr-1 mb-1">
-                                    Comprobante: {{ $sobre->comprobante_numero }}
-                                </span>
-                            @endif
-                            @if($sobre->notas)
-                                <span class="block text-xs text-gray-500 mt-1">Notas: {{ $sobre->notas }}</span>
-                            @endif
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                            <!-- Desktop actions -->
-                            <div class="hidden sm:flex sm:items-center sm:justify-end sm:gap-3">
-                                <a href="{{ route('recuento.edit', $sobre) }}" class="text-blue-600 hover:text-blue-900">Editar</a>
-                                @if(in_array(auth()->user()->rol, ['admin', 'tesorero']))
-                                <button type="button" onclick="mostrarModalEliminarSobre({{ $sobre->id }}, {{ $sobre->numero_sobre }})" class="text-red-600 hover:text-red-900">
-                                    Eliminar
-                                </button>
-                                @endif
-                            </div>
-                            
-                            <!-- Mobile dropdown -->
-                            <div class="relative sm:hidden">
-                                <button type="button" onclick="toggleSobreDropdown({{ $sobre->id }})" class="p-2 hover:bg-gray-100 rounded-full">
-                                    <svg class="w-5 h-5 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
-                                        <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"></path>
-                                    </svg>
-                                </button>
-                                <div id="sobre-dropdown-{{ $sobre->id }}" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 border border-gray-200">
-                                    <div class="py-1">
-                                        <a href="{{ route('recuento.edit', $sobre) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50">
-                                            <span class="flex items-center gap-2">
-                                                <svg class="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-                                                    <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z"></path>
-                                                    <path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd"></path>
-                                                </svg>
-                                                Editar
-                                            </span>
-                                        </a>
-                                        @if(in_array(auth()->user()->rol, ['admin', 'tesorero']))
-                                        <button type="button" onclick="mostrarModalEliminarSobre({{ $sobre->id }}, {{ $sobre->numero_sobre }}); toggleSobreDropdown({{ $sobre->id }})" class="w-full text-left block px-4 py-2 text-sm text-gray-700 hover:bg-red-50">
-                                            <span class="flex items-center gap-2">
-                                                <svg class="w-4 h-4 text-red-600" fill="currentColor" viewBox="0 0 20 20">
-                                                    <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path>
-                                                </svg>
-                                                Eliminar
-                                            </span>
-                                        </button>
-                                        @endif
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            @if(in_array(auth()->user()->rol, ['admin', 'tesorero']))
-                            <form id="form-eliminar-sobre-{{ $sobre->id }}" action="{{ route('recuento.destroy', $sobre) }}" method="POST" class="hidden">
-                                @csrf
-                                @method('DELETE')
-                            </form>
-                            @endif
-                        </td>
-                    </tr>
-                    @empty
-                    <tr>
-                        <td colspan="6" class="px-6 py-12 text-center text-gray-500">
-                            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                            </svg>
-                            <p class="mt-2">No hay sobres registrados para este culto</p>
-                            <a href="{{ route('recuento.create', ['culto_id' => $cultoSeleccionado->id]) }}" class="mt-4 inline-block px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
-                                Agregar primer sobre
-                            </a>
-                        </td>
-                    </tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <!-- Tabla Resumen por Culto -->
-    @if($sobres->count() > 0)
-    @php
-        // Sobres por método de pago (convertir USD a CRC)
-        $sobresEfectivo = $sobres->where('metodo_pago', 'efectivo')->sum(function($s) {
-            return $s->total_declarado_crc;
-        });
-        $sobresTransferencias = $sobres->where('metodo_pago', 'transferencia')->sum(function($s) {
-            return $s->total_declarado_crc;
-        });
-
-        // Dinero suelto (convertir USD a CRC)
-        $totalSuelto = $ofrendasSueltas->sum(function($o) {
-            return $o->monto_crc;
-        });
-
-        // Total de egresos (convertir USD a CRC)
-        $totalEgresos = $egresos->sum(function($e) {
-            return $e->monto_crc;
-        });
-
-        // Totales finales (todo en CRC)
-        $totalEfectivo = $sobresEfectivo + $totalSuelto - $totalEgresos;
-        $totalTransferencias = $sobresTransferencias;
-        $totalGeneral = $totalEfectivo + $totalTransferencias;
-    @endphp
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-        <div class="bg-white rounded-lg shadow p-4 border-l-4 border-green-500">
-            <p class="text-sm text-gray-600">Total Efectivo</p>
-            <p class="text-2xl font-bold text-green-600">₡{{ number_format($totalEfectivo, 2) }}</p>
-            <p class="text-xs text-gray-500 mt-1">Sobres + Suelto - Egresos</p>
-        </div>
-        <div class="bg-white rounded-lg shadow p-4 border-l-4 border-blue-500">
-            <p class="text-sm text-gray-600">Total Transferencias</p>
-            <p class="text-2xl font-bold text-blue-600">₡{{ number_format($totalTransferencias, 2) }}</p>
-            <p class="text-xs text-gray-500 mt-1">Sobres + Suelto</p>
-        </div>
-        <div class="bg-white rounded-lg shadow p-4 border-l-4 border-purple-500">
-            <p class="text-sm text-gray-600">Total General</p>
-            <p class="text-2xl font-bold text-purple-600">₡{{ number_format($totalGeneral, 2) }}</p>
-            <p class="text-xs text-gray-500 mt-1">Efectivo + Transferencias</p>
-        </div>
-    </div>
-    <div class="bg-white rounded-lg shadow overflow-hidden">
-        <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
-            <h3 class="text-lg font-semibold text-gray-900">Resumen Detallado por Categorias</h3>
-        </div>
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-100">
-                    <tr>
-                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">N° Sobre</th>
-                        @foreach($categorias as $cat)
-                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-700 uppercase">{{ $cat->nombre }}</th>
-                        @endforeach
-                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-700 uppercase font-bold">Subtotal</th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
-                    @php
-                        $totales = [];
-                        foreach($categorias as $cat) {
-                            $totales[$cat->slug] = 0;
-                        }
-                        $totales['subtotal'] = 0;
-                    @endphp
-                    @foreach($sobres as $sobre)
-                    @php
-                        $detallesPorCategoria = $sobre->detalles->keyBy('categoria');
-                        $esUsd = $sobre->moneda === 'USD';
-                        $tc = $esUsd ? (float)($sobre->tipo_cambio_venta ?? 0) : 1;
-                        $subtotalOriginal = $sobre->total_declarado;
-                        $subtotalCrc = $esUsd && $tc > 0 ? round($subtotalOriginal * $tc, 2) : $subtotalOriginal;
-                        foreach($categorias as $cat) {
-                            $montoOriginal = $detallesPorCategoria->get($cat->slug)->monto ?? 0;
-                            $montoCrc = $esUsd && $tc > 0 ? round($montoOriginal * $tc, 2) : $montoOriginal;
-                            $totales[$cat->slug] += $montoCrc;
-                        }
-                        $totales['subtotal'] += $subtotalCrc;
-                    @endphp
-                    <tr class="hover:bg-gray-50">
-                        <td class="px-4 py-3 text-sm font-medium text-gray-900">
-                            #{{ $sobre->numero_sobre }}
-                            @if($esUsd)
-                                <span class="ml-1 text-xs bg-yellow-100 text-yellow-800 px-1.5 py-0.5 rounded-full">USD</span>
-                            @endif
-                        </td>
-                        @foreach($categorias as $cat)
-                        @php
-                            $montoOriginal = $detallesPorCategoria->get($cat->slug)->monto ?? 0;
-                            $montoCrc = $esUsd && $tc > 0 ? round($montoOriginal * $tc, 2) : $montoOriginal;
-                        @endphp
-                        <td class="px-4 py-3 text-sm text-right text-gray-700">
-                            ₡{{ number_format($montoCrc, 2) }}
-                            @if($esUsd && $montoOriginal > 0)
-                                <span class="block text-xs text-yellow-600">${{ number_format($montoOriginal, 2) }}</span>
-                            @endif
-                        </td>
-                        @endforeach
-                        <td class="px-4 py-3 text-sm text-right font-bold text-blue-600">
-                            ₡{{ number_format($subtotalCrc, 2) }}
-                            @if($esUsd)
-                                <span class="block text-xs text-yellow-600">${{ number_format($subtotalOriginal, 2) }}</span>
-                            @endif
-                        </td>
-                    </tr>
-                    @endforeach
-
-                    <!-- Filas de Dinero Suelto -->
-                    @foreach($ofrendasSueltas as $ofrenda)
-                    @php
-                        $esUsdSuelto = ($ofrenda->moneda ?? 'CRC') === 'USD';
-                        $tcSuelto = $esUsdSuelto ? (float)($ofrenda->tipo_cambio_venta ?? 0) : 1;
-                        $montoSueltoCrc = $esUsdSuelto && $tcSuelto > 0 ? round($ofrenda->monto * $tcSuelto, 2) : $ofrenda->monto;
-                        $totales['subtotal'] += $montoSueltoCrc;
-                    @endphp
-                    <tr class="hover:bg-green-50 bg-green-50/30">
-                        <td class="px-4 py-3 text-sm">
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <span class="font-medium text-green-700">Dinero Suelto</span>
-                                    @if($ofrenda->descripcion)
-                                    <span class="text-xs text-gray-500 block">{{ $ofrenda->descripcion }}</span>
-                                    @endif
-                                </div>
-                                <div class="flex gap-2 ml-2">
-                                    <button onclick="editarSuelto({{ $ofrenda->id }}, {{ $ofrenda->monto }}, '{{ $ofrenda->descripcion }}')"
-                                            class="text-blue-600 hover:text-blue-900 text-xs">
-                                        Editar
-                                    </button>
-                                    @if(in_array(auth()->user()->rol, ['admin', 'tesorero']))
-                                    <button type="button" onclick="mostrarModalEliminarSuelto({{ $ofrenda->id }}, '{{ $ofrenda->descripcion }}')" class="text-red-600 hover:text-red-900 text-xs">
-                                        Eliminar
-                                    </button>
-                                    <form id="form-eliminar-suelto-{{ $ofrenda->id }}" action="{{ route('recuento.destroy-suelto', $ofrenda) }}" method="POST" class="hidden">
-                                        @csrf
-                                        @method('DELETE')
-                                    </form>
-                                    @endif
-                                </div>
-                            </div>
-                        </td>
-                        @foreach($categorias as $cat)
-                        <td class="px-4 py-3 text-sm text-right text-gray-400">-</td>
-                        @endforeach
-                        <td class="px-4 py-3 text-sm text-right font-bold text-green-600">
-                            ₡{{ number_format($montoSueltoCrc, 2) }}
-                            @if($esUsdSuelto)
-                                <span class="block text-xs text-yellow-600">${{ number_format($ofrenda->monto, 2) }}</span>
-                            @endif
-                        </td>
-                    </tr>
-                    @endforeach
-
-                    <!-- Filas de Egresos -->
-                    @foreach($egresos as $egreso)
-                    @php
-                        $esUsdEgreso = ($egreso->moneda ?? 'CRC') === 'USD';
-                        $tcEgreso = $esUsdEgreso ? (float)($egreso->tipo_cambio_venta ?? 0) : 1;
-                        $montoEgresoCrc = $esUsdEgreso && $tcEgreso > 0 ? round($egreso->monto * $tcEgreso, 2) : $egreso->monto;
-                        $totales['subtotal'] -= $montoEgresoCrc;
-                    @endphp
-                    <tr class="hover:bg-red-50 bg-red-50/30">
-                        <td class="px-4 py-3 text-sm">
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <span class="font-medium text-red-700">Egreso</span>
-                                    @if($egreso->descripcion)
-                                    <span class="text-xs text-gray-500 block">{{ $egreso->descripcion }}</span>
-                                    @endif
-                                </div>
-                                <div class="flex gap-2 ml-2">
-                                    <button onclick="editarEgreso({{ $egreso->id }}, {{ $egreso->monto }}, '{{ $egreso->descripcion }}')"
-                                            class="text-blue-600 hover:text-blue-900 text-xs">
-                                        Editar
-                                    </button>
-                                    @if(in_array(auth()->user()->rol, ['admin', 'tesorero']))
-                                    <button type="button" onclick="mostrarModalEliminarEgreso({{ $egreso->id }}, '{{ $egreso->descripcion }}')" class="text-red-600 hover:text-red-900 text-xs">
-                                        Eliminar
-                                    </button>
-                                    <form id="form-eliminar-egreso-{{ $egreso->id }}" action="{{ route('recuento.destroy-egreso', $egreso) }}" method="POST" class="hidden">
-                                        @csrf
-                                        @method('DELETE')
-                                    </form>
-                                    @endif
-                                </div>
-                            </div>
-                        </td>
-                        @foreach($categorias as $cat)
-                        <td class="px-4 py-3 text-sm text-right text-gray-400">-</td>
-                        @endforeach
-                        <td class="px-4 py-3 text-sm text-right font-bold text-red-600">
-                            -₡{{ number_format($montoEgresoCrc, 2) }}
-                            @if($esUsdEgreso)
-                                <span class="block text-xs text-yellow-600">-${{ number_format($egreso->monto, 2) }}</span>
-                            @endif
-                        </td>
-                    </tr>
-                    @endforeach
-
-                    <!-- Fila de Totales -->
-                    <tr class="bg-blue-50 border-t-2 border-blue-200">
-                        <td class="px-4 py-3 text-sm font-bold text-gray-900">TOTALES</td>
-                        @foreach($categorias as $cat)
-                        <td class="px-4 py-3 text-sm text-right font-bold text-blue-700">₡{{ number_format($totales[$cat->slug] ?? 0, 2) }}</td>
-                        @endforeach
-                        <td class="px-4 py-3 text-sm text-right font-bold text-green-700 text-lg">₡{{ number_format($totales['subtotal'], 2) }}</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
-    @endif
     @endif
 
     <!-- Lista de Cultos Cerrados (Archivo) -->
@@ -858,7 +857,7 @@
             <span class="px-3 py-1 bg-gray-200 text-gray-700 rounded-full text-sm font-semibold">{{ $cultosCerrados->count() }}</span>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
             @foreach($cultosCerrados as $cultoCerrado)
             <div class="bg-white rounded-lg shadow hover:shadow-lg transition-shadow border border-gray-200">
                 <div class="p-5">
@@ -902,22 +901,19 @@
                     </div>
 
                     <div class="flex gap-2">
-                        <button onclick="verCultoCerrado({{ $cultoCerrado->id }})" 
-                           class="flex-1 text-center px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors">
+                        <button type="button" onclick="verCultoCerrado({{ $cultoCerrado->id }})" class="btn-secondary flex-1">
                             <svg class="w-4 h-4 inline mr-1" fill="currentColor" viewBox="0 0 20 20">
                                 <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"></path>
                                 <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"></path>
                             </svg>
                             Ver
                         </button>
-                        <a href="{{ route('ingresos-asistencia.pdf-recuento-individual', $cultoCerrado->id) }}" 
-                           class="px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition-colors">
+                        <a href="{{ route('ingresos-asistencia.pdf-recuento-individual', $cultoCerrado->id) }}" class="btn-secondary" aria-label="Descargar PDF" title="Descargar PDF">
                             <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                             </svg>
                         </a>
-                        <button type="button" onclick="mostrarModalEliminarCulto({{ $cultoCerrado->id }}, '{{ $cultoCerrado->fecha }}')" 
-                                class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors">
+                        <button type="button" onclick="mostrarModalEliminarCulto({{ $cultoCerrado->id }}, @js($cultoCerrado->fecha->format('d/m/Y')))" class="btn-icon text-red-600 hover:bg-red-50 hover:text-red-700" aria-label="Eliminar culto" title="Eliminar culto">
                             <svg class="w-4 h-4 inline" fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path>
                             </svg>
@@ -937,11 +933,11 @@
 
 <!-- Modal para Ver Culto Cerrado -->
 <div id="modalVerCultoCerrado" class="hidden fixed inset-0 bg-gray-900 bg-opacity-75 overflow-y-auto h-full w-full z-50">
-    <div class="relative top-10 mx-auto p-8 border w-11/12 max-w-6xl shadow-2xl rounded-lg bg-white mb-10">
-        <div class="flex justify-between items-center mb-6">
+    <div class="relative top-4 sm:top-10 mx-auto p-4 sm:p-8 border w-11/12 max-w-6xl shadow-2xl rounded-lg bg-white mb-10">
+        <div class="flex justify-between items-center gap-3 mb-6">
             <h3 class="text-2xl font-bold text-gray-900">Resumen de Culto Cerrado</h3>
-            <button onclick="cerrarModal()" class="text-gray-400 hover:text-gray-600">
-                <svg class="w-8 h-8" fill="currentColor" viewBox="0 0 20 20">
+            <button type="button" onclick="cerrarModal()" class="btn-icon" aria-label="Cerrar">
+                <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
                 </svg>
             </button>
@@ -986,7 +982,7 @@ function cerrarModal() {
                     <div class="relative">
                         <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">₡</span>
                         <input type="number" name="monto" id="monto_suelto" min="0.01" step="0.01" required
-                               class="w-full pl-7 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                               class="w-full min-h-[44px] pl-7 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" inputmode="decimal">
                     </div>
                 </div>
 
@@ -996,12 +992,12 @@ function cerrarModal() {
                               class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"></textarea>
                 </div>
 
-                <div class="flex justify-end gap-3">
+                <div class="flex flex-wrap justify-end gap-3">
                     <button type="button" onclick="document.getElementById('modalSuelto').classList.add('hidden')"
-                            class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+                            class="btn-secondary">
                         Cancelar
                     </button>
-                    <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
+                    <button type="submit" class="btn-success">
                         Guardar
                     </button>
                 </div>
@@ -1024,7 +1020,7 @@ function cerrarModal() {
                     <div class="relative">
                         <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">₡</span>
                         <input type="number" name="monto" id="monto_suelto_edit" min="0.01" step="0.01" required
-                               class="w-full pl-7 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                               class="w-full min-h-[44px] pl-7 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" inputmode="decimal">
                     </div>
                 </div>
 
@@ -1034,12 +1030,12 @@ function cerrarModal() {
                               class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"></textarea>
                 </div>
 
-                <div class="flex justify-end gap-3">
+                <div class="flex flex-wrap justify-end gap-3">
                     <button type="button" onclick="document.getElementById('modalEditarSuelto').classList.add('hidden')"
-                            class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+                            class="btn-secondary">
                         Cancelar
                     </button>
-                    <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
+                    <button type="submit" class="btn-success">
                         Actualizar
                     </button>
                 </div>
@@ -1196,7 +1192,7 @@ document.addEventListener('click', function(event) {
         <div class="mt-3">
             <div class="flex items-center justify-between mb-4">
                 <h3 class="text-lg font-semibold text-red-900">⚠️ Eliminar Sobre</h3>
-                <button onclick="cerrarModalEliminarSobre()" class="text-gray-400 hover:text-gray-600">
+                <button type="button" onclick="cerrarModalEliminarSobre()" class="btn-icon" aria-label="Cerrar">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                     </svg>
@@ -1209,15 +1205,15 @@ document.addEventListener('click', function(event) {
                 </p>
             </div>
 
-            <div class="flex justify-end gap-3">
+            <div class="flex flex-wrap justify-end gap-3">
                 <button type="button" 
                         onclick="cerrarModalEliminarSobre()"
-                        class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+                        class="btn-secondary">
                     Cancelar
                 </button>
                 <button type="button" 
                         onclick="confirmarEliminacionSobre()"
-                        class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">
+                        class="btn-danger">
                     Sí, Eliminar
                 </button>
             </div>
@@ -1231,7 +1227,7 @@ document.addEventListener('click', function(event) {
         <div class="mt-3">
             <div class="flex items-center justify-between mb-4">
                 <h3 class="text-lg font-semibold text-red-900">⚠️ Eliminar Dinero Suelto</h3>
-                <button onclick="cerrarModalEliminarSuelto()" class="text-gray-400 hover:text-gray-600">
+                <button type="button" onclick="cerrarModalEliminarSuelto()" class="btn-icon" aria-label="Cerrar">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                     </svg>
@@ -1244,15 +1240,15 @@ document.addEventListener('click', function(event) {
                 </p>
             </div>
 
-            <div class="flex justify-end gap-3">
+            <div class="flex flex-wrap justify-end gap-3">
                 <button type="button" 
                         onclick="cerrarModalEliminarSuelto()"
-                        class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+                        class="btn-secondary">
                     Cancelar
                 </button>
                 <button type="button" 
                         onclick="confirmarEliminacionSuelto()"
-                        class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">
+                        class="btn-danger">
                     Sí, Eliminar
                 </button>
             </div>
@@ -1274,7 +1270,7 @@ document.addEventListener('click', function(event) {
                     <div class="relative">
                         <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">₡</span>
                         <input type="number" name="monto" id="monto_egreso" min="0.01" step="0.01" required
-                               class="w-full pl-7 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                               class="w-full min-h-[44px] pl-7 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" inputmode="decimal">
                     </div>
                 </div>
 
@@ -1284,12 +1280,12 @@ document.addEventListener('click', function(event) {
                               class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"></textarea>
                 </div>
 
-                <div class="flex justify-end gap-3">
+                <div class="flex flex-wrap justify-end gap-3">
                     <button type="button" onclick="document.getElementById('modalEgreso').classList.add('hidden')"
-                            class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+                            class="btn-secondary">
                         Cancelar
                     </button>
-                    <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">
+                    <button type="submit" class="btn-danger">
                         Guardar
                     </button>
                 </div>
@@ -1312,7 +1308,7 @@ document.addEventListener('click', function(event) {
                     <div class="relative">
                         <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">₡</span>
                         <input type="number" name="monto" id="monto_egreso_edit" min="0.01" step="0.01" required
-                               class="w-full pl-7 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                               class="w-full min-h-[44px] pl-7 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" inputmode="decimal">
                     </div>
                 </div>
 
@@ -1322,12 +1318,12 @@ document.addEventListener('click', function(event) {
                               class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"></textarea>
                 </div>
 
-                <div class="flex justify-end gap-3">
+                <div class="flex flex-wrap justify-end gap-3">
                     <button type="button" onclick="document.getElementById('modalEditarEgreso').classList.add('hidden')"
-                            class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+                            class="btn-secondary">
                         Cancelar
                     </button>
-                    <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">
+                    <button type="submit" class="btn-danger">
                         Actualizar
                     </button>
                 </div>
@@ -1342,7 +1338,7 @@ document.addEventListener('click', function(event) {
         <div class="mt-3">
             <div class="flex items-center justify-between mb-4">
                 <h3 class="text-lg font-semibold text-red-900">⚠️ Eliminar Egreso</h3>
-                <button onclick="cerrarModalEliminarEgreso()" class="text-gray-400 hover:text-gray-600">
+                <button type="button" onclick="cerrarModalEliminarEgreso()" class="btn-icon" aria-label="Cerrar">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                     </svg>
@@ -1355,15 +1351,15 @@ document.addEventListener('click', function(event) {
                 </p>
             </div>
 
-            <div class="flex justify-end gap-3">
+            <div class="flex flex-wrap justify-end gap-3">
                 <button type="button" 
                         onclick="cerrarModalEliminarEgreso()"
-                        class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+                        class="btn-secondary">
                     Cancelar
                 </button>
                 <button type="button" 
                         onclick="confirmarEliminacionEgreso()"
-                        class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">
+                        class="btn-danger">
                     Sí, Eliminar
                 </button>
             </div>
@@ -1377,7 +1373,7 @@ document.addEventListener('click', function(event) {
         <div class="mt-3">
             <div class="flex items-center justify-between mb-4">
                 <h3 class="text-lg font-semibold text-red-900">⚠️ Eliminar Culto</h3>
-                <button onclick="cerrarModalEliminarCulto()" class="text-gray-400 hover:text-gray-600">
+                <button type="button" onclick="cerrarModalEliminarCulto()" class="btn-icon" aria-label="Cerrar">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                     </svg>
@@ -1393,15 +1389,15 @@ document.addEventListener('click', function(event) {
                 </p>
             </div>
 
-            <div class="flex justify-end gap-3">
+            <div class="flex flex-wrap justify-end gap-3">
                 <button type="button" 
                         onclick="cerrarModalEliminarCulto()"
-                        class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+                        class="btn-secondary">
                     Cancelar
                 </button>
                 <button type="button" 
                         onclick="confirmarEliminacionCulto()"
-                        class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">
+                        class="btn-danger">
                     Sí, Eliminar
                 </button>
             </div>
@@ -1415,7 +1411,7 @@ document.addEventListener('click', function(event) {
         <div class="mt-3">
             <div class="flex items-center justify-between mb-4">
                 <h3 class="text-lg font-semibold text-orange-900">🔒 Cerrar Culto</h3>
-                <button onclick="cerrarModalCerrarCulto()" class="text-gray-400 hover:text-gray-600">
+                <button type="button" onclick="cerrarModalCerrarCulto()" class="btn-icon" aria-label="Cerrar">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                     </svg>
@@ -1431,15 +1427,15 @@ document.addEventListener('click', function(event) {
                 </p>
             </div>
 
-            <div class="flex justify-end gap-3">
+            <div class="flex flex-wrap justify-end gap-3">
                 <button type="button" 
                         onclick="cerrarModalCerrarCulto()"
-                        class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+                        class="btn-secondary">
                     Cancelar
                 </button>
                 <button type="button" 
                         onclick="confirmarCerrarCulto()"
-                        class="px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700">
+                        class="btn-warning">
                     Sí, Cerrar
                 </button>
             </div>

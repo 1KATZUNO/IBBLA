@@ -35,7 +35,7 @@
         <!-- Patron decorativo sutil -->
         <div class="fixed inset-0 opacity-10" style="background-image: radial-gradient(circle at 25% 25%, rgba(255,255,255,0.2) 1px, transparent 1px), radial-gradient(circle at 75% 75%, rgba(255,255,255,0.15) 1px, transparent 1px); background-size: 50px 50px;"></div>
 
-        <div class="min-h-screen flex flex-col sm:justify-center items-center px-4 py-6 sm:pt-0 relative z-10">
+        <div class="min-h-screen min-h-dvh flex flex-col sm:justify-center items-center px-4 py-6 sm:pt-0 relative z-10">
             <!-- Logo y Titulo -->
             <div class="mb-8 text-center animate-fade-in">
                 <div class="inline-block p-4">

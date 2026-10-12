@@ -42,7 +42,7 @@
                                     </option>
                                 @endforeach
                             </select>
-                            <button type="button" id="btnAgregarRapida" class="w-full px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm">
+                            <button type="button" id="btnAgregarRapida" class="btn bg-green-50 text-green-800 border border-green-200 hover:bg-green-100 focus-visible:ring-green-600 w-full">
                                 + Agregar Persona Rápida
                             </button>
                         </div>
@@ -97,7 +97,7 @@
                                 <label for="{{ $cat->slug }}" class="block text-sm font-medium text-gray-700 mb-2">{{ $cat->nombre }}</label>
                                 <div class="relative">
                                     <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500 simbolo-moneda">₡</span>
-                                    <input type="number" name="detalles[{{ $index }}][monto]" id="{{ $cat->slug }}" step="0.01" min="0" value="0"
+                                    <input type="number" name="detalles[{{ $index }}][monto]" id="{{ $cat->slug }}" step="0.01" min="0" value="0" inputmode="decimal"
                                            class="w-full pl-7 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 detalle-monto">
                                     <input type="hidden" name="detalles[{{ $index }}][categoria]" value="{{ $cat->slug }}">
                                 </div>
@@ -128,16 +128,18 @@
                 </div>
             </div>
 
-            <div class="mt-6 flex justify-end gap-3 sticky bottom-0 bg-white pb-[env(safe-area-inset-bottom,16px)] pt-4 border-t border-gray-200 -mx-6 px-6 z-10" style="padding-bottom: max(1rem, env(safe-area-inset-bottom));">
-                <a href="{{ route('recuento.index', ['culto_id' => $culto ? $culto->id : '']) }}"
-                   class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+            <!-- Barra fija: el total y Guardar siempre a la vista mientras se llenan los montos -->
+            <div class="action-bar">
+                <div class="mr-auto text-sm text-gray-600">
+                    Total: <span class="text-lg font-bold text-blue-700" id="totalBarra">₡0.00</span>
+                </div>
+                <a href="{{ route('recuento.index', ['culto_id' => $culto ? $culto->id : '']) }}" class="btn-secondary">
                     Cancelar
                 </a>
-                <button type="submit" id="btnGuardarSobre" class="px-5 py-2.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-medium min-w-[140px]">
+                <button type="submit" id="btnGuardarSobre" class="btn-primary min-w-[150px]">
                     Guardar Sobre
                 </button>
             </div>
-            <div class="h-2"></div>
         </form>
     </div>
 </div>
@@ -192,6 +194,11 @@
             return monedaSelect.value === 'USD' ? '$' : '₡';
         }
 
+        // Mismo formato que number_format del servidor: 17,500.50
+        function formatoMonto(n) {
+            return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
         function calcularTotal() {
             let total = 0;
             inputs.forEach(input => {
@@ -199,12 +206,13 @@
                 total += valor;
             });
             const simbolo = getSimboloMoneda();
-            totalElement.textContent = simbolo + total.toFixed(2);
+            totalElement.textContent = simbolo + formatoMonto(total);
+            document.getElementById('totalBarra').textContent = simbolo + formatoMonto(total);
 
             // Mostrar equivalente en CRC si es USD
             if (monedaSelect.value === 'USD' && tipoCambioVenta > 0) {
                 totalConvertido.classList.remove('hidden');
-                totalConvertidoValor.textContent = '₡' + (total * tipoCambioVenta).toFixed(2);
+                totalConvertidoValor.textContent = '₡' + formatoMonto(total * tipoCambioVenta);
             } else {
                 totalConvertido.classList.add('hidden');
             }
@@ -265,7 +273,7 @@
 
             if (resultados.length > 0) {
                 resultadosDiv.innerHTML = resultados.map(option => `
-                    <div class="px-4 py-2 hover:bg-blue-50 cursor-pointer resultado-item" data-id="${option.value}">
+                    <div class="px-4 py-3 hover:bg-blue-50 cursor-pointer resultado-item" data-id="${option.value}">
                         ${option.text}
                     </div>
                 `).join('');

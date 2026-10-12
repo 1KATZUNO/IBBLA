@@ -5,62 +5,65 @@
 
 @section('content')
 <div class="max-w-6xl mx-auto">
-    <div class="mb-6 flex justify-between items-center">
+    <div class="mb-6 flex flex-wrap justify-between items-center gap-3">
         <p class="text-gray-600">Configura las clases que aparecerán en el registro de asistencia</p>
-        <a href="{{ route('admin.clases.create') }}" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+        <a href="{{ route('admin.clases.create') }}" class="btn-primary">
             + Nueva Clase
         </a>
     </div>
 
     <div class="bg-white rounded-lg shadow overflow-hidden">
-        <div class="overflow-x-auto">
+        <div class="table-scroll">
         <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-gray-50">
                 <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Orden</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Slug</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Color</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Maestros</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
-                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Orden</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden xl:table-cell">Slug</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden xl:table-cell">Color</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Maestros</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Estado</th>
+                    <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
                 </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
                 @forelse($clases as $clase)
                 <tr>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
                         {{ $clase->orden }}
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {{ $clase->nombre }}
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-900">
+                        <span class="inline-flex items-center gap-2">
+                            <span class="w-3 h-3 rounded-full flex-shrink-0 xl:hidden" style="background-color: {{ $clase->color }}" aria-hidden="true"></span>
+                            {{ $clase->nombre }}
+                        </span>
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono">
+                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500 font-mono hidden xl:table-cell">
                         {{ $clase->slug }}
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                    <td class="px-4 py-3 whitespace-nowrap text-sm hidden xl:table-cell">
                         <div class="flex items-center gap-2">
                             <div class="w-8 h-8 rounded" style="background-color: {{ $clase->color }}"></div>
                             <span class="text-gray-600">{{ $clase->color }}</span>
                         </div>
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                    <td class="px-4 py-3 whitespace-nowrap text-sm">
                         @if($clase->tiene_maestros)
                             <span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Sí</span>
                         @else
                             <span class="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">No</span>
                         @endif
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                    <td class="px-4 py-3 whitespace-nowrap text-sm">
                         @if($clase->activa)
                             <span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Activa</span>
                         @else
                             <span class="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">Inactiva</span>
                         @endif
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <a href="{{ route('admin.clases.edit', $clase) }}" class="text-blue-600 hover:text-blue-900 mr-3">Editar</a>
-                        <button type="button" onclick="mostrarModalEliminar({{ $clase->id }}, '{{ $clase->nombre }}')" class="text-red-600 hover:text-red-900">
+                    <td class="px-4 py-2 whitespace-nowrap text-right text-sm font-medium">
+                        <a href="{{ route('admin.clases.edit', $clase) }}" class="btn-row text-blue-700 hover:bg-blue-50">Editar</a>
+                        <button type="button" onclick="mostrarModalEliminar({{ $clase->id }}, @js($clase->nombre))" class="btn-row text-red-700 hover:bg-red-50">
                             Eliminar
                         </button>
                         <form id="form-eliminar-{{ $clase->id }}" action="{{ route('admin.clases.destroy', $clase) }}" method="POST" class="hidden">
@@ -88,11 +91,11 @@
 
 <!-- Modal: Confirmar Eliminación -->
 <div id="modalEliminar" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+    <div class="relative top-4 sm:top-20 mx-4 sm:mx-auto p-5 border w-auto sm:w-full max-w-md shadow-lg rounded-md bg-white">
         <div class="mt-3">
             <div class="flex items-center justify-between mb-4">
                 <h3 class="text-lg font-semibold text-red-900">⚠️ Eliminar Clase</h3>
-                <button onclick="cerrarModalEliminar()" class="text-gray-400 hover:text-gray-600">
+                <button type="button" onclick="cerrarModalEliminar()" class="btn-icon" aria-label="Cerrar">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                     </svg>
@@ -111,12 +114,12 @@
             <div class="flex justify-end gap-3">
                 <button type="button" 
                         onclick="cerrarModalEliminar()"
-                        class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+                        class="btn-secondary">
                     Cancelar
                 </button>
                 <button type="button" 
                         onclick="confirmarEliminacion()"
-                        class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">
+                        class="btn-danger">
                     Sí, Eliminar
                 </button>
             </div>
