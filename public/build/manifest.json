@@ -1,10 +1,14 @@
 {
+  "_client-DwCdPwZ8.js": {
+    "file": "assets/client-DwCdPwZ8.js",
+    "name": "client"
+  },
   "_index-B9ygI19o.js": {
     "file": "assets/index-B9ygI19o.js",
     "name": "index"
   },
   "resources/css/app.css": {
-    "file": "assets/app-Di64dj37.css",
+    "file": "assets/app-CaCM-x4R.css",
     "src": "resources/css/app.css",
     "isEntry": true,
     "name": "app",
@@ -22,15 +26,25 @@
     ]
   },
   "resources/js/asistencia-app/main.jsx": {
-    "file": "assets/main-Cbpw4PqP.js",
+    "file": "assets/main-Ba1CgZ1a.js",
     "name": "main",
     "src": "resources/js/asistencia-app/main.jsx",
     "isEntry": true,
     "imports": [
+      "_client-DwCdPwZ8.js",
       "_index-B9ygI19o.js"
     ],
     "css": [
       "assets/main-eFz7KI7j.css"
+    ]
+  },
+  "resources/js/clase-app/main.jsx": {
+    "file": "assets/main-DJwLLPr7.js",
+    "name": "main",
+    "src": "resources/js/clase-app/main.jsx",
+    "isEntry": true,
+    "imports": [
+      "_client-DwCdPwZ8.js"
     ]
   }
 }

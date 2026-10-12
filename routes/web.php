@@ -18,6 +18,13 @@ Route::get('/', function () {
     return redirect()->route('login');
 });
 
+// Informe individual de una persona por enlace firmado: se comparte por WhatsApp, no requiere
+// sesión y vence (7 días por defecto). Va fuera de los grupos con auth a propósito.
+Route::get('/informe/{persona}', App\Http\Controllers\InformePublicoController::class)
+    ->whereNumber('persona')
+    ->middleware(['throttle:30,1', 'signed'])
+    ->name('informe.persona');
+
 // API interna - Tipo de cambio
 Route::middleware(['auth'])->get('/api/tipo-cambio', function (BccrExchangeRateService $service) {
     $tipoCambio = $service->obtenerHoy();
@@ -62,6 +69,7 @@ Route::middleware(['auth'])->group(function () {
 // Ruta Mi Perfil - accesible para miembros, servidores, tesorero y asistente
 Route::middleware(['auth', 'role:miembro,servidor,tesorero,asistente'])->group(function () {
     Route::get('/mi-perfil', [App\Http\Controllers\MiPerfilController::class, 'index'])->name('mi-perfil.index');
+    Route::get('/mi-perfil/informe', [App\Http\Controllers\MiPerfilController::class, 'informe'])->name('mi-perfil.informe');
 });
 
 // Ruta para servidores - Marcar Asistencia
@@ -202,6 +210,8 @@ Route::middleware(['auth', 'role:admin', 'audit'])->group(function () {
 
     // Compromisos
     Route::get('personas/{persona}/compromisos', [App\Http\Controllers\CompromisoController::class, 'show'])->name('compromisos.show');
+    // Estado de cuenta de la persona en PDF (el mismo informe que se manda por WhatsApp), ?accion=ver|descargar
+    Route::get('personas/{persona}/informe', [App\Http\Controllers\InformePersonaController::class, 'show'])->name('personas.informe');
     Route::post('compromisos/recalcular', [App\Http\Controllers\CompromisoController::class, 'recalcular'])->name('compromisos.recalcular');
 
     // Limpieza de personas inactivas (temporal)

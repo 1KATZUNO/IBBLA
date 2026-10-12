@@ -15,6 +15,12 @@
                 </span>
             </div>
             <div class="flex gap-2">
+                <a href="{{ route('personas.informe', ['persona' => $persona, 'accion' => 'ver']) }}" target="_blank" rel="noopener" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
+                    Estado de cuenta (PDF)
+                </a>
+                <a href="{{ route('personas.informe', ['persona' => $persona, 'accion' => 'descargar']) }}" class="px-4 py-2 border border-green-600 text-green-700 rounded-md hover:bg-green-50">
+                    Descargar
+                </a>
                 <a href="{{ route('personas.edit', $persona) }}" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
                     Editar
                 </a>
