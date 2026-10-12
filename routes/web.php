@@ -18,6 +18,13 @@ Route::get('/', function () {
     return redirect()->route('login');
 });
 
+// Informe individual de una persona por enlace firmado: se comparte por WhatsApp, no requiere
+// sesión y vence (7 días por defecto). Va fuera de los grupos con auth a propósito.
+Route::get('/informe/{persona}', App\Http\Controllers\InformePublicoController::class)
+    ->whereNumber('persona')
+    ->middleware(['throttle:30,1', 'signed'])
+    ->name('informe.persona');
+
 // API interna - Tipo de cambio
 Route::middleware(['auth'])->get('/api/tipo-cambio', function (BccrExchangeRateService $service) {
     $tipoCambio = $service->obtenerHoy();
@@ -74,6 +81,14 @@ Route::middleware(['auth', 'role:servidor'])->group(function () {
 Route::middleware(['auth', 'role:admin,tesorero'])->group(function () {
     // Crear persona rapida (desde recuento)
     Route::post('personas/quick-store', [PersonaController::class, 'quickStore'])->name('personas.quick-store');
+
+    // Enviar el informe de una persona por WhatsApp (abre wa.me con el enlace firmado al PDF)
+    Route::get('personas/{persona}/whatsapp', App\Http\Controllers\PersonaWhatsAppController::class)->name('personas.whatsapp');
+
+    // Avisos de WhatsApp a los líderes (culto creado, sobres alcanzados): panel con pendientes e historial
+    Route::get('avisos', [App\Http\Controllers\AvisoWhatsAppController::class, 'index'])->name('avisos.index');
+    Route::post('avisos/{aviso}/enviado', [App\Http\Controllers\AvisoWhatsAppController::class, 'marcarEnviado'])->name('avisos.enviado');
+    Route::post('avisos/{aviso}/descartar', [App\Http\Controllers\AvisoWhatsAppController::class, 'descartar'])->name('avisos.descartar');
 
     // Recuento (Sobres)
     Route::prefix('recuento')->name('recuento.')->group(function () {

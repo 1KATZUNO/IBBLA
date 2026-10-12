@@ -15,6 +15,7 @@
                 </span>
             </div>
             <div class="flex flex-wrap gap-2">
+                <x-whatsapp-enviar :persona="$persona" :grande="true" />
                 <a href="{{ route('personas.index') }}" class="btn-secondary">
                     Volver
                 </a>
