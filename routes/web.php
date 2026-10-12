@@ -69,6 +69,7 @@ Route::middleware(['auth'])->group(function () {
 // Ruta Mi Perfil - accesible para miembros, servidores, tesorero y asistente
 Route::middleware(['auth', 'role:miembro,servidor,tesorero,asistente'])->group(function () {
     Route::get('/mi-perfil', [App\Http\Controllers\MiPerfilController::class, 'index'])->name('mi-perfil.index');
+    Route::get('/mi-perfil/informe', [App\Http\Controllers\MiPerfilController::class, 'informe'])->name('mi-perfil.informe');
 });
 
 // Ruta para servidores - Marcar Asistencia
@@ -209,6 +210,8 @@ Route::middleware(['auth', 'role:admin', 'audit'])->group(function () {
 
     // Compromisos
     Route::get('personas/{persona}/compromisos', [App\Http\Controllers\CompromisoController::class, 'show'])->name('compromisos.show');
+    // Estado de cuenta de la persona en PDF (el mismo informe que se manda por WhatsApp), ?accion=ver|descargar
+    Route::get('personas/{persona}/informe', [App\Http\Controllers\InformePersonaController::class, 'show'])->name('personas.informe');
     Route::post('compromisos/recalcular', [App\Http\Controllers\CompromisoController::class, 'recalcular'])->name('compromisos.recalcular');
 
     // Limpieza de personas inactivas (temporal)

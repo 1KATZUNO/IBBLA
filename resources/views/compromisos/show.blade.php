@@ -15,6 +15,12 @@
                     @if($persona->correo) • {{ $persona->correo }} @endif
                 </p>
             </div>
+            <a href="{{ route('personas.informe', ['persona' => $persona, 'accion' => 'ver']) }}" target="_blank" rel="noopener" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
+                Estado de cuenta (PDF)
+            </a>
+            <a href="{{ route('personas.informe', ['persona' => $persona, 'accion' => 'descargar']) }}" class="px-4 py-2 border border-green-600 text-green-700 rounded-md hover:bg-green-50">
+                Descargar
+            </a>
             <a href="{{ route('personas.index') }}" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
                 ← Volver
             </a>

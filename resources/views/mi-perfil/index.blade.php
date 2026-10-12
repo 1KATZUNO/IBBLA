@@ -7,7 +7,7 @@
 <div class="space-y-6">
     <!-- Información Personal -->
     <div class="bg-white rounded-lg shadow p-6">
-        <div class="flex items-center gap-4 mb-6">
+        <div class="flex flex-wrap items-center gap-4 mb-6">
             <div class="w-16 h-16 rounded-full bg-blue-600 flex items-center justify-center text-white text-2xl font-bold">
                 {{ substr($persona->nombre, 0, 2) }}
             </div>
@@ -17,6 +17,10 @@
                 @if($persona->telefono)
                 <p class="text-gray-600">{{ $persona->telefono }}</p>
                 @endif
+            </div>
+            <div class="sm:ml-auto flex flex-wrap gap-2">
+                <a href="{{ route('mi-perfil.informe', ['accion' => 'ver']) }}" target="_blank" rel="noopener" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">Mi estado de cuenta (PDF)</a>
+                <a href="{{ route('mi-perfil.informe', ['accion' => 'descargar']) }}" class="px-4 py-2 border border-green-600 text-green-700 rounded-md hover:bg-green-50">Descargar</a>
             </div>
         </div>
     </div>
