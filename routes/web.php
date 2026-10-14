@@ -106,47 +106,14 @@ Route::middleware(['auth', 'role:admin,tesorero'])->group(function () {
         Route::put('/egreso/{egreso}', [RecuentoController::class, 'updateEgreso'])->name('update-egreso');
         Route::delete('/egreso/{egreso}', [RecuentoController::class, 'destroyEgreso'])->name('destroy-egreso');
         Route::post('/{culto}/cerrar', [RecuentoController::class, 'cerrarCulto'])->name('cerrar-culto');
+        // Pantalla de un culto (abierto o cerrado). La vieja ruta del modal de cerrados redirige aqui.
+        Route::get('/culto/{culto}', [RecuentoController::class, 'culto'])->name('culto');
         Route::get('/culto-cerrado/{culto}', [RecuentoController::class, 'verCultoCerrado'])->name('ver-culto-cerrado');
         Route::get('/{sobre}/edit', [RecuentoController::class, 'edit'])->name('edit');
         Route::put('/{sobre}', [RecuentoController::class, 'update'])->name('update');
         Route::delete('/{sobre}', [RecuentoController::class, 'destroy'])->name('destroy');
         // Firmas del recuento
-        Route::post('/firmas/{culto}', function (\Illuminate\Http\Request $request, \App\Models\Culto $culto) {
-            $data = $request->validate([
-                'firma_pastor' => 'nullable|string|max:255',
-                'firma_pastor_imagen' => 'nullable|string',
-                'firmas_tesoreros' => 'nullable|array',
-                'firmas_tesoreros.*.nombre' => 'nullable|string|max:255',
-                'firmas_tesoreros.*.imagen' => 'nullable|string',
-            ]);
-
-            // Procesar tesoreros (filtrar vacíos)
-            $tesoreros = [];
-            $tesorerosImagenes = [];
-            if (! empty($data['firmas_tesoreros'])) {
-                foreach ($data['firmas_tesoreros'] as $t) {
-                    $nombre = $t['nombre'] ?? '';
-                    $imagen = $t['imagen'] ?? '';
-                    if (! empty($nombre) || ! empty($imagen)) {
-                        $tesoreros[] = $nombre;
-                        $tesorerosImagenes[] = [
-                            'nombre' => $nombre,
-                            'imagen' => $imagen,
-                        ];
-                    }
-                }
-            }
-
-            $culto->update([
-                'firma_pastor' => $data['firma_pastor'] ?? null,
-                'firma_pastor_imagen' => $data['firma_pastor_imagen'] ?? null,
-                'firmas_tesoreros' => $tesoreros,
-                'firmas_tesoreros_imagenes' => $tesorerosImagenes,
-            ]);
-
-            return redirect()->route('recuento.index', ['culto_id' => $culto->id])
-                ->with('success', 'Firmas de recuento actualizadas.');
-        })->name('firmas.update');
+        Route::post('/firmas/{culto}', [RecuentoController::class, 'actualizarFirmas'])->name('firmas.update');
     });
 
     // Reportes de ingresos

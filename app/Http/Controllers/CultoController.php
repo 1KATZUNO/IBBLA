@@ -56,18 +56,10 @@ class CultoController extends Controller
             ->with('success', 'Culto registrado correctamente.');
     }
 
+    /** El detalle de un culto es su pantalla de Recuento (sobres, totales y firmas). */
     public function show(Culto $culto)
     {
-        $sobres = $culto->sobres()->with(['persona', 'detalles'])->get();
-        $ofrendasSueltas = $culto->ofrendasSueltas;
-
-        return view('recuento.index', [
-            'sobres' => $sobres,
-            'cultos' => Culto::where('cerrado', false)->orderBy('fecha', 'desc')->get(),
-            'cultoSeleccionado' => $culto,
-            'ofrendasSueltas' => $ofrendasSueltas,
-            'cultosCerrados' => Culto::where('cerrado', true)->with('totales')->orderBy('cerrado_at', 'desc')->get(),
-        ]);
+        return redirect()->route('recuento.culto', $culto);
     }
 
     public function edit(Culto $culto)
@@ -110,26 +102,6 @@ class CultoController extends Controller
 
     private function getServiceTypes()
     {
-        $user = auth()->user();
-
-        if ($user && $user->tenant_id) {
-            $types = TenantServiceType::where('tenant_id', $user->tenant_id)
-                ->where('activo', true)
-                ->orderBy('orden')
-                ->get();
-
-            if ($types->isNotEmpty()) {
-                return $types;
-            }
-        }
-
-        // Fallback: tipos por defecto para compatibilidad
-        return collect([
-            (object) ['id' => null, 'slug' => 'domingo', 'nombre' => 'Domingo AM', 'tenant_id' => $user->tenant_id ?? null],
-            (object) ['id' => null, 'slug' => 'domingo_pm', 'nombre' => 'Domingo PM', 'tenant_id' => $user->tenant_id ?? null],
-            (object) ['id' => null, 'slug' => 'miercoles', 'nombre' => 'Miercoles', 'tenant_id' => $user->tenant_id ?? null],
-            (object) ['id' => null, 'slug' => 'sabado', 'nombre' => 'Sabado', 'tenant_id' => $user->tenant_id ?? null],
-            (object) ['id' => null, 'slug' => 'especial', 'nombre' => 'Especial', 'tenant_id' => $user->tenant_id ?? null],
-        ]);
+        return TenantServiceType::disponiblesPara(auth()->user());
     }
 }

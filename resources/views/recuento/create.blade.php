@@ -133,7 +133,7 @@
                 <div class="mr-auto text-sm text-gray-600">
                     Total: <span class="text-lg font-bold text-blue-700" id="totalBarra">₡0.00</span>
                 </div>
-                <a href="{{ route('recuento.index', ['culto_id' => $culto ? $culto->id : '']) }}" class="btn-secondary">
+                <a href="{{ $culto ? route('recuento.culto', $culto) : route('recuento.index') }}" class="btn-secondary">
                     Cancelar
                 </a>
                 <button type="submit" id="btnGuardarSobre" class="btn-primary min-w-[150px]">
