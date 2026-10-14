@@ -186,4 +186,10 @@ class User extends Authenticatable
     {
         return $this->hasOne(Persona::class);
     }
+
+    /** Activación de WhatsApp (CallMeBot) para los avisos del sistema: su número, su clave y su consentimiento. */
+    public function activacionWhatsApp()
+    {
+        return $this->hasOne(ActivacionWhatsApp::class);
+    }
 }
