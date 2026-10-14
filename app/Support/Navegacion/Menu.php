@@ -47,13 +47,11 @@ class Menu
      */
     public static function pantallas(User $u): array
     {
-        $salida = [];
-        $vistas = [];
+        $porRuta = [];
 
         foreach (self::grupos($u) as $grupo) {
             foreach ($grupo['items'] as $it) {
-                $vistas[$it['ruta']] = true;
-                $salida[] = [
+                $porRuta[$it['ruta']] = [
                     'titulo' => $it['etiqueta'],
                     'ruta' => $it['ruta'],
                     'url' => route($it['ruta']),
@@ -66,22 +64,24 @@ class Menu
         }
 
         foreach (self::extras($u, self::permisos($u)) as $it) {
-            if (! $it['visible'] || ! Route::has($it['ruta']) || isset($vistas[$it['ruta']])) {
+            if (! $it['visible'] || ! Route::has($it['ruta'])) {
                 continue;
             }
 
-            $salida[] = [
+            // Si la ruta ya esta en el menu con un nombre mas general (al asistente "Reportes" lo lleva
+            // directo al reporte de asistencia), el buscador la muestra con el nombre especifico
+            $porRuta[$it['ruta']] = [
                 'titulo' => $it['etiqueta'],
                 'ruta' => $it['ruta'],
                 'url' => route($it['ruta']),
                 'icono' => $it['icono'],
                 'grupo' => $it['grupo'] ?? 'General',
                 'tipo' => $it['tipo'] ?? 'pantalla',
-                'claves' => $it['claves'] ?? '',
+                'claves' => trim(($porRuta[$it['ruta']]['claves'] ?? '').' '.($it['claves'] ?? '')),
             ];
         }
 
-        return $salida;
+        return array_values($porRuta);
     }
 
     /**

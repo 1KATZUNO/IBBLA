@@ -139,7 +139,9 @@ class Manual
 
     public static function url(Pagina $pagina, ?string $ancla = null): string
     {
-        $url = route('manual.pagina', ['slug' => $pagina->slug], false);
+        $url = Route::has('manual.pagina')
+            ? route('manual.pagina', ['slug' => $pagina->slug], false)
+            : '/manual/'.$pagina->slug;
 
         return $ancla ? $url.'#'.$ancla : $url;
     }
