@@ -43,6 +43,30 @@ class MensajesWhatsApp
         ]);
     }
 
+    /** Mensaje de prueba que la persona se manda a sí misma al activar WhatsApp. */
+    public static function prueba(string $nombre, ?Tenant $iglesia = null): string
+    {
+        return WhatsAppService::armarMensaje((string) config('whatsapp.activacion.plantilla_prueba'), [
+            'nombre' => $nombre,
+            'iglesia' => self::nombreIglesia($iglesia),
+        ]);
+    }
+
+    /**
+     * Texto de la casilla de consentimiento. $tipo es «persona» (estado de cuenta y avisos de la iglesia)
+     * o «usuario» (avisos del sistema para quien administra).
+     */
+    public static function consentimiento(string $tipo, string $telefonoFormateado, ?Tenant $iglesia = null): string
+    {
+        $plantilla = config('whatsapp.activacion.consentimiento.'.$tipo)
+            ?: config('whatsapp.activacion.consentimiento.persona');
+
+        return WhatsAppService::armarMensaje((string) $plantilla, [
+            'iglesia' => self::nombreIglesia($iglesia),
+            'telefono' => $telefonoFormateado,
+        ]);
+    }
+
     /** «domingo 18 de octubre de 2026». */
     public static function fechaCulto(Culto $culto): string
     {

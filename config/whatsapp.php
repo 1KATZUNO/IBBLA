@@ -72,9 +72,18 @@ return [
     |                cambia el texto de la casilla, súbala (v2...) y quienes ya activaron quedan
     |                registrados con la versión que aceptaron.
     | plantilla_prueba  Mensaje de prueba. Variables: {nombre} {iglesia}
+    | consentimiento    Texto de la casilla que la persona marca. Variables: {iglesia} {telefono}
     */
     'activacion' => [
         'version_texto' => 'v1',
+        'consentimiento' => [
+            'persona' => 'Autorizo a {iglesia} a enviarme por WhatsApp, al número {telefono}, mi estado de cuenta y los avisos '
+                .'que me quieran compartir. Entiendo que el envío lo hace CallMeBot, un servicio gratuito de un tercero que puede '
+                .'fallar, y que puedo desactivarlo cuando quiera desde esta misma pantalla.',
+            'usuario' => 'Autorizo a {iglesia} a enviarme por WhatsApp, al número {telefono}, los avisos del sistema (culto creado, '
+                .'sobres registrados). Entiendo que el envío lo hace CallMeBot, un servicio gratuito de un tercero que puede '
+                .'fallar, y que puedo desactivarlo cuando quiera desde esta misma pantalla.',
+        ],
         'plantilla_prueba' => "Hola {nombre}, esta es una prueba de {iglesia}. "
             ."Si usted lee este mensaje, sus avisos por WhatsApp quedaron activados. ¡Dios le bendiga!",
     ],
