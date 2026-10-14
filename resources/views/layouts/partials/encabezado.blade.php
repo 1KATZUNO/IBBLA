@@ -13,7 +13,7 @@
 @endphp
 @if(View::hasSection('page-title') && ! View::hasSection('sin-encabezado'))
     <div class="page-header">
-        <div class="min-w-0">
+        <div class="min-w-0 flex-1 basis-72">
             <h1 class="page-title">@yield('page-title')</h1>
             <p class="page-subtitle">
                 @hasSection('page-subtitle')

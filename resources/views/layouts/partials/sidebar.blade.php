@@ -8,7 +8,7 @@
 
     Variables que espera: $u, $menu, $tenantName, $tenantLogo, $tenantSocial
 --}}
-<aside id="sidebar" aria-label="Menu principal"
+<aside id="sidebar" aria-label="Menú principal"
        class="sidebar-bg fixed inset-y-0 left-0 z-50 flex w-72 -translate-x-full transform flex-col text-white shadow-xl transition-transform duration-300 ease-out lg:static lg:z-auto lg:w-[17rem] lg:translate-x-0 lg:flex-shrink-0 lg:shadow-none xl:w-72">
 
     {{-- Solo en el cajon: la marca y cerrar. En pantallas grandes la marca esta en la barra superior --}}
@@ -19,7 +19,7 @@
             </div>
             <span class="truncate font-display text-lg font-bold tracking-tight">{{ $tenantName }}</span>
         </div>
-        <button id="closeSidebar" type="button" class="inline-flex h-11 w-11 items-center justify-center rounded-lg text-white transition-colors hover:bg-white/10" aria-label="Cerrar menu">
+        <button id="closeSidebar" type="button" class="inline-flex h-11 w-11 items-center justify-center rounded-lg text-white transition-colors hover:bg-white/10" aria-label="Cerrar menú">
             <x-icono nombre="cerrar" class="h-6 w-6" />
         </button>
     </div>
@@ -47,7 +47,7 @@
         <!-- Redes Sociales -->
         @if(!empty($tenantSocial))
             <div class="sidebar-border mt-4 border-t pt-4">
-                <p class="nav-text-tertiary mb-3 text-center text-xs font-medium">Siguenos</p>
+                <p class="nav-text-tertiary mb-3 text-center text-xs font-medium">Síguenos</p>
                 <div class="flex items-center justify-center gap-3">
                     @if(!empty($tenantSocial['instagram']))
                         <a href="{{ $tenantSocial['instagram'] }}" target="_blank" rel="noopener noreferrer" aria-label="Instagram" class="flex h-11 w-11 items-center justify-center rounded-lg bg-gradient-to-br from-purple-600 via-pink-500 to-orange-400 transition-opacity hover:opacity-80">
@@ -81,7 +81,7 @@
             </div>
             <form method="POST" action="{{ route('logout') }}" class="js-logout flex-shrink-0">
                 @csrf
-                <button type="submit" class="btn-sidebar inline-flex min-h-[44px] items-center gap-2 rounded-lg px-3 text-sm font-medium text-white transition-colors duration-200" title="Cerrar sesion">
+                <button type="submit" class="btn-sidebar inline-flex min-h-[44px] items-center gap-2 rounded-lg px-3 text-sm font-medium text-white transition-colors duration-200" title="Cerrar sesión">
                     <x-icono nombre="salir" class="h-5 w-5" />
                     <span>Salir</span>
                 </button>

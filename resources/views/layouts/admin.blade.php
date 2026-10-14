@@ -13,7 +13,7 @@
     $currentTenant = tenant();
     $tenantColors = $currentTenant ? $currentTenant->colors : \App\Models\Tenant::COLOR_THEMES['blue'];
     $tenantName = $currentTenant ? $currentTenant->siglas : 'Admin';
-    $tenantFullName = $currentTenant ? $currentTenant->nombre : 'Sistema de Administracion';
+    $tenantFullName = $currentTenant ? $currentTenant->nombre : 'Sistema de Administración';
     $tenantLogo = $currentTenant ? $currentTenant->logo_url : asset('images/Logo.png');
     $tenantSocial = $currentTenant && $currentTenant->redes_sociales ? $currentTenant->redes_sociales : [];
     $esAppMovil = isset($isMobileApp) && $isMobileApp;
@@ -32,7 +32,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
-    <title>{{ $tenantName }} - @yield('page-title', 'Sistema de Administracion')</title>
+    <title>{{ $tenantName }} - @yield('page-title', 'Sistema de Administración')</title>
 
     {{-- Recordar si el menu lateral esta oculto en pantallas grandes (antes de pintar, para que no parpadee) --}}
     <script>
@@ -92,7 +92,7 @@
                     </div>
 
                     <h2 class="mb-2 font-display text-2xl font-bold text-white">Hasta pronto</h2>
-                    <p class="nav-text-secondary">Cerrando sesion...</p>
+                    <p class="nav-text-secondary">Cerrando sesión...</p>
                 </div>
             </div>
 
@@ -174,7 +174,7 @@
             });
         }
 
-        // Cerrar sesion: pantalla de despedida mientras se envia el formulario
+        // Cerrar sesión: pantalla de despedida mientras se envia el formulario
         document.querySelectorAll('form.js-logout').forEach((form) => {
             form.addEventListener('submit', () => {
                 const logoutOverlay = document.getElementById('logoutOverlay');

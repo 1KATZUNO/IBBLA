@@ -12,7 +12,7 @@
             <div class="mb-6">
                 <label for="culto_id" class="block text-sm font-medium text-gray-700 mb-2">Seleccionar Culto *</label>
                 <select name="culto_id" id="culto_id"
-                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
+                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500" required>
                     <option value="">-- Seleccione un culto --</option>
                     @foreach($cultos as $culto)
                         <option value="{{ $culto->id }}" {{ old('culto_id', request('culto_id')) == $culto->id ? 'selected' : '' }}>
@@ -77,7 +77,7 @@
                                 @foreach($maestrosDeClase as $maestro)
                                 <label class="flex items-center min-h-[44px] px-2 rounded hover:bg-gray-50 cursor-pointer">
                                     <input type="checkbox" name="clase[{{ $clase->id }}][maestros_ids][]" value="{{ $maestro->id }}"
-                                           class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-500 focus:ring-blue-500 maestro-check maestro-check-{{ $clase->id }}"
+                                           class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-brand-500 focus:ring-brand-500 maestro-check maestro-check-{{ $clase->id }}"
                                            {{ in_array($maestro->id, old("clase.{$clase->id}.maestros_ids", [])) ? 'checked' : '' }}>
                                     <span class="ml-2 text-sm text-gray-700">{{ $maestro->nombre }}</span>
                                 </label>
@@ -238,7 +238,7 @@
                 <div class="mr-auto flex items-center gap-3">
                     <label for="total_asistencia" class="text-sm font-semibold text-gray-700">Total Asistencia</label>
                     <input type="number" name="total_asistencia" id="total_asistencia" step="1" min="0" value="{{ old('total_asistencia', 0) }}"
-                           class="w-24 min-h-[44px] text-xl font-bold text-center text-blue-700 bg-blue-50 rounded-md border-blue-200 shadow-sm focus:border-blue-500 focus:ring-blue-500" required readonly tabindex="-1">
+                           class="w-24 min-h-[44px] text-xl font-bold text-center text-blue-700 bg-blue-50 rounded-md border-blue-200 shadow-sm focus:border-brand-500 focus:ring-brand-500" required readonly tabindex="-1">
                 </div>
                 <a href="{{ route('asistencia.index') }}" class="btn-secondary">
                     Cancelar

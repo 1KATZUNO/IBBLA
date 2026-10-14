@@ -14,7 +14,7 @@
                         <div class="mb-4">
                             <label for="name" class="block text-sm font-medium text-gray-700">Nombre</label>
                             <input type="text" name="name" id="name" value="{{ old('name') }}" required
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
                             @error('name')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
@@ -24,7 +24,7 @@
                         <div class="mb-4">
                             <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
                             <input type="email" name="email" id="email" value="{{ old('email') }}" required
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
                             @error('email')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
@@ -36,14 +36,13 @@
                         <div class="mb-4">
                             <label for="rol" class="block text-sm font-medium text-gray-700">Rol</label>
                             <select name="rol" id="rol" required
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
                                 <option value="">Seleccionar rol...</option>
-                                <option value="admin" {{ old('rol') === 'admin' ? 'selected' : '' }}>Admin - Acceso total</option>
-                                <option value="tesorero" {{ old('rol') === 'tesorero' ? 'selected' : '' }}>Tesorero - Dashboard + Recuento</option>
-                                <option value="asistente" {{ old('rol') === 'asistente' ? 'selected' : '' }}>Asistente - Dashboard + Asistencia</option>
-                                <option value="servidor" {{ old('rol') === 'servidor' ? 'selected' : '' }}>Servidor - Marcar Asistencia</option>
-                                <option value="miembro" {{ old('rol') === 'miembro' ? 'selected' : '' }}>Miembro - Mi Perfil</option>
-                                <option value="invitado" {{ old('rol') === 'invitado' ? 'selected' : '' }}>Invitado - Solo Dashboard</option>
+                                <option value="admin" {{ old('rol') === 'admin' ? 'selected' : '' }}>Administrador - Acceso total</option>
+                                <option value="tesorero" {{ old('rol') === 'tesorero' ? 'selected' : '' }}>Tesorero - Recuento, dashboards y reportes de dinero</option>
+                                <option value="asistente" {{ old('rol') === 'asistente' ? 'selected' : '' }}>Asistente - Asistencia y reportes de asistencia</option>
+                                <option value="servidor" {{ old('rol') === 'servidor' ? 'selected' : '' }}>Servidor - Marca su asistencia con el QR</option>
+                                <option value="miembro" {{ old('rol') === 'miembro' ? 'selected' : '' }}>Miembro - Ve su perfil y su estado de cuenta</option>
                             </select>
                             @error('rol')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -54,7 +53,7 @@
                         <div class="mb-4">
                             <label for="password" class="block text-sm font-medium text-gray-700">Contraseña</label>
                             <input type="password" name="password" id="password" required
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
                             @error('password')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
@@ -64,7 +63,7 @@
                         <div class="mb-4">
                             <label for="password_confirmation" class="block text-sm font-medium text-gray-700">Confirmar Contraseña</label>
                             <input type="password" name="password_confirmation" id="password_confirmation" required
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
                         </div>
 
                         <div class="flex items-center justify-end mt-6 gap-4">

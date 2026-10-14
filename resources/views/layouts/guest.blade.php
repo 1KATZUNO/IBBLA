@@ -9,7 +9,7 @@
         <meta name="apple-mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
-        <title>Iniciar Sesion - Sistema de Administracion</title>
+        <title>Iniciar sesión - Sistema de Administración</title>
 
         <!-- PWA Manifest -->
         <link rel="manifest" href="{{ asset('manifest.json') }}">
@@ -41,7 +41,7 @@
                 <div class="inline-block p-4">
                     <img src="{{ asset('images/Logo_ANGEDA_azul.png') }}" alt="Logo" class="w-20 h-20 mx-auto mb-4 drop-shadow-lg">
                     <h1 class="text-2xl font-bold text-white">Sistema Admin</h1>
-                    <p class="text-cyan-200 font-medium mt-1 text-sm">Administracion de Iglesia</p>
+                    <p class="text-cyan-200 font-medium mt-1 text-sm">Administración de Iglesia</p>
                 </div>
             </div>
 
@@ -53,7 +53,7 @@
 
                 <!-- Footer -->
                 <div class="text-center mt-6 text-sm text-cyan-200/70">
-                    <p>&copy; {{ date('Y') }} Sistema de Administracion. Todos los derechos reservados.</p>
+                    <p>&copy; {{ date('Y') }} Sistema de Administración. Todos los derechos reservados.</p>
                 </div>
             </div>
         </div>

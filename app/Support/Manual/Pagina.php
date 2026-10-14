@@ -8,7 +8,7 @@ namespace App\Support\Manual;
 final class Pagina
 {
     /**
-     * @param  list<string>  $roles  claves de rol (todos, admin, tesorero, asistente, servidor, miembro, invitado)
+     * @param  list<string>  $roles  claves de rol (todos, admin, tesorero, asistente, servidor, miembro)
      * @param  list<string>  $rutas  nombres de ruta (admite comodin *) cuya ayuda "?" abre esta pagina
      * @param  list<string>  $palabras  sinonimos para el buscador
      */

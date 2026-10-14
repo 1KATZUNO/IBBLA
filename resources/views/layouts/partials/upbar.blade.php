@@ -21,7 +21,7 @@
 
     {{-- Izquierda: boton del menu y marca --}}
     <div class="flex min-w-0 shrink-0 items-center gap-1 sm:gap-2" :class="movil ? 'hidden md:flex' : ''">
-        <button id="toggleSidebar" type="button" class="upbar-btn !px-0" aria-controls="sidebar" aria-label="Mostrar u ocultar el menu">
+        <button id="toggleSidebar" type="button" class="upbar-btn !px-0" aria-controls="sidebar" aria-label="Mostrar u ocultar el menú">
             <x-icono nombre="menu" class="h-6 w-6" />
         </button>
         <a href="{{ route('principal') }}" class="flex min-w-0 items-center gap-2.5 rounded-lg py-1 pl-1 pr-2 transition-colors hover:bg-white/10" title="Ir a la pantalla Principal">
@@ -56,7 +56,7 @@
                     <x-icono nombre="lupa" class="upbar-search-icon" />
                     <span class="upbar-search-kbd hidden md:block" x-show="!q" aria-hidden="true"><kbd class="kbd !border-white/30 !bg-white/10 !text-white/80">/</kbd></span>
                 </div>
-                <button type="button" class="upbar-btn md:hidden" @click="cerrarMovil()" aria-label="Cerrar la busqueda" x-show="movil" x-cloak>
+                <button type="button" class="upbar-btn md:hidden" @click="cerrarMovil()" aria-label="Cerrar la búsqueda" x-show="movil" x-cloak>
                     <x-icono nombre="cerrar" class="h-5 w-5" />
                 </button>
             </form>
@@ -65,7 +65,7 @@
             <div id="busqueda-panel" x-show="abierto" x-cloak x-transition.opacity.duration.100ms
                  @click.outside="cerrar()"
                  class="fixed inset-x-2 top-[calc(var(--upbar-h)+0.25rem)] z-50 flex max-h-[calc(100dvh-var(--upbar-h)-1rem)] flex-col overflow-hidden rounded-xl border border-gray-200 bg-white text-gray-800 shadow-popover md:absolute md:inset-x-0 md:top-full md:mt-2 md:max-h-[min(34rem,calc(100dvh-5rem))]">
-                <div class="min-h-0 flex-1 overflow-y-auto overscroll-contain" role="listbox" aria-label="Resultados de la busqueda">
+                <div class="min-h-0 flex-1 overflow-y-auto overscroll-contain" role="listbox" aria-label="Resultados de la búsqueda">
 
                     {{-- Antes de escribir: que se puede buscar --}}
                     <div x-show="!hayConsulta" class="p-4 text-sm text-gray-600">
@@ -209,7 +209,7 @@
         {{-- Salir: siempre a un clic en pantallas medianas y grandes --}}
         <form method="POST" action="{{ route('logout') }}" class="js-logout hidden md:block">
             @csrf
-            <button type="submit" class="upbar-btn" title="Cerrar sesion" aria-label="Cerrar sesion">
+            <button type="submit" class="upbar-btn" title="Cerrar sesión" aria-label="Cerrar sesión">
                 <x-icono nombre="salir" class="h-5 w-5" />
                 <span class="hidden xl:inline">Salir</span>
             </button>

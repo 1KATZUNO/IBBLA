@@ -46,7 +46,7 @@
         </ol>
         <div class="flex gap-3 pt-2">
             <a href="{{ route('asistencia.importar.plantilla') }}"
-               class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition">
+               class="btn-primary">
                 Descargar plantilla Excel
             </a>
         </div>

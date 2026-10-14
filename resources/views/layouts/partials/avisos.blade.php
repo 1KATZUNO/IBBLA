@@ -3,7 +3,7 @@
     $avisos = [
         'success' => ['alert-success', 'text-green-600', 'ok', 'Listo'],
         'error' => ['alert-error', 'text-red-600', 'error', 'Error'],
-        'warning' => ['alert-warning', 'text-yellow-600', 'alerta', 'Atencion'],
+        'warning' => ['alert-warning', 'text-yellow-600', 'alerta', 'Atención'],
         'info' => ['alert-info', 'text-blue-600', 'info', 'Aviso'],
     ];
 @endphp

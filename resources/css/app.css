@@ -56,6 +56,22 @@
         outline: 2px solid rgb(var(--t-500-rgb));
         outline-offset: 2px;
     }
+
+    /* Campos de formulario: el foco toma el color de la iglesia (el plugin de formularios usa azul fijo) */
+    [type='text']:focus, [type='email']:focus, [type='url']:focus, [type='password']:focus, [type='number']:focus,
+    [type='date']:focus, [type='datetime-local']:focus, [type='month']:focus, [type='search']:focus, [type='tel']:focus,
+    [type='time']:focus, [type='week']:focus, [multiple]:focus, textarea:focus, select:focus {
+        --tw-ring-color: rgb(var(--t-500-rgb));
+        border-color: rgb(var(--t-500-rgb));
+    }
+
+    [type='checkbox'], [type='radio'] {
+        color: rgb(var(--t-600-rgb));
+    }
+
+    [type='checkbox']:focus, [type='radio']:focus {
+        --tw-ring-color: rgb(var(--t-500-rgb));
+    }
 }
 
 @layer components {
@@ -198,7 +214,7 @@
     }
 
     .page-actions {
-        @apply flex flex-wrap items-center gap-2 ml-auto;
+        @apply flex flex-shrink-0 flex-wrap items-center gap-2 ml-auto;
     }
 
     /* Titulo de una seccion dentro de la pagina */
@@ -431,6 +447,16 @@
 
     .tab-active {
         @apply bg-white text-gray-900 shadow-sm;
+    }
+
+    /* Ficha de 44 px para atajos y filtros rapidos (Este mes, Mes anterior...) */
+    .chip {
+        @apply inline-flex min-h-[44px] items-center rounded-full bg-gray-100 px-4 text-sm font-medium text-gray-700;
+        @apply transition-colors duration-150 hover:bg-gray-200;
+    }
+
+    .chip-active {
+        @apply bg-brand-600 text-white hover:bg-brand-700;
     }
 
     /* Tecla (atajos de teclado en pantalla) */
@@ -809,6 +835,14 @@
 /* Alpine: ocultar elementos con x-cloak hasta que Alpine arranque (evita que modales se vean un instante al cargar) */
 [x-cloak] {
     display: none !important;
+}
+
+/* Tarjetas escritas con utilidades (bg-white + redondeado + sombra) toman el borde fino y la sombra suave de
+   .card sin tocar cada pantalla. Las que ya traen su propio borde (border-red-200...) conservan el suyo. */
+.app-main :is(.shadow, .shadow-sm, .shadow-md):is(.rounded-lg, .rounded-xl).bg-white:not([class*='border-']) {
+    border: 1px solid rgb(229 231 235);
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05), 0 1px 3px rgba(16, 24, 40, 0.08);
+    border-radius: 0.75rem;
 }
 
 /* Quien prefiere menos movimiento no ve animaciones de entrada */

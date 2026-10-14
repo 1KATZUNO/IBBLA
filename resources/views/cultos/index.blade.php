@@ -3,55 +3,55 @@
 @section('title', tenant_title('Cultos'))
 @section('page-title', 'Gestión de Cultos')
 
+@section('page-subtitle', 'Crea el culto antes de registrar sus sobres y su asistencia.')
+
+@section('page-actions')
+    <a href="{{ route('cultos.create') }}" class="btn-primary">+ Nuevo Culto</a>
+@endsection
+
 @section('content')
 <div class="space-y-6">
-    <div class="flex flex-wrap items-center justify-between gap-3">
-        <p class="text-sm text-gray-600">Crea el culto antes de registrar sus sobres y su asistencia.</p>
-        <a href="{{ route('cultos.create') }}" class="btn-primary">
-            + Nuevo Culto
-        </a>
-    </div>
-
-    <div class="bg-white rounded-lg shadow overflow-hidden">
+    <div class="card overflow-hidden">
         <div class="table-scroll">
-        <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
+        <table class="data-table">
+            <thead>
                 <tr>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha</th>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase hidden xl:table-cell">Hora</th>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tipo</th>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total Ingresos</th>
-                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase hidden xl:table-cell">Asistencia</th>
-                    <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Acciones</th>
+                    <th>Fecha</th>
+                    <th class="hidden xl:table-cell">Hora</th>
+                    <th>Tipo</th>
+                    <th class="col-num">Total ingresos</th>
+                    <th class="hidden xl:table-cell col-num">Asistencia</th>
+                    <th class="col-actions">Acciones</th>
                 </tr>
             </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
+            <tbody>
                 @forelse($cultos as $culto)
-                <tr class="hover:bg-gray-50">
-                    <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
+                <tr>
+                    <td class="whitespace-nowrap font-medium text-gray-900">
                         {{ $culto->fecha->format('d/m/Y') }}
                     </td>
-                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500 hidden xl:table-cell">
+                    <td class="hidden whitespace-nowrap xl:table-cell">
                         {{ \Carbon\Carbon::parse($culto->hora)->format('h:i A') }}
                     </td>
-                    <td class="px-4 py-3 whitespace-nowrap text-sm">
-                        <span class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
-                            {{ $culto->tipo_nombre }}
-                        </span>
+                    <td class="whitespace-nowrap">
+                        <x-ui.badge tipo="brand">{{ $culto->tipo_nombre }}</x-ui.badge>
+                        @if($culto->cerrado)
+                            <x-ui.badge tipo="neutral" class="ml-1">Cerrado</x-ui.badge>
+                        @endif
                     </td>
-                    <td class="px-4 py-3 whitespace-nowrap text-sm font-semibold text-gray-900">
+                    <td class="col-num whitespace-nowrap font-semibold text-gray-900">
                         @php
                             $t = $culto->totales;
                             $totalGeneral = $t ? $t->total_general : ($culto->sobres->flatMap->detalles->sum('monto') + $culto->ofrendasSueltas->sum('monto'));
                         @endphp
                         ₡{{ number_format($totalGeneral, 2) }}
                     </td>
-                    <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500 hidden xl:table-cell">
+                    <td class="hidden xl:table-cell col-num whitespace-nowrap">
                         {{ $culto->asistencia ? $culto->asistencia->total_asistencia : '-' }}
                     </td>
-                    <td class="px-4 py-2 whitespace-nowrap text-right text-sm font-medium">
+                    <td class="col-actions">
                         <a href="{{ route('cultos.show', $culto) }}" class="btn-row text-green-700 hover:bg-green-50">Ver</a>
-                        <a href="{{ route('cultos.edit', $culto) }}" class="btn-row text-blue-700 hover:bg-blue-50">Editar</a>
+                        <a href="{{ route('cultos.edit', $culto) }}" class="btn-row text-brand-700 hover:bg-brand-50">Editar</a>
                         <button type="button" onclick="mostrarModalEliminar({{ $culto->id }}, @js($culto->fecha->format('d/m/Y') . ' - ' . $culto->tipo_nombre))" class="btn-row text-red-700 hover:bg-red-50">
                             Eliminar
                         </button>
@@ -63,8 +63,10 @@
                 </tr>
                 @empty
                 <tr>
-                    <td colspan="6" class="px-6 py-12 text-center text-gray-500">
-                        No hay cultos registrados
+                    <td colspan="6" class="!p-0">
+                        <x-ui.vacio icono="calendario" titulo="Todavía no hay cultos" texto="Crea el primer culto para empezar a registrar sus sobres y su asistencia.">
+                            <x-slot name="acciones"><a href="{{ route('cultos.create') }}" class="btn-primary">+ Nuevo Culto</a></x-slot>
+                        </x-ui.vacio>
                     </td>
                 </tr>
                 @endforelse

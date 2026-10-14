@@ -3,86 +3,66 @@
 @section('title', tenant_title('Gestión de Usuarios'))
 @section('page-title', 'Gestión de Usuarios')
 
+@section('page-subtitle', 'Quién entra al sistema y con qué rol. Cada rol ve solo lo suyo.')
+
+@section('page-actions')
+    <a href="{{ route('usuarios.create') }}" class="btn-primary">+ Nuevo Usuario</a>
+@endsection
+
 @section('content')
 <div class="space-y-6">
-    <div class="flex justify-end">
-        <a href="{{ route('usuarios.create') }}" class="btn-primary">
-            + Nuevo Usuario
-        </a>
-    </div>
-
-    <div class="bg-white rounded-lg shadow">
+    <div class="card overflow-hidden">
         <div class="table-scroll">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Nombre
-                                </th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Email
-                                </th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Rol
-                                </th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider hidden xl:table-cell">
-                                    Fecha Registro
-                                </th>
-                                <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                    Acciones
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
-                            @forelse ($usuarios as $usuario)
-                            <tr>
-                                <td class="px-4 py-3 whitespace-nowrap">
-                                    <div class="text-sm font-medium text-gray-900">{{ $usuario->name }}</div>
-                                </td>
-                                <td class="px-4 py-3 whitespace-nowrap">
-                                    <div class="text-sm text-gray-500">{{ $usuario->email }}</div>
-                                </td>
-                                <td class="px-4 py-3 whitespace-nowrap">
-                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
-                                        @if($usuario->rol === 'admin') bg-purple-100 text-purple-800
-                                        @elseif($usuario->rol === 'tesorero') bg-blue-100 text-blue-800
-                                        @elseif($usuario->rol === 'asistente') bg-green-100 text-green-800
-                                        @else bg-gray-100 text-gray-800
-                                        @endif">
-                                        {{ ucfirst($usuario->rol) }}
-                                    </span>
-                                </td>
-                                <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500 hidden xl:table-cell">
-                                    {{ $usuario->created_at->format('d/m/Y') }}
-                                </td>
-                                <td class="px-4 py-3 whitespace-nowrap text-right text-sm font-medium">
-                                    <a href="{{ route('usuarios.edit', $usuario) }}" class="btn-row text-blue-700 hover:bg-blue-50">Editar</a>
-                                    @if($usuario->id !== auth()->id())
-                                    <button type="button" onclick="mostrarModalEliminar({{ $usuario->id }}, @js($usuario->name))" class="btn-row text-red-700 hover:bg-red-50">
-                                        Eliminar
-                                    </button>
-                                    <form id="form-eliminar-{{ $usuario->id }}" action="{{ route('usuarios.destroy', $usuario) }}" method="POST" class="hidden">
-                                        @csrf
-                                        @method('DELETE')
-                                    </form>
-                                    @endif
-                                </td>
-                            </tr>
-                            @empty
-                            <tr>
-                                <td colspan="5" class="px-6 py-12 text-center text-gray-500">
-                                    No hay usuarios registrados
-                                </td>
-                            </tr>
-                            @endforelse
-                        </tbody>
-                    </table>
-                </div>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Email</th>
+                        <th>Rol</th>
+                        <th class="hidden xl:table-cell">Fecha de registro</th>
+                        <th class="col-actions">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse ($usuarios as $usuario)
+                    <tr>
+                        <td class="whitespace-nowrap font-medium text-gray-900">{{ $usuario->name }}</td>
+                        <td class="whitespace-nowrap">{{ $usuario->email }}</td>
+                        <td class="whitespace-nowrap">
+                            <x-ui.badge :tipo="in_array($usuario->rol, ['admin', 'tesorero', 'asistente']) ? 'brand' : 'neutral'">{{ $usuario->rol_nombre }}</x-ui.badge>
+                        </td>
+                        <td class="hidden whitespace-nowrap xl:table-cell">{{ $usuario->created_at->format('d/m/Y') }}</td>
+                        <td class="col-actions">
+                            <a href="{{ route('usuarios.edit', $usuario) }}" class="btn-row text-brand-700 hover:bg-brand-50">Editar</a>
+                            @if($usuario->id !== auth()->id())
+                            <button type="button" onclick="mostrarModalEliminar({{ $usuario->id }}, @js($usuario->name))" class="btn-row text-red-700 hover:bg-red-50">
+                                Eliminar
+                            </button>
+                            <form id="form-eliminar-{{ $usuario->id }}" action="{{ route('usuarios.destroy', $usuario) }}" method="POST" class="hidden">
+                                @csrf
+                                @method('DELETE')
+                            </form>
+                            @endif
+                        </td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="5" class="!p-0">
+                            <x-ui.vacio icono="usuario" titulo="Todavía no hay usuarios" texto="Crea el primero para darle acceso al sistema.">
+                                <x-slot name="acciones"><a href="{{ route('usuarios.create') }}" class="btn-primary">+ Nuevo Usuario</a></x-slot>
+                            </x-ui.vacio>
+                        </td>
+                    </tr>
+                    @endforelse
+                </tbody>
+            </table>
         </div>
 
-        <div class="px-6 py-4 bg-gray-50">
+        @if($usuarios->hasPages())
+        <div class="card-footer">
             {{ $usuarios->links() }}
         </div>
+        @endif
     </div>
 </div>
 

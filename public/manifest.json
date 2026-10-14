@@ -1,7 +1,7 @@
 {
-    "name": "ANGEDA - Sistema de Administracion",
-    "short_name": "ANGEDA",
-    "description": "Sistema de administracion de iglesias",
+    "name": "Sistema de Administración de Iglesia",
+    "short_name": "Iglesia",
+    "description": "Sistema de administración de iglesias",
     "start_url": "/",
     "display": "standalone",
     "background_color": "#0f172a",

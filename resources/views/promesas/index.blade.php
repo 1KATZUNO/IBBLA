@@ -6,7 +6,7 @@
 @section('content')
 <div class="space-y-6">
     <div class="flex justify-end">
-        <a href="{{ route('promesas.create') }}" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+        <a href="{{ route('promesas.create') }}" class="btn-primary">
             + Nueva Promesa
         </a>
     </div>

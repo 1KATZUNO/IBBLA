@@ -275,7 +275,7 @@ titulo: Personas y compromisos
 orden: 40                      # (opcional: sale del prefijo del archivo)
 icono: personas                # nombre de App\Support\Iconos
 resumen: Una linea para el indice y el buscador.
-roles: admin                   # todos, admin, tesorero, asistente, servidor, miembro, invitado
+roles: admin                   # todos, admin, tesorero, asistente, servidor, miembro
 rutas: personas.*, compromisos.*   # pantallas cuyo boton "?" abre esta pagina (admite *)
 ancla: seccion-inicial         # opcional: el "?" salta a esa seccion
 palabras: miembros, hermanos   # sinonimos para el buscador

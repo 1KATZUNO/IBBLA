@@ -15,19 +15,17 @@
         <p class="mt-2 text-sm text-green-700">Envío automático activo: los avisos nuevos se envían solos. Aquí quedan los que no se pudieron enviar.</p>
         @endif
 
-        <div class="mt-4 flex gap-2 border-b border-gray-200">
-            <a href="{{ route('avisos.index') }}"
-               class="px-4 py-2 text-sm font-medium border-b-2 {{ $pestana === 'pendientes' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700' }}">
+        <nav class="tabs mt-4" aria-label="Avisos">
+            <a href="{{ route('avisos.index') }}" class="tab {{ $pestana === 'pendientes' ? 'tab-active' : '' }}">
                 Pendientes
                 @if($totalPendientes > 0)
-                <span class="ml-1 px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">{{ $totalPendientes }}</span>
+                <span class="badge-danger">{{ $totalPendientes }}</span>
                 @endif
             </a>
-            <a href="{{ route('avisos.index', ['tab' => 'historial']) }}"
-               class="px-4 py-2 text-sm font-medium border-b-2 {{ $pestana === 'historial' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700' }}">
+            <a href="{{ route('avisos.index', ['tab' => 'historial']) }}" class="tab {{ $pestana === 'historial' ? 'tab-active' : '' }}">
                 Historial
             </a>
-        </div>
+        </nav>
     </div>
 
     @if($pestana === 'pendientes')
@@ -35,7 +33,7 @@
         <section class="bg-white rounded-lg shadow overflow-hidden">
             <div class="px-4 py-3 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
                 <h3 class="text-base font-semibold text-gray-900">{{ \App\Models\AvisoWhatsApp::EVENTOS[$evento] ?? ucfirst(str_replace('_', ' ', $evento)) }}</h3>
-                <span class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">{{ $avisos->count() }}</span>
+                <span class="badge-brand">{{ $avisos->count() }}</span>
             </div>
             <ul class="divide-y divide-gray-200">
                 @foreach($avisos as $aviso)
@@ -54,7 +52,7 @@
                     </div>
                     <div class="flex flex-wrap items-center gap-2">
                         <a href="{{ $aviso->enlace_whatsapp }}" target="_blank" rel="noopener"
-                           class="inline-flex items-center justify-center min-h-[44px] px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 transition-colors">
+                           class="btn-success">
                             Abrir WhatsApp
                         </a>
                         <form action="{{ route('avisos.enviado', $aviso) }}" method="POST">

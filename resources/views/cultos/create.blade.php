@@ -13,7 +13,7 @@
                 <div>
                     <label for="fecha" class="block text-sm font-medium text-gray-700 mb-2">Fecha</label>
                     <input type="date" name="fecha" id="fecha" value="{{ old('fecha', date('Y-m-d')) }}" 
-                           class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
+                           class="w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500" required>
                     @error('fecha')
                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                     @enderror
@@ -22,7 +22,7 @@
                 <div>
                     <label for="hora" class="block text-sm font-medium text-gray-700 mb-2">Hora</label>
                     <input type="time" name="hora" id="hora" value="{{ old('hora', '10:00') }}" 
-                           class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
+                           class="w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500" required>
                     @error('hora')
                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                     @enderror
@@ -31,7 +31,7 @@
                 <div>
                     <label for="tipo_culto" class="block text-sm font-medium text-gray-700 mb-2">Tipo de Culto</label>
                     <select name="tipo_culto" id="tipo_culto"
-                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
+                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500" required>
                         @foreach($serviceTypes as $type)
                             <option value="{{ $type->slug }}" {{ old('tipo_culto') == $type->slug ? 'selected' : '' }}>{{ $type->nombre }}</option>
                         @endforeach
@@ -44,7 +44,7 @@
                 <div>
                     <label for="notas" class="block text-sm font-medium text-gray-700 mb-2">Notas (Opcional)</label>
                     <textarea name="notas" id="notas" rows="3" 
-                              class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">{{ old('notas') }}</textarea>
+                              class="w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">{{ old('notas') }}</textarea>
                     @error('notas')
                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                     @enderror

@@ -36,7 +36,6 @@
                             <span class="text-xs uppercase tracking-widest text-gray-400">Clase</span>
                         </div>
                         <h3 class="text-lg font-semibold text-gray-900">{{ $clase->nombre }}</h3>
-                        <p class="text-xs text-gray-500 mt-1"><code>{{ $clase->slug }}</code></p>
                         <div class="mt-4 inline-flex items-center gap-1 text-sm font-medium" style="color:{{ $clase->color }};">
                             Abrir app
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

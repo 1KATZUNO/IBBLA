@@ -47,6 +47,7 @@
                     <p class="text-2xl font-bold text-gray-900">₡{{ number_format($totalesPeriodo['total_general'], 0) }}</p>
                 </div>
                 <div class="text-right">
+                    @if($comparativo['periodo_anterior_total'] > 0)
                     <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-sm font-semibold
                         {{ $comparativo['diferencia'] >= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700' }}">
                         @if($comparativo['diferencia'] >= 0)
@@ -56,6 +57,9 @@
                         @endif
                         {{ $comparativo['porcentaje'] >= 0 ? '+' : '' }}{{ $comparativo['porcentaje'] }}%
                     </span>
+                    @else
+                    <span class="badge-neutral">Sin datos anteriores</span>
+                    @endif
                     <p class="text-xs text-gray-400 mt-1">vs {{ $comparativo['periodo_anterior_nombre'] }}</p>
                 </div>
             </div>
@@ -67,10 +71,14 @@
                     <p class="text-2xl font-bold text-gray-900">{{ $comparativo['asistencia_actual'] }}</p>
                 </div>
                 <div class="text-right">
+                    @if($comparativo['asistencia_anterior'] > 0)
                     <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-sm font-semibold
                         {{ $comparativo['asistencia_diff'] >= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700' }}">
                         {{ $comparativo['asistencia_diff'] >= 0 ? '+' : '' }}{{ $comparativo['asistencia_diff'] }}%
                     </span>
+                    @else
+                    <span class="badge-neutral">Sin datos anteriores</span>
+                    @endif
                     <p class="text-xs text-gray-400 mt-1">vs {{ $comparativo['periodo_anterior_nombre'] }}</p>
                 </div>
             </div>

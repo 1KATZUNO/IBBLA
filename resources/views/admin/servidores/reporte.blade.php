@@ -11,7 +11,7 @@
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div>
                     <label for="mes" class="block text-sm font-medium text-gray-700 mb-2">Mes</label>
-                    <select name="mes" id="mes" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    <select name="mes" id="mes" class="w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
                         @foreach($meses as $numMes => $nombreMes)
                             <option value="{{ $numMes }}" {{ $mes == $numMes ? 'selected' : '' }}>{{ $nombreMes }}</option>
                         @endforeach
@@ -19,7 +19,7 @@
                 </div>
                 <div>
                     <label for="ano" class="block text-sm font-medium text-gray-700 mb-2">Año</label>
-                    <select name="ano" id="ano" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    <select name="ano" id="ano" class="w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
                         @for($y = now()->year; $y >= now()->year - 3; $y--)
                             <option value="{{ $y }}" {{ $ano == $y ? 'selected' : '' }}>{{ $y }}</option>
                         @endfor
@@ -27,7 +27,7 @@
                 </div>
                 <div>
                     <label for="ministerio_id" class="block text-sm font-medium text-gray-700 mb-2">Ministerio</label>
-                    <select name="ministerio_id" id="ministerio_id" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    <select name="ministerio_id" id="ministerio_id" class="w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
                         <option value="">Todos los ministerios</option>
                         @foreach($ministerios as $min)
                             <option value="{{ $min->id }}" {{ ($ministerioFiltro?->id ?? null) == $min->id ? 'selected' : '' }}>{{ $min->nombre }}</option>

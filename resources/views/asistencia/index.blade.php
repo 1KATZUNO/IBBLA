@@ -3,15 +3,15 @@
 @section('title', tenant_title('Asistencia'))
 @section('page-title', 'Registro de Asistencia')
 
+@section('page-subtitle', 'Registra la asistencia de cada culto y ciérrala cuando esté completa.')
+
+@section('page-actions')
+    <a href="{{ route('asistencia.create') }}" class="btn-primary">+ Nueva Asistencia</a>
+@endsection
+
 @section('content')
 <div class="space-y-6">
     {{-- Los mensajes de exito/error los muestra el layout (antes salian dos veces) --}}
-    <div class="flex flex-wrap items-center justify-between gap-3">
-        <p class="text-sm text-gray-600">Registra la asistencia de cada culto y cierrala cuando este completa.</p>
-        <a href="{{ route('asistencia.create') }}" class="btn-primary">
-            + Nueva Asistencia
-        </a>
-    </div>
 
     <!-- Filtros -->
     <div class="bg-white rounded-lg shadow p-6">
@@ -19,7 +19,7 @@
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                     <label for="mes" class="block text-sm font-medium text-gray-700 mb-2">Mes</label>
-                    <select name="mes" id="mes" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    <select name="mes" id="mes" class="w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
                         <option value="todos" {{ request('mes', 'todos') == 'todos' ? 'selected' : '' }}>Todos los meses</option>
                         <option value="1" {{ request('mes') == '1' ? 'selected' : '' }}>Enero</option>
                         <option value="2" {{ request('mes') == '2' ? 'selected' : '' }}>Febrero</option>
@@ -37,7 +37,7 @@
                 </div>
                 <div>
                     <label for="año" class="block text-sm font-medium text-gray-700 mb-2">Año</label>
-                    <select name="año" id="año" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    <select name="año" id="año" class="w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
                         <option value="todos" {{ request('año', 'todos') == 'todos' ? 'selected' : '' }}>Todos los años</option>
                         @for($i = date('Y'); $i >= 2020; $i--)
                             <option value="{{ $i }}" {{ request('año') == $i ? 'selected' : '' }}>{{ $i }}</option>

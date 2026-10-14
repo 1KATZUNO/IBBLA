@@ -21,7 +21,7 @@ use League\CommonMark\MarkdownConverter;
  *   orden: 40
  *   icono: personas            (nombre de App\Support\Iconos)
  *   resumen: Una linea que se ve en el indice y en el buscador.
- *   roles: admin               (todos, admin, tesorero, asistente, servidor, miembro, invitado)
+ *   roles: admin               (todos, admin, tesorero, asistente, servidor, miembro)
  *   rutas: personas.*, compromisos.*   (pantallas cuyo boton "?" abre esta pagina; admite *)
  *   ancla: seccion-inicial     (opcional: el "?" abre directo esa seccion)
  *   palabras: miembros, hermanos       (sinonimos para el buscador)
@@ -40,7 +40,6 @@ class Manual
         'asistente' => 'Asistente',
         'servidor' => 'Servidor',
         'miembro' => 'Miembro',
-        'invitado' => 'Invitado',
     ];
 
     private const PALABRAS_VACIAS = ['de', 'la', 'el', 'los', 'las', 'un', 'una', 'en', 'y', 'a', 'que', 'del', 'al', 'por', 'para', 'con', 'se', 'mi', 'es', 'lo', 'su'];
@@ -181,9 +180,6 @@ class Manual
         }
         if ($u->isMiembro() || $u->canAccessMiPerfil()) {
             $roles[] = 'miembro';
-        }
-        if ($u->isInvitado()) {
-            $roles[] = 'invitado';
         }
 
         return $roles;

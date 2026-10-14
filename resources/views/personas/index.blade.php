@@ -18,8 +18,8 @@
                     <input type="search"
                            name="buscar"
                            value="{{ request('buscar') }}"
-                           placeholder="Buscar por nombre o PIN..."
-                           aria-label="Buscar por nombre o PIN"
+                           placeholder="Buscar por nombre, PIN o teléfono..."
+                           aria-label="Buscar por nombre, PIN o teléfono"
                            class="block w-full min-h-[44px] pl-10 pr-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
                 </div>
                 <div class="flex gap-2">

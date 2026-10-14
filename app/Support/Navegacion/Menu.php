@@ -141,7 +141,7 @@ class Menu
             ['Super Admin', [
                 self::it('super-admin.dashboard', 'Panel Super Admin', 'escudo', 'super-admin.*', $u->isSuperAdmin(), 'iglesias plataforma tenants super administrador'),
             ]],
-            ['Administracion', [
+            ['Administración', [
                 self::it('cultos.index', 'Gestionar Cultos', 'calendario', 'cultos.*', $p['admin'], 'cultos servicios crear culto fecha domingo miercoles editar eliminar'),
                 self::it('admin.clases.index', 'Gestionar Clases', 'ajustes', 'admin.clases.*', $p['admin'], 'clases escuela dominical grupos maestros alumnos'),
                 self::it('personas.index', 'Gestionar Personas', 'personas', 'personas.*|compromisos.*', $p['admin'], 'personas miembros hermanos pin telefono promesas compromisos estado de cuenta ficha'),
@@ -149,8 +149,8 @@ class Menu
                 self::it('usuarios.index', 'Gestionar Usuarios', 'personas', 'usuarios.*', $p['admin'], 'usuarios roles permisos contrasena acceso cuentas'),
                 self::it($rutaAccesos, 'Accesos', 'candado', 'admin.accesos.*|accesos.*', $p['admin'], 'accesos permisos de edicion culto tesorero conceder revocar'),
                 self::it('admin.servidores.index', 'Servidores', 'grupo', 'admin.servidores.*', $p['admin'], 'servidores qr asistencia de servidores reporte de servidores'),
-                self::it('asistencia.importar.index', 'Cargar Historico', 'subir', 'asistencia.importar.*', $p['admin'], 'importar historico excel asistencias antiguas plantilla'),
-                self::it('admin.auditoria.index', 'Auditoria', 'lupa', 'admin.auditoria.index', $p['admin'], 'auditoria historial de cambios quien modifico bitacora'),
+                self::it('asistencia.importar.index', 'Cargar Histórico', 'subir', 'asistencia.importar.*', $p['admin'], 'importar historico excel asistencias antiguas plantilla'),
+                self::it('admin.auditoria.index', 'Auditoría', 'lupa', 'admin.auditoria.index', $p['admin'], 'auditoria historial de cambios quien modifico bitacora'),
                 // Historial de ingresos a la plataforma
                 self::it('admin.auditoria.ingresos', 'Historial de ingresos', 'usuario', 'admin.auditoria.ingresos*', $p['admin'], 'historial de ingresos quien entro cuando hora accesos al sistema'),
             ]],
@@ -167,11 +167,11 @@ class Menu
     private static function extras(User $u, array $p): array
     {
         return [
-            self::extra('cultos.create', 'Nuevo culto', 'calendario', $p['admin'], 'crear agregar culto servicio nuevo', 'Administracion'),
-            self::extra('personas.create', 'Nueva persona', 'personas', $p['admin'], 'crear agregar persona miembro nuevo hermano', 'Administracion'),
-            self::extra('usuarios.create', 'Nuevo usuario', 'personas', $p['admin'], 'crear agregar usuario cuenta nueva rol', 'Administracion'),
-            self::extra('admin.ministerios.create', 'Nuevo ministerio', 'estrella', $p['admin'], 'crear agregar ministerio nuevo area de servicio', 'Administracion'),
-            self::extra('admin.clases.create', 'Nueva clase', 'ajustes', $p['admin'], 'crear agregar clase nueva grupo', 'Administracion'),
+            self::extra('cultos.create', 'Nuevo culto', 'calendario', $p['admin'], 'crear agregar culto servicio nuevo', 'Administración'),
+            self::extra('personas.create', 'Nueva persona', 'personas', $p['admin'], 'crear agregar persona miembro nuevo hermano', 'Administración'),
+            self::extra('usuarios.create', 'Nuevo usuario', 'personas', $p['admin'], 'crear agregar usuario cuenta nueva rol', 'Administración'),
+            self::extra('admin.ministerios.create', 'Nuevo ministerio', 'estrella', $p['admin'], 'crear agregar ministerio nuevo area de servicio', 'Administración'),
+            self::extra('admin.clases.create', 'Nueva clase', 'ajustes', $p['admin'], 'crear agregar clase nueva grupo', 'Administración'),
             self::extra('asistencia.create', 'Nueva asistencia', 'grupo', $p['asistencia'], 'registrar asistencia de un culto nueva capilla clases', 'Registro'),
             self::extra('ingresos-asistencia.ingresos', 'Reporte de ingresos', 'reporte', $p['recuento'], 'reporte ingresos dinero ofrendas diezmos por culto pdf excel', 'Reportes', 'reporte'),
             self::extra('ingresos-asistencia.asistencia', 'Reporte de asistencia', 'reporte', $p['asistencia'], 'reporte asistencia por culto mes pdf excel', 'Reportes', 'reporte'),
