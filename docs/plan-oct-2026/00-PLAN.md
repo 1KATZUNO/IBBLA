@@ -129,3 +129,9 @@ Del lider del proyecto (David):
   3a -> 2 -> 5 -> 4 (layouts al final), luego suite + build + QA de entrega + deploy (E1).
   Pendientes del cliente: definicion de "servidores", volcado de BD de produccion, 30 ministerios,
   cuenta Meta.
+- 2026-10-13 (18:40): DECISION WHATSAPP = CallMeBot "como en ARCA" (gestion-app-arca: WhatsAppProvider +
+  CallMeBotProvider, cada receptor activa el bot desde su WhatsApp y pega el enlace con phone/apikey en
+  su perfil, boton de prueba). Se elimina el bot/webhook de Meta (WA-2); el driver meta queda guardado.
+  Personas lo activan solas en Mi perfil con guia ilustrada; usuarios del sistema igual para los avisos
+  de rol; el admin manda informes solo cuando la persona tiene clave, si no, wa.me como hoy. Equipo 5
+  re-briefeado por mensaje; Equipo 4 agrega la seccion al manual. "Hermanos servidores": David lo averigua.
