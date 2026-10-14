@@ -135,3 +135,11 @@ Del lider del proyecto (David):
   Personas lo activan solas en Mi perfil con guia ilustrada; usuarios del sistema igual para los avisos
   de rol; el admin manda informes solo cuando la persona tiene clave, si no, wa.me como hoy. Equipo 5
   re-briefeado por mensaje; Equipo 4 agrega la seccion al manual. "Hermanos servidores": David lo averigua.
+- 2026-10-13 (20:10): QA INICIAL INTEGRADO (c93d334): 43 hallazgos (1 bloqueante QA-024 cifras distintas
+  por persona, 12 altas), repartidos por mensaje a los equipos 2, 3a, 4 y 5. DECISIONES DEL CLIENTE:
+  Roy usa Administrador; culto cerrado se borra SOLO admin (motivo + auditoria); tesorero NO ve Personas
+  pero tiene alta rapida de personas; se elimina "Entrar como invitado" (queda solo el login de las
+  personas agregadas); las firmas del recuento se pueden corregir despues de firmadas (admin/tesorero,
+  auditado). Supuesto vigente hasta que David diga otra cosa: los reportes financieros (Reporte General,
+  estados de cuenta, cumplimiento) los ven admin y tesorero. Pendientes para el motor: si el diezmo cuenta,
+  si el mes en curso se cobra, tipo de cambio del sobre o de hoy.
