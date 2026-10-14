@@ -105,6 +105,9 @@ Route::middleware(['auth', 'role:admin,tesorero'])->group(function () {
 
     // Enviar el informe de una persona por WhatsApp (abre wa.me con el enlace firmado al PDF)
     Route::get('personas/{persona}/whatsapp', App\Http\Controllers\PersonaWhatsAppController::class)->name('personas.whatsapp');
+    // Con WHATSAPP_DRIVER=callmebot y una persona que activó WhatsApp en su perfil, el informe se manda solo (POST)
+    Route::post('personas/{persona}/whatsapp', [App\Http\Controllers\PersonaWhatsAppController::class, 'enviarAutomatico'])
+        ->middleware('throttle:20,1')->name('personas.whatsapp.enviar');
 
     // Avisos de WhatsApp a los líderes (culto creado, sobres alcanzados): panel con pendientes e historial
     Route::get('avisos', [App\Http\Controllers\AvisoWhatsAppController::class, 'index'])->name('avisos.index');
