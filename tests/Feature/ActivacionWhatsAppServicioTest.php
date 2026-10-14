@@ -208,7 +208,7 @@ class ActivacionWhatsAppServicioTest extends TestCase
 
         $errores = $this->erroresAl(fn () => $this->servicio()->activar($tesorero, self::ENLACE, true));
         $this->assertStringContainsString('tiene registrado su usuario', $errores['enlace']);
-        $this->assertStringContainsString('el administrador', $errores['enlace']);
+        $this->assertStringContainsString('pídale al administrador', $errores['enlace']);
     }
 
     // ---------------------------------------------------------------- situación

@@ -153,20 +153,20 @@ class ActivacionWhatsAppService
 
     private function mensajeSinTelefono(string $tipo): string
     {
-        $quien = $tipo === self::PERSONA ? 'la administración' : 'el administrador (Gestionar Usuarios)';
+        $quien = $tipo === self::PERSONA ? 'a la administración' : 'al administrador (Gestionar Usuarios)';
 
         return 'No tenemos un teléfono válido registrado a su nombre, y WhatsApp necesita el mismo número con el que usted activa el bot. '
-            ."Pídale a {$quien} que lo escriba (8 dígitos, por ejemplo 8888-7777) y vuelva a intentarlo.";
+            ."Pídale {$quien} que lo escriba (8 dígitos, por ejemplo 8888-7777) y vuelva a intentarlo.";
     }
 
     private function mensajeOtroNumero(string $tipo, string $delEnlace, string $registrado): string
     {
         $dondeEsta = $tipo === self::PERSONA ? 'la iglesia tiene registrado para usted' : 'tiene registrado su usuario';
-        $quien = $tipo === self::PERSONA ? 'la administración' : 'el administrador';
+        $quien = $tipo === self::PERSONA ? 'a la administración' : 'al administrador';
 
         return 'Ese enlace es del número '.WhatsAppService::formatearTelefono($delEnlace)
             .", pero el número que {$dondeEsta} es ".WhatsAppService::formatearTelefono($registrado).'. '
-            ."Use el enlace del número registrado, o pídale a {$quien} que actualice su teléfono.";
+            ."Use el enlace del número registrado, o pídale {$quien} que actualice su teléfono.";
     }
 
     private function mensajeEnlace(string $motivo): string

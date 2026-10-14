@@ -41,7 +41,7 @@
 
 @if($telefono === null)
 <div class="mt-6 p-4 rounded-lg bg-amber-50 border border-amber-300 text-base text-amber-900" role="alert">
-    {{ $bolsa->first('telefono') ?: 'No tenemos un teléfono válido registrado a su nombre, y WhatsApp necesita el mismo número con el que usted activa el bot. Pídale a '.($tipo === 'persona' ? 'la administración' : 'el administrador (Gestionar Usuarios)').' que lo escriba (8 dígitos, por ejemplo 8888-7777) y vuelva a intentarlo.' }}
+    {{ $bolsa->first('telefono') ?: 'No tenemos un teléfono válido registrado a su nombre, y WhatsApp necesita el mismo número con el que usted activa el bot. Pídale '.($tipo === 'persona' ? 'a la administración' : 'al administrador (Gestionar Usuarios)').' que lo escriba (8 dígitos, por ejemplo 8888-7777) y vuelva a intentarlo.' }}
 </div>
 @else
 <form method="POST" action="{{ route($rutas['guardar']) }}" class="mt-6 space-y-4" autocomplete="off">
