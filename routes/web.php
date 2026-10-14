@@ -164,6 +164,14 @@ Route::middleware(['auth', 'role:admin,tesorero'])->group(function () {
     Route::get('/ingresos-asistencia/promesas-por-clase', [App\Http\Controllers\PromesasReporteController::class, 'porClase'])->name('ingresos-asistencia.promesas-por-clase');
 });
 
+// Reportes de dinero por persona con el motor unico (equipo 3a): admin y tesorero.
+Route::middleware(['auth', 'role:admin,tesorero'])->prefix('reportes')->name('reportes.')->group(function () {
+    // Cumplimiento de promesas con corte a la fecha (HU-R13): pantalla, PDF (?accion=ver|descargar) y Excel
+    Route::get('/cumplimiento', [App\Http\Controllers\Reportes\CumplimientoController::class, 'index'])->name('cumplimiento');
+    Route::get('/cumplimiento/pdf', [App\Http\Controllers\Reportes\CumplimientoController::class, 'pdf'])->name('cumplimiento.pdf');
+    Route::get('/cumplimiento/excel', [App\Http\Controllers\Reportes\CumplimientoController::class, 'excel'])->name('cumplimiento.excel');
+});
+
 // Rutas para Admin y Asistente - Asistencia
 Route::middleware(['auth', 'role:admin,asistente', 'audit'])->group(function () {
     // Asistencia
