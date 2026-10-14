@@ -183,14 +183,14 @@ class RecuentoController extends Controller
         $siguiente = $request->boolean('siguiente');
 
         // Doble envio del mismo formulario (doble toque, volver atras y reenviar): se guarda una sola vez.
-        // Sin codigo de envio (otros clientes) sigue la regla vieja de la misma persona en 30 segundos.
+        // Sin codigo de envio (otros clientes) se considera duplicado el mismo sobre en 10 segundos.
         $envio = (string) $request->input('envio', '');
         if ($envio !== '') {
             if (! Cache::add('recuento:envio:'.$envio, true, now()->addHours(12))) {
                 return $this->trasGuardarSobre($culto, $siguiente, 'warning', 'Ese sobre ya se había guardado: el formulario llegó dos veces y se registró una sola.');
             }
-        } elseif ($this->hayDuplicadoReciente($culto, $validated['persona_id'] ?? null)) {
-            return $this->alCulto($culto->id, 'warning', 'Ya se registró un sobre para esta persona en este culto hace unos segundos. Verifique que no sea duplicado.');
+        } elseif ($this->hayDuplicadoReciente($culto, $validated)) {
+            return $this->alCulto($culto->id, 'warning', 'Hace unos segundos se registró un sobre igual (misma persona, monto y método) en este culto, así que no se guardó de nuevo. Si era otro sobre, regístralo otra vez.');
         }
 
         [$moneda, $tipoCambioVenta, $tipoCambioId] = $this->monedaYTipoCambio($validated['moneda'] ?? null);
@@ -228,7 +228,7 @@ class RecuentoController extends Controller
 
         $sobre->load(['detalles', 'persona']);
 
-        return view('recuento.edit', $this->datosFormularioSobre($culto) + ['sobre' => $sobre]);
+        return view('recuento.edit', $this->datosFormularioSobre($culto, $sobre) + ['sobre' => $sobre]);
     }
 
     public function update(Request $request, Sobre $sobre)
@@ -505,16 +505,25 @@ class RecuentoController extends Controller
         $this->permisosEdicion->registrarCambioEnCerrado($request, $culto, $accion, $detalles);
     }
 
-    /** Lo que necesita el formulario de sobre (registrar y editar comparten el mismo). */
-    private function datosFormularioSobre(Culto $culto): array
+    /**
+     * Lo que necesita el formulario de sobre (registrar y editar comparten el mismo). Al editar, la
+     * persona del sobre se incluye aunque este inactiva: si no, el formulario la mostraba como Anonimo
+     * y al guardar el sobre perdia a su persona (QA-002).
+     */
+    private function datosFormularioSobre(Culto $culto, ?Sobre $sobre = null): array
     {
+        $personas = Persona::where('activo', true)->orderBy('nombre')->get(['id', 'nombre', 'pin'])
+            ->map(fn (Persona $p) => ['id' => $p->id, 'nombre' => $p->nombre, 'pin' => $p->pin, 'inactiva' => false]);
+
+        if ($sobre?->persona && ! $sobre->persona->activo) {
+            $personas->prepend(['id' => $sobre->persona->id, 'nombre' => $sobre->persona->nombre, 'pin' => $sobre->persona->pin, 'inactiva' => true]);
+        }
+
         return [
             'culto' => $culto,
             'categorias' => tenant_categories(['es_ofrenda_suelta' => false]),
-            // Para el buscador de persona: solo lo necesario (nombre y PIN)
-            'personas' => Persona::where('activo', true)->orderBy('nombre')->get(['id', 'nombre', 'pin'])
-                ->map(fn (Persona $p) => ['id' => $p->id, 'nombre' => $p->nombre, 'pin' => $p->pin])
-                ->values(),
+            // Para el buscador de persona: solo lo necesario (nombre, PIN y si esta inactiva)
+            'personas' => $personas->values(),
         ];
     }
 
@@ -557,12 +566,18 @@ class RecuentoController extends Controller
             : $this->alCulto($culto->id, $tipo, $mensaje);
     }
 
-    /** Regla vieja contra dobles envios, para pedidos sin codigo de envio: misma persona en 30 segundos. */
-    private function hayDuplicadoReciente(Culto $culto, mixed $personaId): bool
+    /**
+     * Respaldo contra dobles envios para pedidos sin codigo de envio: el MISMO sobre (persona o anonimo,
+     * total y metodo de pago) en el mismo culto en los ultimos 10 segundos. Antes bastaba la misma persona
+     * en 30 segundos y se perdian los anonimos seguidos (QA-001).
+     */
+    private function hayDuplicadoReciente(Culto $culto, array $validated): bool
     {
         return Sobre::where('culto_id', $culto->id)
-            ->where('persona_id', $personaId)
-            ->where('created_at', '>=', now()->subSeconds(30))
+            ->where('persona_id', $validated['persona_id'] ?? null)
+            ->where('metodo_pago', $validated['metodo_pago'])
+            ->where('total_declarado', $this->totalDetalles($validated['detalles']))
+            ->where('created_at', '>=', now()->subSeconds(10))
             ->exists();
     }
 

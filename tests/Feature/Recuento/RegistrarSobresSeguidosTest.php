@@ -114,15 +114,45 @@ class RegistrarSobresSeguidosTest extends TestCase
         $this->assertSame(1, $this->culto->sobres()->count());
     }
 
-    public function test_sin_codigo_de_envio_sigue_la_regla_vieja_de_30_segundos(): void
+    public function test_sin_codigo_de_envio_solo_es_duplicado_el_mismo_sobre_en_10_segundos(): void
     {
         $persona = $this->crearPersonaDe($this->iglesia);
-        $sinCodigo = fn () => $this->sobre(['persona_id' => $persona->id, 'envio' => null]);
+        $sinCodigo = fn (array $extra = []) => $this->sobre($extra + ['envio' => null]);
 
-        $this->actingAs($this->tesorero)->post(route('recuento.store'), $sinCodigo())->assertSessionHas('success');
-        $this->actingAs($this->tesorero)->post(route('recuento.store'), $sinCodigo())->assertSessionHas('warning');
-
+        // El mismo sobre dos veces: el segundo no se guarda
+        $this->actingAs($this->tesorero)->post(route('recuento.store'), $sinCodigo(['persona_id' => $persona->id]))->assertSessionHas('success');
+        $this->actingAs($this->tesorero)->post(route('recuento.store'), $sinCodigo(['persona_id' => $persona->id]))->assertSessionHas('warning');
         $this->assertSame(1, $this->culto->sobres()->count());
+
+        // Otro monto de la misma persona, o un anonimo, si se guardan (QA-001)
+        $otroMonto = $sinCodigo(['persona_id' => $persona->id]);
+        $otroMonto['detalles'][0]['monto'] = '20000';
+        $this->actingAs($this->tesorero)->post(route('recuento.store'), $otroMonto)->assertSessionHas('success');
+        $this->actingAs($this->tesorero)->post(route('recuento.store'), $sinCodigo())->assertSessionHas('success');
+        $this->assertSame(3, $this->culto->sobres()->count());
+    }
+
+    public function test_editar_un_sobre_de_persona_inactiva_conserva_la_persona(): void
+    {
+        $inactiva = $this->crearPersonaDe($this->iglesia, 'Miguel Ulate Herrera');
+        $inactiva->update(['activo' => false]);
+        $sobre = $this->crearSobreEn($this->culto, $inactiva, ['diezmo' => 51000]);
+
+        $this->actingAs($this->tesorero)->get(route('recuento.edit', $sobre))
+            ->assertOk()
+            ->assertSee('Sobre de', false)
+            ->assertSee('Miguel Ulate Herrera')
+            ->assertSee('persona inactiva')
+            ->assertSee('name="persona_id" id="persona_id" value="'.$inactiva->id.'"', false);
+
+        // Guardar sin tocar la persona (lo que manda el formulario) la conserva
+        $this->actingAs($this->tesorero)->put(route('recuento.update', $sobre), [
+            'persona_id' => $inactiva->id,
+            'metodo_pago' => 'efectivo',
+            'detalles' => [['categoria' => 'diezmo', 'monto' => '51000']],
+        ])->assertRedirect(route('recuento.culto', $this->culto));
+
+        $this->assertSame($inactiva->id, (int) $sobre->fresh()->persona_id);
     }
 
     public function test_un_sobre_en_cero_no_se_guarda(): void

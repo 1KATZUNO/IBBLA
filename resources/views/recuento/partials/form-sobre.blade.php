@@ -39,6 +39,9 @@
     <p class="text-sm text-gray-600" id="personaEstado" aria-live="polite">
         @if($personaElegida)
             Sobre de <strong class="text-gray-900">{{ $personaElegida['nombre'] }}</strong>
+            @if($personaElegida['inactiva'] ?? false)
+                <span class="ml-1 rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700">persona inactiva</span>
+            @endif
         @else
             Sin persona: se guarda como <strong class="text-gray-900">Anónimo</strong>
         @endif
@@ -150,6 +153,7 @@
     function pintarEstado(persona) {
         estado.innerHTML = persona
             ? 'Sobre de <strong class="text-gray-900">' + escapar(persona.nombre) + '</strong>'
+                + (persona.inactiva ? ' <span class="ml-1 rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700">persona inactiva</span>' : '')
             : 'Sin persona: se guarda como <strong class="text-gray-900">Anónimo</strong>';
     }
     function cerrarLista() {
@@ -183,7 +187,7 @@
         resultados = personas.filter(p => normalizar(p.nombre).includes(texto) || (p.pin && String(p.pin) === texto)).slice(0, 8);
         lista.innerHTML = resultados.map((p, i) =>
             '<li id="opcion-persona-' + i + '" role="option" aria-selected="false" data-indice="' + i + '" class="flex items-center justify-between gap-3 min-h-[44px] px-3 py-2 cursor-pointer hover:bg-blue-50">' +
-            '<span class="text-sm text-gray-900">' + escapar(p.nombre) + '</span>' +
+            '<span class="text-sm text-gray-900">' + escapar(p.nombre) + (p.inactiva ? ' <span class="text-xs text-gray-500">(inactiva)</span>' : '') + '</span>' +
             (p.pin ? '<span class="text-xs text-gray-500">PIN ' + escapar(p.pin) + '</span>' : '') + '</li>'
         ).join('') + '<li role="option" aria-selected="false" data-nueva="1" id="opcion-persona-nueva" class="flex items-center min-h-[44px] px-3 py-2 cursor-pointer text-sm font-medium text-green-800 hover:bg-green-50">+ Crear «' + escapar(buscador.value.trim()) + '» como persona nueva</li>';
         lista.classList.remove('hidden');

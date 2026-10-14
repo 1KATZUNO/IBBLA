@@ -58,10 +58,14 @@ de otros cultos.
 ### Reglas que cambian
 
 - **Doble envío:** cada formulario lleva un código único de envío. Si el mismo formulario llega dos
-  veces (doble toque, volver atrás y reenviar) el segundo se ignora con un aviso. Desaparece la
-  regla de "misma persona en 30 segundos": dos sobres anónimos seguidos, o dos sobres de la misma
-  persona (uno en colones y otro en dólares), se guardan bien. Sin código (otros clientes) se
-  mantiene la regla vieja.
+  veces (doble toque, volver atrás y reenviar) el segundo se ignora con un aviso ("ya se había
+  guardado"): no se pierde nada porque el primero sí quedó. Desaparece la regla de "misma persona
+  en 30 segundos" (QA-001): dos sobres anónimos seguidos, o dos sobres de la misma persona (uno en
+  colones y otro en dólares), se guardan bien. Solo si llega un sobre **sin** código (otro cliente)
+  se usa un respaldo: es duplicado el **mismo sobre** (misma persona o anónimo, mismo total y mismo
+  método de pago) en el mismo culto dentro de 10 segundos.
+- **Persona inactiva:** al editar un sobre cuya persona está inactiva, la persona se sigue viendo
+  (marcada "persona inactiva") y no cambia salvo que se elija otra (QA-002: antes quedaba Anónimo).
 - **Sobre vacío:** si todos los montos están en cero no se guarda: "Escribe al menos un monto".
 - **Culto cerrado:** el formulario solo se abre si la regla de REC-2/REC-3 deja editar el culto.
 
