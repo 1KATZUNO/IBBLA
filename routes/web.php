@@ -170,6 +170,12 @@ Route::middleware(['auth', 'role:admin,tesorero'])->prefix('reportes')->name('re
     Route::get('/cumplimiento', [App\Http\Controllers\Reportes\CumplimientoController::class, 'index'])->name('cumplimiento');
     Route::get('/cumplimiento/pdf', [App\Http\Controllers\Reportes\CumplimientoController::class, 'pdf'])->name('cumplimiento.pdf');
     Route::get('/cumplimiento/excel', [App\Http\Controllers\Reportes\CumplimientoController::class, 'excel'])->name('cumplimiento.excel');
+
+    // Estados de cuenta de un grupo (HU-R5): pantalla, PDF con portada e indice, ZIP con un PDF por persona y Excel
+    Route::get('/estados-de-cuenta', [App\Http\Controllers\Reportes\EstadosCuentaController::class, 'index'])->name('estados-cuenta');
+    Route::get('/estados-de-cuenta/pdf', [App\Http\Controllers\Reportes\EstadosCuentaController::class, 'pdf'])->name('estados-cuenta.pdf');
+    Route::get('/estados-de-cuenta/zip', [App\Http\Controllers\Reportes\EstadosCuentaController::class, 'zip'])->name('estados-cuenta.zip');
+    Route::get('/estados-de-cuenta/excel', [App\Http\Controllers\Reportes\EstadosCuentaController::class, 'excel'])->name('estados-cuenta.excel');
 });
 
 // Rutas para Admin y Asistente - Asistencia
