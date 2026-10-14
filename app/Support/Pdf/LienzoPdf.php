@@ -41,8 +41,11 @@ class LienzoPdf
 
     private Cpdf $pdf;
 
-    /** @var array<string, string> estilo => archivo de fuente de DomPDF */
+    /** @var array<string, string> estilo => fuente reducida (ver FuentesPdf), o la completa si no se pudo preparar */
     private array $fuentes;
+
+    /** @var array<string, string> estilo => fuente completa de DomPDF, para textos con caracteres fuera de la reducida */
+    private array $completas;
 
     private bool $subconjunto;
 
@@ -78,11 +81,12 @@ class LienzoPdf
         }
 
         $metricas = $this->dompdf->getFontMetrics();
-        $this->fuentes = [
+        $this->completas = [
             self::REGULAR => $metricas->getFont('DejaVu Sans', 'normal'),
             self::NEGRITA => $metricas->getFont('DejaVu Sans', 'bold'),
             self::ITALICA => $metricas->getFont('DejaVu Sans', 'italic'),
         ];
+        $this->fuentes = FuentesPdf::reducidas($metricas) ?? $this->completas;
         $this->subconjunto = $this->dompdf->getOptions()->getIsFontSubsettingEnabled();
     }
 
@@ -170,7 +174,7 @@ class LienzoPdf
         }
 
         $this->color($color);
-        $this->pdf->selectFont($this->fuentes[$estilo], '', true, $this->subconjunto);
+        $this->pdf->selectFont($this->fuente($texto, $estilo), '', true, $this->subconjunto);
         $this->pdf->addText($x, $this->alto - $base, $tam, $texto);
     }
 
@@ -188,7 +192,7 @@ class LienzoPdf
     {
         $clave = $estilo.'|'.$tam.'|'.$texto;
         if (! isset($this->anchos[$clave])) {
-            $this->pdf->selectFont($this->fuentes[$estilo], '', true, $this->subconjunto);
+            $this->pdf->selectFont($this->fuente($texto, $estilo), '', true, $this->subconjunto);
             $this->anchos[$clave] = $this->pdf->getTextWidth($tam, $texto);
         }
 
@@ -370,6 +374,12 @@ class LienzoPdf
         }
 
         return preg_match('/^[0-9a-f]{6}$/i', $limpio) ? '#'.strtolower($limpio) : null;
+    }
+
+    /** La fuente reducida si cubre todos los caracteres del texto; si no, la completa. */
+    private function fuente(string $texto, string $estilo): string
+    {
+        return FuentesPdf::cubre($texto) ? $this->fuentes[$estilo] : $this->completas[$estilo];
     }
 
     private function color(string $hex): void

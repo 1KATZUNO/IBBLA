@@ -166,12 +166,16 @@ class DocumentoPdf
     }
 
     /**
-     * Cuantas paginas usaria $dibujo a partir de la posicion actual (1 si cabe en la que esta), sin
-     * dibujar nada. Sirve para armar un indice antes de dibujar las secciones.
+     * Cuantas paginas usaria $dibujo (1 si cabe en una) sin dibujar nada: desde la posicion actual o,
+     * con $desdeArriba, desde el principio de una pagina nueva. Sirve para armar un indice antes de
+     * dibujar las secciones.
      */
-    public function medirPaginas(callable $dibujo): int
+    public function medirPaginas(callable $dibujo, bool $desdeArriba = false): int
     {
         $y = $this->y;
+        if ($desdeArriba) {
+            $this->y = self::MARGEN_ARRIBA;
+        }
         try {
             return 1 + $this->lienzo->simular($dibujo);
         } finally {
@@ -223,6 +227,30 @@ class DocumentoPdf
 
         $this->y += $alto + 6;
         $this->lienzo->lineaHorizontal($this->x0(), $this->x1(), $this->y, self::AZUL_OSCURO, 1.2);
+        $this->y += 10;
+
+        return $this;
+    }
+
+    /**
+     * Encabezado de una seccion dentro del documento (p. ej. cada persona de un lote): titulo grande
+     * a la izquierda, un texto a la derecha (periodo) y una linea debajo.
+     */
+    public function encabezadoSeccion(string $titulo, string $derecha = ''): static
+    {
+        $this->asegurarEspacio(90);
+        $anchoDerecha = $derecha !== '' ? $this->lienzo->anchoTexto($derecha, LienzoPdf::NEGRITA, 9.0) + 12 : 0;
+        $lineas = $this->lienzo->partirEnLineas($titulo, LienzoPdf::NEGRITA, 14.0, $this->anchoUtil() - $anchoDerecha);
+        $base = $this->y + 14;
+        foreach ($lineas as $linea) {
+            $this->lienzo->texto($linea, $this->x0(), $base, LienzoPdf::NEGRITA, 14.0, self::AZUL_OSCURO);
+            $base += 17;
+        }
+        if ($derecha !== '') {
+            $this->lienzo->textoDerecha($derecha, $this->x1(), $this->y + 14, LienzoPdf::NEGRITA, 9.0, self::GRIS);
+        }
+        $this->y = $base - 17 + 8;
+        $this->lienzo->lineaHorizontal($this->x0(), $this->x1(), $this->y, self::AZUL_OSCURO, 1.0);
         $this->y += 10;
 
         return $this;
@@ -502,6 +530,16 @@ class DocumentoPdf
         $ajustar = $columna['ajustar'] ?? ! in_array($columna['alinear'] ?? 'izquierda', ['derecha', 'centro'], true);
 
         if ($ajustar) {
+            // Una palabra que sola no cabe ("Construccion" en una columna angosta) achica la letra en
+            // vez de partirse por letras.
+            $palabraMasAncha = 0.0;
+            foreach (preg_split('/\s+/u', trim($celda['texto']), -1, PREG_SPLIT_NO_EMPTY) as $palabra) {
+                $palabraMasAncha = max($palabraMasAncha, $this->lienzo->anchoTexto($palabra, $estilo, $tam));
+            }
+            if ($palabraMasAncha > $ancho && $palabraMasAncha > 0) {
+                $tam = max(5.0, floor($tam * $ancho / $palabraMasAncha * 10) / 10);
+            }
+
             return [$this->lienzo->partirEnLineas($celda['texto'], $estilo, $tam, $ancho), $tam];
         }
 
