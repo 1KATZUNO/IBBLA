@@ -121,3 +121,11 @@ Del lider del proyecto (David):
   Nota: el primer comando de deploy cayo en ~/public_html = IBBSCMusica (musica.ibbla.eu) y solo le
   recacheo config/rutas/vistas. Plan semanal al 67 %: paro aqui; el squad del Centro de Reportes
   (HU-reportes.md) y el QA de integracion arrancan tras el reinicio del 13/10 13:00.
+- 2026-10-13 (18:20): SEGUNDA RONDA LANZADA. Los 5 equipos corren a la vez en sus worktrees (plan semanal
+  recien reiniciado: 13 % al lanzar). Equipo 1 QA opus (qa/revision-inicial, 8111), 3a motor de reportes
+  opus (feat/reportes-motor, 8112), 2 recuento y permisos opus (feat/recuento-lineas-permisos, 8113),
+  4 UI/upbar/manual sonnet (feat/ui-upbar-manual, 8114), 5 WhatsApp/analisis sonnet
+  (feat/whatsapp-persona-analisis, 8115). Briefs en 03-BRIEFS-EQUIPOS.md. Orden de integracion previsto:
+  3a -> 2 -> 5 -> 4 (layouts al final), luego suite + build + QA de entrega + deploy (E1).
+  Pendientes del cliente: definicion de "servidores", volcado de BD de produccion, 30 ministerios,
+  cuenta Meta.
