@@ -109,6 +109,7 @@ Route::middleware(['auth', 'role:admin,tesorero'])->group(function () {
     // Avisos de WhatsApp a los líderes (culto creado, sobres alcanzados): panel con pendientes e historial
     Route::get('avisos', [App\Http\Controllers\AvisoWhatsAppController::class, 'index'])->name('avisos.index');
     Route::post('avisos/{aviso}/enviado', [App\Http\Controllers\AvisoWhatsAppController::class, 'marcarEnviado'])->name('avisos.enviado');
+    Route::post('avisos/{aviso}/enviar', [App\Http\Controllers\AvisoWhatsAppController::class, 'enviarAhora'])->middleware('throttle:20,1')->name('avisos.enviar-ahora');
     Route::post('avisos/{aviso}/descartar', [App\Http\Controllers\AvisoWhatsAppController::class, 'descartar'])->name('avisos.descartar');
 
     // Recuento (Sobres)

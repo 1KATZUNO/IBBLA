@@ -11,7 +11,11 @@ use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use InvalidArgumentException;
 use Throwable;
+
+use function Illuminate\Support\defer;
 
 /**
  * Crea los avisos de WhatsApp para los líderes de la iglesia (un aviso por destinatario y evento).
@@ -19,6 +23,10 @@ use Throwable;
  * Destinatarios: usuarios de la iglesia cuyo rol está en config('whatsapp.avisos.roles')
  * (admin y tesorero por defecto) y que tienen un teléfono válido. Con el driver meta (y
  * credenciales) cada aviso se envía solo con un job; con link queda pendiente en el panel /avisos.
+ *
+ * Con el driver callmebot cada líder decide por sí mismo: quien activó WhatsApp en su perfil recibe el
+ * aviso solo (después de responder la petición, sin cola); quien no, lo tiene pendiente en el panel
+ * para mandarlo con un toque (wa.me). Un aviso que no pudo salir también queda pendiente: nunca se pierde.
  */
 class AvisosWhatsAppService
 {
@@ -173,6 +181,12 @@ class AvisosWhatsAppService
      */
     private function enviarSiEsAutomatico(Collection $avisos): void
     {
+        if ($this->whatsapp->usaClavePorReceptor()) {
+            $this->enviarConClave($avisos);
+
+            return;
+        }
+
         if (! $this->whatsapp->puedeEnviar()) {
             return;
         }
@@ -184,6 +198,75 @@ class AvisosWhatsAppService
                 report($e);
             }
         }
+    }
+
+    /**
+     * Driver callmebot: manda cada aviso a quien tiene clave. En una petición web va después de enviar
+     * la respuesta (defer): CallMeBot es un tercero sin garantía y crear un culto no debe esperarlo, y
+     * en un hosting compartido no hay un worker de colas que lo haga. En consola (comandos, tests) va
+     * en línea. Un fallo no tumba nada: el aviso sigue pendiente en el panel.
+     *
+     * @param  Collection<int, AvisoWhatsApp>  $avisos
+     */
+    private function enviarConClave(Collection $avisos): void
+    {
+        if ($avisos->isEmpty()) {
+            return;
+        }
+
+        $enviar = function () use ($avisos): void {
+            foreach ($avisos as $aviso) {
+                $this->enviarAviso($aviso);
+            }
+        };
+
+        if (app()->runningInConsole()) {
+            $enviar();
+        } else {
+            defer($enviar);
+        }
+    }
+
+    /**
+     * Envía un aviso pendiente al WhatsApp de su destinatario con la clave que este activó, y lo marca
+     * enviado (por el sistema, o por quien lo pidió desde el panel). Devuelve null si salió, o el motivo
+     * (sin la clave) si no: el destinatario ya no existe, no activó WhatsApp, cambió de teléfono o
+     * CallMeBot no lo aceptó.
+     */
+    public function enviarAviso(AvisoWhatsApp $aviso, ?User $por = null): ?string
+    {
+        // Pudieron atenderlo a mano (o descartarlo) mientras tanto.
+        $aviso = AvisoWhatsApp::withoutGlobalScopes()->find($aviso->id);
+
+        if ($aviso === null || ! $aviso->estaPendiente()) {
+            return 'El aviso ya no estaba pendiente.';
+        }
+
+        $usuario = $aviso->user_id ? User::find($aviso->user_id) : null;
+
+        if ($usuario === null) {
+            return 'El aviso no tiene un usuario que lo reciba por WhatsApp.';
+        }
+
+        try {
+            $destinatario = $this->whatsapp->destinatario($usuario);
+
+            if (! $this->whatsapp->puedeEnviarA($destinatario)) {
+                return "{$destinatario->nombre} no tiene WhatsApp automático activado.";
+            }
+
+            $this->whatsapp->enviarA($destinatario, $aviso->mensaje);
+        } catch (WhatsAppEnvioException|WhatsAppNoConfiguradoException|InvalidArgumentException $e) {
+            // El mensaje ya viene sin la clave ni el texto del aviso (ver CallMeBotDriver).
+            Log::warning('WhatsApp: el aviso quedó pendiente porque no se pudo enviar solo.', ['aviso_id' => $aviso->id, 'motivo' => $e->getMessage()]);
+
+            return $e->getMessage();
+        }
+
+        // $por es quien pulsó «Enviar ahora»; null cuando lo envió el sistema solo.
+        $aviso->marcarEnviado($por);
+
+        return null;
     }
 
     /** Pantalla del recuento del culto: es a donde llevan los avisos. */
