@@ -177,6 +177,8 @@ class ActivacionWhatsAppService
             EnlaceCallMeBot::VACIO => 'Pegue aquí el mensaje que le respondió el bot. '.$copiar,
             EnlaceCallMeBot::OTRO_SITIO => 'Ese enlace no es de CallMeBot. Debe empezar con https://api.callmebot.com/whatsapp.php?phone=... '.$copiar,
             EnlaceCallMeBot::SIN_CLAVE => 'A ese enlace le falta la clave (apikey=...). '.$copiar,
+            EnlaceCallMeBot::PARECE_TELEFONO => 'Eso parece un número de teléfono, no la clave. La clave es el número que le escribió el bot '
+                .'después de «Your APIKEY is» (suele tener 6 o 7 cifras). '.$copiar,
             default => 'No encontramos el enlace del bot en lo que pegó. Debe empezar con https://api.callmebot.com/whatsapp.php?phone=... '.$copiar,
         };
     }

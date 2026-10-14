@@ -18,6 +18,9 @@ use Illuminate\Support\Facades\Http;
  *  - Los errores de conexión de cURL traen la URL completa, es decir, la clave. Nada de lo que sale de
  *    aquí (excepciones, logs, mensajes en pantalla) lleva la clave ni el texto del mensaje, que puede
  *    contener un enlace firmado al informe de la persona.
+ *
+ * Respuesta real observada el 13/10/2026 (HTTP 200, text/html, en ~1,5 s), con las etiquetas pegadas:
+ *   <p>Message to: +506XXXXXXXX<p>Text to send: Prueba de IBBLA<p><b>Message queued.</b> You will receive it in a few seconds.
  */
 class CallMeBotDriver implements WhatsAppDriverConClave
 {
@@ -89,7 +92,7 @@ class CallMeBotDriver implements WhatsAppDriverConClave
     /** Lo que CallMeBot contestó, sin la clave, sin el mensaje enviado y sin enlaces: cabe en un aviso en pantalla. */
     private function describirError(Response $respuesta, string $apikey, string $mensaje): string
     {
-        $detalle = self::limpiar(trim(strip_tags((string) $respuesta->body())), $apikey, $mensaje);
+        $detalle = self::limpiar((string) $respuesta->body(), $apikey, $mensaje);
 
         return 'CallMeBot respondió '.$respuesta->status().($detalle !== '' ? ': '.$detalle : ' sin detalle').'.';
     }
@@ -100,6 +103,8 @@ class CallMeBotDriver implements WhatsAppDriverConClave
      */
     private static function limpiar(string $texto, string $apikey, string $mensaje): string
     {
+        // Las etiquetas se vuelven espacios: el cuerpo de CallMeBot trae «<p>Message to: ...<p>Text to send: ...» pegado.
+        $texto = (string) preg_replace('/<[^>]*>/', ' ', $texto);
         $texto = html_entity_decode($texto, ENT_QUOTES | ENT_HTML5, 'UTF-8');
 
         foreach (array_filter([$apikey, $mensaje, rawurlencode($mensaje), urlencode($mensaje)]) as $secreto) {
@@ -107,6 +112,8 @@ class CallMeBotDriver implements WhatsAppDriverConClave
         }
 
         $texto = (string) preg_replace('~https?://\S+~i', '[enlace]', $texto);
+        // CallMeBot repite a quién y qué se mandó; eso no explica el error y solo ocupa lugar.
+        $texto = (string) preg_replace(['/Message to:\s*\+?\d+/i', '/Text to send:\s*\[mensaje\]/i'], '', $texto);
         $texto = trim((string) preg_replace('/\s+/u', ' ', $texto));
 
         return mb_strlen($texto) > 200 ? rtrim(mb_substr($texto, 0, 200)).'…' : $texto;

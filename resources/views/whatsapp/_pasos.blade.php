@@ -35,6 +35,7 @@
             <h4 class="text-lg font-semibold text-gray-900">Paso 3. Copie la respuesta del bot</h4>
             <p class="text-base text-gray-700">El bot le responde con un mensaje que trae un <strong>enlace largo</strong>. Deje el dedo sobre ese mensaje y toque <strong>Copiar</strong>.</p>
             <p class="text-base text-gray-700">Después péguelo en el cuadro de aquí abajo.</p>
+            <p class="text-sm text-gray-600">Si el bot le dice «You already have an apikey», no se preocupe: ese mensaje también trae su enlace y sirve igual.</p>
         </div>
     </li>
 </ol>
@@ -46,6 +47,7 @@
 @else
 <form method="POST" action="{{ route($rutas['guardar']) }}" class="mt-6 space-y-4" autocomplete="off">
     @csrf
+    @if($volver !== '')<input type="hidden" name="volver" value="{{ $volver }}">@endif
     <div>
         <label for="whatsapp-enlace" class="block text-lg font-semibold text-gray-900">Pegue aquí el mensaje que le respondió el bot</label>
         <textarea id="whatsapp-enlace" name="enlace" rows="4" required spellcheck="false" autocomplete="off" autocapitalize="off"
@@ -54,7 +56,7 @@
         @if($bolsa->has('enlace'))
         <p class="mt-2 text-base text-red-700" role="alert">{{ $bolsa->first('enlace') }}</p>
         @endif
-        <p class="mt-2 text-sm text-gray-600">Debe ser el enlace del número <strong>{{ $telefonoFormateado }}</strong>, que es el que {{ $tipo === 'persona' ? 'la iglesia tiene registrado para usted' : 'tiene registrado su usuario' }}.</p>
+        <p class="mt-2 text-sm text-gray-600">Debe ser el enlace del número <strong>{{ $telefonoFormateado }}</strong>, que es el que {{ $tipo === 'persona' ? 'la iglesia tiene registrado para usted' : 'tiene registrado su usuario' }}. También puede pegar solo la clave (el número de 6 o 7 cifras que dice «Your APIKEY is»).</p>
     </div>
 
     <div>

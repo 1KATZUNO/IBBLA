@@ -160,4 +160,39 @@ class EnlaceCallMeBotTest extends TestCase
     {
         $this->assertNull(EnlaceCallMeBot::analizar(null));
     }
+
+    public function test_acepta_la_respuesta_real_cuando_el_numero_ya_estaba_activado(): void
+    {
+        $mensaje = 'You already have an apikey. Your apikey is 1234567 You can send a test messages using the url '
+            .'https://api.callmebot.com/whatsapp.php?phone=50688887777&text=This+is+a+Test&apikey=1234567';
+
+        $e = EnlaceCallMeBot::analizar($mensaje);
+
+        $this->assertSame('1234567', $e?->apikey);
+        $this->assertSame('50688887777', $e->telefono);
+        $this->assertTrue($e->traeTelefono);
+    }
+
+    public function test_acepta_la_clave_sola(): void
+    {
+        foreach (['1234567', "  1234567\n", '123456', '98765432109', 'k3y-77_ab'] as $pegado) {
+            $e = EnlaceCallMeBot::analizar($pegado);
+
+            $this->assertNotNull($e, $pegado);
+            $this->assertSame(trim($pegado), $e->apikey);
+            $this->assertNull($e->telefono);
+            $this->assertFalse($e->traeTelefono);
+        }
+    }
+
+    public function test_un_telefono_pegado_solo_no_se_toma_por_la_clave(): void
+    {
+        foreach (['88887777', '8888-7777', '50688887777', '+50688887777'] as $telefono) {
+            $this->assertNull(EnlaceCallMeBot::analizar($telefono), $telefono);
+        }
+
+        $this->assertSame(EnlaceCallMeBot::PARECE_TELEFONO, EnlaceCallMeBot::diagnostico('88887777'));
+        $this->assertSame(EnlaceCallMeBot::PARECE_TELEFONO, EnlaceCallMeBot::diagnostico('50688887777'));
+        $this->assertSame(EnlaceCallMeBot::SIN_ENLACE, EnlaceCallMeBot::diagnostico('hola'), 'Una palabra suelta no es un teléfono');
+    }
 }

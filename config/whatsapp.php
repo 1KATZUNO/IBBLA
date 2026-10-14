@@ -51,16 +51,23 @@ return [
     |   - Responde HTTP 200 aunque falle: el éxito se reconoce por «Message queued» en la respuesta.
     |   - Para algo sostenido hay opciones de pago (Twilio, TextMeBot) o la API oficial de Meta.
     |
-    | bot_numero: número del bot que se muestra en la guía. CallMeBot lo cambia de vez en cuando:
-    | verifíquelo en callmebot.com antes de activar a la gente (ARCA usó otro número en octubre).
+    | bot_numero: número del bot que se muestra en la guía. CallMeBot lo cambia de vez en cuando
+    | (el 13/10/2026 el bot que respondió una activación real fue el +34 644 91 07 79; ARCA usó otro
+    | en octubre y callmebot.com mostraba otro): si la gente dice que el bot no le contesta, verifique
+    | el número vigente y cámbielo con WHATSAPP_CALLMEBOT_BOT_NUMERO sin tocar código.
     | frase_activacion: el mensaje exacto que se le manda al bot.
+    |
+    | Lo que contesta el bot: la primera vez «API Activated for your phone number. Your APIKEY is 1234567»
+    | y, si ese número ya estaba activado, «You already have an apikey. Your apikey is 1234567 You can send
+    | a test messages using the url https://api.callmebot.com/whatsapp.php?phone=506...&text=...&apikey=1234567».
+    | La persona puede pegar el mensaje completo, el enlace o solo la clave: las tres formas se aceptan.
     */
     'callmebot' => [
         'url' => env('WHATSAPP_CALLMEBOT_URL', 'https://api.callmebot.com/whatsapp.php'),
         // Segundos máximos para conectar y para recibir la respuesta: un tercero sin SLA no debe colgar la pantalla.
         'connect_timeout' => (int) env('WHATSAPP_CALLMEBOT_CONNECT_TIMEOUT', 3),
         'timeout' => (int) env('WHATSAPP_CALLMEBOT_TIMEOUT', 10),
-        'bot_numero' => env('WHATSAPP_CALLMEBOT_BOT_NUMERO', '+34 621 34 22 27'),
+        'bot_numero' => env('WHATSAPP_CALLMEBOT_BOT_NUMERO', '+34 644 91 07 79'),
         'frase_activacion' => env('WHATSAPP_CALLMEBOT_FRASE', 'I allow callmebot to send me messages'),
         'ayuda_url' => 'https://www.callmebot.com/blog/free-api-whatsapp-messages/',
     ],

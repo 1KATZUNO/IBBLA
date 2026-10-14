@@ -1,6 +1,7 @@
 @if($visible)
 @php
-    $bolsa = $errors->getBag('whatsapp');
+    // $errors solo existe dentro de una petición web: fuera de ella (otra vista, una prueba) la tarjeta igual se dibuja.
+    $bolsa = isset($errors) ? $errors->getBag('whatsapp') : new \Illuminate\Support\MessageBag();
     $aviso = session('whatsapp_aviso');
     $esPersona = $tipo === 'persona';
     $verificada = $activacion?->verificado_at !== null;
@@ -88,11 +89,13 @@
             <div class="flex flex-wrap gap-3">
                 <form method="POST" action="{{ route($rutas['probar']) }}" onsubmit="this.querySelector('button').disabled = true;">
                     @csrf
+                    @if($volver !== '')<input type="hidden" name="volver" value="{{ $volver }}">@endif
                     <button type="submit" class="btn-success">Enviar mensaje de prueba</button>
                 </form>
                 <form method="POST" action="{{ route($rutas['desactivar']) }}" onsubmit="return confirm('¿Desactivar los avisos por WhatsApp? Borraremos su clave y dejará de recibirlos.');">
                     @csrf
                     @method('DELETE')
+                    @if($volver !== '')<input type="hidden" name="volver" value="{{ $volver }}">@endif
                     <button type="submit" class="btn-danger-soft">Desactivar</button>
                 </form>
             </div>

@@ -26,7 +26,7 @@
     </div>
 
     {{-- Avisos por WhatsApp (CallMeBot): la tarjeta solo se dibuja con WHATSAPP_DRIVER=callmebot --}}
-    <x-whatsapp-activacion :receptor="$persona" tipo="persona" />
+    <x-whatsapp-activacion :receptor="$persona ?? null" volver="mi-perfil" />
 
     <!-- Resumen General -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">

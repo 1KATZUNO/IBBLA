@@ -330,4 +330,33 @@ class ActivacionWhatsAppServicioTest extends TestCase
         $this->assertStringContainsString('estado de cuenta', $persona);
         $this->assertStringContainsString('avisos del sistema', $usuario);
     }
+
+    public function test_activar_con_la_clave_sola_usa_el_numero_registrado(): void
+    {
+        $activacion = $this->servicio()->activar($this->ana, ' 7654321 ', true);
+
+        $this->assertSame('7654321', $activacion->clave());
+        $this->assertSame('50688887777', $activacion->telefono);
+    }
+
+    public function test_activar_con_el_mensaje_real_de_un_numero_ya_activado(): void
+    {
+        $this->servicio()->activar(
+            $this->ana,
+            'You already have an apikey. Your apikey is 1234567 You can send a test messages using the url '
+            .'https://api.callmebot.com/whatsapp.php?phone=50688887777&text=This+is+a+Test&apikey=1234567',
+            true,
+        );
+
+        $this->assertSame('1234567', $this->ana->fresh()->activacionWhatsApp->clave());
+    }
+
+    public function test_pegar_el_telefono_en_lugar_de_la_clave_se_explica(): void
+    {
+        $errores = $this->erroresAl(fn () => $this->servicio()->activar($this->ana, '88887777', true));
+
+        $this->assertStringContainsString('parece un número de teléfono, no la clave', $errores['enlace']);
+        $this->assertStringContainsString('Your APIKEY is', $errores['enlace']);
+        $this->assertSame(0, ActivacionWhatsApp::withoutGlobalScopes()->count());
+    }
 }

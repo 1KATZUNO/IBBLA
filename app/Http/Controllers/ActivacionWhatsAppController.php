@@ -112,11 +112,15 @@ class ActivacionWhatsAppController extends Controller
         return $usuario;
     }
 
+    /**
+     * Adonde se vuelve tras cada acción: Mi perfil para la persona, y para un usuario del sistema su perfil de
+     * usuario, salvo que la tarjeta estuviera en Mi perfil (campo «volver», solo con ese valor y ningún otro).
+     */
     private function destino(Request $request): string
     {
-        $ruta = $request->route('tipo') === ActivacionWhatsAppService::PERSONA ? route('mi-perfil.index') : route('profile.edit');
+        $enMiPerfil = $request->route('tipo') === ActivacionWhatsAppService::PERSONA || $request->input('volver') === 'mi-perfil';
 
-        return $ruta.'#whatsapp';
+        return ($enMiPerfil ? route('mi-perfil.index') : route('profile.edit')).'#whatsapp';
     }
 
     /** Vuelve a la tarjeta con el aviso que ella misma muestra (no depende de cómo pinte el layout los mensajes). */

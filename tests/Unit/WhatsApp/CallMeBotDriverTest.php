@@ -258,4 +258,36 @@ class CallMeBotDriverTest extends TestCase
         config(['whatsapp.driver' => 'link']);
         $this->assertFalse((new WhatsAppService())->usaClavePorReceptor());
     }
+
+    public function test_la_respuesta_real_de_callmebot_se_reconoce_como_exito(): void
+    {
+        // Cuerpo observado el 13/10/2026 (HTTP 200, text/html): etiquetas pegadas y el texto repetido.
+        Http::fake(['api.callmebot.com/*' => Http::response(
+            '<p>Message to: +50688887777<p>Text to send: Prueba de IBBLA ✅ CallMeBot funciona<p><b>Message queued.</b> You will receive it in a few seconds.',
+            200,
+            ['Content-Type' => 'text/html; charset=UTF-8'],
+        )]);
+
+        $this->driver()->enviarConClave('50688887777', 'Prueba de IBBLA ✅ CallMeBot funciona', '123456');
+
+        $this->addToAssertionCount(1);
+    }
+
+    public function test_un_error_con_el_mismo_formato_no_repite_a_quien_ni_el_texto_enviado(): void
+    {
+        Http::fake(['*' => Http::response(
+            '<p>Message to: +50688887777<p>Text to send: Hola Ana, su informe<p><b>ERROR</b>: APIKey 987654 is invalid or phone number not registered',
+            200,
+        )]);
+
+        try {
+            $this->driver()->enviarConClave('50688887777', 'Hola Ana, su informe', '987654');
+            $this->fail('Debió lanzar WhatsAppEnvioException');
+        } catch (WhatsAppEnvioException $e) {
+            $this->assertSame('CallMeBot respondió 200: ERROR : APIKey *** is invalid or phone number not registered.', $e->getMessage());
+            $this->assertStringNotContainsString('Message to', $e->getMessage());
+            $this->assertStringNotContainsString('+50688887777', $e->getMessage());
+            $this->assertStringNotContainsString('Hola Ana', $e->getMessage());
+        }
+    }
 }
