@@ -5,6 +5,7 @@
 
 @section('content')
 @php
+    $permisoCrearCulto = Gate::inspect('create', \App\Models\Culto::class);
     $selectClase = 'w-full min-h-[44px] rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm';
     $estados = [
         '' => ['Todos', $conteo['total']],
@@ -19,9 +20,9 @@
             <h2 class="text-lg font-semibold text-gray-900">Cultos</h2>
             <p class="text-sm text-gray-500">Toca una línea para abrir el culto y registrar o revisar sus sobres.</p>
         </div>
-        @if(Auth::user()->canAccessAdmin())
-            <a href="{{ route('cultos.create') }}" class="btn-primary">+ Nuevo culto</a>
-        @endif
+        <x-permiso :permiso="$permisoCrearCulto">
+            <a href="{{ route('cultos.create', ['desde' => 'recuento']) }}" class="btn-primary">+ Nuevo culto</a>
+        </x-permiso>
     </div>
 
     {{-- Filtros arriba de la tabla --}}
@@ -140,9 +141,11 @@
                                 @else
                                     <p class="text-base font-semibold text-gray-800">Todavía no hay cultos</p>
                                     <p class="mt-1 text-sm text-gray-500">Para registrar sobres primero hay que crear el culto.</p>
-                                    @if(Auth::user()->canAccessAdmin())
-                                        <a href="{{ route('cultos.create') }}" class="btn-primary mt-4">+ Nuevo culto</a>
-                                    @endif
+                                    <div class="mt-4">
+                                        <x-permiso :permiso="$permisoCrearCulto">
+                                            <a href="{{ route('cultos.create', ['desde' => 'recuento']) }}" class="btn-primary">+ Nuevo culto</a>
+                                        </x-permiso>
+                                    </div>
                                 @endif
                             </td>
                         </tr>

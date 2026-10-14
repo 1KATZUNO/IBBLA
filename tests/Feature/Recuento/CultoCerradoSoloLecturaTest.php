@@ -97,7 +97,7 @@ class CultoCerradoSoloLecturaTest extends TestCase
         $this->actingAs($this->tesorero)
             ->postJson(route('recuento.store'), ['culto_id' => $this->cerrado->id, 'metodo_pago' => 'efectivo', 'detalles' => [['categoria' => 'diezmo', 'monto' => 100]]])
             ->assertForbidden()
-            ->assertJsonFragment(['message' => 'Cerrado el 11/10 por Ana Tesorera. Solo lectura: si hay que corregir algo, pídele al administrador que lo corrija.']);
+            ->assertJsonFragment(['message' => 'Cerrado el 11/10 por Ana Tesorera. Solo lectura: si hay que corregir algo, pídele al administrador que lo corrija o que te dé acceso de edición.']);
     }
 
     public function test_el_admin_si_corrige_un_culto_cerrado(): void

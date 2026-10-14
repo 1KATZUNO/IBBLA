@@ -156,10 +156,22 @@ Route::middleware(['auth', 'role:admin,asistente', 'audit'])->group(function () 
     Route::get('/ingresos-asistencia/excel-promesas', [IngresosAsistenciaController::class, 'excelPromesas'])->name('ingresos-asistencia.excel-promesas');
 });
 
+// Crear cultos: el administrador y quien tenga un acceso de edicion vigente (CultoPolicy::create).
+// Va antes del grupo de admin para que 'cultos/create' no lo tome la ruta cultos/{culto}.
+Route::middleware(['auth', 'can:create,App\Models\Culto', 'audit'])->group(function () {
+    Route::get('cultos/create', [CultoController::class, 'create'])->name('cultos.create');
+    Route::post('cultos', [CultoController::class, 'store'])->name('cultos.store');
+});
+
 // Solo admin
 Route::middleware(['auth', 'role:admin', 'audit'])->group(function () {
-    // Cultos
-    Route::resource('cultos', CultoController::class);
+    // Cultos (crear esta arriba, con su propia regla)
+    Route::resource('cultos', CultoController::class)->except(['create', 'store']);
+
+    // Accesos de edicion: quien puede corregir cultos cerrados, hasta cuando, y lo que cambio con ellos
+    Route::get('/admin/accesos', [App\Http\Controllers\AccesoEdicionController::class, 'index'])->name('admin.accesos.index');
+    Route::post('/admin/accesos', [App\Http\Controllers\AccesoEdicionController::class, 'store'])->name('admin.accesos.store');
+    Route::delete('/admin/accesos/{permiso}', [App\Http\Controllers\AccesoEdicionController::class, 'destroy'])->name('admin.accesos.destroy');
 
     // Administración de Ministerios / Áreas de Servicio
     Route::prefix('admin/ministerios')->name('admin.ministerios.')->group(function () {

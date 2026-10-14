@@ -10,7 +10,18 @@
             <svg class="w-5 h-5 mt-0.5 flex-shrink-0 text-gray-500" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true"><path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/></svg>
             <div class="text-sm">
                 <p class="font-semibold">{{ $cerradoTexto }} · solo lectura</p>
-                <p>Puedes ver todo y descargar el PDF, pero no agregar ni editar. Si hay que corregir algo, pídele al administrador que lo corrija.</p>
+                <p>Puedes ver todo y descargar el PDF, pero no agregar ni editar. Si hay que corregir algo, pídele al administrador que lo corrija o que te dé acceso de edición.</p>
+            </div>
+        </div>
+    @elseif($accesoUsado)
+        <div class="flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-blue-900" role="status">
+            <svg class="w-5 h-5 mt-0.5 flex-shrink-0 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/></svg>
+            <div class="text-sm">
+                <p class="font-semibold">{{ $cerradoTexto }} · tienes acceso de edición</p>
+                <p>
+                    {{ $accesoUsado->otorgadoPor ? $accesoUsado->otorgadoPor->name.' te dio' : 'Te dieron' }} permiso para corregirlo{{ $accesoUsado->vence_el ? ' hasta el '.$accesoUsado->vence_el->format('d/m/Y') : '' }}.
+                    Cada cambio recalcula los totales y queda registrado con tu nombre.
+                </p>
             </div>
         </div>
     @else
@@ -18,7 +29,10 @@
             <svg class="w-5 h-5 mt-0.5 flex-shrink-0 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
             <div class="text-sm">
                 <p class="font-semibold">{{ $cerradoTexto }} · lo estás corrigiendo como administrador</p>
-                <p>Cada cambio recalcula los totales con el tipo de cambio congelado al cerrar. Los tesoreros lo ven en solo lectura.</p>
+                <p>
+                    Cada cambio recalcula los totales con el tipo de cambio congelado al cerrar y queda en la auditoría. Los tesoreros lo ven en solo lectura.
+                    <a href="{{ route('admin.accesos.index', ['culto_id' => $culto->id]) }}" class="font-semibold underline hover:no-underline">Dar acceso a un tesorero para corregirlo</a>
+                </p>
             </div>
         </div>
     @endif

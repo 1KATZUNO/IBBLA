@@ -12,6 +12,7 @@ use App\Models\SobreDetalle;
 use App\Models\TenantServiceType;
 use App\Models\TipoCambio;
 use App\Services\CalculoTotalesCultoService;
+use App\Services\PermisosEdicionService;
 use App\Services\WhatsApp\AvisosWhatsAppService;
 use App\Support\ResumenCulto;
 use Carbon\Carbon;
@@ -22,12 +23,10 @@ use Illuminate\Support\Facades\Gate;
 
 class RecuentoController extends Controller
 {
-    protected $calculoService;
-
-    public function __construct(CalculoTotalesCultoService $calculoService)
-    {
-        $this->calculoService = $calculoService;
-    }
+    public function __construct(
+        protected CalculoTotalesCultoService $calculoService,
+        protected PermisosEdicionService $permisosEdicion,
+    ) {}
 
     /**
      * Lista de cultos por lineas: una fila por culto (fecha, dia, tipo, sobres, total, estado)
@@ -84,7 +83,7 @@ class RecuentoController extends Controller
      * Pantalla de un culto: encabezado con su resumen y acciones, sobres, dinero suelto y egresos,
      * resumen por categorias y firmas. Solo este culto: nada de otros cultos en la pantalla.
      */
-    public function culto(Culto $culto)
+    public function culto(Request $request, Culto $culto)
     {
         $culto->load(['totales', 'serviceType', 'cerradoPor:id,name']);
         $categorias = tenant_categories(['es_ofrenda_suelta' => false]);
@@ -94,8 +93,13 @@ class RecuentoController extends Controller
         $resumen = ResumenCulto::calcular($sobres, $ofrendasSueltas, $egresos, $categorias);
         // Una sola respuesta de la regla para toda la pantalla: habilita, deshabilita (con motivo) u oculta acciones
         $permisoEditar = Gate::inspect('puedeEditarCulto', $culto);
+        // Si el culto esta cerrado y lo puede corregir alguien que no es admin, es por un acceso de edicion
+        $user = $request->user();
+        $accesoUsado = $culto->cerrado && $permisoEditar->allowed() && ! $user->isAdmin() && ! $user->isSuperAdmin()
+            ? $this->permisosEdicion->permisoQueCubre($user, $culto)
+            : null;
 
-        return view('recuento.culto', compact('culto', 'categorias', 'sobres', 'ofrendasSueltas', 'egresos', 'resumen', 'permisoEditar'));
+        return view('recuento.culto', compact('culto', 'categorias', 'sobres', 'ofrendasSueltas', 'egresos', 'resumen', 'permisoEditar', 'accesoUsado'));
     }
 
     /** Antes un culto cerrado se veia en un modal; ahora tiene su pantalla (en solo lectura si corresponde). */
@@ -202,7 +206,7 @@ class RecuentoController extends Controller
         $this->guardarDetalles($sobre, $validated['detalles']);
         $this->auditar($request, 'POST', 'recuento.store', 'Agregar Sobre', $this->datosSobre($sobre));
 
-        $this->calculoService->recalcular($culto);
+        $this->despuesDeCambiar($request, $culto, 'Agregar sobre', $this->datosSobre($sobre));
 
         // Aviso por WhatsApp cuando el culto llega a N sobres (una sola vez por culto; nunca interrumpe el registro).
         app(AvisosWhatsAppService::class)->sobreRegistrado($culto);
@@ -257,7 +261,7 @@ class RecuentoController extends Controller
         $this->guardarDetalles($sobre, $validated['detalles']);
         $this->auditar($request, 'PUT', 'recuento.update', 'Editar Sobre', $this->datosSobre($sobre));
 
-        $this->calculoService->recalcular($culto);
+        $this->despuesDeCambiar($request, $culto, 'Editar sobre', $this->datosSobre($sobre));
 
         return $this->alCulto($culto->id, 'success', 'Sobre actualizado correctamente.');
     }
@@ -270,8 +274,8 @@ class RecuentoController extends Controller
         $datos = $this->datosSobre($sobre);
         $sobre->delete();
 
-        $this->calculoService->recalcular($culto);
         $this->auditar($request, 'DELETE', 'recuento.destroy', 'Eliminar Sobre', $datos);
+        $this->despuesDeCambiar($request, $culto, 'Eliminar sobre', $datos);
 
         return $this->alCulto($culto->id, 'success', 'Sobre eliminado correctamente.');
     }
@@ -289,7 +293,7 @@ class RecuentoController extends Controller
 
         [$moneda, $tipoCambioVenta] = $this->monedaYTipoCambio($validated['moneda'] ?? null);
 
-        OfrendaSuelta::create([
+        $suelto = OfrendaSuelta::create([
             'culto_id' => $culto->id,
             'monto' => $validated['monto'],
             'moneda' => $moneda,
@@ -298,7 +302,7 @@ class RecuentoController extends Controller
             'descripcion' => $validated['descripcion'] ?? null,
         ]);
 
-        $this->calculoService->recalcular($culto);
+        $this->despuesDeCambiar($request, $culto, 'Agregar dinero suelto', ['suelto_id' => $suelto->id, 'monto' => $suelto->monto]);
 
         return $this->alCulto($culto->id, 'success', 'Dinero suelto registrado correctamente.');
     }
@@ -325,18 +329,18 @@ class RecuentoController extends Controller
             'descripcion' => $validated['descripcion'] ?? null,
         ]);
 
-        $this->calculoService->recalcular($culto);
+        $this->despuesDeCambiar($request, $culto, 'Editar dinero suelto', ['suelto_id' => $suelto->id, 'monto' => $suelto->monto]);
 
         return $this->alCulto($culto->id, 'success', 'Dinero suelto actualizado correctamente.');
     }
 
-    public function destroySuelto(OfrendaSuelta $suelto)
+    public function destroySuelto(Request $request, OfrendaSuelta $suelto)
     {
         $culto = $this->cultoDe($suelto);
         Gate::authorize('puedeEditarCulto', $culto);
 
         $suelto->delete();
-        $this->calculoService->recalcular($culto);
+        $this->despuesDeCambiar($request, $culto, 'Eliminar dinero suelto', ['suelto_id' => $suelto->id, 'monto' => $suelto->monto]);
 
         return $this->alCulto($culto->id, 'success', 'Dinero suelto eliminado correctamente.');
     }
@@ -355,7 +359,7 @@ class RecuentoController extends Controller
 
         [$moneda, $tipoCambioVenta] = $this->monedaYTipoCambio($validated['moneda'] ?? null);
 
-        Egreso::create([
+        $egreso = Egreso::create([
             'culto_id' => $culto->id,
             'monto' => $validated['monto'],
             'moneda' => $moneda,
@@ -363,7 +367,7 @@ class RecuentoController extends Controller
             'descripcion' => $validated['descripcion'] ?? null,
         ]);
 
-        $this->calculoService->recalcular($culto);
+        $this->despuesDeCambiar($request, $culto, 'Agregar egreso', ['egreso_id' => $egreso->id, 'monto' => $egreso->monto]);
 
         return $this->alCulto($culto->id, 'success', 'Egreso registrado correctamente.');
     }
@@ -390,18 +394,18 @@ class RecuentoController extends Controller
             'descripcion' => $validated['descripcion'] ?? null,
         ]);
 
-        $this->calculoService->recalcular($culto);
+        $this->despuesDeCambiar($request, $culto, 'Editar egreso', ['egreso_id' => $egreso->id, 'monto' => $egreso->monto]);
 
         return $this->alCulto($culto->id, 'success', 'Egreso actualizado correctamente.');
     }
 
-    public function destroyEgreso(Egreso $egreso)
+    public function destroyEgreso(Request $request, Egreso $egreso)
     {
         $culto = $this->cultoDe($egreso);
         Gate::authorize('puedeEditarCulto', $culto);
 
         $egreso->delete();
-        $this->calculoService->recalcular($culto);
+        $this->despuesDeCambiar($request, $culto, 'Eliminar egreso', ['egreso_id' => $egreso->id, 'monto' => $egreso->monto]);
 
         return $this->alCulto($culto->id, 'success', 'Egreso eliminado correctamente.');
     }
@@ -461,6 +465,8 @@ class RecuentoController extends Controller
             'firmas_tesoreros_imagenes' => $tesorerosImagenes,
         ]);
 
+        $this->permisosEdicion->registrarCambioEnCerrado($request, $culto, 'Actualizar firmas');
+
         return $this->alCulto($culto->id, 'success', 'Firmas de recuento actualizadas.');
     }
 
@@ -493,6 +499,16 @@ class RecuentoController extends Controller
         $tipoCambio = TipoCambio::hoy();
 
         return ['USD', $tipoCambio?->venta, $tipoCambio?->id];
+    }
+
+    /**
+     * Despues de cualquier cambio en el recuento: recalcula los totales del culto y, si el culto esta
+     * cerrado, deja el cambio en la auditoria (hecho con un acceso de edicion o como correccion del admin).
+     */
+    private function despuesDeCambiar(Request $request, Culto $culto, string $accion, array $detalles = []): void
+    {
+        $this->calculoService->recalcular($culto);
+        $this->permisosEdicion->registrarCambioEnCerrado($request, $culto, $accion, $detalles);
     }
 
     /** @param  array<int, array{categoria: string, monto: mixed}>  $detalles */

@@ -18,11 +18,12 @@ class CultoController extends Controller
         return view('cultos.index', compact('cultos'));
     }
 
-    public function create()
+    public function create(Request $request)
     {
         $serviceTypes = $this->getServiceTypes();
+        $desdeRecuento = $this->vieneDeRecuento($request);
 
-        return view('cultos.create', compact('serviceTypes'));
+        return view('cultos.create', compact('serviceTypes', 'desdeRecuento'));
     }
 
     public function store(Request $request)
@@ -51,6 +52,13 @@ class CultoController extends Controller
 
         // Avisa por WhatsApp a los líderes (un fallo al preparar los avisos no impide crear el culto).
         CultoCreado::dispatch($culto);
+
+        // Desde Recuento (o quien no administra cultos, p. ej. un tesorero con acceso de edicion)
+        // se sigue directo a registrar los sobres del culto nuevo.
+        if ($this->vieneDeRecuento($request)) {
+            return redirect()->route('recuento.culto', $culto)
+                ->with('success', 'Culto creado. Ya puedes registrar sus sobres.');
+        }
 
         return redirect()->route('cultos.index')
             ->with('success', 'Culto registrado correctamente.');
@@ -98,6 +106,12 @@ class CultoController extends Controller
 
         return redirect()->route('cultos.index')
             ->with('success', 'Culto eliminado correctamente.');
+    }
+
+    /** El formulario se abrio desde Recuento, o quien lo usa no gestiona cultos (no entra a la lista de admin). */
+    private function vieneDeRecuento(Request $request): bool
+    {
+        return $request->input('desde') === 'recuento' || ! $request->user()->canAccessAdmin();
     }
 
     private function getServiceTypes()
