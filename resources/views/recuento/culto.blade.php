@@ -5,11 +5,13 @@
 
 @section('content')
 @php
-    // Quien puede modificar este culto: abierto, cualquiera de tesoreria; cerrado, solo el admin.
-    $puedeEditar = ! $culto->cerrado || Auth::user()->isAdmin();
+    // $permisoEditar viene de la regla unica CultoPolicy::puedeEditarCulto (abierto: tesoreria; cerrado: solo el admin)
+    $puedeEditar = $permisoEditar->allowed();
+    $accionesVisibles = ! \App\Support\Permiso::seOculta($permisoEditar);
 @endphp
 <div class="space-y-6">
     @include('recuento.partials.encabezado')
+    @include('recuento.partials.aviso-estado')
     @include('recuento.partials.sobres')
     @include('recuento.partials.movimientos')
     @include('recuento.partials.resumen-categorias')

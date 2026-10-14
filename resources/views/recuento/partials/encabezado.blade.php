@@ -54,11 +54,15 @@
 
         {{-- Acciones a la derecha (en tablet vertical bajan debajo del resumen) --}}
         <div class="toolbar xl:justify-end xl:max-w-xl">
-            @if($puedeEditar)
+            <x-permiso :permiso="$permisoEditar">
                 <a href="{{ route('recuento.create', ['culto_id' => $culto->id]) }}" class="btn-primary">+ Agregar sobre</a>
+            </x-permiso>
+            <x-permiso :permiso="$permisoEditar">
                 <button type="button" class="btn-success" data-abrir-movimiento="suelto">+ Dinero suelto</button>
+            </x-permiso>
+            <x-permiso :permiso="$permisoEditar">
                 <button type="button" class="btn-danger-soft" data-abrir-movimiento="egreso">− Egreso</button>
-            @endif
+            </x-permiso>
             <details class="relative" data-menu>
                 <summary class="btn-secondary list-none cursor-pointer [&::-webkit-details-marker]:hidden">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
@@ -70,7 +74,8 @@
                     <a href="{{ route('ingresos-asistencia.pdf-recuento-transferencias', $culto->id) }}" class="flex items-center min-h-[44px] px-4 text-sm text-gray-700 hover:bg-gray-50">Solo transferencias</a>
                 </div>
             </details>
-            @if(! $culto->cerrado && $puedeEditar)
+            @if(! $culto->cerrado)
+                <x-permiso :permiso="$permisoEditar">
                 <button type="button" class="btn-warning"
                         data-confirmar="#form-cerrar-culto"
                         data-titulo="Cerrar culto"
@@ -80,9 +85,12 @@
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
                     Cerrar culto
                 </button>
-                <form id="form-cerrar-culto" action="{{ route('recuento.cerrar-culto', $culto) }}" method="POST" class="hidden">
-                    @csrf
-                </form>
+                </x-permiso>
+                @if($puedeEditar)
+                    <form id="form-cerrar-culto" action="{{ route('recuento.cerrar-culto', $culto) }}" method="POST" class="hidden">
+                        @csrf
+                    </form>
+                @endif
             @endif
         </div>
     </div>

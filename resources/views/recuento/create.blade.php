@@ -9,16 +9,17 @@
         <form action="{{ route('recuento.store') }}" method="POST" id="sobreForm">
             @csrf
 
-            <input type="hidden" name="culto_id" value="{{ $culto ? $culto->id : request('culto_id') }}">
+            <input type="hidden" name="culto_id" value="{{ $culto->id }}">
 
-            @if($culto)
             <div class="mb-6 p-4 bg-blue-50 rounded-lg">
                 <p class="text-sm text-gray-600">Culto seleccionado:</p>
                 <p class="text-lg font-semibold text-blue-900">
-                    {{ $culto->fecha->format('d/m/Y') }} - {{ ucfirst($culto->tipo_culto) }}
+                    {{ $culto->fecha->format('d/m/Y') }} - {{ $culto->tipo_nombre }}
                 </p>
+                @if($culto->cerrado)
+                    <p class="mt-1 text-sm text-amber-800">Este culto está cerrado: estás agregando el sobre como corrección.</p>
+                @endif
             </div>
-            @endif
 
             <div class="space-y-4">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -133,7 +134,7 @@
                 <div class="mr-auto text-sm text-gray-600">
                     Total: <span class="text-lg font-bold text-blue-700" id="totalBarra">₡0.00</span>
                 </div>
-                <a href="{{ $culto ? route('recuento.culto', $culto) : route('recuento.index') }}" class="btn-secondary">
+                <a href="{{ route('recuento.culto', $culto) }}" class="btn-secondary">
                     Cancelar
                 </a>
                 <button type="submit" id="btnGuardarSobre" class="btn-primary min-w-[150px]">

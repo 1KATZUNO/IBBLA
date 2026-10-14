@@ -16,8 +16,15 @@
         
         <h1 class="text-6xl font-bold text-gray-800 mb-4">403</h1>
         <h2 class="text-3xl font-semibold text-gray-700 mb-4">Acceso Denegado</h2>
-        <p class="text-gray-600 mb-8 max-w-md mx-auto">
-            Lo sentimos, no tienes permiso para acceder a esta página.
+        @php
+            // El motivo viene de la regla que nego el acceso (policy o middleware de roles)
+            $motivo = isset($exception) ? trim((string) $exception->getMessage()) : '';
+            if ($motivo === '' || $motivo === 'This action is unauthorized.' || $motivo === 'Forbidden') {
+                $motivo = 'Lo sentimos, no tienes permiso para acceder a esta página.';
+            }
+        @endphp
+        <p class="text-gray-600 mb-8 max-w-md mx-auto px-4">
+            {{ $motivo }}
         </p>
         
         <div class="space-x-4">
