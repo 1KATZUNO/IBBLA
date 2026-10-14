@@ -99,10 +99,10 @@
                             {{ ucfirst($compromiso->categoria) }}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-900">
-                            ₡{{ number_format($compromiso->monto_prometido, 2) }}
+                            ₡{{ number_format($compromiso->monto_prometido_crc, 2) }}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-right text-blue-600 font-semibold">
-                            ₡{{ number_format($compromiso->monto_dado, 2) }}
+                            ₡{{ number_format($compromiso->monto_dado_crc, 2) }}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-right font-bold {{ $compromiso->saldo_actual >= 0 ? 'text-green-600' : 'text-red-600' }}">
                             {{ $compromiso->saldo_actual >= 0 ? '+' : '-' }}₡{{ number_format(abs($compromiso->saldo_actual), 2) }}

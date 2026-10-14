@@ -4,22 +4,27 @@ namespace App\Http\Controllers;
 
 use App\Models\Compromiso;
 use App\Models\Persona;
-use App\Models\SobreDetalle;
 use App\Models\TipoCambio;
+use App\Services\Reportes\CuentaPersona;
+use App\Services\Reportes\MotorReportes;
+use App\Services\Reportes\PeriodoReporte;
 use Carbon\Carbon;
+use Illuminate\Support\Collection;
 
 class CompromisoController extends Controller
 {
+    public function __construct(private readonly MotorReportes $motor) {}
+
     /**
      * Muestra el estado de compromisos de una persona
      */
     public function show(Persona $persona)
     {
-        $año = request('año', Carbon::now()->year);
-        $mes = request('mes', Carbon::now()->month);
+        $año = (int) request('año', Carbon::now()->year);
+        $mes = (int) request('mes', Carbon::now()->month);
 
         // Obtener o calcular compromisos para el mes seleccionado
-        $compromisos = $this->calcularCompromisos($persona, $año, $mes);
+        $compromisos = $this->sincronizarMes(collect([$persona]), $año, $mes)[$persona->id] ?? collect();
 
         // Obtener historial de compromisos solo desde la fecha de creación de la persona
         $fechaCreacion = Carbon::parse($persona->created_at);
@@ -52,169 +57,84 @@ class CompromisoController extends Controller
     }
 
     /**
-     * Calcula los compromisos de una persona para un mes específico
-     * SIN arrastrar saldos - cada mes es independiente
-     * Comparación SIEMPRE en CRC
+     * Guarda en la tabla compromisos el mes indicado de cada persona y los devuelve.
+     *
+     * Cada mes es independiente (sin arrastrar saldos) y la comparación es en colones. Los montos
+     * en colones salen del motor único de reportes, el mismo del estado de cuenta y del Reporte
+     * General: una fila por categoría de compromiso con promesa (si hay dos promesas de la misma
+     * categoría vale la última, antes salían dos filas y el resumen las sumaba dos veces), lo
+     * prometido según la frecuencia y lo dado con los dólares convertidos.
+     *
+     * @param  iterable<Persona>  $personas
+     * @return array<int, Collection<int, Compromiso>> id de persona => sus compromisos del mes
      */
-    private function calcularCompromisos(Persona $persona, int $año, int $mes)
+    private function sincronizarMes(iterable $personas, int $año, int $mes): array
     {
-        $persona->load('promesas');
-        $tipoCambio = TipoCambio::hoy();
-        $tcVenta = $tipoCambio ? (float) $tipoCambio->venta : 0;
+        // Con detalle: de ahí sale lo dado "en la moneda del sobre" que guarda la columna monto_dado.
+        $resultado = $this->motor->calcular(PeriodoReporte::deMeses($año, $mes, $mes), $personas, conDetalle: true);
+        $delMes = $resultado->periodo->meses()[0];
+        $tipoCambio = $resultado->tipoCambioHoy > 0 ? $resultado->tipoCambioHoy : null;
 
-        $compromisos = collect();
+        $porPersona = [];
+        foreach ($resultado->cuentas() as $cuenta) {
+            $compromisos = collect();
 
-        foreach ($persona->promesas as $promesa) {
-            $montoPrometido = $this->calcularMontoPrometido($promesa, $año, $mes);
-            $esUsd = $promesa->moneda === 'USD';
+            foreach ($cuenta->promesas() as $categoria => $promesa) {
+                $prometidoCrc = $cuenta->esperado($delMes->clave, $categoria);
+                $dadoCrc = $cuenta->dado($delMes->clave, [$categoria]);
 
-            // Convertir prometido a CRC si es USD
-            $montoPrometidoCrc = $esUsd && $tcVenta > 0
-                ? round($montoPrometido * $tcVenta, 2)
-                : $montoPrometido;
-
-            // Calcular dado: suma por moneda
-            $montoDadoCrc = $this->calcularMontoDadoCrc($persona, $promesa->categoria, $año, $mes, $tcVenta);
-
-            // Verificar si ya existe el registro de compromiso
-            $compromiso = Compromiso::firstOrCreate(
-                [
-                    'persona_id' => $persona->id,
-                    'categoria' => $promesa->categoria,
+                $compromiso = Compromiso::firstOrNew([
+                    'persona_id' => $cuenta->id,
+                    'categoria' => $categoria,
                     'año' => $año,
                     'mes' => $mes,
-                ],
-                [
-                    'monto_prometido' => $montoPrometido,
-                    'monto_dado' => 0,
+                ]);
+                $compromiso->fill([
+                    'monto_prometido' => $promesa->montoDelMes($delMes->domingos),
+                    'monto_dado' => $this->dadoSinConvertir($cuenta, $categoria),
                     'saldo_anterior' => 0,
-                    'saldo_actual' => 0,
-                    'moneda_promesa' => $promesa->moneda ?? 'CRC',
-                    'monto_prometido_crc' => $montoPrometidoCrc,
-                    'monto_dado_crc' => $montoDadoCrc,
-                    'tipo_cambio_usado' => $tcVenta > 0 ? $tcVenta : null,
-                ]
-            );
+                    'moneda_promesa' => $promesa->moneda,
+                    'monto_prometido_crc' => $prometidoCrc,
+                    'monto_dado_crc' => $dadoCrc,
+                    'tipo_cambio_usado' => $tipoCambio,
+                    // Saldo en CRC: dado_crc - prometido_crc
+                    'saldo_actual' => $dadoCrc - $prometidoCrc,
+                ]);
+                $compromiso->save();
 
-            // Actualizar valores
-            $compromiso->monto_prometido = $montoPrometido;
-            $compromiso->moneda_promesa = $promesa->moneda ?? 'CRC';
-            $compromiso->monto_prometido_crc = $montoPrometidoCrc;
-            $compromiso->saldo_anterior = 0;
+                $compromisos->push($compromiso);
+            }
 
-            // Calcular lo dado (en moneda original y en CRC)
-            $compromiso->monto_dado = $this->calcularMontoDado($persona, $promesa->categoria, $año, $mes);
-            $compromiso->monto_dado_crc = $montoDadoCrc;
-            $compromiso->tipo_cambio_usado = $tcVenta > 0 ? $tcVenta : null;
-
-            // Saldo en CRC: dado_crc - prometido_crc
-            $compromiso->saldo_actual = $compromiso->monto_dado_crc - $compromiso->monto_prometido_crc;
-            $compromiso->save();
-
-            $compromisos->push($compromiso);
+            $porPersona[$cuenta->id] = $compromisos;
         }
 
-        return $compromisos;
+        return $porPersona;
     }
 
     /**
-     * Calcula el monto prometido según la frecuencia
+     * Suma de los montos tal como se anotaron en los sobres (sin convertir dólares): es lo que
+     * siempre guardó la columna monto_dado y lo que leen el Dashboard de promesas y Servidores.
      */
-    private function calcularMontoPrometido($promesa, int $año, int $mes): float
+    private function dadoSinConvertir(CuentaPersona $cuenta, string $categoria): float
     {
-        $fechaMes = Carbon::create($año, $mes, 1);
-
-        switch ($promesa->frecuencia) {
-            case 'semanal':
-                $domingos = 0;
-                $fecha = $fechaMes->copy()->startOfMonth();
-                $finMes = $fechaMes->copy()->endOfMonth();
-
-                while ($fecha->lte($finMes)) {
-                    if ($fecha->dayOfWeek === Carbon::SUNDAY) {
-                        $domingos++;
-                    }
-                    $fecha->addDay();
-                }
-
-                return $promesa->monto * $domingos;
-
-            case 'quincenal':
-                return $promesa->monto * 2;
-
-            case 'mensual':
-            default:
-                return $promesa->monto;
-        }
-    }
-
-    /**
-     * Calcula lo que la persona ha dado en un mes específico (moneda original)
-     */
-    private function calcularMontoDado(Persona $persona, string $categoria, int $año, int $mes): float
-    {
-        return SobreDetalle::whereHas('sobre', function ($query) use ($persona, $año, $mes) {
-            $query->where('persona_id', $persona->id)
-                ->whereHas('culto', function ($q) use ($año, $mes) {
-                    $q->whereYear('fecha', $año)
-                      ->whereMonth('fecha', $mes);
-                });
-        })
-            ->where('categoria', $categoria)
-            ->sum('monto');
-    }
-
-    /**
-     * Calcula lo dado convertido a CRC (sumando CRC directo + USD convertido)
-     */
-    private function calcularMontoDadoCrc(Persona $persona, string $categoria, int $año, int $mes, float $tcVenta): float
-    {
-        // Dado en CRC (sobres CRC)
-        $dadoCrc = SobreDetalle::whereHas('sobre', function ($query) use ($persona, $año, $mes) {
-            $query->where('persona_id', $persona->id)
-                ->where('moneda', 'CRC')
-                ->whereHas('culto', function ($q) use ($año, $mes) {
-                    $q->whereYear('fecha', $año)
-                      ->whereMonth('fecha', $mes);
-                });
-        })
-            ->where('categoria', $categoria)
-            ->sum('monto');
-
-        // Dado en USD (sobres USD) - convertir con tipo de cambio del sobre o actual
-        $detallesUsd = SobreDetalle::whereHas('sobre', function ($query) use ($persona, $año, $mes) {
-            $query->where('persona_id', $persona->id)
-                ->where('moneda', 'USD')
-                ->whereHas('culto', function ($q) use ($año, $mes) {
-                    $q->whereYear('fecha', $año)
-                      ->whereMonth('fecha', $mes);
-                });
-        })
-            ->where('categoria', $categoria)
-            ->with('sobre')
-            ->get();
-
-        $dadoUsdConvertido = 0;
-        foreach ($detallesUsd as $detalle) {
-            $tc = (float) ($detalle->sobre->tipo_cambio_venta ?? $tcVenta);
-            $dadoUsdConvertido += $tc > 0 ? round((float) $detalle->monto * $tc, 2) : (float) $detalle->monto;
+        $centimos = 0;
+        foreach ($cuenta->detalle as $renglon) {
+            if ($renglon['categoria'] === $categoria) {
+                $centimos += (int) round($renglon['monto'] * 100);
+            }
         }
 
-        return $dadoCrc + $dadoUsdConvertido;
+        return $centimos / 100;
     }
 
     /**
-     * Recalcula todos los compromisos de todas las personas
+     * Recalcula los compromisos del mes en curso de todas las personas activas
      */
     public function recalcular()
     {
-        $personas = Persona::with('promesas')->where('activo', true)->get();
-        $añoActual = Carbon::now()->year;
-        $mesActual = Carbon::now()->month;
+        $personas = Persona::where('activo', true)->get(['id', 'nombre', 'activo']);
 
-        foreach ($personas as $persona) {
-            $this->calcularCompromisos($persona, $añoActual, $mesActual);
-        }
+        $this->sincronizarMes($personas, Carbon::now()->year, Carbon::now()->month);
 
         return redirect()->back()->with('success', 'Compromisos recalculados correctamente.');
     }

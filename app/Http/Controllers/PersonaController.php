@@ -10,6 +10,9 @@ use App\Models\Ministerio;
 use App\Models\User;
 use App\Services\ReporteGeneralPdf;
 use App\Services\ReporteGeneralService;
+use App\Services\Reportes\Dinero;
+use App\Services\Reportes\MotorReportes;
+use App\Services\Reportes\PeriodoReporte;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Hash;
@@ -516,63 +519,54 @@ class PersonaController extends Controller
     }
 
     /**
-     * Genera un reporte PDF de contribuciones acumuladas desde enero hasta el mes actual
+     * Genera un reporte PDF de contribuciones acumuladas desde enero hasta el mes actual: una fila
+     * por persona activa que dio algo, una columna por categoria de la iglesia.
+     *
+     * Las cifras salen del motor unico (Reportes\MotorReportes): antes este reporte sumaba los
+     * montos de los sobres en dolares como si fueran colones; ahora van convertidos con el tipo de
+     * cambio del sobre, igual que en el estado de cuenta y el Reporte General.
      */
-    public function reportePdf(Request $request)
+    public function reportePdf(Request $request, MotorReportes $motor)
     {
         $validated = $request->validate([
             'accion' => 'required|in:ver,descargar',
         ]);
 
         // Calcular desde enero del anio actual hasta el mes actual
-        $anioActual = date('Y');
-        $mesActual = date('n'); // Mes sin cero inicial (1-12)
-
-        $fechaInicio = Carbon::create($anioActual, 1, 1)->startOfMonth();
-        $fechaFin = Carbon::now()->endOfMonth();
-
-        // Titulo del periodo
-        $meses = ['', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-                  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
-        $tituloPeriodo = "Enero - {$meses[$mesActual]} {$anioActual}";
+        $anioActual = now()->year;
+        $mesActual = now()->month;
+        $periodo = PeriodoReporte::deMeses($anioActual, 1, $mesActual);
+        $tituloPeriodo = $periodo->etiqueta();
 
         // Categorías dinámicas del tenant
         $categorias = tenant_categories()->pluck('slug')->toArray();
 
-        // Obtener personas activas con sus sobres del período
         $personas = Persona::where('activo', true)
-            ->with(['sobres' => function($query) use ($fechaInicio, $fechaFin) {
-                $query->whereHas('culto', function($q) use ($fechaInicio, $fechaFin) {
-                    $q->whereBetween('fecha', [$fechaInicio, $fechaFin]);
-                })->with('detalles');
-            }])
             ->orderBy('nombre')
-            ->get();
+            ->get(['id', 'nombre', 'activo']);
+        $resultado = $motor->calcular($periodo, $personas);
 
-        // Calcular totales por categoría
+        // Totales por categoría, en centimos para que el total general cuadre con las filas
         $totalesPorCategoria = array_fill_keys($categorias, 0);
         $totalGeneral = 0;
 
         foreach ($personas as $persona) {
-            // Inicializar contribuciones por categoría
-            $contribuciones = array_fill_keys($categorias, 0);
+            $cuenta = $resultado->cuenta($persona->id);
+            $contribuciones = [];
             $totalPersona = 0;
 
-            foreach ($persona->sobres as $sobre) {
-                foreach ($sobre->detalles as $detalle) {
-                    $cat = $detalle->categoria;
-                    if (isset($contribuciones[$cat])) {
-                        $contribuciones[$cat] += $detalle->monto;
-                        $totalesPorCategoria[$cat] += $detalle->monto;
-                        $totalPersona += $detalle->monto;
-                        $totalGeneral += $detalle->monto;
-                    }
-                }
+            foreach ($categorias as $cat) {
+                $monto = $cuenta->dadoCentimos(null, [$cat]);
+                $contribuciones[$cat] = Dinero::colones($monto);
+                $totalesPorCategoria[$cat] += $monto;
+                $totalPersona += $monto;
             }
+            $totalGeneral += $totalPersona;
 
             $persona->contribuciones = $contribuciones;
-            $persona->total_dado = $totalPersona;
+            $persona->total_dado = Dinero::colones($totalPersona);
         }
+        $totalesPorCategoria = array_map(fn (int $c) => Dinero::colones($c), $totalesPorCategoria);
 
         // Filtrar solo personas que han dado algo
         $personas = $personas->filter(function($persona) {
@@ -584,7 +578,7 @@ class PersonaController extends Controller
             'tituloPeriodo' => $tituloPeriodo,
             'categorias' => $categorias,
             'totalesPorCategoria' => $totalesPorCategoria,
-            'totalGeneral' => $totalGeneral,
+            'totalGeneral' => Dinero::colones($totalGeneral),
         ]);
 
         $pdf->setPaper('letter', 'landscape');
