@@ -92,7 +92,7 @@
                         <td colspan="{{ $accionesVisibles ? 6 : 5 }}" class="px-6 py-10 text-center">
                             <p class="text-base font-semibold text-gray-800">Este culto no tiene sobres</p>
                             @if($puedeEditar)
-                                <p class="mt-1 text-sm text-gray-500">Registra el primero con el botón de abajo.</p>
+                                <p class="mt-1 text-sm text-gray-500">Registra el primero; después sigue con "Guardar y siguiente" sin salir del formulario.</p>
                                 <a href="{{ route('recuento.create', ['culto_id' => $culto->id]) }}" class="btn-primary mt-4">+ Agregar primer sobre</a>
                             @endif
                         </td>

@@ -19,7 +19,10 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 
 class RecuentoController extends Controller
 {
@@ -150,15 +153,25 @@ class RecuentoController extends Controller
         return redirect()->route('recuento.culto', $cultoId)->with($tipo, $mensaje);
     }
 
+    /**
+     * Registrar sobres de un culto, uno tras otro (flujo en docs/plan-oct-2026/FLUJO-SOBRES.md):
+     * solo ese culto en pantalla, con su avance y el ultimo sobre guardado.
+     */
     public function create(Request $request)
     {
         $culto = $this->cultoPedido($request->query('culto_id'));
         Gate::authorize('puedeEditarCulto', $culto);
 
-        $personas = Persona::where('activo', true)->orderBy('nombre')->get();
-        $categorias = tenant_categories(['es_ofrenda_suelta' => false]);
+        $datos = $this->datosFormularioSobre($culto);
+        $sobres = $culto->sobres()->with(['persona', 'detalles'])->orderBy('numero_sobre')->get();
 
-        return view('recuento.create', compact('culto', 'personas', 'categorias'));
+        return view('recuento.create', $datos + [
+            // El mismo resumen que la pantalla del culto, para que el avance cuadre
+            'resumen' => ResumenCulto::calcular($sobres, $culto->ofrendasSueltas, $culto->egresos, $datos['categorias']),
+            'ultimoSobre' => $sobres->last(),
+            // Codigo de envio: si el mismo formulario llega dos veces, se guarda una sola
+            'envio' => (string) Str::uuid(),
+        ]);
     }
 
     public function store(Request $request)
@@ -166,26 +179,17 @@ class RecuentoController extends Controller
         $culto = $this->cultoPedido($request->input('culto_id'));
         Gate::authorize('puedeEditarCulto', $culto);
 
-        $validated = $request->validate([
-            'persona_id' => 'nullable|exists:personas,id',
-            'metodo_pago' => 'required|in:efectivo,transferencia',
-            'comprobante_numero' => 'nullable|required_if:metodo_pago,transferencia|string|max:100',
-            'moneda' => 'nullable|in:CRC,USD',
-            'notas' => 'nullable|string',
-            'detalles' => 'required|array',
-            'detalles.*.categoria' => 'required|string',
-            'detalles.*.monto' => 'required|numeric|min:0',
-        ], [
-            'comprobante_numero.required_if' => 'Para una transferencia hay que anotar el número de comprobante.',
-        ]);
+        $validated = $this->validarSobre($request);
+        $siguiente = $request->boolean('siguiente');
 
-        // Prevenir duplicados: el mismo sobre enviado dos veces en pocos segundos
-        $duplicado = Sobre::where('culto_id', $culto->id)
-            ->where('persona_id', $validated['persona_id'] ?? null)
-            ->where('created_at', '>=', now()->subSeconds(30))
-            ->exists();
-
-        if ($duplicado) {
+        // Doble envio del mismo formulario (doble toque, volver atras y reenviar): se guarda una sola vez.
+        // Sin codigo de envio (otros clientes) sigue la regla vieja de la misma persona en 30 segundos.
+        $envio = (string) $request->input('envio', '');
+        if ($envio !== '') {
+            if (! Cache::add('recuento:envio:'.$envio, true, now()->addHours(12))) {
+                return $this->trasGuardarSobre($culto, $siguiente, 'warning', 'Ese sobre ya se había guardado: el formulario llegó dos veces y se registró una sola.');
+            }
+        } elseif ($this->hayDuplicadoReciente($culto, $validated['persona_id'] ?? null)) {
             return $this->alCulto($culto->id, 'warning', 'Ya se registró un sobre para esta persona en este culto hace unos segundos. Verifique que no sea duplicado.');
         }
 
@@ -196,7 +200,7 @@ class RecuentoController extends Controller
             'persona_id' => $validated['persona_id'] ?? null,
             'metodo_pago' => $validated['metodo_pago'],
             'comprobante_numero' => $validated['metodo_pago'] === 'transferencia' ? ($validated['comprobante_numero'] ?? null) : null,
-            'total_declarado' => collect($validated['detalles'])->sum('monto'),
+            'total_declarado' => $this->totalDetalles($validated['detalles']),
             'moneda' => $moneda,
             'tipo_cambio_venta' => $tipoCambioVenta,
             'tipo_cambio_id' => $tipoCambioId,
@@ -211,7 +215,10 @@ class RecuentoController extends Controller
         // Aviso por WhatsApp cuando el culto llega a N sobres (una sola vez por culto; nunca interrumpe el registro).
         app(AvisosWhatsAppService::class)->sobreRegistrado($culto);
 
-        return $this->alCulto($culto->id, 'success', 'Sobre registrado correctamente.');
+        $quien = $sobre->persona?->nombre ?? 'Anónimo';
+
+        return $this->trasGuardarSobre($culto, $siguiente, 'success',
+            "Sobre #{$sobre->numero_sobre} guardado: {$quien}, {$sobre->simbolo_moneda}".number_format((float) $sobre->total_declarado, 2).'.');
     }
 
     public function edit(Sobre $sobre)
@@ -219,11 +226,9 @@ class RecuentoController extends Controller
         $culto = $this->cultoDe($sobre);
         Gate::authorize('puedeEditarCulto', $culto);
 
-        $sobre->load(['detalles', 'culto']);
-        $personas = Persona::where('activo', true)->orderBy('nombre')->get();
-        $categorias = tenant_categories(['es_ofrenda_suelta' => false]);
+        $sobre->load(['detalles', 'persona']);
 
-        return view('recuento.edit', compact('sobre', 'personas', 'categorias'));
+        return view('recuento.edit', $this->datosFormularioSobre($culto) + ['sobre' => $sobre]);
     }
 
     public function update(Request $request, Sobre $sobre)
@@ -231,18 +236,7 @@ class RecuentoController extends Controller
         $culto = $this->cultoDe($sobre);
         Gate::authorize('puedeEditarCulto', $culto);
 
-        $validated = $request->validate([
-            'persona_id' => 'nullable|exists:personas,id',
-            'metodo_pago' => 'required|in:efectivo,transferencia',
-            'comprobante_numero' => 'nullable|required_if:metodo_pago,transferencia|string|max:100',
-            'moneda' => 'nullable|in:CRC,USD',
-            'notas' => 'nullable|string',
-            'detalles' => 'required|array',
-            'detalles.*.categoria' => 'required|string',
-            'detalles.*.monto' => 'required|numeric|min:0',
-        ], [
-            'comprobante_numero.required_if' => 'Para una transferencia hay que anotar el número de comprobante.',
-        ]);
+        $validated = $this->validarSobre($request);
 
         [$moneda, $tipoCambioVenta, $tipoCambioId] = $this->monedaYTipoCambio($validated['moneda'] ?? null);
 
@@ -250,7 +244,7 @@ class RecuentoController extends Controller
             'persona_id' => $validated['persona_id'] ?? null,
             'metodo_pago' => $validated['metodo_pago'],
             'comprobante_numero' => $validated['metodo_pago'] === 'transferencia' ? ($validated['comprobante_numero'] ?? null) : null,
-            'total_declarado' => collect($validated['detalles'])->sum('monto'),
+            'total_declarado' => $this->totalDetalles($validated['detalles']),
             'moneda' => $moneda,
             'tipo_cambio_venta' => $tipoCambioVenta,
             'tipo_cambio_id' => $tipoCambioId,
@@ -263,7 +257,7 @@ class RecuentoController extends Controller
 
         $this->despuesDeCambiar($request, $culto, 'Editar sobre', $this->datosSobre($sobre));
 
-        return $this->alCulto($culto->id, 'success', 'Sobre actualizado correctamente.');
+        return $this->alCulto($culto->id, 'success', "Sobre #{$sobre->numero_sobre} actualizado.");
     }
 
     public function destroy(Request $request, Sobre $sobre)
@@ -511,11 +505,72 @@ class RecuentoController extends Controller
         $this->permisosEdicion->registrarCambioEnCerrado($request, $culto, $accion, $detalles);
     }
 
+    /** Lo que necesita el formulario de sobre (registrar y editar comparten el mismo). */
+    private function datosFormularioSobre(Culto $culto): array
+    {
+        return [
+            'culto' => $culto,
+            'categorias' => tenant_categories(['es_ofrenda_suelta' => false]),
+            // Para el buscador de persona: solo lo necesario (nombre y PIN)
+            'personas' => Persona::where('activo', true)->orderBy('nombre')->get(['id', 'nombre', 'pin'])
+                ->map(fn (Persona $p) => ['id' => $p->id, 'nombre' => $p->nombre, 'pin' => $p->pin])
+                ->values(),
+        ];
+    }
+
+    /** Reglas del sobre (registrar y editar). Los montos vacios cuentan como cero, pero el total debe ser mayor que cero. */
+    private function validarSobre(Request $request): array
+    {
+        $validated = $request->validate([
+            'persona_id' => 'nullable|exists:personas,id',
+            'metodo_pago' => 'required|in:efectivo,transferencia',
+            'comprobante_numero' => 'nullable|required_if:metodo_pago,transferencia|string|max:100',
+            'moneda' => 'nullable|in:CRC,USD',
+            'notas' => 'nullable|string',
+            'detalles' => 'required|array',
+            'detalles.*.categoria' => 'required|string',
+            'detalles.*.monto' => 'nullable|numeric|min:0',
+        ], [
+            'comprobante_numero.required_if' => 'Para una transferencia hay que anotar el número de comprobante.',
+            'detalles.*.monto.numeric' => 'Los montos tienen que ser números.',
+            'detalles.*.monto.min' => 'Los montos no pueden ser negativos.',
+        ]);
+
+        if ($this->totalDetalles($validated['detalles']) <= 0) {
+            throw ValidationException::withMessages(['detalles' => 'Escribe al menos un monto mayor que cero.']);
+        }
+
+        return $validated;
+    }
+
+    /** @param  array<int, array{categoria: string, monto: mixed}>  $detalles */
+    private function totalDetalles(array $detalles): float
+    {
+        return round(collect($detalles)->sum(fn ($d) => (float) ($d['monto'] ?? 0)), 2);
+    }
+
+    /** "Guardar y siguiente" vuelve al formulario del mismo culto; "Guardar y terminar", a la pantalla del culto. */
+    private function trasGuardarSobre(Culto $culto, bool $siguiente, string $tipo, string $mensaje): RedirectResponse
+    {
+        return $siguiente
+            ? redirect()->route('recuento.create', ['culto_id' => $culto->id])->with($tipo, $mensaje)
+            : $this->alCulto($culto->id, $tipo, $mensaje);
+    }
+
+    /** Regla vieja contra dobles envios, para pedidos sin codigo de envio: misma persona en 30 segundos. */
+    private function hayDuplicadoReciente(Culto $culto, mixed $personaId): bool
+    {
+        return Sobre::where('culto_id', $culto->id)
+            ->where('persona_id', $personaId)
+            ->where('created_at', '>=', now()->subSeconds(30))
+            ->exists();
+    }
+
     /** @param  array<int, array{categoria: string, monto: mixed}>  $detalles */
     private function guardarDetalles(Sobre $sobre, array $detalles): void
     {
         foreach ($detalles as $detalle) {
-            if ((float) $detalle['monto'] > 0) {
+            if ((float) ($detalle['monto'] ?? 0) > 0) {
                 SobreDetalle::create([
                     'sobre_id' => $sobre->id,
                     'categoria' => $detalle['categoria'],
