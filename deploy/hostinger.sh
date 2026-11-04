@@ -24,6 +24,10 @@
 # =============================================================================
 set -uo pipefail
 
+# Todo el trabajo va dentro de main(): bash lee la funcion completa antes de ejecutarla, asi que el
+# git checkout/pull que reemplaza este mismo archivo a mitad de la corrida no la corrompe.
+main() {
+
 RUTA_ESPERADA_SUFIJO="domains/ibbla.eu/public_html"
 PHP_BIN="${PHP_BIN:-php}"
 COMPOSER_BIN="${COMPOSER_BIN:-composer}"
@@ -216,3 +220,7 @@ if [ "$CHEQUEO_OK" -eq 1 ]; then
 fi
 falla "El chequeo final no paso. Revise storage/logs/laravel.log y considere el rollback de arriba."
 exit 1
+}
+
+main "$@"
+exit $?
