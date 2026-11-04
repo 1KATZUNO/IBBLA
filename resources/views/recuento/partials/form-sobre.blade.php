@@ -252,7 +252,8 @@
         const opciones = lista.querySelectorAll('[role="option"]');
         if (e.key === 'ArrowDown' && !lista.classList.contains('hidden')) { e.preventDefault(); marcar(Math.min(marcado + 1, opciones.length - 1)); }
         else if (e.key === 'ArrowUp' && !lista.classList.contains('hidden')) { e.preventDefault(); marcar(Math.max(marcado - 1, 0)); }
-        else if (e.key === 'Escape') { cerrarLista(); }
+        // Escape cierra la lista sin borrar lo escrito (en un campo de busqueda el navegador lo borraria)
+        else if (e.key === 'Escape') { e.preventDefault(); cerrarLista(); }
         else if (e.key === 'Enter') {
             // Enter nunca guarda desde aqui: elige a la persona marcada y pasa a los montos
             e.preventDefault();
