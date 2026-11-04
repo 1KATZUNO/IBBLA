@@ -15,7 +15,7 @@ El sistema usa **WhatsApp** de dos formas:
 - **Enviar por WhatsApp** el estado de cuenta de una persona (un enlace a su PDF) con el mensaje ya escrito.
 - **Avisos de WhatsApp** a los líderes cuando se crea un culto o cuando un culto llega a cierta cantidad de sobres.
 
-> **Importante:** el sistema **no envía mensajes por su cuenta**. Prepara el mensaje y **abre WhatsApp** con él escrito; tú solo tocas **enviar** en WhatsApp. Por eso se necesita el teléfono guardado y WhatsApp instalado o abierto en el navegador.
+> **Importante:** el sistema escribe **solo** a quien **activó WhatsApp en su perfil** (con el bot gratuito CallMeBot; ver *WhatsApp: cómo activar tus avisos* en *Mi perfil y mi cuenta*). A quien no lo activó no se le manda nada solo: el sistema **abre WhatsApp** con el mensaje escrito y tú solo tocas **enviar**. Si un envío automático falla, el aviso queda en el panel para mandarlo a mano; nunca se pierde.
 
 ## Quién puede usarlo
 
@@ -25,7 +25,7 @@ El sistema usa **WhatsApp** de dos formas:
 | **Avisos de WhatsApp** (panel) | Administrador, Tesorero |
 | **Recibir avisos** | Administradores y tesoreros que tengan teléfono en su usuario |
 
-Si quieres recibir **tus propios avisos y tu estado de cuenta** por WhatsApp, activa el servicio en *Mi perfil* (ver *WhatsApp: cómo activar tus avisos* en esa página).
+Si quieres recibir **tus propios avisos y tu estado de cuenta** sin tocar nada, activa WhatsApp en *Mi perfil* o *Mi cuenta* (ver *WhatsApp: cómo activar tus avisos* en esa página).
 
 ## Enviar el estado de cuenta de una persona
 
@@ -38,7 +38,7 @@ El botón de WhatsApp está en tres lugares: el icono verde en el renglón de la
 | **1. Enviar por WhatsApp** | Prepara un enlace al estado de cuenta en PDF de la persona y abre WhatsApp con el mensaje escrito. | Administrador | Solo falta tocar **enviar**. El enlace funciona **7 días** y luego vence. |
 | **Botón gris** | Indica que no se puede enviar. | Administrador | La persona no tiene un teléfono válido: edítala y escribe un número de 8 dígitos (el +506 se agrega solo). |
 
-La persona que recibe el enlace puede abrir el PDF sin entrar al sistema; pasados los 7 días el enlace deja de abrir y hay que mandar uno nuevo.
+Si la persona activó WhatsApp en su perfil, el enlace **le llega solo**; si no, se abre el chat con el mensaje escrito. Quien recibe el enlace puede abrir el PDF sin entrar al sistema; pasados los 7 días el enlace deja de abrir y hay que mandar uno nuevo.
 
 ## Avisos de WhatsApp
 

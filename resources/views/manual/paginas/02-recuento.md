@@ -89,4 +89,6 @@ Al cerrar:
 
 **¿Puedo eliminar un sobre?** Sí, mientras el culto esté abierto, con el icono del basurero y confirmando. En un culto cerrado no se puede eliminar.
 
+**¿Puedo eliminar un culto ya cerrado?** Solo el **Administrador**, desde **Cultos Cerrados (Archivo)** con **Eliminar culto**. El sistema pide confirmar y escribir un **motivo** (obligatorio), y queda en la auditoría qué culto era, su fecha, su total y cuántos sobres tenía. El Tesorero no ve ese botón.
+
 **El sobre es de una persona que no está en la lista.** Usa **+ Agregar Persona Rápida** en el formulario del sobre para crearla con su nombre; después el administrador puede completar sus datos en **Personas**.

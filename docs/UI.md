@@ -309,7 +309,9 @@ palabras: miembros, hermanos   # sinonimos para el buscador
 
 Las capturas estan en `public/images/manual/`. Se generan con `tools/manual/capturar.mjs` (Chrome headless
 + `puppeteer-core`): lee `tools/manual/capturas.json` (ruta, rol, tamano y los numeros rojos a dibujar sobre
-cada boton) y vuelve a sacar todas cuando cambia la interfaz (ver el encabezado del script).
+cada boton) y vuelve a sacar todas cuando cambia la interfaz (ver el encabezado del script). Hay que repetirlas
+tras integrar ramas que cambian pantallas (por ejemplo Recuento): `cd tools/manual && node capturar.mjs`.
+Usuarios de las capturas: los de `UsuariosDemoSeeder` y `AdminUserSeeder` (ver `capturas.json`).
 
 ### PDF
 
@@ -318,7 +320,27 @@ se guarda en `storage/app/manual` y se reutiliza mientras no cambien las paginas
 plantilla; el primero en pedirlo espera unos segundos. Para dejarlo listo al desplegar:
 `php artisan manual:pdf`.
 
-## 8. Checklist para una pantalla nueva
+## 8. Idioma (español) y cambio del .env en produccion
+
+Toda la app esta en español. Los textos de Laravel (validaciones, login, paginacion, recuperar contrasena)
+viven en `lang/es/{validation,auth,pagination,passwords}.php` y los de Breeze en `lang/es.json`.
+
+`config/app.php` deja `'locale' => 'es'` **fijo**: ya no depende de `APP_LOCALE`. Asi, aunque un `.env` traiga
+`APP_LOCALE=en` (el de IBBSC en produccion y el `.env.example` heredado lo traen), el login y las validaciones
+salen en español. Aun asi, lo correcto en cada servidor es dejar el `.env` coherente:
+
+```
+APP_LOCALE=es
+APP_FALLBACK_LOCALE=es
+APP_FAKER_LOCALE=es_ES
+```
+
+Pasos en produccion (Hostinger): editar el `.env` del servidor (no se versiona), correr
+`php artisan config:clear && php artisan config:cache` y comprobar `/login` (debe decir «Iniciar sesión» y
+«Correo electrónico»). `.env.example` lo mantiene el equipo de entrega; este cambio solo hay que reflejarlo
+alli. Prueba automatica: `tests/Feature/LoginEspanolTest.php`.
+
+## 9. Checklist para una pantalla nueva
 
 - [ ] `@section('page-title')` y, si hay accion principal, `@section('page-actions')`.
 - [ ] Tabla dentro de `.card` + `.table-scroll`, con `.data-table`; acciones a la derecha de 44 px.

@@ -42,44 +42,54 @@ Aquí cada persona ve **sus propios datos**: lo que prometió, lo que ha dado, l
 
 | Botón o control | Qué hace | Quién puede usarlo | Qué pasa después |
 |---|---|---|---|
-| **1. Datos de tu cuenta (Name, Email) y Save** | Cambia tu nombre y tu correo. | Todos | Se guardan con un mensaje de confirmación. |
-| **2. Contraseña (Current Password, New Password, Confirm Password) y Save** | Cambia tu contraseña: escribes la actual y la nueva dos veces. | Todos | La nueva contraseña sirve desde la próxima vez que entres. |
+| **1. Información del perfil (Nombre, Correo electrónico) y Guardar** | Cambia tu nombre y tu correo. | Todos | Se guardan con un mensaje de confirmación. |
+| **2. Cambiar contraseña (Contraseña actual, Nueva contraseña, Confirmar contraseña) y Guardar** | Cambia tu contraseña: escribes la actual y la nueva dos veces. | Todos | La nueva contraseña sirve desde la próxima vez que entres. |
 
 Al final de la pantalla hay una sección para **eliminar tu cuenta**. No la uses salvo que el administrador te lo pida: se borra tu usuario.
 
 ## WhatsApp: cómo activar tus avisos
 
-Para recibir tus avisos y tu estado de cuenta en WhatsApp hay que **activar el servicio una sola vez**. Funciona con un bot gratuito (CallMeBot) y son tres pasos. El mismo procedimiento sirve para **personas** (en **Mi perfil**) y para **usuarios del sistema** (en **Mi cuenta**, desde el menú de tu nombre).
+Para recibir tus avisos y tu estado de cuenta **directo en tu WhatsApp, sin tocar nada**, hay que activar el servicio **una sola vez**. Son **tres pasos**. Funciona con **CallMeBot**, un bot gratuito de un tercero (no es WhatsApp oficial). El mismo procedimiento sirve para **personas** (en **Mi perfil**) y para **usuarios del sistema** (en **Mi cuenta**, desde el menú de tu nombre; la tarjeta se llama **Avisos por WhatsApp**).
 
-> **Antes de empezar:** ten a la mano tu teléfono con WhatsApp y confirma que el número que aparece en la pantalla es el tuyo.
+> **Antes de empezar:** ten a la mano el teléfono con WhatsApp y confirma que el número que aparece en la tarjeta es el tuyo. El bot solo le escribe al número que activó el bot: si es otro, pídele al administrador que lo corrija.
 
-### Paso 1: agrega el contacto del bot
+### Paso 1: guarda el contacto del bot
 
-En tu teléfono, guarda como contacto el **número del bot** que muestra el paso 1 de la pantalla (ponle el nombre **CallMeBot**).
+En tu teléfono agrega, con el nombre **CallMeBot**, el **número del bot** que muestra el paso 1 de la tarjeta. Si usas un teléfono con los contactos sincronizados, no hace falta nada más.
 
-![Paso 1: agregar el contacto del bot](img:whatsapp/paso-1-agregar-contacto.png "Paso 1: guarda el número del bot como contacto")
+![Paso 1: guardar el contacto del bot](img:whatsapp/paso-1-contacto.png "Paso 1: guarda el número del bot con el nombre CallMeBot")
 
 ### Paso 2: mándale el mensaje de permiso
 
-Abre WhatsApp, entra al chat con **CallMeBot** y envíale exactamente este mensaje:
+Abre WhatsApp, entra a la conversación con **CallMeBot** y envíale **exactamente** este mensaje (también puedes tocar **Abrir WhatsApp con el mensaje listo**):
 
 `I allow callmebot to send me messages`
 
-En unos segundos el bot te responde con un mensaje que incluye **tu enlace personal**.
+El bot responde en menos de dos minutos. Si no responde, espera un día y vuelve a intentarlo.
 
-![Paso 2: enviar el mensaje de permiso](img:whatsapp/paso-2-mensaje-de-permiso.png "Paso 2: escribe el mensaje tal cual y espera la respuesta del bot")
+![Paso 2: enviar el mensaje de permiso](img:whatsapp/paso-2-mensaje.png "Paso 2: envía el mensaje tal cual y espera la respuesta del bot")
 
-### Paso 3: pega el enlace en el sistema y prueba
+### Paso 3: copia la respuesta del bot y pégala en el sistema
 
-1. Copia el **enlace** que te respondió el bot.
-2. Pégalo en la casilla del paso 3, en **Mi perfil** (si eres una persona) o en **Mi cuenta** (si eres usuario del sistema).
-3. Toca **Enviar mensaje de prueba**.
+El bot contesta con un mensaje que dice **Your APIKEY is** y un número (tu clave), y a veces trae también un enlace largo. Copia **todo ese mensaje** (mantén el dedo sobre él y toca **Copiar**), vuelve al sistema y:
 
-Si el mensaje de prueba llega a tu WhatsApp, **ya quedó activado**.
+1. Pégalo en la casilla **Pegue aquí el mensaje que le respondió el bot**. Sirve el enlace completo o solo la clave.
+2. Marca la casilla de **consentimiento** (autorizas que el sistema te escriba por este medio).
+3. Toca **Activar WhatsApp**.
 
-![Paso 3: pegar el enlace y enviar el mensaje de prueba](img:whatsapp/paso-3-pegar-enlace.png "Paso 3: pega el enlace y toca Enviar mensaje de prueba")
+![Paso 3: copiar la respuesta del bot](img:whatsapp/paso-3-enlace.png "Paso 3: la respuesta del bot trae tu clave; cópiala y pégala en la tarjeta")
 
-> **Cuidado:** el enlace es personal; no lo compartas. Si el mensaje de prueba no llega, revisa que enviaste el mensaje del paso 2 *exactamente* igual y que el enlace pegado sea el que te respondió el bot.
+Después toca **Enviar mensaje de prueba**. Si el mensaje llega a tu WhatsApp, **ya quedó activado**. Mientras no hagas la prueba la tarjeta dice **Activado, falta la prueba**.
+
+![Mensaje de prueba recibido](img:whatsapp/paso-4-prueba.png "Así se ve el mensaje de prueba cuando todo salió bien")
+
+| Botón o control | Qué hace | Quién puede usarlo | Qué pasa después |
+|---|---|---|---|
+| **Activar WhatsApp** | Guarda tu clave y tu consentimiento. | Todos los usuarios y las personas con perfil | Queda en «Activado, falta la prueba». |
+| **Enviar mensaje de prueba** | Manda un mensaje de prueba a tu WhatsApp. | Quien activó WhatsApp | Si llega, quedas activado del todo. |
+| **Desactivar** | Borra tu clave y tu consentimiento (pide confirmación). | Quien activó WhatsApp | Dejas de recibir mensajes automáticos; los avisos vuelven a mandarse con el toque manual. |
+
+> **Cuidado:** la clave es personal; no la compartas. CallMeBot es un servicio **gratuito de un tercero y sin garantía**: a veces demora o falla, y sus condiciones lo limitan a uso personal. Por eso el sistema nunca depende solo de él: si un mensaje no sale, el aviso queda en el panel para mandarlo a mano.
 
 ## Preguntas frecuentes
 
@@ -89,6 +99,6 @@ Si el mensaje de prueba llega a tu WhatsApp, **ya quedó activado**.
 
 **Mis promesas aparecen vacías.** Quizá todavía no tienes promesas configuradas. Pídele al administrador que las agregue en tu ficha (ver *Promesas*).
 
-**El mensaje de prueba no llega.** Repite el paso 2 con el mensaje exacto, espera la respuesta del bot y pega **el enlace nuevo** que te mande.
+**El mensaje de prueba no llega.** Repite el paso 2 con el mensaje exacto, espera la respuesta del bot y pega **el mensaje nuevo** que te mande (completo o solo la clave). Revisa también que el teléfono de la tarjeta sea el de tu WhatsApp.
 
-**Cambié de teléfono.** Repite los tres pasos con el teléfono nuevo.
+**Cambié de teléfono.** Pídele al administrador que actualice tu número, desactiva WhatsApp y repite los tres pasos con el teléfono nuevo.
