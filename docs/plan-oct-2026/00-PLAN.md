@@ -182,3 +182,13 @@ Del lider del proyecto (David):
   Prueba real de whatsapp:probar del equipo 5 llego a David 16:02 (2 de 3 mensajes reales usados).
   Pendientes de integrar: 2 (recuento), 5 (WhatsApp), 4 (UI, layouts al final); luego npm run build,
   suite completa, QA de entrega, tag y deploy con deploy/hostinger.sh.
+- 2026-11-04 (noche): LOS CINCO EQUIPOS INTEGRADOS en integracion/oct-2026: 6 (2760faa), 3a (d7efce7),
+  2 (sin conflictos), 5 (82d1898; conflictos en .env.example y MiPerfilController resueltos a favor de 5
+  + bloque de reporte mensual), 4 (eb26ed1; 8 vistas en conflicto resueltas conservando la logica de
+  2/3a/5 y aplicando los colores de 4; login = version de 4), assets reconstruidos (32ec4fd).
+  Suite tras 3a+2+6: 580 tests, solo los 15 de Breeze (correr con -d memory_limit=1G por los PDFs).
+  Hallazgo del equipo 5 a revisar antes del QA de entrega: dos promesas de una persona en la misma
+  categoria se pisan en compromisos (comprobar que el motor y compromisos:sincronizar las sumen).
+  Pendiente de menu (ROLES.md final): "Yo" con tieneMiPerfil(), dashboard de asistencia con
+  puedeVerDashboardAsistencia(), entrada "Agregar persona", ocultar Cumpleaneros al miembro.
+  Siguiente: suite completa final, revision visual rapida, QA de entrega (opus), tag y deploy E1.
