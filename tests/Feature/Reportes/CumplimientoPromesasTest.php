@@ -100,8 +100,9 @@ class CumplimientoPromesasTest extends TestCase
         $ana = $filas['Ana Mora'];
         $this->assertSame(EstadoCuenta::PENDIENTE, $ana->estado);
         $this->assertEquals(213000, $ana->leCorresponde());
-        $this->assertEquals(61826.25, $ana->haDado());
-        $this->assertEquals(-151173.75, $ana->diferencia());
+        // Ha dado: solo categorias con promesa (sin diezmo y sin los 3.000 de campa, que no prometio).
+        $this->assertEquals(58826.25, $ana->haDado());
+        $this->assertEquals(-154173.75, $ana->diferencia());
         $this->assertSame('04/10/2026', $ana->ultimoAporteTexto());
         $this->assertSame('sin aportes en 5 meses (Abril a Septiembre)', $ana->observacion);
         $this->assertSame('Misiones ₡10,000.00 mensual · Seminario $5.00 cada quincena · Construccion ₡2,000.00 cada domingo', $ana->promesa);
@@ -146,10 +147,10 @@ class CumplimientoPromesasTest extends TestCase
         $this->assertSame(1, $resumen['sin_promesa']);
         // Le correspondia: Ana 213.000 + Carla 54.000 + Gabriel 9.000 + Hilda 27.000 + Elena 9.000 + Fabio 18.000
         $this->assertEquals(330000, $resumen['le_correspondia']);
-        // Ha dado (con promesa): 61.826,25 + 13.000,10 + 8.000 + 9.000 + 12.000 + 18.000
-        $this->assertEquals(121826.35, $resumen['ha_dado']);
-        // Faltante de los pendientes: 151.173,75 + 40.999,90 + 1.000 + 18.000
-        $this->assertEquals(211173.65, $resumen['faltante']);
+        // Ha dado (con promesa): 58.826,25 + 13.000,10 + 8.000 + 9.000 + 12.000 + 18.000
+        $this->assertEquals(118826.35, $resumen['ha_dado']);
+        // Faltante de los pendientes: 154.173,75 + 40.999,90 + 1.000 + 18.000
+        $this->assertEquals(214173.65, $resumen['faltante']);
         $this->assertEquals(6234.56, $resumen['dado_sin_promesa']);
     }
 
@@ -159,7 +160,7 @@ class CumplimientoPromesasTest extends TestCase
 
         // Enero a septiembre igual que con el corte al 13/10, pero lo de octubre no se ha dado todavia.
         $this->assertEquals(213000, $filas['Ana Mora']->leCorresponde());
-        $this->assertEquals(61826.25 - 8000.75, $filas['Ana Mora']->haDado());
+        $this->assertEquals(58826.25 - 8000.75, $filas['Ana Mora']->haDado());
         $this->assertStringContainsString('de enero a septiembre.', $this->generar('2026-09-30')->explicacion());
     }
 
@@ -228,7 +229,7 @@ class CumplimientoPromesasTest extends TestCase
             ->assertSee('Le correspondía (ene-sep)')
             ->assertSee('Ana Mora')
             ->assertSee('sin aportes en 5 meses (Abril a Septiembre)')
-            ->assertSee('-₡151,174')
+            ->assertSee('-₡154,174')
             ->assertSee('Corte al 13/10/2026')
             ->assertDontSee('Zoe Ajena')
             // Ivan (sin promesa ni aportes) no va en la tabla; solo se cuenta.
@@ -276,7 +277,7 @@ class CumplimientoPromesasTest extends TestCase
         $this->assertStringContainsString('Al día (2)', $texto);
         $this->assertStringContainsString('Aportan sin promesa registrada (1)', $texto);
         $this->assertStringContainsString('Beto Rojas (₡6,235)', $texto);
-        $this->assertStringContainsString('-₡151,174', $texto);
+        $this->assertStringContainsString('-₡154,174', $texto);
         $this->assertStringContainsString('₡330,000', $texto);
         $this->assertStringContainsString('Página 1 de 1', $texto);
 
@@ -318,8 +319,8 @@ class CumplimientoPromesasTest extends TestCase
         $this->assertSame('Le correspondía (ene-sep)', $resumen->getCell('C9')->getValue());
         $this->assertSame('Ana Mora', $resumen->getCell('B10')->getValue());
         $this->assertEquals(213000, $resumen->getCell('C10')->getValue());
-        $this->assertEquals(61826.25, $resumen->getCell('D10')->getValue());
-        $this->assertEquals(-151173.75, $resumen->getCell('E10')->getValue());
+        $this->assertEquals(58826.25, $resumen->getCell('D10')->getValue());
+        $this->assertEquals(-154173.75, $resumen->getCell('E10')->getValue());
         $this->assertSame('PENDIENTE', $resumen->getCell('F10')->getValue());
         $this->assertSame('04/10/2026', $resumen->getCell('G10')->getFormattedValue());
         $this->assertSame('"₡"#,##0;[Red]-"₡"#,##0', $resumen->getStyle('C10')->getNumberFormat()->getFormatCode());

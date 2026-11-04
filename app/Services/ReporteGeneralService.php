@@ -18,12 +18,15 @@ use App\Services\Reportes\PeriodoReporte;
  * - solo personas activas, ordenadas por nombre;
  * - columnas = categorias de compromiso (las no excluidas de promesas); el
  *   diezmo no entra;
- * - "dado" = lo de sus sobres en cultos del periodo, por mes del culto (los
- *   dolares ya convertidos a colones por el motor);
+ * - "dado" = lo de sus sobres en cultos del periodo hasta hoy, por mes del culto
+ *   (los dolares ya convertidos a colones por el motor), SOLO en las categorias
+ *   en que la persona tiene promesa (regla 2.1: lo demas no cuenta para el
+ *   cumplimiento; se ve en el estado de cuenta y en el reporte de contribuciones);
  * - "esperado" = promesa segun frecuencia (semanal x domingos del mes,
- *   quincenal x 2, mensual x 1), todos los meses del periodo incluido el mes en
- *   curso; si hay dos promesas de la misma categoria vale la ultima;
- * - se omiten las personas sin nada dado ni esperado.
+ *   quincenal x 2, mensual x 1) de los meses completos antes de hoy: el mes en
+ *   curso sale con esperado 0 (no se cobra) y lo dado en el si cuenta; si hay dos
+ *   promesas de la misma categoria vale la ultima;
+ * - se omiten las personas sin nada dado ni esperado (p. ej. sin promesa).
  */
 class ReporteGeneralService
 {
@@ -46,6 +49,7 @@ class ReporteGeneralService
         $reporteData = [];
 
         foreach ($resultado->cuentas() as $cuenta) {
+            $conPromesa = array_flip($cuenta->categoriasConPromesa());
             $datosPersona = [
                 'nombre' => $cuenta->nombre,
                 'meses' => [],
@@ -70,7 +74,7 @@ class ReporteGeneralService
                 $esperadoMes = 0;
 
                 foreach ($categoriasConPromesa as $cat) {
-                    $dado = $cuenta->dadoCentimos($mes->clave, [$cat]);
+                    $dado = isset($conPromesa[$cat]) ? $cuenta->dadoCentimos($mes->clave, [$cat]) : 0;
                     $esperado = $cuenta->esperadoCentimos($mes->clave, $cat);
 
                     $mesDatos['categorias'][$cat] = [
@@ -104,7 +108,7 @@ class ReporteGeneralService
 
         return [
             'reporteData' => $reporteData,
-            'totalesGenerales' => $this->totalesGenerales($reporteData, $categoriasConPromesa, $mesHasta),
+            'totalesGenerales' => $this->totalesGenerales($reporteData, $categoriasConPromesa, $resultado->periodo->cantidadMeses()),
             'categoriasConPromesa' => $categoriasConPromesa,
         ];
     }

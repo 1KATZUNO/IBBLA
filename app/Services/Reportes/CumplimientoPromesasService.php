@@ -13,10 +13,11 @@ use Illuminate\Support\Str;
  * con los numeros del motor unico):
  *  - Le correspondia = lo prometido en los meses completos antes del corte (el mes en curso no se
  *    cobra; si el corte es fin de mes, ese mes si).
- *  - Ha dado = todo lo entregado del 1 de enero hasta el dia del corte en categorias de
- *    compromiso, incluido el mes en curso.
+ *  - Ha dado = todo lo entregado del 1 de enero hasta el dia del corte en las categorias en que
+ *    la persona tiene promesa, incluido el mes en curso (el diezmo y lo demas no cuentan).
  *  - Estado por acumulado: AL DÍA si lo dado alcanza lo que correspondia (quien no dio un mes pero
- *    repuso despues esta al dia); PENDIENTE si no; SIN PROMESA si no tiene promesa pero aporto.
+ *    repuso despues esta al dia; tolerancia 1 colon); PENDIENTE si no; SIN PROMESA si no tiene
+ *    promesa pero aporto en categorias de compromiso (ese monto se muestra aparte).
  *  - Observacion: "sin aportes en Junio", "sin aportes en N meses (Enero a Septiembre)" (3 o mas),
  *    "aporta, pero menos de lo prometido" o "adelantado".
  *  - Orden: pendientes, al dia y sin promesa; dentro de cada grupo por nombre.
@@ -45,7 +46,7 @@ final class CumplimientoPromesasService
         usort($filas, fn (FilaCumplimiento $a, FilaCumplimiento $b) => [$orden[$a->estado], self::claveOrden($a->nombre), $a->personaId]
             <=> [$orden[$b->estado], self::claveOrden($b->nombre), $b->personaId]);
 
-        return new ReporteCumplimiento($periodo, $filtro, $resultado->categoriasCompromiso, $filas, $sinMovimiento, CarbonImmutable::now());
+        return new ReporteCumplimiento($resultado->periodo, $filtro, $resultado->categoriasCompromiso, $filas, $sinMovimiento, CarbonImmutable::now());
     }
 
     private function fila(CuentaPersona $cuenta, ResultadoMotor $resultado): FilaCumplimiento
@@ -56,7 +57,7 @@ final class CumplimientoPromesasService
         $meses = [];
         foreach ($resultado->periodo->meses() as $mes) {
             $meses[$mes->clave] = [
-                'dado' => $cuenta->dadoEnCompromisosCentimos($mes->clave),
+                'dado' => $cuenta->tienePromesa() ? $cuenta->dadoEnPromesasCentimos($mes->clave) : $cuenta->dadoEnCompromisosCentimos($mes->clave),
                 'esperado' => $cuenta->esperadoCentimos($mes->clave),
             ];
         }

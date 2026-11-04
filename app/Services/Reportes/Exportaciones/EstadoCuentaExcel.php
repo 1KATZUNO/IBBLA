@@ -52,8 +52,8 @@ class EstadoCuentaExcel
         }
         array_push($columnas,
             ['titulo' => 'Total contribuido', 'ancho' => 16, 'formato' => LibroExcel::MONEDA_DECIMALES],
-            ['titulo' => 'Esperado a la fecha', 'ancho' => 16, 'formato' => LibroExcel::MONEDA_DECIMALES],
-            ['titulo' => 'Dado en compromisos', 'ancho' => 16, 'formato' => LibroExcel::MONEDA_DECIMALES],
+            ['titulo' => 'Le corresponde', 'ancho' => 16, 'formato' => LibroExcel::MONEDA_DECIMALES],
+            ['titulo' => 'Ha dado en compromisos', 'ancho' => 16, 'formato' => LibroExcel::MONEDA_DECIMALES],
             ['titulo' => 'Diferencia', 'ancho' => 16, 'formato' => LibroExcel::MONEDA_DECIMALES],
             ['titulo' => 'Estado', 'ancho' => 14, 'colores' => self::COLORES_ESTADO],
         );
@@ -95,7 +95,7 @@ class EstadoCuentaExcel
                     $c['esperado'],
                     $c['dado'],
                     $c['diferencia'],
-                    $c['categoria'] === InformePersonaService::OTRAS_CATEGORIAS ? 'SIN PROMESA' : ($c['al_dia'] ? 'AL DÍA' : 'PENDIENTE'),
+                    $c['al_dia'] ? 'AL DÍA' : 'PENDIENTE',
                 ];
             }
         }
@@ -104,7 +104,7 @@ class EstadoCuentaExcel
             ['titulo' => 'Nombre', 'ancho' => 34],
             ['titulo' => 'Categoría', 'ancho' => 22],
             ['titulo' => 'Compromiso', 'ancho' => 36],
-            ['titulo' => 'Esperado a la fecha', 'ancho' => 16, 'formato' => LibroExcel::MONEDA_DECIMALES],
+            ['titulo' => 'Le corresponde', 'ancho' => 16, 'formato' => LibroExcel::MONEDA_DECIMALES],
             ['titulo' => 'Dado', 'ancho' => 16, 'formato' => LibroExcel::MONEDA_DECIMALES],
             ['titulo' => 'Diferencia', 'ancho' => 16, 'formato' => LibroExcel::MONEDA_DECIMALES],
             ['titulo' => 'Estado', 'ancho' => 14, 'colores' => self::COLORES_ESTADO],

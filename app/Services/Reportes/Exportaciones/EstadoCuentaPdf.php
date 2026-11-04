@@ -130,8 +130,8 @@ class EstadoCuentaPdf
 
         $tarjetas = [['etiqueta' => 'Total contribuido', 'valor' => Dinero::formato($datos['total_dado'], 2)]];
         if ($datos['tiene_compromisos']) {
-            $tarjetas[] = ['etiqueta' => 'Compromisos a la fecha', 'valor' => Dinero::formato($datos['total_esperado'], 2)];
-            $tarjetas[] = ['etiqueta' => 'Dado en compromisos', 'valor' => Dinero::formato($datos['dado_en_compromisos'], 2)];
+            $tarjetas[] = ['etiqueta' => 'Le corresponde al '.$datos['corte'], 'valor' => Dinero::formato($datos['total_esperado'], 2)];
+            $tarjetas[] = ['etiqueta' => 'Ha dado en compromisos', 'valor' => Dinero::formato($datos['dado_en_compromisos'], 2)];
             $tarjetas[] = ['etiqueta' => 'Diferencia', 'valor' => Dinero::formato($datos['diferencia'], 2, true)];
             $tarjetas[] = $datos['al_dia']
                 ? ['etiqueta' => 'Estado', 'valor' => 'AL DÍA', 'color' => DocumentoPdf::VERDE]
@@ -155,7 +155,7 @@ class EstadoCuentaPdf
             $doc->tabla([
                 ['titulo' => 'Categoría', 'ancho' => 2.4],
                 ['titulo' => 'Compromiso', 'ancho' => 3.2],
-                ['titulo' => 'Esperado a la fecha', 'ancho' => 2.2, 'alinear' => 'derecha'],
+                ['titulo' => 'Le corresponde', 'ancho' => 2.2, 'alinear' => 'derecha'],
                 ['titulo' => 'Dado', 'ancho' => 2.2, 'alinear' => 'derecha'],
                 ['titulo' => 'Diferencia', 'ancho' => 2.2, 'alinear' => 'derecha'],
                 ['titulo' => 'Estado', 'ancho' => 1.6, 'alinear' => 'centro'],

@@ -18,6 +18,8 @@ use Throwable;
  *    lo dado de octubre hasta el corte si cuenta.
  *  - Lo esperado de un mes: semanal x domingos del mes, quincenal x 2, mensual x 1.
  *
+ * Nada posterior a hoy cuenta: el motor usa recortadoAHoy().
+ *
  * Validacion: inicio <= fin y como mucho 24 meses (de enero de un anio a diciembre del siguiente).
  * Es inmutable; conCorte() devuelve otro periodo.
  */
@@ -94,6 +96,23 @@ final class PeriodoReporte
         $hasta = $corte->lt($this->hasta) ? $corte : $this->hasta;
 
         return new self($this->desde, $hasta, $hasta);
+    }
+
+    /**
+     * Nada posterior a hoy cuenta: si el periodo termina despues de hoy, el mismo periodo con corte
+     * hoy (lo dado hasta hoy; se cobran los meses completos anteriores). Si termina antes, igual.
+     */
+    public function recortadoAHoy(): self
+    {
+        $hoy = CarbonImmutable::today();
+        if ($this->hasta->lte($hoy)) {
+            return $this;
+        }
+        if ($this->desde->gt($hoy)) {
+            throw new PeriodoInvalido('El periodo empieza después de hoy ('.$this->desde->format('d/m/Y').').');
+        }
+
+        return $this->conCorte($hoy);
     }
 
     // ------------------------------------------------------------------

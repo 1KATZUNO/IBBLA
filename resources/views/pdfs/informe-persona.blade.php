@@ -94,7 +94,7 @@
         }
 
         .resumen td {
-            width: 33%;
+            width: 25%;
             padding: 0 4px;
             text-align: center;
         }
@@ -256,13 +256,19 @@
             @if($tiene_compromisos)
             <td>
                 <div class="tarjeta">
-                    <div class="etiqueta">Compromisos a la fecha</div>
+                    <div class="etiqueta">Le corresponde al {{ $corte }}</div>
                     <div class="valor azul">₡{{ number_format($total_esperado, 2) }}</div>
+                </div>
+            </td>
+            <td>
+                <div class="tarjeta">
+                    <div class="etiqueta">Ha dado en sus compromisos</div>
+                    <div class="valor verde">₡{{ number_format($dado_en_compromisos, 2) }}</div>
                 </div>
             </td>
             <td class="ultimo">
                 <div class="tarjeta">
-                    <div class="etiqueta">Diferencia en compromisos</div>
+                    <div class="etiqueta">Diferencia · {{ $al_dia ? 'Al día' : 'Pendiente' }}</div>
                     <div class="valor {{ $diferencia >= 0 ? 'verde' : 'rojo' }}">{{ $diferencia >= 0 ? '+' : '-' }}₡{{ number_format(abs($diferencia), 2) }}</div>
                 </div>
             </td>
@@ -278,8 +284,8 @@
                 <tr>
                     <th class="izq">Categoría</th>
                     <th class="izq">Compromiso</th>
-                    <th>Esperado a la fecha</th>
-                    <th>Dado</th>
+                    <th>Le corresponde</th>
+                    <th>Ha dado</th>
                     <th>Diferencia</th>
                     <th>Estado</th>
                 </tr>
@@ -338,10 +344,14 @@
     <div class="nota">
         Este informe resume lo registrado en el periodo indicado ({{ $periodo }}).
         @if($hay_usd)
-        Los sobres en dólares se muestran convertidos a colones con el tipo de cambio guardado en cada sobre.
+        Los sobres en dólares se muestran convertidos a colones con el tipo de cambio guardado en cada sobre (o el del día del culto).
         @endif
         @if($tiene_compromisos)
-        «Esperado a la fecha» suma, por cada compromiso, el monto de cada mes completo desde enero hasta el mes en curso.
+        «Le corresponde» suma, por cada compromiso, los meses completos ({{ $meses_cobrados ?: 'ninguno todavía' }}).
+        @if($mes_en_curso)
+        {{ $mes_en_curso }} está en curso y no se cobra, pero lo dado en él sí cuenta.
+        @endif
+        «Ha dado» cuenta solo las categorías en que hay promesa; el diezmo y las demás ofrendas se muestran arriba pero no cuentan.
         @endif
         Si nota alguna diferencia, comuníquese con la iglesia.
     </div>

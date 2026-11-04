@@ -46,11 +46,11 @@ final class LoteEstadosCuenta
         $enCurso = $this->periodo->mesEnCurso();
 
         if ($cobrados === '') {
-            return '«Esperado a la fecha» todavía es cero: no hay meses completos en el periodo.';
+            return '«Le corresponde» todavía es cero: no hay meses completos en el periodo.';
         }
 
-        return '«Esperado a la fecha» suma lo prometido de '.$cobrados
+        return '«Le corresponde» suma lo prometido de '.$cobrados
             .($enCurso ? ' ('.mb_strtolower($enCurso->nombre).' está en curso y no se cobra)' : '')
-            .'. La diferencia compara lo dado en las categorías que admiten promesa con lo esperado.';
+            .'. La diferencia compara lo dado en las categorías en que cada persona tiene promesa (el diezmo y lo demás no cuentan) con lo que le corresponde.';
     }
 }

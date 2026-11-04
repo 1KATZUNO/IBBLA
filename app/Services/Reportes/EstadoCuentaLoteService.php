@@ -35,6 +35,6 @@ class EstadoCuentaLoteService
             $estados[] = $this->informe->datosDeCuenta($resultado->cuenta($persona->id), $resultado, $persona);
         }
 
-        return new LoteEstadosCuenta($periodo, $filtro, $resultado, $estados, $total);
+        return new LoteEstadosCuenta($resultado->periodo, $filtro, $resultado, $estados, $total);
     }
 }

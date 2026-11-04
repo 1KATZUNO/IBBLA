@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Persona;
 use App\Services\Reportes\CuentaPersona;
 use App\Services\Reportes\Dinero;
+use App\Services\Reportes\EstadoCuenta;
 use App\Services\Reportes\MotorReportes;
 use App\Services\Reportes\PeriodoReporte;
 use App\Services\Reportes\ResultadoMotor;
@@ -20,10 +21,10 @@ use Illuminate\Support\Str;
  * curso) y su enlace firmado, que es lo que se comparte por WhatsApp.
  *
  * Las cifras salen del motor único (Reportes\MotorReportes), el mismo del Reporte General, el
- * estado de cuenta en lote y el reporte de cumplimiento: de enero al mes en curso, promesas
- * semanales por domingos del mes, quincenales x2, mensuales x1, todo en colones (los dólares con
- * el tipo de cambio del sobre). Es de solo lectura: no escribe nada, porque lo abre cualquiera que
- * tenga el enlace.
+ * estado de cuenta en lote, el reporte de cumplimiento, Compromisos y Mi perfil: de enero a hoy
+ * (corte), se cobran los meses completos antes del corte, lo dado cuenta hasta el corte y solo en
+ * las categorías con promesa (docs/plan-oct-2026/REGLAS-CALCULO.md). Es de solo lectura: no
+ * escribe nada, porque lo abre cualquiera que tenga el enlace.
  *
  * Usa nombre, logo y categorías de la iglesia actual (tenant()); el controlador público fija la
  * de la persona porque ahí no hay sesión.
@@ -33,9 +34,6 @@ class InformePersonaService
     public const RUTA = 'informe.persona';
 
     public const MESES = PeriodoReporte::NOMBRES_MESES;
-
-    /** Clave de la fila de compromisos que junta lo dado a categorías de compromiso sin promesa. */
-    public const OTRAS_CATEGORIAS = '_otras';
 
     public function __construct(private readonly MotorReportes $motor) {}
 
@@ -69,7 +67,7 @@ class InformePersonaService
         return $pdf;
     }
 
-    /** El periodo del informe: de enero al mes de $hasta (hoy por defecto), meses completos. */
+    /** El periodo del informe: de enero al mes de $hasta (hoy por defecto); el motor lo recorta a hoy (corte). */
     public function periodo(?DateTimeInterface $hasta = null): PeriodoReporte
     {
         $hasta = $hasta ? Carbon::instance($hasta) : now();
@@ -143,10 +141,12 @@ class InformePersonaService
             $meses[] = $fila;
         }
 
-        // Compromisos: una fila por categoría prometida, con lo esperado de los meses que se cobran.
+        // Compromisos: una fila por categoría prometida, con lo esperado de los meses que se cobran
+        // (completos antes del corte) y todo lo dado en esa categoría hasta el corte. El diezmo y las
+        // categorías sin promesa salen en la tabla mensual pero no cuentan para el estado.
         $compromisos = [];
         foreach ($promesas as $slug => $promesa) {
-            $esperado = $cuenta->esperadoCentimos(categoria: $slug, soloCobrables: true);
+            $esperado = $cuenta->esperadoCentimos(categoria: $slug);
             $dado = $cuenta->dadoCentimos(null, [$slug]);
             $compromisos[] = [
                 'categoria' => $slug,
@@ -155,33 +155,29 @@ class InformePersonaService
                 'esperado' => Dinero::colones($esperado),
                 'dado' => Dinero::colones($dado),
                 'diferencia' => Dinero::colones($dado - $esperado),
-                'al_dia' => $dado >= $esperado,
+                'al_dia' => $dado + EstadoCuenta::TOLERANCIA_CENTIMOS >= $esperado,
             ];
         }
 
-        // Lo dado a categorías de compromiso en las que no prometió también cuenta para el estado (la
-        // regla del Reporte General): va en una fila aparte para que la tabla cuadre con el resumen.
+        // Mes a mes de cada compromiso, solo informativo (el estado nunca se decide mes a mes): lo
+        // que corresponde al mes según la promesa, si ese mes se cobra, y lo dado en la categoría.
+        $detalleMensual = [];
         if ($compromisos !== []) {
-            $sinPromesa = array_values(array_filter(
-                $cuenta->categoriasCompromiso(),
-                fn (string $slug) => ! isset($promesas[$slug]) && $cuenta->dadoCentimos(null, [$slug]) > 0,
-            ));
-            if ($sinPromesa !== []) {
-                $dado = $cuenta->dadoCentimos(null, $sinPromesa);
-                $compromisos[] = [
-                    'categoria' => self::OTRAS_CATEGORIAS,
-                    'nombre' => 'Otras categorías de compromiso',
-                    'detalle' => 'Sin promesa: '.implode(', ', array_map(fn ($slug) => $categorias[$slug] ?? $resultado->nombreCategoria($slug), $sinPromesa)),
-                    'esperado' => 0.0,
-                    'dado' => Dinero::colones($dado),
-                    'diferencia' => Dinero::colones($dado),
-                    'al_dia' => true,
-                ];
+            foreach ($periodo->meses() as $mes) {
+                $fila = ['clave' => $mes->clave, 'nombre' => $mes->etiqueta($variosAnios), 'cobrable' => $mes->cobrable, 'categorias' => []];
+                foreach (array_keys($promesas) as $slug) {
+                    $fila['categorias'][$slug] = [
+                        'del_mes' => $cuenta->esperadoDelMes($mes->clave, $slug),
+                        'dado' => $cuenta->dado($mes->clave, [$slug]),
+                    ];
+                }
+                $detalleMensual[] = $fila;
             }
         }
 
         $estado = $cuenta->estado();
         $mesActual = $periodo->hasta->month;
+        $tienePromesa = $cuenta->tienePromesa() && $compromisos !== [];
 
         return [
             'persona' => $persona ?? (object) ['id' => $cuenta->id, 'nombre' => $cuenta->nombre],
@@ -194,10 +190,15 @@ class InformePersonaService
             'total_dado' => Dinero::colones($totalDado),
             'compromisos' => $compromisos,
             'tiene_compromisos' => $compromisos !== [],
-            'total_esperado' => $compromisos !== [] ? $estado->leCorresponde() : 0.0,
-            'dado_en_compromisos' => $compromisos !== [] ? $estado->haDado() : 0.0,
-            'diferencia' => $compromisos !== [] ? $estado->diferencia() : 0.0,
+            'total_esperado' => $tienePromesa ? $estado->leCorresponde() : 0.0,
+            'dado_en_compromisos' => $tienePromesa ? $estado->haDado() : 0.0,
+            'diferencia' => $tienePromesa ? $estado->diferencia() : 0.0,
             'al_dia' => $estado->alDia(),
+            'estado' => $estado->etiqueta(),
+            'corte' => $periodo->hasta->format('d/m/Y'),
+            'meses_cobrados' => $periodo->textoMesesCobrables(),
+            'mes_en_curso' => $periodo->mesEnCurso()?->nombre,
+            'detalle_mensual' => $detalleMensual,
             'hay_datos' => $totalDado > 0 || $compromisos !== [],
             'hay_usd' => $cuenta->hayUsd,
         ];

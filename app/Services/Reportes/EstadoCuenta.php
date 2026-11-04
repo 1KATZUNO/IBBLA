@@ -6,7 +6,8 @@ namespace App\Services\Reportes;
  * Estado acumulado de una persona en un periodo: lo que le correspondia (promesas de los meses que
  * se cobran) contra lo que ha dado en las categorias de compromiso.
  *
- * AL DÍA si lo dado alcanza lo que correspondia, aunque algun mes no haya dado (repuso despues).
+ * AL DÍA si lo dado alcanza lo que correspondia (con tolerancia de 1 colon), aunque algun mes no
+ * haya dado (repuso despues). Nunca se decide mes a mes.
  */
 final class EstadoCuenta
 {
@@ -15,6 +16,9 @@ final class EstadoCuenta
     public const PENDIENTE = 'PENDIENTE';
 
     public const SIN_PROMESA = 'SIN PROMESA';
+
+    /** Tolerancia para AL DÍA: 1 colon (redondeos de los dolares). */
+    public const TOLERANCIA_CENTIMOS = 100;
 
     public function __construct(
         public readonly int $leCorrespondeCentimos,
@@ -44,7 +48,7 @@ final class EstadoCuenta
 
     public function alDia(): bool
     {
-        return $this->haDadoCentimos >= $this->leCorrespondeCentimos;
+        return $this->haDadoCentimos + self::TOLERANCIA_CENTIMOS >= $this->leCorrespondeCentimos;
     }
 
     /** AL DÍA, PENDIENTE o SIN PROMESA. */

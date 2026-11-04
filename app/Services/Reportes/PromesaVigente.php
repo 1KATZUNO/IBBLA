@@ -2,6 +2,8 @@
 
 namespace App\Services\Reportes;
 
+use App\Support\Moneda\ConversorUsd;
+
 /**
  * La promesa que vale para una persona en una categoria.
  *
@@ -23,10 +25,10 @@ final class PromesaVigente
         return $this->monto * $this->factor($domingos);
     }
 
-    /** Lo esperado de un mes, en centimos de colon (los dolares, al tipo de cambio de hoy). */
-    public function esperadoCentimos(int $domingos, float $tipoCambioHoy): int
+    /** Lo esperado de un mes, en centimos de colon (los dolares, al tipo de cambio del fin de ese mes). */
+    public function esperadoCentimos(MesPeriodo $mes, ConversorUsd $conversor): int
     {
-        return Dinero::aColones($this->montoDelMes($domingos), $this->moneda, null, $tipoCambioHoy);
+        return $conversor->centimosPromesa($this->montoDelMes($mes->domingos), $this->moneda, $mes->anio, $mes->mes);
     }
 
     public function esUsd(): bool

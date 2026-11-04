@@ -150,8 +150,8 @@
                             <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">#</th>
                             <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nombre</th>
                             <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase whitespace-nowrap">Total contribuido</th>
-                            <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase whitespace-nowrap">Esperado a la fecha</th>
-                            <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase whitespace-nowrap">Dado en compromisos</th>
+                            <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase whitespace-nowrap">Le corresponde</th>
+                            <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase whitespace-nowrap">Ha dado en compromisos</th>
                             <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase">Diferencia</th>
                             <th class="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase">Estado</th>
                         </tr>

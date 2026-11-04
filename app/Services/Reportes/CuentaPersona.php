@@ -9,9 +9,11 @@ use Carbon\CarbonImmutable;
  *
  * - dado: por mes (clave "2026-03") y categoria, de TODAS las categorias en que dio (tambien
  *   diezmo y categorias que la iglesia ya no usa). Los sobres en dolares ya vienen convertidos.
- * - esperado: por mes y categoria, solo de las categorias de compromiso con promesa.
- * - "Ha dado" para el estado = lo dado en las categorias de compromiso (las que no estan excluidas
- *   de promesas), tenga o no promesa en cada una: es la regla del Reporte General.
+ * - esperado: por mes y categoria, solo de las categorias de compromiso con promesa. Para el
+ *   estado solo cuentan los meses que se cobran (completos antes del corte): esperadoCentimos().
+ *   esperadoDelMesCentimos() da lo de cualquier mes del periodo, solo como dato informativo.
+ * - "Ha dado" para el estado = lo dado en las categorias en que la persona TIENE promesa (regla 2.1
+ *   de 04-DECISIONES.md); el diezmo y las categorias sin promesa se muestran pero no cuentan.
  */
 final class CuentaPersona
 {
@@ -67,7 +69,20 @@ final class CuentaPersona
         return Dinero::colones($this->dadoCentimos($clave, $categorias));
     }
 
-    /** Lo dado en las categorias de compromiso (lo que cuenta para el estado). */
+    /** Lo dado en las categorias en que tiene promesa: lo que cuenta para el estado. */
+    public function dadoEnPromesasCentimos(?string $clave = null): int
+    {
+        $categorias = $this->categoriasConPromesa();
+
+        return $categorias === [] ? 0 : $this->dadoCentimos($clave, $categorias);
+    }
+
+    public function dadoEnPromesas(?string $clave = null): float
+    {
+        return Dinero::colones($this->dadoEnPromesasCentimos($clave));
+    }
+
+    /** Lo dado en cualquier categoria de compromiso, tenga o no promesa en ella (informativo). */
     public function dadoEnCompromisosCentimos(?string $clave = null): int
     {
         return $this->dadoCentimos($clave, $this->categoriasCompromiso);
@@ -100,10 +115,34 @@ final class CuentaPersona
     // ------------------------------------------------------------------
 
     /**
-     * Lo esperado en un mes (o en todo el periodo), de una categoria (o de todas las prometidas).
-     * Con $soloCobrables cuenta solo los meses que se cobran (enteros dentro del periodo).
+     * Lo esperado en un mes (o en todo el periodo), de una categoria (o de todas las prometidas),
+     * contando SOLO los meses que se cobran (completos antes del corte): lo que cuenta para el estado.
      */
-    public function esperadoCentimos(?string $clave = null, ?string $categoria = null, bool $soloCobrables = false): int
+    public function esperadoCentimos(?string $clave = null, ?string $categoria = null): int
+    {
+        return $this->sumarEsperado($clave, $categoria, true);
+    }
+
+    public function esperado(?string $clave = null, ?string $categoria = null): float
+    {
+        return Dinero::colones($this->esperadoCentimos($clave, $categoria));
+    }
+
+    /**
+     * Lo que corresponde a un mes segun la promesa aunque ese mes todavia no se cobre (el mes en
+     * curso): solo para mostrar el detalle mes a mes y para la tabla compromisos.
+     */
+    public function esperadoDelMesCentimos(string $clave, ?string $categoria = null): int
+    {
+        return $this->sumarEsperado($clave, $categoria, false);
+    }
+
+    public function esperadoDelMes(string $clave, ?string $categoria = null): float
+    {
+        return Dinero::colones($this->esperadoDelMesCentimos($clave, $categoria));
+    }
+
+    private function sumarEsperado(?string $clave, ?string $categoria, bool $soloCobrables): int
     {
         $total = 0;
         foreach ($this->periodo->meses() as $mes) {
@@ -118,11 +157,6 @@ final class CuentaPersona
         }
 
         return $total;
-    }
-
-    public function esperado(?string $clave = null, ?string $categoria = null, bool $soloCobrables = false): float
-    {
-        return Dinero::colones($this->esperadoCentimos($clave, $categoria, $soloCobrables));
     }
 
     // ------------------------------------------------------------------
@@ -146,6 +180,19 @@ final class CuentaPersona
         return false;
     }
 
+    /** @return list<string> categorias en que tiene promesa (monto > 0), en el orden de la iglesia */
+    public function categoriasConPromesa(): array
+    {
+        $categorias = [];
+        foreach ($this->promesas as $categoria => $promesa) {
+            if ($promesa->monto > 0) {
+                $categorias[] = $categoria;
+            }
+        }
+
+        return $categorias;
+    }
+
     /** @return list<string> */
     public function categoriasCompromiso(): array
     {
@@ -153,15 +200,18 @@ final class CuentaPersona
     }
 
     /**
-     * Estado acumulado: lo esperado de los meses que se cobran contra todo lo dado en el periodo en
-     * las categorias de compromiso.
+     * Estado acumulado: lo esperado de los meses que se cobran contra todo lo dado en el periodo
+     * (incluido el mes en curso) en las categorias con promesa. Sin promesa, "ha dado" es lo dado en
+     * categorias de compromiso, solo para mostrarlo.
      */
     public function estado(): EstadoCuenta
     {
+        $tienePromesa = $this->tienePromesa();
+
         return new EstadoCuenta(
-            $this->esperadoCentimos(soloCobrables: true),
-            $this->dadoEnCompromisosCentimos(),
-            $this->tienePromesa(),
+            $this->esperadoCentimos(),
+            $tienePromesa ? $this->dadoEnPromesasCentimos() : $this->dadoEnCompromisosCentimos(),
+            $tienePromesa,
         );
     }
 
@@ -175,7 +225,7 @@ final class CuentaPersona
     {
         $meses = [];
         foreach ($this->periodo->mesesCobrables() as $mes) {
-            if ($this->esperadoCentimos($mes->clave) > 0 && $this->dadoEnCompromisosCentimos($mes->clave) === 0) {
+            if ($this->esperadoCentimos($mes->clave) > 0 && $this->dadoEnPromesasCentimos($mes->clave) === 0) {
                 $meses[] = $mes;
             }
         }

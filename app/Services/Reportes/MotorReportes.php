@@ -2,7 +2,7 @@
 
 namespace App\Services\Reportes;
 
-use App\Models\TipoCambio;
+use App\Support\Moneda\ConversorUsd;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 
@@ -12,16 +12,17 @@ use Illuminate\Support\Facades\DB;
  * (individual y en lote), el reporte de contribuciones, la pantalla de Compromisos y el reporte de
  * cumplimiento con corte, asi que todos dan el mismo numero.
  *
- * Reglas (las mismas que ya aplicaban esos reportes, ahora en un solo lugar):
+ * Reglas (las definitivas: docs/plan-oct-2026/REGLAS-CALCULO.md):
+ *  - Nada posterior a hoy cuenta: un periodo que termina despues de hoy se recorta a hoy (corte).
  *  - Dado: detalles de los sobres de la persona en cultos con fecha dentro del periodo, por mes del
- *    culto y categoria. Los sobres en dolares se convierten con el tipo de cambio guardado en el
- *    sobre o, si no lo tiene, con el de hoy (antes el Reporte General y el de contribuciones sumaban
- *    los dolares como si fueran colones).
+ *    culto y categoria, de TODAS las categorias (se muestran). Los dolares se convierten con
+ *    ConversorUsd: tipo de cambio del sobre, si no el de la fecha del culto, si no el de hoy.
  *  - Esperado: por cada categoria de compromiso (las de la iglesia no excluidas de promesas) vale la
  *    ultima promesa de la persona; semanal x domingos del mes, quincenal x 2, mensual x 1. Las
- *    promesas en dolares se convierten con el tipo de cambio de hoy. Las promesas en categorias
- *    excluidas (p. ej. diezmo) no cuentan, como en el Reporte General.
- *  - Que meses se cobran lo decide el periodo (PeriodoReporte): solo los completos.
+ *    promesas en dolares, al tipo de cambio del ultimo dia de cada mes (el de hoy para el mes en
+ *    curso). Las promesas en categorias excluidas (p. ej. diezmo) no cuentan.
+ *  - Para el estado solo se cobran los meses completos anteriores al corte (PeriodoReporte) y solo
+ *    cuenta lo dado en las categorias con promesa (CuentaPersona::estado()).
  *
  * Costo: una consulta para lo dado y otra para las promesas por cada 1000 personas, sin modelos de
  * Eloquent; ~5.000 detalles de un anio se procesan en milisegundos.
@@ -35,9 +36,11 @@ final class MotorReportes
      */
     public function calcular(PeriodoReporte $periodo, iterable $personas, bool $conDetalle = false): ResultadoMotor
     {
+        $periodo = $periodo->recortadoAHoy();
         $categorias = tenant_categories()->pluck('nombre', 'slug')->all();
         $deCompromiso = tenant_categories(['excluir_de_promesas' => false])->pluck('slug')->values()->all();
-        $tipoCambioHoy = (float) (TipoCambio::hoy()?->venta ?? 0);
+        $conversor = app(ConversorUsd::class);
+        $tipoCambioHoy = $conversor->tipoCambioHoy();
 
         $personasPorId = [];
         foreach ($personas as $persona) {
@@ -46,7 +49,7 @@ final class MotorReportes
 
         $acumulado = ['dado' => [], 'ultimo' => [], 'usd' => [], 'detalle' => [], 'promesas' => []];
         foreach (array_chunk(array_keys($personasPorId), 1000) as $ids) {
-            $this->leerDado($acumulado, $ids, $periodo, $deCompromiso, $tipoCambioHoy, $conDetalle);
+            $this->leerDado($acumulado, $ids, $periodo, $deCompromiso, $conversor, $conDetalle);
             $this->leerPromesas($acumulado, $ids, $deCompromiso);
         }
 
@@ -57,7 +60,7 @@ final class MotorReportes
             $esperado = [];
             foreach ($promesas as $categoria => $promesa) {
                 foreach ($periodo->meses() as $mes) {
-                    $esperado[$mes->clave][$categoria] = $promesa->esperadoCentimos($mes->domingos, $tipoCambioHoy);
+                    $esperado[$mes->clave][$categoria] = $promesa->esperadoCentimos($mes, $conversor);
                 }
             }
 
@@ -86,7 +89,7 @@ final class MotorReportes
      * @param  list<int>  $ids
      * @param  list<string>  $deCompromiso
      */
-    private function leerDado(array &$acumulado, array $ids, PeriodoReporte $periodo, array $deCompromiso, float $tipoCambioHoy, bool $conDetalle): void
+    private function leerDado(array &$acumulado, array $ids, PeriodoReporte $periodo, array $deCompromiso, ConversorUsd $conversor, bool $conDetalle): void
     {
         $columnas = ['s.persona_id', 'c.fecha', 'd.categoria', 'd.monto', 's.moneda', 's.tipo_cambio_venta'];
         if ($conDetalle) {
@@ -109,7 +112,7 @@ final class MotorReportes
             $id = (int) $fila->persona_id;
             $fecha = substr((string) $fila->fecha, 0, 10);
             $clave = substr($fecha, 0, 7);
-            $centimos = Dinero::aColones($fila->monto, $fila->moneda, $fila->tipo_cambio_venta, $tipoCambioHoy);
+            $centimos = $conversor->centimosSobre($fila->monto, $fila->moneda, $fila->tipo_cambio_venta, $fecha);
 
             $acumulado['dado'][$id][$clave][$fila->categoria] = ($acumulado['dado'][$id][$clave][$fila->categoria] ?? 0) + $centimos;
 
@@ -132,7 +135,7 @@ final class MotorReportes
                     'categoria' => (string) $fila->categoria,
                     'monto' => (float) $fila->monto,
                     'moneda' => $usd ? 'USD' : 'CRC',
-                    'tipo_cambio' => $usd ? ((float) $fila->tipo_cambio_venta > 0 ? (float) $fila->tipo_cambio_venta : ($tipoCambioHoy > 0 ? $tipoCambioHoy : null)) : null,
+                    'tipo_cambio' => $usd ? ($conversor->tipoCambioDeSobre($fila->tipo_cambio_venta, $fecha) ?: null) : null,
                     'colones' => Dinero::colones($centimos),
                 ];
             }

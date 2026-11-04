@@ -68,8 +68,8 @@ class EstadosCuentaLoteTest extends TestCase
             ->assertOk()
             ->assertSee('Enero - Marzo 2026 · Todas las personas activas · 3 personas.')
             ->assertSee('Ana Mora')
-            ->assertSee('₡38,825.50')
-            ->assertSee('-₡32,174.50')
+            ->assertSee('₡35,825.50')
+            ->assertSee('-₡35,174.50')
             ->assertSee('SIN PROMESA')
             ->assertSee(e(route('reportes.estados-cuenta.zip', $this->parametros(['grupo' => 'todas']))), false)
             ->assertDontSee('Zoe Ajena');
@@ -96,10 +96,10 @@ class EstadosCuentaLoteTest extends TestCase
         // Numeros de pagina del indice: Ana 3, Beto 4, Carla 5.
         $this->assertMatchesRegularExpression('/Ana Mora\n3\n/', $texto);
         $this->assertMatchesRegularExpression('/Carla Solano\n5\n/', $texto);
-        // Cifras de Ana (enero a marzo): compromisos ₡71,000.00, dado en compromisos ₡38,825.50.
+        // Cifras de Ana (enero a marzo): compromisos ₡71,000.00, dado en compromisos ₡35,825.50.
         $this->assertStringContainsString('₡71,000.00', $texto);
-        $this->assertStringContainsString('₡38,825.50', $texto);
-        $this->assertStringContainsString('-₡32,174.50', $texto);
+        $this->assertStringContainsString('₡35,825.50', $texto);
+        $this->assertStringContainsString('-₡35,174.50', $texto);
         $this->assertStringContainsString('Página 5 de 5', $texto);
 
         $detalles = json_decode(AuditLog::where('action', AuditoriaReportes::ACCION)->sole()->details, true);
@@ -160,7 +160,7 @@ class EstadosCuentaLoteTest extends TestCase
         $this->assertSame('Ana Mora', $resumen->getCell('A7')->getValue());
         $this->assertEquals(30200.5, $resumen->getCell('C7')->getValue());
         $this->assertEquals(71000, $resumen->getCell('J7')->getValue());
-        $this->assertEquals(38825.5, $resumen->getCell('K7')->getValue());
+        $this->assertEquals(35825.5, $resumen->getCell('K7')->getValue());
         $this->assertSame('PENDIENTE', $resumen->getCell('M7')->getValue());
         $this->assertSame('SIN PROMESA', $resumen->getCell('M8')->getValue());
         $this->assertSame('TOTAL', $resumen->getCell('A10')->getValue());

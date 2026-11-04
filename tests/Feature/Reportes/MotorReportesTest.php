@@ -54,7 +54,11 @@ class MotorReportesTest extends TestCase
         $this->assertEquals(40000.5, $ana->dado('2026-01'));
         $this->assertTrue($ana->hayUsd);
 
-        // Para el estado cuenta todo lo dado en categorías de compromiso (campa sin promesa también); el diezmo no.
+        // Para el estado cuenta solo lo dado en las categorías en que prometió (regla 2.1): ni el
+        // diezmo ni la campa (categoría de compromiso, pero sin promesa de Ana).
+        $this->assertEquals(35825.5, $ana->dadoEnPromesas());
+        $this->assertEquals(35825.5, $ana->estado()->haDado());
+        // Informativo: todo lo dado en categorías de compromiso.
         $this->assertEquals(38825.5, $ana->dadoEnCompromisos());
     }
 
@@ -100,18 +104,20 @@ class MotorReportesTest extends TestCase
 
         // Se cobra enero a septiembre: misiones 9 x 10.000 + construcción 2.000 x 39 domingos + seminario 9 x 5.000.
         $this->assertEquals(213000, $estado->leCorresponde());
-        // Dado hasta el 13/10 (incluido el 04/10) en categorías de compromiso; el 01/11 no.
-        $this->assertEquals(61826.25, $estado->haDado());
-        $this->assertEquals(-151173.75, $estado->diferencia());
+        // Dado hasta el 13/10 (incluido el 04/10) en las categorías prometidas; el 01/11 no.
+        $this->assertEquals(58826.25, $estado->haDado());
+        $this->assertEquals(-154173.75, $estado->diferencia());
         $this->assertSame(EstadoCuenta::PENDIENTE, $estado->etiqueta());
 
-        // Octubre se muestra (esperado del mes) pero no se cobra.
-        $this->assertEquals(10000 + 8000 + 5000, $resultado->cuenta($this->ana->id)->esperado('2026-10'));
+        // Octubre se muestra (lo del mes, informativo) pero no se cobra.
+        $this->assertEquals(0, $resultado->cuenta($this->ana->id)->esperado('2026-10'));
+        $this->assertEquals(10000 + 8000 + 5000, $resultado->cuenta($this->ana->id)->esperadoDelMes('2026-10'));
         $this->assertSame('2026-10', $resultado->periodo->mesEnCurso()?->clave);
     }
 
     public function test_si_el_corte_es_el_ultimo_dia_del_mes_ese_mes_si_se_cobra(): void
     {
+        Carbon::setTestNow('2026-11-01 10:00:00');
         $carla = $this->calcular(PeriodoReporte::alCorte('2026-10-31'))->cuenta($this->carla->id);
 
         $this->assertEquals(10 * 6000, $carla->estado()->leCorresponde());
@@ -130,6 +136,54 @@ class MotorReportesTest extends TestCase
         $this->assertEquals(2000, $estado->leCorresponde());
         $this->assertTrue($estado->alDia());
         $this->assertSame(EstadoCuenta::AL_DIA, $estado->etiqueta());
+    }
+
+    public function test_nada_posterior_a_hoy_cuenta(): void
+    {
+        // Hoy 13/10: el anio completo se recorta a hoy; ni el sobre del 01/11 ni noviembre-diciembre.
+        $resultado = $this->calcular(PeriodoReporte::deMeses(2026, 1, 12));
+        $ana = $resultado->cuenta($this->ana->id);
+
+        $this->assertSame('2026-10-13', $resultado->periodo->hasta->toDateString());
+        $this->assertSame('Corte al 13/10/2026', $resultado->periodo->etiqueta());
+        $this->assertEquals(0, $ana->dado('2026-11'));
+        $this->assertEquals(213000, $ana->estado()->leCorresponde());
+        $this->assertEquals($this->calcular(PeriodoReporte::alCorte('2026-10-13'))->cuenta($this->ana->id)->estado(), $ana->estado());
+    }
+
+    public function test_al_dia_con_tolerancia_de_un_colon(): void
+    {
+        $persona = $this->crearPersona('Elena Vargas', '8000-0000');
+        $this->promesa($persona, 'misiones', 1000, 'mensual');
+        $this->crearSobre($this->crearCulto('2026-01-11'), $persona, ['misiones' => 999.01]);
+        $estado = app(MotorReportes::class)->calcular(PeriodoReporte::alCorte('2026-02-10'), [$persona])->cuenta($persona->id)->estado();
+        $this->assertSame(EstadoCuenta::AL_DIA, $estado->etiqueta());
+
+        $this->crearSobre($this->crearCulto('2026-03-08'), $persona, ['misiones' => 999.98]);
+        $estado = app(MotorReportes::class)->calcular(PeriodoReporte::alCorte('2026-03-31'), [$persona])->cuenta($persona->id)->estado();
+        // Le correspondían 3.000 y dio 1.998,99: falta más de un colón.
+        $this->assertSame(EstadoCuenta::PENDIENTE, $estado->etiqueta());
+    }
+
+    public function test_dolares_sin_tipo_de_cambio_en_el_sobre_usan_el_de_la_fecha_del_culto_y_las_promesas_el_de_fin_de_mes(): void
+    {
+        TipoCambio::create(['fecha' => '2026-02-28', 'compra' => 515, 'venta' => 520, 'source' => 'prueba']);
+        TipoCambio::create(['fecha' => '2026-03-05', 'compra' => 525, 'venta' => 530, 'source' => 'prueba']);
+        TipoCambio::create(['fecha' => '2026-10-10', 'compra' => 535, 'venta' => 540, 'source' => 'prueba']);
+
+        $ana = $this->calcular(PeriodoReporte::alCorte('2026-10-13'), conDetalle: true)->cuenta($this->ana->id);
+
+        // Sobre del 04/03 sin tipo de cambio: el vigente ese dia (28/02, ₡520), no el de hoy (₡540).
+        $this->assertEquals(7.25 * 520, $ana->dado('2026-03', ['seminario']));
+        $this->assertEquals(520, collect($ana->detalle)->firstWhere('categoria', 'seminario')['tipo_cambio']);
+        // El sobre que guardó su tipo de cambio (₡510) lo conserva.
+        $this->assertEquals(20200, $ana->dado('2026-02', ['misiones']));
+        // Promesa de $5 quincenal: enero al 31/01 (₡500), febrero al 28/02 (₡520), marzo al 31/03 (₡530),
+        // octubre en curso al de hoy (₡540, solo informativo).
+        $this->assertEquals(5000, $ana->esperado('2026-01', 'seminario'));
+        $this->assertEquals(5200, $ana->esperado('2026-02', 'seminario'));
+        $this->assertEquals(5300, $ana->esperado('2026-03', 'seminario'));
+        $this->assertEquals(5400, $ana->esperadoDelMes('2026-10', 'seminario'));
     }
 
     public function test_sin_promesa_el_estado_es_sin_promesa(): void
