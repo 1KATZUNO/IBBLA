@@ -62,6 +62,29 @@ class CultoPolicy
     }
 
     /**
+     * Cerrar el recuento (QA-005, QA-009): quien puede editar el culto, pero no antes del dia del
+     * culto ni con el culto vacio (sin sobres ni dinero suelto). Se muestra deshabilitado con el motivo.
+     */
+    public function cerrar(User $user, Culto $culto): Response
+    {
+        $puede = $this->puedeEditarCulto($user, $culto);
+        if ($puede->denied()) {
+            return $puede;
+        }
+        if ($culto->cerrado) {
+            return Permiso::deshabilitar('Este culto ya está cerrado.');
+        }
+        if ($culto->fecha->isAfter(today())) {
+            return Permiso::deshabilitar('Todavía no se puede cerrar: el culto es el '.$culto->fecha->format('d/m/Y').'.');
+        }
+        if (! $culto->sobres()->exists() && ! $culto->ofrendasSueltas()->exists()) {
+            return Permiso::deshabilitar('No hay nada que cerrar: registra al menos un sobre o el dinero suelto.');
+        }
+
+        return Permiso::permitir();
+    }
+
+    /**
      * Firmas del recuento (decision del cliente 13/10): admin y tesoreria las pueden corregir despues
      * de firmadas, incluso con el culto cerrado. Cada cambio se audita (RecuentoController).
      */

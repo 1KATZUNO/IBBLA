@@ -75,18 +75,22 @@
                 </div>
             </details>
             @if(! $culto->cerrado)
-                <x-permiso :permiso="$permisoEditar">
+                @php
+                    $permisoCerrar = Gate::inspect('cerrar', $culto);
+                    $avisoAnonimos = ($cantidadAnonimos ?? 0) > 0 ? ' Ojo: '.$cantidadAnonimos.' '.($cantidadAnonimos === 1 ? 'sobre está' : 'sobres están').' como Anónimo.' : '';
+                @endphp
+                <x-permiso :permiso="$permisoCerrar">
                 <button type="button" class="btn-warning"
                         data-confirmar="#form-cerrar-culto"
                         data-titulo="Cerrar culto"
-                        data-mensaje="¿Cerrar el culto del {{ $culto->fecha->format('d/m/Y') }}? Después ya no se podrán agregar ni editar sobres (solo el administrador podrá corregirlo). El tipo de cambio queda congelado."
+                        data-mensaje="¿Cerrar el culto del {{ $culto->fecha->format('d/m/Y') }}? {{ $resumen->cantidadSobres }} sobres, total ₡{{ number_format($resumen->total(), 2) }}.{{ $avisoAnonimos }} Después ya no se podrán agregar ni editar sobres (solo el administrador podrá corregirlo). El tipo de cambio queda congelado."
                         data-boton="Sí, cerrar"
                         data-variante="btn-warning">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
                     Cerrar culto
                 </button>
                 </x-permiso>
-                @if($puedeEditar)
+                @if($permisoCerrar->allowed())
                     <form id="form-cerrar-culto" action="{{ route('recuento.cerrar-culto', $culto) }}" method="POST" class="hidden">
                         @csrf
                     </form>

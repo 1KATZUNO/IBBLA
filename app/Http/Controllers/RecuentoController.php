@@ -453,7 +453,7 @@ class RecuentoController extends Controller
         if ($culto->cerrado) {
             return $this->alCulto($culto->id, 'error', 'Este culto ya está cerrado.');
         }
-        Gate::authorize('puedeEditarCulto', $culto);
+        Gate::authorize('cerrar', $culto);
 
         // Congelar tipo de cambio al cerrar
         $tipoCambioVenta = TipoCambio::hoy()?->venta;

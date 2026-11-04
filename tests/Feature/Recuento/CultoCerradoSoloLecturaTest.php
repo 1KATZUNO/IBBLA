@@ -149,6 +149,8 @@ class CultoCerradoSoloLecturaTest extends TestCase
     public function test_en_un_culto_abierto_el_tesorero_registra_sin_problema(): void
     {
         $abierto = $this->crearCulto($this->iglesia, '2026-10-18');
+        // Con al menos un sobre (vacio, "Cerrar culto" sale deshabilitado con su motivo)
+        $this->crearSobreEn($abierto);
 
         $this->actingAs($this->tesorero)->get(route('recuento.culto', $abierto))
             ->assertOk()
