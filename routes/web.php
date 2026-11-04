@@ -164,6 +164,36 @@ Route::middleware(['auth', 'role:admin,tesorero'])->group(function () {
     Route::get('/ingresos-asistencia/promesas-por-clase', [App\Http\Controllers\PromesasReporteController::class, 'porClase'])->name('ingresos-asistencia.promesas-por-clase');
 });
 
+// Descargas financieras (regla 2.5 de 04-DECISIONES.md, QA-010): admin y tesorero. Reporte General,
+// contribuciones y estado de cuenta de cualquier persona; Excel de ingresos y de promesas.
+Route::middleware(['auth', 'role:admin,tesorero', 'audit'])->group(function () {
+    Route::get('/ingresos-asistencia/excel-ingresos', [IngresosAsistenciaController::class, 'excelIngresos'])->name('ingresos-asistencia.excel-ingresos');
+    Route::get('/ingresos-asistencia/excel-promesas', [IngresosAsistenciaController::class, 'excelPromesas'])->name('ingresos-asistencia.excel-promesas');
+    Route::get('personas/reporte-pdf', [PersonaController::class, 'reportePdf'])->name('personas.reporte-pdf');
+    Route::get('personas/reporte-general', [PersonaController::class, 'reporteGeneral'])->name('personas.reporte-general');
+    // Estado de cuenta de la persona en PDF (el mismo informe que se manda por WhatsApp), ?accion=ver|descargar
+    Route::get('personas/{persona}/informe', [App\Http\Controllers\InformePersonaController::class, 'show'])->name('personas.informe');
+});
+
+// Reportes de asistencia (regla 2.5): admin, tesorero y asistente. Registrar asistencia sigue en el grupo de abajo.
+Route::middleware(['auth', 'role:admin,tesorero,asistente', 'audit'])->group(function () {
+    // Reportes de asistencia
+    Route::get('/ingresos-asistencia/asistencia', [IngresosAsistenciaController::class, 'asistencia'])->name('ingresos-asistencia.asistencia');
+    Route::get('/ingresos-asistencia/pdf-asistencia', [IngresosAsistenciaController::class, 'pdfAsistencia'])->name('ingresos-asistencia.pdf-asistencia');
+    Route::get('/ingresos-asistencia/pdf-asistencia-culto/{culto}', [IngresosAsistenciaController::class, 'pdfAsistenciaCulto'])->name('ingresos-asistencia.pdf-asistencia-culto');
+    Route::get('/ingresos-asistencia/pdf-asistencia-mes', [IngresosAsistenciaController::class, 'pdfAsistenciaMes'])->name('ingresos-asistencia.pdf-asistencia-mes');
+
+    // Asistencia por clase en un rango de fechas, con promedio (pantalla, PDF, CSV y Excel)
+    Route::get('/ingresos-asistencia/asistencia-clases', [App\Http\Controllers\AsistenciaClasesReporteController::class, 'index'])->name('ingresos-asistencia.asistencia-clases');
+    Route::get('/ingresos-asistencia/asistencia-clases/pdf', [App\Http\Controllers\AsistenciaClasesReporteController::class, 'pdf'])->name('ingresos-asistencia.asistencia-clases.pdf');
+    Route::get('/ingresos-asistencia/asistencia-clases/csv', [App\Http\Controllers\AsistenciaClasesReporteController::class, 'csv'])->name('ingresos-asistencia.asistencia-clases.csv');
+    Route::get('/ingresos-asistencia/asistencia-clases/excel', [App\Http\Controllers\AsistenciaClasesReporteController::class, 'excel'])->name('ingresos-asistencia.asistencia-clases.excel');
+
+    // Excel exports (Fase 2): paralelos a los PDFs
+    Route::get('/ingresos-asistencia/excel-asistencia', [IngresosAsistenciaController::class, 'excelAsistencia'])->name('ingresos-asistencia.excel-asistencia');
+    Route::get('/ingresos-asistencia/excel-asistencia-mes', [IngresosAsistenciaController::class, 'excelAsistenciaMes'])->name('ingresos-asistencia.excel-asistencia-mes');
+});
+
 // Reportes de dinero por persona con el motor unico (equipo 3a): admin y tesorero.
 Route::middleware(['auth', 'role:admin,tesorero'])->prefix('reportes')->name('reportes.')->group(function () {
     // Cumplimiento de promesas con corte a la fecha (HU-R13): pantalla, PDF (?accion=ver|descargar) y Excel
@@ -183,24 +213,6 @@ Route::middleware(['auth', 'role:admin,asistente', 'audit'])->group(function () 
     // Asistencia
     Route::post('asistencia/{asistencium}/cerrar', [AsistenciaController::class, 'cerrarAsistencia'])->name('asistencia.cerrar');
     Route::resource('asistencia', AsistenciaController::class);
-
-    // Reportes de asistencia
-    Route::get('/ingresos-asistencia/asistencia', [IngresosAsistenciaController::class, 'asistencia'])->name('ingresos-asistencia.asistencia');
-    Route::get('/ingresos-asistencia/pdf-asistencia', [IngresosAsistenciaController::class, 'pdfAsistencia'])->name('ingresos-asistencia.pdf-asistencia');
-    Route::get('/ingresos-asistencia/pdf-asistencia-culto/{culto}', [IngresosAsistenciaController::class, 'pdfAsistenciaCulto'])->name('ingresos-asistencia.pdf-asistencia-culto');
-    Route::get('/ingresos-asistencia/pdf-asistencia-mes', [IngresosAsistenciaController::class, 'pdfAsistenciaMes'])->name('ingresos-asistencia.pdf-asistencia-mes');
-
-    // Asistencia por clase en un rango de fechas, con promedio (pantalla, PDF, CSV y Excel)
-    Route::get('/ingresos-asistencia/asistencia-clases', [App\Http\Controllers\AsistenciaClasesReporteController::class, 'index'])->name('ingresos-asistencia.asistencia-clases');
-    Route::get('/ingresos-asistencia/asistencia-clases/pdf', [App\Http\Controllers\AsistenciaClasesReporteController::class, 'pdf'])->name('ingresos-asistencia.asistencia-clases.pdf');
-    Route::get('/ingresos-asistencia/asistencia-clases/csv', [App\Http\Controllers\AsistenciaClasesReporteController::class, 'csv'])->name('ingresos-asistencia.asistencia-clases.csv');
-    Route::get('/ingresos-asistencia/asistencia-clases/excel', [App\Http\Controllers\AsistenciaClasesReporteController::class, 'excel'])->name('ingresos-asistencia.asistencia-clases.excel');
-
-    // Excel exports (Fase 2): paralelos a los PDFs
-    Route::get('/ingresos-asistencia/excel-asistencia', [IngresosAsistenciaController::class, 'excelAsistencia'])->name('ingresos-asistencia.excel-asistencia');
-    Route::get('/ingresos-asistencia/excel-asistencia-mes', [IngresosAsistenciaController::class, 'excelAsistenciaMes'])->name('ingresos-asistencia.excel-asistencia-mes');
-    Route::get('/ingresos-asistencia/excel-ingresos', [IngresosAsistenciaController::class, 'excelIngresos'])->name('ingresos-asistencia.excel-ingresos');
-    Route::get('/ingresos-asistencia/excel-promesas', [IngresosAsistenciaController::class, 'excelPromesas'])->name('ingresos-asistencia.excel-promesas');
 });
 
 // Solo admin
@@ -232,15 +244,11 @@ Route::middleware(['auth', 'role:admin', 'audit'])->group(function () {
     // Personas y Promesas
     Route::post('personas/{persona}/reiniciar-compromisos', [PersonaController::class, 'reiniciarCompromisos'])->name('personas.reiniciar-compromisos');
     Route::post('personas/{persona}/limpiar-todo', [PersonaController::class, 'limpiarTodo'])->name('personas.limpiar-todo');
-    Route::get('personas/reporte-pdf', [PersonaController::class, 'reportePdf'])->name('personas.reporte-pdf');
-    Route::get('personas/reporte-general', [PersonaController::class, 'reporteGeneral'])->name('personas.reporte-general');
     Route::resource('personas', PersonaController::class);
     Route::resource('promesas', PromesaController::class);
 
     // Compromisos
     Route::get('personas/{persona}/compromisos', [App\Http\Controllers\CompromisoController::class, 'show'])->name('compromisos.show');
-    // Estado de cuenta de la persona en PDF (el mismo informe que se manda por WhatsApp), ?accion=ver|descargar
-    Route::get('personas/{persona}/informe', [App\Http\Controllers\InformePersonaController::class, 'show'])->name('personas.informe');
     Route::post('compromisos/recalcular', [App\Http\Controllers\CompromisoController::class, 'recalcular'])->name('compromisos.recalcular');
 
     // Limpieza de personas inactivas (temporal)
