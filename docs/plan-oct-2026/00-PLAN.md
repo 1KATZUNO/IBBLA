@@ -121,3 +121,55 @@ Del lider del proyecto (David):
   Nota: el primer comando de deploy cayo en ~/public_html = IBBSCMusica (musica.ibbla.eu) y solo le
   recacheo config/rutas/vistas. Plan semanal al 67 %: paro aqui; el squad del Centro de Reportes
   (HU-reportes.md) y el QA de integracion arrancan tras el reinicio del 13/10 13:00.
+- 2026-10-13 (18:20): SEGUNDA RONDA LANZADA. Los 5 equipos corren a la vez en sus worktrees (plan semanal
+  recien reiniciado: 13 % al lanzar). Equipo 1 QA opus (qa/revision-inicial, 8111), 3a motor de reportes
+  opus (feat/reportes-motor, 8112), 2 recuento y permisos opus (feat/recuento-lineas-permisos, 8113),
+  4 UI/upbar/manual sonnet (feat/ui-upbar-manual, 8114), 5 WhatsApp/analisis sonnet
+  (feat/whatsapp-persona-analisis, 8115). Briefs en 03-BRIEFS-EQUIPOS.md. Orden de integracion previsto:
+  3a -> 2 -> 5 -> 4 (layouts al final), luego suite + build + QA de entrega + deploy (E1).
+  Pendientes del cliente: definicion de "servidores", volcado de BD de produccion, 30 ministerios,
+  cuenta Meta.
+- 2026-10-13 (18:40): DECISION WHATSAPP = CallMeBot "como en ARCA" (gestion-app-arca: WhatsAppProvider +
+  CallMeBotProvider, cada receptor activa el bot desde su WhatsApp y pega el enlace con phone/apikey en
+  su perfil, boton de prueba). Se elimina el bot/webhook de Meta (WA-2); el driver meta queda guardado.
+  Personas lo activan solas en Mi perfil con guia ilustrada; usuarios del sistema igual para los avisos
+  de rol; el admin manda informes solo cuando la persona tiene clave, si no, wa.me como hoy. Equipo 5
+  re-briefeado por mensaje; Equipo 4 agrega la seccion al manual. "Hermanos servidores": David lo averigua.
+- 2026-10-13 (20:10): QA INICIAL INTEGRADO (c93d334): 43 hallazgos (1 bloqueante QA-024 cifras distintas
+  por persona, 12 altas), repartidos por mensaje a los equipos 2, 3a, 4 y 5. DECISIONES DEL CLIENTE:
+  Roy usa Administrador; culto cerrado se borra SOLO admin (motivo + auditoria); tesorero NO ve Personas
+  pero tiene alta rapida de personas; se elimina "Entrar como invitado" (queda solo el login de las
+  personas agregadas); las firmas del recuento se pueden corregir despues de firmadas (admin/tesorero,
+  auditado). Supuesto vigente hasta que David diga otra cosa: los reportes financieros (Reporte General,
+  estados de cuenta, cumplimiento) los ven admin y tesorero. Pendientes para el motor: si el diezmo cuenta,
+  si el mes en curso se cobra, tipo de cambio del sobre o de hoy.
+- 2026-10-13 (20:35): PAUSA ORDENADA POR DAVID. Los 4 equipos detenidos, todo commiteado (WIP donde hacia
+  falta), NADA mergeado todavia salvo el QA (c93d334). Estado por equipo:
+  * 3a feat/reportes-motor (6 commits, hasta dd2807e): motor unico (989c702), periodo (5203841), plantilla
+    PDF/Excel (62a48f7), cumplimiento con corte pantalla+PDF+Excel (7c80b7a), ajustes PDF (f1242ce),
+    lote de estados de cuenta PDF/ZIP/Excel (dd2807e). FALTA: puntos del QA (QA-024 verificar que todas
+    las pantallas den lo mismo, QA-025 lecturas que escriben -> comando compromisos:sincronizar, QA-026
+    helper USD, QA-010 permisos, seeder sin fechas futuras, PDFs lentos), REGLAS-CALCULO.md con las
+    reglas definitivas del lider (diezmo no cuenta; mes en curso no se cobra; USD con tc del sobre/fecha
+    del culto/hoy; promesa USD con tc de fin de mes), suite e informe.
+  * 2 feat/recuento-lineas-permisos (8 commits + WIP 904d443): REC-1 lineas (055c0e2), REC-2 solo lectura
+    (aa30180), suelto con descripcion (619c0d6), REC-3 Accesos (ca6fe9e), REC-4 flujo y sobres seguidos
+    (9a76aee, 9e2085d), QA-020 (d2d44f9), QA-001/002 (7280ac1). FALTA: REC-5 docs/ROLES.md + regla unica
+    de "sin permiso", QA-003 borrar cerrado solo admin con motivo, QA-011/014 redirecciones y Mi perfil,
+    QA-012/013 seguridad (super admin editable, API asistencia sin rol), decisiones del cliente (quitar
+    invitado -en curso-, tesorero sin Personas + alta rapida, firmas corregibles), USD en PDF de recuento.
+  * 4 feat/ui-upbar-manual (3 commits + WIP ee9173b): UI-1 tokens y docs/UI.md (2e85816), UI-2 upbar
+    (8fafdda), UI-3 buscador global (fc8d2b8). FALTA: UI-4 manual en la app + "?" + PDF, lang/es,
+    login sin invitado (diseno), seccion WhatsApp del manual, npm run build, capturas.
+  * 5 feat/whatsapp-persona-analisis (8 commits + WIP 077100f): driver callmebot por receptor (bdfea29),
+    activacion con consentimiento (9b16c2a), tarjeta Mi perfil con pasos (0405623), perfil de usuario
+    (7c15726), avisos automaticos (85b04ae), informe automatico (b88ca25), whatsapp:probar (628f666),
+    acepta clave sola y respuesta real (c3d8adc). FALTA: tests del comando (en curso), AN-1 comando
+    ingresos:analizar + ANALISIS-INGRESOS-local.md, .env.example documentado, informe.
+  * 6 (NO lanzado): worktree IBBLA-wt/entrega-deploy listo (feat/entrega-deploy, ibbla_dep, 8116) para
+    deploy tooling (script Hostinger, DEPLOY-HOSTINGER.md, comando de verificacion, limpiar
+    .env.example, vendor en .gitignore).
+  CallMeBot: activacion real hecha desde el WhatsApp de David (clave ya existia por ARCA), 1 mensaje real
+  de prueba recibido 7:31 PM; clave solo en el .env del worktree del equipo 5 (max 3 pruebas reales).
+  Para REANUDAR: mandar "continua" a cada agente (conservan contexto) o relanzar con 03-BRIEFS +
+  esta nota; luego integrar 3a -> 2 -> 5 -> 4 (+6), suite, build, QA de entrega, deploy E1.
