@@ -85,6 +85,6 @@ php artisan test --filter=Name  # Run specific test
 
 ## Deployment
 
-Production deployment via cPanel (`.cpanel.yml`) to Verpex hosting. Alternative bash script in `deploy.sh` for manual deployment.
+Production runs on Hostinger shared hosting (ibbla.eu), deployed over SSH with `deploy/hostinger.sh` (see `docs/DEPLOY-HOSTINGER.md`). Check a server with `php artisan ibbla:verificar`; run `deploy/empaquetar.ps1` locally before tagging.
 
 Default admin credentials after seeding: `admin@ibbsc.com` / `password`
