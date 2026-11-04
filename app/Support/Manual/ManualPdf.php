@@ -29,6 +29,10 @@ class ManualPdf
             return $ruta;
         }
 
+        // El manual completo lleva decenas de capturas: DomPDF necesita mas memoria y tiempo que un PDF comun
+        @ini_set('memory_limit', '512M');
+        @set_time_limit(180);
+
         if (! is_dir(dirname($ruta))) {
             mkdir(dirname($ruta), 0775, true);
         }
