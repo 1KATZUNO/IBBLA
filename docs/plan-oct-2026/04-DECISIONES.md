@@ -17,6 +17,10 @@ mandan sobre los briefs cuando se contradigan.
 6. WhatsApp = **CallMeBot "como en ARCA"** (ver seccion 4). Sin bot de Meta (el driver meta queda guardado).
 7. "Hermanos servidores" para el reporte de cumplimiento: aun sin definir; el filtro ofrece
    todas / con promesa / por ministerio / seleccion.
+8. (Roy, 04/11) Al registrar un sobre eligen a la persona, guardan y en el reporte sale como "Anonimo".
+   Equipo 2 dentro de REC-4: causa raiz con test; nombre de la persona GRANDE y fijo junto a Guardar, con
+   "ANONIMO" en rojo; guardar anonimo exige marcarlo o confirmar; filtro "solo anonimos" + accion
+   "asignar persona" en el recuento para corregir los que ya quedaron mal.
 
 ## 2. Reglas de calculo definitivas (las fija el lider por delegacion de David)
 1. **Dado** para el cumplimiento = solo lo entregado en las categorias con promesa de esa persona. El
