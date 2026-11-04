@@ -61,6 +61,22 @@ class CultoPolicy
         return Permiso::deshabilitar('Crear cultos le toca al administrador. Si necesitas crear uno, pídele un acceso de edición.');
     }
 
+    /**
+     * Eliminar un culto (decision del cliente 13/10, QA-003): solo el administrador. Si el culto esta
+     * cerrado o tiene movimientos, el controlador ademas pide confirmacion y motivo y lo audita todo.
+     * Los demas roles no ven el boton.
+     */
+    public function delete(User $user, Culto $culto): Response
+    {
+        if (! $this->esDeSuIglesia($user, $culto)) {
+            return Response::denyAsNotFound();
+        }
+
+        return $user->isSuperAdmin() || $user->isAdmin()
+            ? Permiso::permitir()
+            : Permiso::ocultar('Eliminar cultos le toca solo al administrador.');
+    }
+
     /** "Cerrado el 11/10 por Ana. Solo lectura: ..." (sin fecha o sin nombre si el culto no los tiene). */
     public static function mensajeCerrado(Culto $culto): string
     {

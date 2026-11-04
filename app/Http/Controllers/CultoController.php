@@ -3,9 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Events\CultoCreado;
+use App\Models\AuditLog;
 use App\Models\Culto;
 use App\Models\TenantServiceType;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 
 class CultoController extends Controller
 {
@@ -100,12 +103,58 @@ class CultoController extends Controller
             ->with('success', 'Culto actualizado correctamente.');
     }
 
-    public function destroy(Culto $culto)
+    /**
+     * Eliminar un culto (QA-003 y decision del cliente 13/10): solo el administrador. Un culto
+     * cerrado o con sobres, dinero suelto o egresos exige confirmar y escribir el motivo, y en la
+     * auditoria queda lo que se borro (culto, fecha, total, cuantos sobres y cuales).
+     */
+    public function destroy(Request $request, Culto $culto)
     {
-        $culto->delete();
+        Gate::authorize('delete', $culto);
+
+        $culto->load(['totales', 'cerradoPor:id,name', 'sobres.persona:id,nombre']);
+        $cantidadSobres = $culto->sobres->count();
+        $conDatos = $culto->cerrado || $cantidadSobres > 0 || $culto->ofrendasSueltas()->exists() || $culto->egresos()->exists();
+
+        if ($conDatos) {
+            $request->validate([
+                'motivo' => 'required|string|min:10|max:500',
+                'confirmo' => 'accepted',
+            ], [
+                'motivo.required' => 'Escribe por qué se elimina este culto (queda en la auditoría).',
+                'motivo.min' => 'El motivo tiene que explicar un poco más (al menos 10 letras).',
+                'confirmo.accepted' => 'Marca que entiendes que se borran el culto y todo su recuento.',
+            ]);
+        }
+
+        $detalles = [
+            'culto_id' => $culto->id,
+            'fecha' => $culto->fecha->toDateString(),
+            'tipo' => $culto->tipo_nombre,
+            'cerrado' => (bool) $culto->cerrado,
+            'cerrado_por' => $culto->cerradoPor?->name,
+            'total_general' => (float) ($culto->totales->total_general ?? 0),
+            'cantidad_sobres' => $cantidadSobres,
+            'cantidad_ofrendas_sueltas' => $culto->ofrendasSueltas()->count(),
+            'cantidad_egresos' => $culto->egresos()->count(),
+            'motivo' => $conDatos ? trim((string) $request->input('motivo')) : null,
+            // Lo minimo para reconstruir que se perdio
+            'sobres' => $culto->sobres->map(fn ($s) => [
+                'numero' => $s->numero_sobre,
+                'persona' => $s->persona?->nombre ?? 'Anónimo',
+                'total' => (float) $s->total_declarado,
+                'moneda' => $s->moneda ?? 'CRC',
+                'metodo' => $s->metodo_pago,
+            ])->values()->all(),
+        ];
+
+        DB::transaction(function () use ($culto, $detalles) {
+            AuditLog::registrar('Eliminar culto', $detalles, 'cultos.destroy');
+            $culto->delete();
+        });
 
         return redirect()->route('cultos.index')
-            ->with('success', 'Culto eliminado correctamente.');
+            ->with('success', 'Culto del '.$culto->fecha->format('d/m/Y').' eliminado'.($cantidadSobres ? " con sus {$cantidadSobres} sobres" : '').'. Quedó registrado en la auditoría.');
     }
 
     /** El formulario se abrio desde Recuento, o quien lo usa no gestiona cultos (no entra a la lista de admin). */

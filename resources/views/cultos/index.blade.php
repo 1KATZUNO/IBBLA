@@ -52,13 +52,18 @@
                     <td class="px-4 py-2 whitespace-nowrap text-right text-sm font-medium">
                         <a href="{{ route('cultos.show', $culto) }}" class="btn-row text-green-700 hover:bg-green-50">Ver</a>
                         <a href="{{ route('cultos.edit', $culto) }}" class="btn-row text-blue-700 hover:bg-blue-50">Editar</a>
-                        <button type="button" onclick="mostrarModalEliminar({{ $culto->id }}, @js($culto->fecha->format('d/m/Y') . ' - ' . $culto->tipo_nombre))" class="btn-row text-red-700 hover:bg-red-50">
-                            Eliminar
-                        </button>
-                        <form id="form-eliminar-{{ $culto->id }}" action="{{ route('cultos.destroy', $culto) }}" method="POST" class="hidden">
-                            @csrf
-                            @method('DELETE')
-                        </form>
+                        @php
+                            $conDatos = $culto->cerrado || $culto->sobres->isNotEmpty() || $culto->ofrendasSueltas->isNotEmpty();
+                        @endphp
+                        <x-permiso :permiso="Gate::inspect('delete', $culto)">
+                            <button type="button" class="btn-row text-red-700 hover:bg-red-50"
+                                    data-eliminar-culto="{{ route('cultos.destroy', $culto) }}"
+                                    data-nombre="{{ $culto->fecha->format('d/m/Y') }} - {{ $culto->tipo_nombre }}"
+                                    data-con-datos="{{ $conDatos ? '1' : '0' }}"
+                                    data-resumen="{{ $culto->cerrado ? 'Culto CERRADO' : 'Culto abierto' }} · {{ $culto->sobres->count() }} sobres · ₡{{ number_format($totalGeneral, 2) }}">
+                                Eliminar
+                            </button>
+                        </x-permiso>
                     </td>
                 </tr>
                 @empty
@@ -78,59 +83,70 @@
     </div>
 </div>
 
-<!-- Modal: Confirmar Eliminación -->
-<div id="modalEliminar" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+{{-- Eliminar culto (QA-003): solo admin; si esta cerrado o tiene recuento pide confirmacion y motivo, y se audita --}}
+<div id="modalEliminar" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" role="dialog" aria-modal="true" aria-labelledby="tituloEliminarCulto">
     <div class="relative top-4 sm:top-20 mx-4 sm:mx-auto p-5 border w-full max-w-sm sm:max-w-md shadow-lg rounded-md bg-white">
-        <div class="mt-3">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-semibold text-red-900">⚠️ Eliminar Culto</h3>
-                <button type="button" onclick="cerrarModalEliminar()" class="btn-icon" aria-label="Cerrar">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                    </svg>
+        <form method="POST" id="formEliminarCulto" class="space-y-4">
+            @csrf
+            @method('DELETE')
+            <div class="flex items-center justify-between">
+                <h3 id="tituloEliminarCulto" class="text-lg font-semibold text-red-900">Eliminar culto</h3>
+                <button type="button" data-cerrar-eliminar class="btn-icon" aria-label="Cerrar">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
                 </button>
             </div>
-            
-            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
-                <p class="text-sm text-yellow-800 mb-2">
-                    ¿Estás seguro de que deseas eliminar el culto <strong id="nombreCulto"></strong>?
-                </p>
+            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-sm text-yellow-900">
+                <p>¿Eliminar el culto <strong id="nombreCulto"></strong>?</p>
+                <p class="mt-1 font-medium" id="resumenCulto"></p>
             </div>
-
+            <div id="camposMotivo" class="hidden space-y-3">
+                <p class="text-sm text-red-800">Se borran también todos sus sobres, el dinero suelto y los egresos. No se puede deshacer; queda registrado en la auditoría.</p>
+                <div>
+                    <label for="motivoEliminar" class="block text-sm font-medium text-gray-800 mb-1">Motivo (obligatorio)</label>
+                    <textarea id="motivoEliminar" name="motivo" rows="3" minlength="10" maxlength="500" class="w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500" placeholder="Ej.: culto creado dos veces por error; los sobres están en el culto del 12/10"></textarea>
+                </div>
+                <label class="flex items-start gap-2 text-sm text-gray-800">
+                    <input type="checkbox" name="confirmo" value="1" id="confirmoEliminar" class="mt-0.5 h-5 w-5 rounded border-gray-300 text-red-600 focus:ring-red-500">
+                    Entiendo que se borran el culto y todo su recuento.
+                </label>
+            </div>
             <div class="flex justify-end gap-3">
-                <button type="button" 
-                        onclick="cerrarModalEliminar()"
-                        class="btn-secondary">
-                    Cancelar
-                </button>
-                <button type="button" 
-                        onclick="confirmarEliminacion()"
-                        class="btn-danger">
-                    Sí, Eliminar
-                </button>
+                <button type="button" data-cerrar-eliminar class="btn-secondary">Cancelar</button>
+                <button type="submit" class="btn-danger">Sí, eliminar</button>
             </div>
-        </div>
+        </form>
     </div>
 </div>
 
 <script>
-let cultoIdEliminar = null;
+(function () {
+    const modal = document.getElementById('modalEliminar');
+    const form = document.getElementById('formEliminarCulto');
+    const campos = document.getElementById('camposMotivo');
+    const motivo = document.getElementById('motivoEliminar');
+    const confirmo = document.getElementById('confirmoEliminar');
 
-function mostrarModalEliminar(id, nombre) {
-    cultoIdEliminar = id;
-    document.getElementById('nombreCulto').textContent = nombre;
-    document.getElementById('modalEliminar').classList.remove('hidden');
-}
-
-function cerrarModalEliminar() {
-    document.getElementById('modalEliminar').classList.add('hidden');
-    cultoIdEliminar = null;
-}
-
-function confirmarEliminacion() {
-    if (cultoIdEliminar) {
-        document.getElementById('form-eliminar-' + cultoIdEliminar).submit();
-    }
-}
+    document.addEventListener('click', function (e) {
+        const boton = e.target.closest('[data-eliminar-culto]');
+        if (boton) {
+            const conDatos = boton.dataset.conDatos === '1';
+            form.action = boton.dataset.eliminarCulto;
+            document.getElementById('nombreCulto').textContent = boton.dataset.nombre;
+            document.getElementById('resumenCulto').textContent = boton.dataset.resumen;
+            campos.classList.toggle('hidden', !conDatos);
+            motivo.required = conDatos;
+            confirmo.required = conDatos;
+            motivo.value = '';
+            confirmo.checked = false;
+            modal.classList.remove('hidden');
+            (conDatos ? motivo : form.querySelector('[type=submit]')).focus();
+            return;
+        }
+        if (e.target.closest('[data-cerrar-eliminar]') || e.target === modal) {
+            modal.classList.add('hidden');
+        }
+    });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') modal.classList.add('hidden'); });
+})();
 </script>
 @endsection
