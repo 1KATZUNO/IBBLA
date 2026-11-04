@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Promesa;
 use Carbon\Carbon;
+use Database\Seeders\AdminUserSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\Concerns\CreaEscenarioWhatsApp;
@@ -112,6 +113,32 @@ class VerificarIbblaTest extends TestCase
 
         $this->artisan('ibbla:verificar', ['--tenant' => 99999])
             ->expectsOutputToContain('no hay iglesia con personas activas')
+            ->assertExitCode(0);
+    }
+
+    public function test_cuentas_con_la_contrasena_de_la_semilla_son_aviso_o_falla_segun_el_entorno(): void
+    {
+        $this->seed(AdminUserSeeder::class);
+
+        $this->artisan('ibbla:verificar', ['--sin-reportes' => true])
+            ->expectsOutputToContain('admin@ibbsc.com, super@admin.com, tesorero@ibbsc.com conservan la contraseña')
+            ->expectsOutputToContain('RESUMEN: OK')
+            ->assertExitCode(0);
+
+        $this->app['env'] = 'production';
+
+        $this->artisan('ibbla:verificar', ['--sin-reportes' => true])
+            ->expectsOutputToContain('contraseña publica en el repositorio')
+            ->assertExitCode(1);
+    }
+
+    public function test_cuenta_de_semilla_con_otra_contrasena_no_se_marca(): void
+    {
+        $this->seed(AdminUserSeeder::class);
+        DB::table('users')->update(['password' => bcrypt('una-clave-propia-larga')]);
+
+        $this->artisan('ibbla:verificar', ['--sin-reportes' => true])
+            ->expectsOutputToContain('ninguna conserva la contraseña del repositorio')
             ->assertExitCode(0);
     }
 }

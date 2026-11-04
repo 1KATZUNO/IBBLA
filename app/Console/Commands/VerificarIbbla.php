@@ -8,7 +8,9 @@ use App\Services\InformePersonaService;
 use App\Services\ReporteGeneralPdf;
 use App\Services\ReporteGeneralService;
 use Illuminate\Console\Command;
+use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Throwable;
 
 /**
@@ -50,6 +52,7 @@ class VerificarIbbla extends Command
         $bdOk = $this->chequearConexion();
         if ($bdOk) {
             $this->chequearMigraciones();
+            $this->chequearCuentasDeSemilla();
         } else {
             $this->falla('Migraciones', 'no se pueden revisar sin conexión a la base de datos');
         }
@@ -170,6 +173,40 @@ class VerificarIbbla extends Command
             $this->falla('Migraciones', count($pendientes).' pendiente(s): '.implode(', ', array_slice($pendientes, 0, 3)).(count($pendientes) > 3 ? ', ...' : ''));
         } catch (Throwable $e) {
             $this->falla('Migraciones', 'no se pudieron revisar: '.$this->primeraLinea($e->getMessage()));
+        }
+    }
+
+    /**
+     * AdminUserSeeder crea usuarios con contraseñas escritas en el repositorio. Si siguen vivas
+     * en el servidor, cualquiera que lea el codigo puede entrar.
+     */
+    private function chequearCuentasDeSemilla(): void
+    {
+        $semilla = [
+            'super@admin.com' => 'admin123',
+            'admin@ibbsc.com' => 'admin123',
+            'tesorero@ibbsc.com' => 'tesorero123',
+        ];
+
+        try {
+            $expuestas = [];
+            foreach (User::withoutGlobalScopes()->whereIn('email', array_keys($semilla))->orderBy('email')->get() as $usuario) {
+                if (Hash::check($semilla[$usuario->email], $usuario->password)) {
+                    $expuestas[] = $usuario->email;
+                }
+            }
+        } catch (Throwable $e) {
+            $this->aviso('Cuentas de semilla', 'no se pudieron revisar: '.$this->primeraLinea($e->getMessage()));
+
+            return;
+        }
+
+        if ($expuestas === []) {
+            $this->ok('Cuentas de semilla', 'ninguna conserva la contraseña del repositorio');
+        } elseif (app()->environment('production')) {
+            $this->falla('Cuentas de semilla', 'contraseña publica en el repositorio: '.implode(', ', $expuestas).' (cambiarla o borrar la cuenta)');
+        } else {
+            $this->aviso('Cuentas de semilla', implode(', ', $expuestas).' conservan la contraseña de AdminUserSeeder (cambiarla antes de produccion)');
         }
     }
 
