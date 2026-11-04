@@ -25,6 +25,9 @@ final class ContextoAnalisis
     /** @var list<array{fecha: string, venta: float}>|null */
     private ?array $tiposCambio = null;
 
+    /** @var array<int, array<string, array<int, float>>>|null */
+    private ?array $dadoAnual = null;
+
     public function __construct(
         public readonly Tenant $iglesia,
         public readonly ?string $desde,
@@ -115,6 +118,50 @@ final class ContextoAnalisis
         $this->tipoCambioDe('9999-12-31');
 
         return $this->tiposCambio === [] ? 0.0 : (float) end($this->tiposCambio)['venta'];
+    }
+
+    /**
+     * Lo dado en el año del estado de cuenta, en colones, por persona, categoría y mes: lo que suman los
+     * detalles de sus sobres con la regla de la app (tipo de cambio del sobre y, si no lo guardó, el más reciente).
+     *
+     * @return array<int, array<string, array<int, float>>>
+     */
+    public function dadoAnual(): array
+    {
+        if ($this->dadoAnual !== null) {
+            return $this->dadoAnual;
+        }
+
+        $tcReciente = $this->tipoCambioReciente();
+        $this->dadoAnual = [];
+
+        $filas = DB::table('sobre_detalles as d')
+            ->join('sobres as s', 's.id', '=', 'd.sobre_id')
+            ->join('cultos as c', 'c.id', '=', 's.culto_id')
+            ->where('c.tenant_id', $this->iglesia->id)->whereNotNull('s.persona_id')
+            ->whereBetween('c.fecha', [$this->anioEstadoCuenta.'-01-01', $this->anioEstadoCuenta.'-12-31'])
+            ->get(['s.persona_id', 'c.fecha', 'd.categoria', 'd.monto', 's.moneda', 's.tipo_cambio_venta']);
+
+        foreach ($filas as $fila) {
+            $persona = (int) $fila->persona_id;
+            $categoria = mb_strtolower((string) $fila->categoria);
+            $mes = (int) Carbon::parse($fila->fecha)->format('n');
+            $this->dadoAnual[$persona][$categoria][$mes] = ($this->dadoAnual[$persona][$categoria][$mes] ?? 0)
+                + $this->aColones((float) $fila->monto, $fila->moneda, (float) $fila->tipo_cambio_venta, $tcReciente);
+        }
+
+        return $this->dadoAnual;
+    }
+
+    /** Dólares a colones con el tipo de cambio del sobre o, si no lo guardó, el indicado; sin ninguno, el monto tal cual. */
+    public function aColones(float $monto, ?string $moneda, float $tipoCambioSobre, float $tipoCambioSiNo): float
+    {
+        if ($moneda !== 'USD') {
+            return $monto;
+        }
+        $tc = $tipoCambioSobre > 0 ? $tipoCambioSobre : $tipoCambioSiNo;
+
+        return $tc > 0 ? round($monto * $tc, 2) : $monto;
     }
 
     /** ¿La diferencia es mayor que el redondeo de centavos? */
