@@ -336,6 +336,6 @@ class MiPerfilWhatsAppTest extends TestCase
 
     public function test_el_resto_de_mi_perfil_sigue_funcionando(): void
     {
-        $this->pagina()->assertOk()->assertSee('Mi estado de cuenta (PDF)')->assertSee('Promesas Activas');
+        $this->pagina()->assertOk()->assertSee('Mi estado de cuenta (PDF)')->assertSee('Mis compromisos al');
     }
 }
