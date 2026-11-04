@@ -4,36 +4,90 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ==========================================================================
+   Sistema visual de IBBLA (documentado en docs/UI.md)
+
+   1. Tokens (variables del tema de la iglesia, alto de la barra superior)
+   2. Base
+   3. Componentes: botones, superficies, encabezado de pagina, tarjeta de resumen,
+      barra de filtros, estado vacio, badges, tabla, formularios, avisos, pestanas
+   4. Estructura de la app: barra superior (upbar), buscador global, menu lateral
+   5. Manual de usuario
+   6. Compatibilidad con pantallas anteriores y App movil
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. Tokens
+   El layout escribe estas variables con los colores del tema de cada iglesia
+   (Tenant::colors). Estos valores son el respaldo (tema azul) para las paginas
+   que no pasan por el layout: login, errores, PDF de prueba.
+   -------------------------------------------------------------------------- */
+:root {
+    --t-50: #eff6ff;  --t-50-rgb: 239 246 255;
+    --t-100: #dbeafe; --t-100-rgb: 219 234 254;
+    --t-200: #bfdbfe; --t-200-rgb: 191 219 254;
+    --t-300: #93c5fd; --t-300-rgb: 147 197 253;
+    --t-400: #60a5fa; --t-400-rgb: 96 165 250;
+    --t-500: #3b82f6; --t-500-rgb: 59 130 246;
+    --t-600: #2563eb; --t-600-rgb: 37 99 235;
+    --t-700: #1d4ed8; --t-700-rgb: 29 78 216;
+    --t-800: #1e40af; --t-800-rgb: 30 64 175;
+    --t-900: #1e3a8a; --t-900-rgb: 30 58 138;
+
+    /* Alto de la barra superior fija: la usan el menu en modo cajon y el buscador movil */
+    --upbar-h: 3.5rem;
+}
+
+/* --------------------------------------------------------------------------
+   2. Base
+   -------------------------------------------------------------------------- */
 @layer base {
     body {
-        @apply font-sans antialiased bg-gray-50;
+        @apply font-sans antialiased bg-gray-50 text-gray-900;
     }
 
     h1, h2, h3, h4, h5, h6 {
         @apply font-display;
         letter-spacing: -0.01em;
     }
+
+    /* Foco visible para quien navega con teclado */
+    :focus-visible {
+        outline: 2px solid rgb(var(--t-500-rgb));
+        outline-offset: 2px;
+    }
+
+    /* Campos de formulario: el foco toma el color de la iglesia (el plugin de formularios usa azul fijo) */
+    [type='text']:focus, [type='email']:focus, [type='url']:focus, [type='password']:focus, [type='number']:focus,
+    [type='date']:focus, [type='datetime-local']:focus, [type='month']:focus, [type='search']:focus, [type='tel']:focus,
+    [type='time']:focus, [type='week']:focus, [multiple]:focus, textarea:focus, select:focus {
+        --tw-ring-color: rgb(var(--t-500-rgb));
+        border-color: rgb(var(--t-500-rgb));
+    }
+
+    [type='checkbox'], [type='radio'] {
+        color: rgb(var(--t-600-rgb));
+    }
+
+    [type='checkbox']:focus, [type='radio']:focus {
+        --tw-ring-color: rgb(var(--t-500-rgb));
+    }
 }
 
 @layer components {
-    /* Clean Card */
-    .glass-card {
-        @apply bg-white rounded-xl shadow-card border border-gray-100;
-        transition: box-shadow 0.2s ease, transform 0.2s ease;
-    }
 
-    .glass-card:hover {
-        @apply shadow-card-hover;
-    }
+    /* ======================================================================
+       3. Componentes
+       ====================================================================== */
 
     /* ------------------------------------------------------------------
        Botones. Todos miden al menos 44px de alto (area tactil para tablet).
        Colores con significado fijo en toda la app:
-         primario  = accion principal de la pantalla (azul)
-         secundario = cancelar, volver, filtros (blanco con borde)
-         peligro   = eliminar / acciones destructivas (rojo)
-         exito     = registrar dinero o confirmar algo positivo (verde)
-         aviso     = cerrar/bloquear un culto o una asistencia (naranja)
+         primario   = accion principal de la pantalla (color de la iglesia)
+         secundario = cancelar, volver, filtros, descargas (blanco con borde)
+         peligro    = eliminar / acciones destructivas (rojo)
+         exito      = registrar dinero o confirmar algo positivo (verde)
+         aviso      = cerrar/bloquear un culto o una asistencia (naranja)
        ------------------------------------------------------------------ */
     .btn {
         @apply inline-flex items-center justify-center gap-2 min-h-[44px] px-4 py-2 rounded-lg;
@@ -44,7 +98,7 @@
     }
 
     .btn-primary {
-        @apply btn bg-blue-600 text-white shadow-sm hover:bg-blue-700 active:bg-blue-800 focus-visible:ring-blue-500;
+        @apply btn bg-brand-600 text-white shadow-sm hover:bg-brand-700 active:bg-brand-800 focus-visible:ring-brand-500;
     }
 
     .btn-secondary {
@@ -67,18 +121,28 @@
         @apply btn bg-orange-700 text-white shadow-sm hover:bg-orange-800 active:bg-orange-900 focus-visible:ring-orange-600;
     }
 
+    /* Boton sin caja para acciones terciarias (Ver mas, Limpiar filtros) */
+    .btn-ghost {
+        @apply btn text-brand-700 hover:bg-brand-50 active:bg-brand-100 focus-visible:ring-brand-500;
+    }
+
     /* Boton solo-icono (acciones de fila en tablas, cerrar modales) */
     .btn-icon {
         @apply inline-flex items-center justify-center h-11 w-11 shrink-0 rounded-lg text-gray-500;
         @apply transition-colors duration-150 hover:bg-gray-100 hover:text-gray-800 active:bg-gray-200;
-        @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500;
+        @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500;
     }
 
     /* Accion de fila con texto (Editar, Ver...) */
     .btn-row {
         @apply inline-flex items-center justify-center gap-1.5 min-h-[44px] px-3 rounded-lg text-sm font-medium whitespace-nowrap;
         @apply transition-colors duration-150 hover:bg-gray-100 active:bg-gray-200;
-        @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500;
+        @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500;
+    }
+
+    /* Enlace de texto con el color de la iglesia */
+    .link {
+        @apply font-medium text-brand-700 underline-offset-2 hover:underline hover:text-brand-800;
     }
 
     /* Barra de acciones pegajosa al fondo de formularios largos: Guardar siempre visible.
@@ -108,24 +172,85 @@
         @apply btn-primary;
     }
 
-    /* Input Fields */
-    .input-primary {
-        @apply w-full px-4 py-3 rounded-lg border border-gray-300 bg-white;
-        @apply focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none;
-        @apply transition-all duration-200;
+    /* ------------------------------------------------------------------
+       Superficies: tarjeta con borde fino y sombra casi imperceptible
+       ------------------------------------------------------------------ */
+    .card,
+    .glass-card {
+        @apply bg-white rounded-xl border border-gray-200 shadow-card;
     }
 
-    /* Alias para compatibilidad */
-    .input-gemini {
-        @apply input-primary;
+    .card-header {
+        @apply flex flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6 border-b border-gray-200;
     }
 
-    /* Stats Card con borde lateral azul */
+    .card-title {
+        @apply text-base font-semibold text-gray-900;
+    }
+
+    .card-body {
+        @apply p-4 sm:p-6;
+    }
+
+    .card-footer {
+        @apply px-4 py-3 sm:px-6 border-t border-gray-200 bg-gray-50 rounded-b-xl;
+    }
+
+    /* .glass-card es alias de .card (antes llevaba sombra al pasar el mouse aunque no fuera clicable) */
+
+    /* ------------------------------------------------------------------
+       Encabezado de pagina: titulo y descripcion a la izquierda, acciones a la derecha
+       ------------------------------------------------------------------ */
+    .page-header {
+        @apply flex flex-wrap items-start justify-between gap-x-4 gap-y-3 mb-6;
+    }
+
+    .page-title {
+        @apply text-xl sm:text-2xl font-semibold tracking-tight text-gray-900 leading-tight;
+    }
+
+    .page-subtitle {
+        @apply mt-1 text-sm text-gray-500;
+    }
+
+    .page-actions {
+        @apply flex flex-shrink-0 flex-wrap items-center gap-2 ml-auto;
+    }
+
+    /* Titulo de una seccion dentro de la pagina */
+    .section-title {
+        @apply text-base sm:text-lg font-semibold text-gray-900;
+    }
+
+    /* ------------------------------------------------------------------
+       Tarjeta de resumen (KPI): etiqueta, valor grande, nota o variacion
+       ------------------------------------------------------------------ */
+    .summary-grid {
+        @apply grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4;
+    }
+
+    .summary-card {
+        @apply card flex flex-col gap-1 p-4 sm:p-5;
+    }
+
+    .summary-label {
+        @apply text-sm font-medium text-gray-500;
+    }
+
+    .summary-value {
+        @apply text-2xl font-semibold tracking-tight text-gray-900 tabular-nums break-words;
+    }
+
+    .summary-hint {
+        @apply text-xs text-gray-500;
+    }
+
+    /* Tarjeta de estadistica de los dashboards (borde lateral con el color de la iglesia) */
     .stat-card {
-        @apply relative bg-white rounded-xl p-6 shadow-card border border-gray-100;
-        @apply transition-all duration-200 hover:shadow-card-hover;
+        @apply relative bg-white rounded-xl p-6 shadow-card border border-gray-200;
+        @apply transition-shadow duration-200 hover:shadow-card-hover;
         @apply flex flex-col;
-        @apply border-l-4 border-l-blue-600;
+        @apply border-l-4 border-l-brand-600;
         min-height: 140px;
     }
 
@@ -135,9 +260,218 @@
         overflow-wrap: anywhere;
     }
 
-    /* Texto azul sólido (reemplazo de gradiente) */
+    /* ------------------------------------------------------------------
+       Barra de filtros: arriba de la tabla, controles de 44px, acciones a la derecha
+       ------------------------------------------------------------------ */
+    .filter-bar {
+        @apply card flex flex-wrap items-end gap-3 p-3 sm:p-4;
+    }
+
+    .filter-field {
+        @apply flex flex-col gap-1 min-w-0;
+    }
+
+    .filter-label {
+        @apply text-xs font-medium text-gray-500;
+    }
+
+    .filter-actions {
+        @apply flex flex-wrap items-center gap-2 ml-auto;
+    }
+
+    /* ------------------------------------------------------------------
+       Estado vacio: dice que paso y que hacer
+       ------------------------------------------------------------------ */
+    .empty-state {
+        @apply flex flex-col items-center justify-center gap-2 px-6 py-12 text-center;
+    }
+
+    .empty-state-icon {
+        @apply mb-1 flex h-12 w-12 items-center justify-center rounded-full bg-gray-100 text-gray-400;
+    }
+
+    .empty-state-title {
+        @apply text-base font-semibold text-gray-900;
+    }
+
+    .empty-state-text {
+        @apply max-w-md text-sm text-gray-500;
+    }
+
+    .empty-state-actions {
+        @apply mt-3 flex flex-wrap items-center justify-center gap-2;
+    }
+
+    /* ------------------------------------------------------------------
+       Badge de estado. El color SIEMPRE significa algo:
+         success = al dia, abierto, activo, enviado
+         warning = pendiente, por revisar
+         danger  = atrasado, cerrado con error, inactivo
+         info    = informativo, en proceso
+         neutral = sin estado especial
+         brand   = etiqueta de categoria o rol
+       ------------------------------------------------------------------ */
+    .badge {
+        @apply inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium leading-5 whitespace-nowrap ring-1 ring-inset;
+    }
+
+    .badge-dot::before {
+        content: '';
+        @apply h-1.5 w-1.5 shrink-0 rounded-full bg-current;
+    }
+
+    /* Siempre se usa con una variante: badge-neutral es la de por defecto */
+    .badge-success { @apply badge bg-green-50 text-green-700 ring-green-600/20; }
+    .badge-warning { @apply badge bg-amber-50 text-amber-800 ring-amber-600/25; }
+    .badge-danger { @apply badge bg-red-50 text-red-700 ring-red-600/20; }
+    .badge-info { @apply badge bg-blue-50 text-blue-700 ring-blue-600/20; }
+    .badge-neutral { @apply badge bg-gray-100 text-gray-700 ring-gray-500/20; }
+    .badge-brand,
+    .badge-primary,
+    .badge-gemini { @apply badge bg-brand-50 text-brand-700 ring-brand-600/20; }
+
+    /* ------------------------------------------------------------------
+       Tabla de datos: encabezado claro, filas finas, acciones a la derecha.
+       Va dentro de .table-scroll dentro de una .card.
+       ------------------------------------------------------------------ */
+    .data-table,
+    .table-primary,
+    .table-gemini {
+        @apply w-full border-collapse text-left text-sm;
+    }
+
+    .data-table thead th,
+    .table-primary thead th,
+    .table-gemini thead th {
+        @apply whitespace-nowrap border-b border-gray-200 bg-gray-50 px-4 py-3 text-xs font-semibold uppercase tracking-wide text-gray-500;
+    }
+
+    .data-table tbody td,
+    .table-primary tbody td,
+    .table-gemini tbody td {
+        @apply border-b border-gray-100 px-4 py-3 align-middle text-gray-700;
+    }
+
+    .data-table tbody tr:last-child td,
+    .table-primary tbody tr:last-child td,
+    .table-gemini tbody tr:last-child td {
+        @apply border-b-0;
+    }
+
+    .data-table tbody tr,
+    .table-primary tbody tr,
+    .table-gemini tbody tr {
+        @apply transition-colors duration-100 hover:bg-gray-50/70;
+    }
+
+    .data-table tfoot td {
+        @apply border-t border-gray-200 bg-gray-50 px-4 py-3 font-semibold text-gray-900;
+    }
+
+    /* Columna de cifras: a la derecha y con digitos de ancho fijo */
+    .data-table .col-num {
+        @apply text-right tabular-nums;
+    }
+
+    /* Columna de acciones: a la derecha, sin saltos de linea */
+    .data-table .col-actions {
+        @apply text-right whitespace-nowrap;
+    }
+
+    /* ------------------------------------------------------------------
+       Formularios
+       ------------------------------------------------------------------ */
+    .field-label {
+        @apply mb-1.5 block text-sm font-medium text-gray-700;
+    }
+
+    .field-hint {
+        @apply mt-1 text-xs text-gray-500;
+    }
+
+    .field-error {
+        @apply mt-1 text-xs font-medium text-red-600;
+    }
+
+    /* Campo de texto de 44px con foco del color de la iglesia */
+    .input-primary {
+        @apply w-full min-h-[44px] px-3.5 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-900 placeholder-gray-400;
+        @apply focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 focus:outline-none;
+        @apply transition-colors duration-150;
+    }
+
+    /* Alias para compatibilidad */
+    .input-gemini {
+        @apply input-primary;
+    }
+
+    /* Seccion de un formulario largo: tarjeta con titulo */
+    .form-section {
+        @apply card;
+    }
+
+    .form-section-title {
+        @apply px-4 py-3 sm:px-6 border-b border-gray-200 text-base font-semibold text-gray-900;
+    }
+
+    /* ------------------------------------------------------------------
+       Avisos del sistema
+       ------------------------------------------------------------------ */
+    .alert-success {
+        @apply bg-green-50 border border-green-200 border-l-4 border-l-green-600 text-green-800 px-4 py-3 sm:px-5 rounded-lg;
+    }
+
+    .alert-error {
+        @apply bg-red-50 border border-red-200 border-l-4 border-l-red-600 text-red-800 px-4 py-3 sm:px-5 rounded-lg;
+    }
+
+    .alert-info {
+        @apply bg-blue-50 border border-blue-200 border-l-4 border-l-blue-600 text-blue-800 px-4 py-3 sm:px-5 rounded-lg;
+    }
+
+    .alert-warning {
+        @apply bg-yellow-50 border border-yellow-200 border-l-4 border-l-yellow-500 text-yellow-800 px-4 py-3 sm:px-5 rounded-lg;
+    }
+
+    /* ------------------------------------------------------------------
+       Pestanas tipo segmento (General | Asistencia | Promesas)
+       ------------------------------------------------------------------ */
+    .tabs {
+        @apply inline-flex flex-wrap items-center gap-1 rounded-lg bg-gray-100 p-1;
+    }
+
+    .tab {
+        @apply inline-flex min-h-[44px] items-center gap-2 rounded-md px-3.5 text-sm font-medium text-gray-600;
+        @apply transition-colors duration-150 hover:text-gray-900;
+    }
+
+    .tab-active {
+        @apply bg-white text-gray-900 shadow-sm;
+    }
+
+    /* Ficha de 44 px para atajos y filtros rapidos (Este mes, Mes anterior...) */
+    .chip {
+        @apply inline-flex min-h-[44px] items-center rounded-full bg-gray-100 px-4 text-sm font-medium text-gray-700;
+        @apply transition-colors duration-150 hover:bg-gray-200;
+    }
+
+    .chip-active {
+        @apply bg-brand-600 text-white hover:bg-brand-700;
+    }
+
+    /* Tecla (atajos de teclado en pantalla) */
+    .kbd {
+        @apply inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded border border-gray-300 bg-white px-1 text-[11px] font-medium leading-none text-gray-500 shadow-[0_1px_0_rgba(0,0,0,0.08)];
+    }
+
+    /* Texto azul solido (reemplazo de gradiente) */
     .text-gradient {
-        @apply text-blue-700 font-semibold;
+        @apply text-brand-700 font-semibold;
+    }
+
+    /* Background pattern simple */
+    .bg-pattern {
+        @apply bg-gray-50;
     }
 
     /* Scrollbar personalizado */
@@ -163,78 +497,6 @@
         @apply scrollbar-primary;
     }
 
-    /* Badge */
-    .badge-primary {
-        @apply inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium;
-        @apply bg-blue-100 text-blue-800;
-        @apply transition-all duration-200;
-    }
-
-    /* Alias para compatibilidad */
-    .badge-gemini {
-        @apply badge-primary;
-    }
-
-    /* Table Style */
-    .table-primary {
-        @apply w-full border-collapse;
-    }
-
-    .table-primary thead tr {
-        @apply bg-blue-700 text-white;
-    }
-
-    .table-primary thead th {
-        @apply px-6 py-4 text-left font-semibold tracking-wider uppercase text-sm;
-    }
-
-    .table-primary thead th:first-child {
-        @apply rounded-tl-lg;
-    }
-
-    .table-primary thead th:last-child {
-        @apply rounded-tr-lg;
-    }
-
-    .table-primary tbody tr {
-        @apply bg-white border-b border-gray-100;
-        @apply transition-colors duration-200 hover:bg-blue-50;
-    }
-
-    .table-primary tbody td {
-        @apply px-6 py-4;
-    }
-
-    /* Alias para compatibilidad */
-    .table-gemini {
-        @apply table-primary;
-    }
-
-    .table-gemini thead tr {
-        @apply bg-blue-700 text-white;
-    }
-
-    .table-gemini thead th {
-        @apply px-6 py-4 text-left font-semibold tracking-wider uppercase text-sm;
-    }
-
-    .table-gemini thead th:first-child {
-        @apply rounded-tl-lg;
-    }
-
-    .table-gemini thead th:last-child {
-        @apply rounded-tr-lg;
-    }
-
-    .table-gemini tbody tr {
-        @apply bg-white border-b border-gray-100;
-        @apply transition-colors duration-200 hover:bg-blue-50;
-    }
-
-    .table-gemini tbody td {
-        @apply px-6 py-4;
-    }
-
     /* Modal */
     .modal-overlay {
         @apply fixed inset-0 bg-gray-900/50;
@@ -245,28 +507,6 @@
         @apply relative bg-white rounded-xl shadow-xl;
         @apply border border-gray-200 p-8 max-w-2xl mx-auto my-8;
         animation: fadeInUp 0.3s ease-out;
-    }
-
-    /* Alerts */
-    .alert-success {
-        @apply bg-green-50 border border-green-200 text-green-800 px-6 py-4 rounded-lg;
-    }
-
-    .alert-error {
-        @apply bg-red-50 border border-red-200 text-red-800 px-6 py-4 rounded-lg;
-    }
-
-    .alert-info {
-        @apply bg-blue-50 border border-blue-200 text-blue-800 px-6 py-4 rounded-lg;
-    }
-
-    .alert-warning {
-        @apply bg-yellow-50 border border-yellow-200 text-yellow-800 px-6 py-4 rounded-lg;
-    }
-
-    /* Background pattern simple */
-    .bg-pattern {
-        @apply bg-gray-50;
     }
 }
 
@@ -279,9 +519,251 @@
     .delay-500 { animation-delay: 0.25s; }
 }
 
-/* ============================================
-   ESTILOS PARA APP MOVIL (IBBSCApp WebView)
-   ============================================ */
+/* ==========================================================================
+   4. Estructura de la app: barra superior (upbar), buscador y menu lateral
+   Los colores salen de --t-* (tema de la iglesia). Estos estilos van fuera de
+   @layer para que Tailwind no los elimine al depurar el CSS.
+   ========================================================================== */
+
+.upbar {
+    height: var(--upbar-h);
+    background-color: rgb(var(--t-900-rgb));
+    color: #fff;
+    box-shadow: 0 1px 0 rgba(0, 0, 0, 0.18), 0 2px 8px -2px rgba(15, 23, 42, 0.25);
+}
+
+/* Boton de la barra superior: 44px de area tactil, fondo suave al pasar el mouse */
+.upbar-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 44px;
+    min-width: 44px;
+    padding: 0 0.75rem;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: rgb(255 255 255 / 0.9);
+    transition: background-color 0.15s ease;
+}
+
+.upbar-btn:hover {
+    background-color: rgb(255 255 255 / 0.12);
+    color: #fff;
+}
+
+.upbar-btn:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: -2px;
+}
+
+/* Campo de busqueda de la barra superior */
+.upbar-search-input {
+    width: 100%;
+    height: 2.75rem;
+    padding: 0 3.25rem 0 2.5rem;
+    border-radius: 0.5rem;
+    border: 1px solid rgb(255 255 255 / 0.18);
+    background-color: rgb(255 255 255 / 0.12);
+    color: #fff;
+    font-size: 0.875rem;
+    transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.upbar-search-input::placeholder {
+    color: rgb(255 255 255 / 0.7);
+}
+
+.upbar-search-input:hover {
+    background-color: rgb(255 255 255 / 0.18);
+}
+
+.upbar-search-input:focus {
+    outline: none;
+    background-color: #fff;
+    border-color: #fff;
+    color: rgb(17 24 39);
+    box-shadow: 0 0 0 3px rgb(var(--t-300-rgb) / 0.55);
+}
+
+.upbar-search-input:focus::placeholder {
+    color: rgb(107 114 128);
+}
+
+/* El campo no debe llevar el estilo de formularios de @tailwindcss/forms */
+.upbar-search-input[type='search']::-webkit-search-cancel-button {
+    -webkit-appearance: none;
+    appearance: none;
+}
+
+/* Lupa y tecla "/" van despues del campo en el HTML para reaccionar al foco solo con CSS */
+.upbar-search-icon {
+    pointer-events: none;
+    position: absolute;
+    left: 0.75rem;
+    top: 50%;
+    height: 1.25rem;
+    width: 1.25rem;
+    transform: translateY(-50%);
+    color: rgb(255 255 255 / 0.75);
+}
+
+.upbar-search-input:focus ~ .upbar-search-icon {
+    color: rgb(107 114 128);
+}
+
+.upbar-search-kbd {
+    pointer-events: none;
+    position: absolute;
+    right: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.upbar-search-input:focus ~ .upbar-search-kbd {
+    display: none;
+}
+
+/* Menu lateral (colores del tema) */
+.sidebar-bg { background-color: rgb(var(--t-800-rgb)); }
+.sidebar-border { border-color: rgb(var(--t-700-rgb)); }
+.sidebar-user-bg { background-color: rgb(var(--t-900-rgb)); }
+.nav-item-active { background-color: rgb(var(--t-700-rgb)); color: #fff; }
+.nav-item-default { color: rgb(var(--t-100-rgb)); }
+.nav-item-default:hover { background-color: color-mix(in srgb, rgb(var(--t-700-rgb)) 50%, transparent); }
+.nav-section-title { color: rgb(var(--t-300-rgb)); }
+.nav-text-secondary { color: rgb(var(--t-200-rgb)); }
+.nav-text-tertiary { color: rgb(var(--t-300-rgb)); }
+.avatar-bg { background-color: rgb(var(--t-600-rgb)); }
+.btn-sidebar { background-color: rgb(var(--t-700-rgb)); }
+.btn-sidebar:hover { background-color: rgb(var(--t-600-rgb)); }
+.overlay-bg { background-color: rgb(var(--t-800-rgb)); }
+
+/* Area de contenido: el scroll es del <main>; reservar el espacio de la barra de desplazamiento
+   evita que el contenido "salte" unos pixeles al pasar de una pantalla corta a una larga */
+.app-main {
+    scrollbar-gutter: stable;
+}
+
+/* Boton "?" de ayuda contextual junto al titulo de cada pantalla */
+.help-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 44px;
+    padding: 0 0.875rem 0 0.5rem;
+    border-radius: 9999px;
+    border: 1px solid rgb(209 213 219);
+    background-color: #fff;
+    color: rgb(55 65 81);
+    font-size: 0.875rem;
+    font-weight: 500;
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.help-btn:hover {
+    background-color: rgb(var(--t-50-rgb));
+    border-color: rgb(var(--t-300-rgb));
+    color: rgb(var(--t-800-rgb));
+}
+
+.help-btn-mark {
+    display: inline-flex;
+    height: 1.75rem;
+    width: 1.75rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9999px;
+    background-color: rgb(var(--t-100-rgb));
+    color: rgb(var(--t-700-rgb));
+    font-size: 0.9375rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+/* ==========================================================================
+   5. Manual de usuario (Markdown renderizado dentro de .manual-prose)
+   ========================================================================== */
+.manual-prose {
+    color: rgb(55 65 81);
+    font-size: 1rem;
+    line-height: 1.7;
+    overflow-wrap: anywhere;
+}
+
+.manual-prose > * + * { margin-top: 1rem; }
+
+.manual-prose h1 { font-size: 1.875rem; font-weight: 700; color: rgb(17 24 39); line-height: 1.2; margin-top: 0; }
+.manual-prose h2 {
+    font-size: 1.375rem; font-weight: 650; color: rgb(17 24 39); line-height: 1.3;
+    margin-top: 2.5rem; padding-top: 1.5rem; border-top: 1px solid rgb(229 231 235);
+    scroll-margin-top: 5rem;
+}
+.manual-prose h2:first-child { margin-top: 0; padding-top: 0; border-top: 0; }
+.manual-prose h3 { font-size: 1.125rem; font-weight: 600; color: rgb(17 24 39); margin-top: 1.75rem; scroll-margin-top: 5rem; }
+.manual-prose h4 { font-size: 1rem; font-weight: 600; color: rgb(17 24 39); margin-top: 1.25rem; }
+
+.manual-prose a { color: rgb(var(--t-700-rgb)); font-weight: 500; text-decoration: underline; text-underline-offset: 2px; }
+.manual-prose a:hover { color: rgb(var(--t-900-rgb)); }
+.manual-prose a.manual-anchor { visibility: hidden; margin-left: 0.4rem; text-decoration: none; color: rgb(156 163 175); }
+.manual-prose :is(h2, h3):hover a.manual-anchor { visibility: visible; }
+
+.manual-prose ul, .manual-prose ol { padding-left: 1.5rem; }
+.manual-prose ul { list-style: disc; }
+.manual-prose ol { list-style: decimal; }
+.manual-prose li { margin-top: 0.4rem; padding-left: 0.25rem; }
+.manual-prose li > ul, .manual-prose li > ol { margin-top: 0.4rem; }
+.manual-prose li::marker { color: rgb(var(--t-600-rgb)); font-weight: 600; }
+
+.manual-prose strong { color: rgb(17 24 39); font-weight: 600; }
+.manual-prose code {
+    padding: 0.1rem 0.4rem; border-radius: 0.375rem; background-color: rgb(243 244 246);
+    font-size: 0.875em; color: rgb(17 24 39); border: 1px solid rgb(229 231 235);
+}
+.manual-prose hr { border: 0; border-top: 1px solid rgb(229 231 235); margin: 2rem 0; }
+
+/* Capturas con numeros: figura con borde y pie */
+.manual-prose figure { margin: 1.5rem 0; }
+.manual-prose figure img {
+    display: block; width: 100%; height: auto; border-radius: 0.75rem;
+    border: 1px solid rgb(209 213 219); box-shadow: 0 4px 16px -6px rgba(16, 24, 40, 0.25);
+}
+.manual-prose figcaption { margin-top: 0.6rem; font-size: 0.8125rem; color: rgb(107 114 128); text-align: center; }
+.manual-prose p > img { max-width: 100%; height: auto; border-radius: 0.5rem; border: 1px solid rgb(229 231 235); }
+
+/* Tablas de botones: # / boton / que hace / quien / que pasa despues */
+.manual-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; border: 1px solid rgb(229 231 235); border-radius: 0.75rem; background: #fff; }
+.manual-prose table { width: 100%; border-collapse: collapse; font-size: 0.9rem; line-height: 1.5; }
+.manual-prose th {
+    background-color: rgb(249 250 251); text-align: left; padding: 0.65rem 0.9rem;
+    font-size: 0.75rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: rgb(107 114 128);
+    border-bottom: 1px solid rgb(229 231 235); white-space: nowrap;
+}
+.manual-prose td { padding: 0.7rem 0.9rem; vertical-align: top; border-bottom: 1px solid rgb(243 244 246); }
+.manual-prose tr:last-child td { border-bottom: 0; }
+.manual-prose td:first-child { font-weight: 600; color: rgb(17 24 39); min-width: 9rem; }
+
+/* Avisos dentro del manual: > **Nota:** ... */
+.manual-prose blockquote {
+    border-left: 4px solid rgb(var(--t-500-rgb)); background-color: rgb(var(--t-50-rgb));
+    padding: 0.75rem 1rem; border-radius: 0 0.5rem 0.5rem 0; color: rgb(30 41 59);
+}
+.manual-prose blockquote > * + * { margin-top: 0.5rem; }
+.manual-prose blockquote.manual-cuidado { border-left-color: rgb(217 119 6); background-color: rgb(255 251 235); color: rgb(120 53 15); }
+.manual-prose blockquote.manual-consejo { border-left-color: rgb(22 163 74); background-color: rgb(240 253 244); color: rgb(20 83 45); }
+
+/* Numero rojo de las capturas, tambien usable en el texto: <span class="m-n">1</span> */
+.manual-prose .m-n {
+    display: inline-flex; width: 1.4rem; height: 1.4rem; align-items: center; justify-content: center;
+    border-radius: 9999px; background-color: #dc2626; color: #fff; font-size: 0.75rem; font-weight: 700; line-height: 1;
+    vertical-align: 1px;
+}
+
+/* ==========================================================================
+   6. Compatibilidad con pantallas anteriores y App movil
+   ========================================================================== */
 
 /* Bottom Navigation */
 .mobile-nav-item {
@@ -294,6 +776,10 @@
 .mobile-nav-item:active {
     @apply bg-gray-100;
 }
+
+/* ============================================
+   ESTILOS PARA APP MOVIL (IBBSCApp WebView)
+   ============================================ */
 
 /* Cuando la clase ibbsc-mobile-app esta presente (inyectada por WebView o por el body class) */
 .ibbsc-mobile-app .stat-card {
@@ -325,12 +811,14 @@
 
 /* Tablas responsive en movil */
 .ibbsc-mobile-app .table-primary thead th,
-.ibbsc-mobile-app .table-gemini thead th {
+.ibbsc-mobile-app .table-gemini thead th,
+.ibbsc-mobile-app .data-table thead th {
     @apply px-3 py-2 text-xs;
 }
 
 .ibbsc-mobile-app .table-primary tbody td,
-.ibbsc-mobile-app .table-gemini tbody td {
+.ibbsc-mobile-app .table-gemini tbody td,
+.ibbsc-mobile-app .data-table tbody td {
     @apply px-3 py-2 text-sm;
 }
 
@@ -347,4 +835,21 @@
 /* Alpine: ocultar elementos con x-cloak hasta que Alpine arranque (evita que modales se vean un instante al cargar) */
 [x-cloak] {
     display: none !important;
+}
+
+/* Tarjetas escritas con utilidades (bg-white + redondeado + sombra) toman el borde fino y la sombra suave de
+   .card sin tocar cada pantalla. Las que ya traen su propio borde (border-red-200...) conservan el suyo. */
+.app-main :is(.shadow, .shadow-sm, .shadow-md):is(.rounded-lg, .rounded-xl).bg-white:not([class*='border-']) {
+    border: 1px solid rgb(229 231 235);
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05), 0 1px 3px rgba(16, 24, 40, 0.08);
+    border-radius: 0.75rem;
+}
+
+/* Quien prefiere menos movimiento no ve animaciones de entrada */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
 }

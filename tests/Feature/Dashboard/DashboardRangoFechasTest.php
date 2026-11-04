@@ -372,9 +372,9 @@ class DashboardRangoFechasTest extends TestCase
         $this->assertStringContainsString('href="'.route('dashboard').$periodo.'"', $html);
 
         // el dashboard en el que se está aparece resaltado y los otros no
-        $this->assertMatchesRegularExpression('/bg-blue-600 text-white">General<\/a>/', $html);
-        $this->assertMatchesRegularExpression('/bg-gray-100 text-gray-700 hover:bg-gray-200">Asistencia<\/a>/', $html);
-        $this->assertMatchesRegularExpression('/bg-gray-100 text-gray-700 hover:bg-gray-200">Promesas<\/a>/', $html);
+        $this->assertMatchesRegularExpression('/class="tab tab-active"\s+aria-current="page"\s*>General<\/a>/', $html);
+        $this->assertMatchesRegularExpression('/class="tab "\s*>Asistencia<\/a>/', $html);
+        $this->assertMatchesRegularExpression('/class="tab "\s*>Promesas<\/a>/', $html);
     }
 
     public function test_el_acceso_rapido_conserva_el_mes_y_el_año_elegidos(): void

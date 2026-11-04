@@ -35,7 +35,7 @@
                 @if (is_array($element))
                     @foreach ($element as $page => $url)
                         @if ($page == $paginator->currentPage())
-                            <span class="hidden sm:inline-flex items-center justify-center min-h-[44px] min-w-[44px] px-3 text-sm font-semibold text-white bg-blue-600 border border-blue-600 rounded-lg" aria-current="page">{{ $page }}</span>
+                            <span class="hidden sm:inline-flex items-center justify-center min-h-[44px] min-w-[44px] px-3 text-sm font-semibold text-white bg-brand-600 border border-brand-600 rounded-lg" aria-current="page">{{ $page }}</span>
                         @else
                             <a href="{{ $url }}" class="hidden sm:inline-flex items-center justify-center min-h-[44px] min-w-[44px] px-3 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50" aria-label="Ir a la pagina {{ $page }}">{{ $page }}</a>
                         @endif

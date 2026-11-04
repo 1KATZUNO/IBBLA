@@ -20,8 +20,8 @@
             <div class="space-y-6">
                 <!-- Capilla -->
                 <div class="border rounded-lg overflow-hidden">
-                    <button type="button" onclick="toggleSection('capilla')" class="w-full px-4 py-3 bg-blue-50 hover:bg-blue-100 flex justify-between items-center">
-                        <h3 class="text-lg font-semibold text-blue-900">Capilla</h3>
+                    <button type="button" onclick="toggleSection('capilla')" class="w-full px-4 py-3 bg-brand-50 hover:bg-brand-100 flex justify-between items-center">
+                        <h3 class="text-lg font-semibold text-brand-900">Capilla</h3>
                         <svg id="capilla-icon" class="w-5 h-5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                         </svg>
@@ -73,7 +73,7 @@
                                 @foreach($maestrosDeClase as $maestro)
                                 <label class="flex items-center min-h-[44px] px-2 rounded hover:bg-gray-50 cursor-pointer">
                                     <input type="checkbox" name="clase[{{ $clase->id }}][maestros_ids][]" value="{{ $maestro->id }}"
-                                           class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-500 focus:ring-blue-500 maestro-check maestro-check-{{ $clase->id }}"
+                                           class="rounded border-gray-300 text-brand-600 shadow-sm focus:border-brand-500 focus:ring-brand-500 maestro-check maestro-check-{{ $clase->id }}"
                                            {{ in_array($maestro->id, $maestrosSeleccionados) ? 'checked' : '' }}>
                                     <span class="ml-2 text-sm text-gray-700">{{ $maestro->nombre }}</span>
                                 </label>
@@ -127,9 +127,9 @@
                 </div>
 
                 <!-- Bautismos -->
-                <div class="border rounded-lg overflow-hidden border-blue-300">
-                    <button type="button" onclick="toggleSection('bautismos')" class="w-full px-4 py-3 bg-blue-50 hover:bg-blue-100 flex justify-between items-center">
-                        <h3 class="text-lg font-semibold text-blue-900">Bautismos</h3>
+                <div class="border rounded-lg overflow-hidden border-brand-300">
+                    <button type="button" onclick="toggleSection('bautismos')" class="w-full px-4 py-3 bg-brand-50 hover:bg-brand-100 flex justify-between items-center">
+                        <h3 class="text-lg font-semibold text-brand-900">Bautismos</h3>
                         <svg id="bautismos-icon" class="w-5 h-5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                         </svg>
@@ -165,9 +165,9 @@
                 </div>
 
                 <!-- Visitas -->
-                <div class="border rounded-lg overflow-hidden border-purple-300">
-                    <button type="button" onclick="toggleSection('visitas')" class="w-full px-4 py-3 bg-purple-50 hover:bg-purple-100 flex justify-between items-center">
-                        <h3 class="text-lg font-semibold text-purple-900">Visitas</h3>
+                <div class="border rounded-lg overflow-hidden border-gray-300">
+                    <button type="button" onclick="toggleSection('visitas')" class="w-full px-4 py-3 bg-gray-50 hover:bg-gray-100 flex justify-between items-center">
+                        <h3 class="text-lg font-semibold text-gray-900">Visitas</h3>
                         <svg id="visitas-icon" class="w-5 h-5 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                         </svg>
@@ -238,7 +238,7 @@
                 <div class="mr-auto flex items-center gap-3">
                     <label for="total_asistencia" class="text-sm font-semibold text-gray-700">Total Asistencia</label>
                     <input type="number" name="total_asistencia" id="total_asistencia" step="1" min="0" value="{{ old('total_asistencia', $asistencia->total_asistencia) }}"
-                           class="w-24 min-h-[44px] text-xl font-bold text-center text-blue-700 bg-blue-50 rounded-md border-blue-200 shadow-sm focus:border-blue-500 focus:ring-blue-500" required readonly tabindex="-1">
+                           class="w-24 min-h-[44px] text-xl font-bold text-center text-brand-700 bg-brand-50 rounded-md border-brand-200 shadow-sm focus:border-brand-500 focus:ring-brand-500" required readonly tabindex="-1">
                 </div>
                 <a href="{{ route('asistencia.index') }}" class="btn-secondary">
                     Cancelar

@@ -15,7 +15,7 @@
                         <div class="mb-4">
                             <label for="name" class="block text-sm font-medium text-gray-700">Nombre</label>
                             <input type="text" name="name" id="name" value="{{ old('name', $usuario->name) }}" required
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
                             @error('name')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
@@ -25,7 +25,7 @@
                         <div class="mb-4">
                             <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
                             <input type="email" name="email" id="email" value="{{ old('email', $usuario->email) }}" required
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
                             @error('email')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
@@ -37,7 +37,7 @@
                         <div class="mb-4">
                             <label for="rol" class="block text-sm font-medium text-gray-700">Rol</label>
                             <select name="rol" id="rol" required
-                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
                                 <option value="">Seleccionar rol...</option>
                                 <option value="admin" {{ old('rol', $usuario->rol) === 'admin' ? 'selected' : '' }}>Administrador - Todo, incluida la configuración</option>
                                 <option value="tesorero" {{ old('rol', $usuario->rol) === 'tesorero' ? 'selected' : '' }}>Tesorero - Recuento, dashboards y reportes financieros</option>
@@ -59,7 +59,7 @@
                             <div class="mb-4">
                                 <label for="password" class="block text-sm font-medium text-gray-700">Nueva Contraseña</label>
                                 <input type="password" name="password" id="password"
-                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
                                 @error('password')
                                     <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                                 @enderror
@@ -69,7 +69,7 @@
                             <div class="mb-4">
                                 <label for="password_confirmation" class="block text-sm font-medium text-gray-700">Confirmar Nueva Contraseña</label>
                                 <input type="password" name="password_confirmation" id="password_confirmation"
-                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
+                                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
                             </div>
                         </div>
 

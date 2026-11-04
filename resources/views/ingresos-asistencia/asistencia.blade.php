@@ -6,9 +6,9 @@
 @section('content')
 <div class="space-y-6">
     <!-- Filtros y Búsqueda -->
-    <div class="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl shadow-md p-6 border border-blue-100">
+    <div class="bg-brand-50 rounded-xl shadow-md p-6 border border-brand-100">
         <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
-            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-5 h-5 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path>
             </svg>
             Filtros de Búsqueda
@@ -18,7 +18,7 @@
                 <!-- Filtro de Mes -->
                 <div>
                     <label for="mes" class="block text-sm font-medium text-gray-700 mb-2">Mes</label>
-                    <select name="mes" id="mes" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    <select name="mes" id="mes" class="w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
                         <option value="todos" {{ request('mes', 'todos') == 'todos' ? 'selected' : '' }}>Todos los meses</option>
                         <option value="1" {{ request('mes') == '1' ? 'selected' : '' }}>Enero</option>
                         <option value="2" {{ request('mes') == '2' ? 'selected' : '' }}>Febrero</option>
@@ -38,7 +38,7 @@
                 <!-- Filtro de Año -->
                 <div>
                     <label for="año" class="block text-sm font-medium text-gray-700 mb-2">Año</label>
-                    <select name="año" id="año" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    <select name="año" id="año" class="w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
                         <option value="todos" {{ request('año', 'todos') == 'todos' ? 'selected' : '' }}>Todos los años</option>
                         @foreach($añosDisponibles as $año)
                             <option value="{{ $año }}" {{ request('año') == $año ? 'selected' : '' }}>{{ $año }}</option>
@@ -50,14 +50,14 @@
                 <div>
                     <label for="fecha_inicio" class="block text-sm font-medium text-gray-700 mb-2">Fecha Inicio</label>
                     <input type="date" name="fecha_inicio" id="fecha_inicio" value="{{ request('fecha_inicio') }}"
-                           class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                           class="w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
                 </div>
 
                 <!-- Fecha Fin -->
                 <div>
                     <label for="fecha_fin" class="block text-sm font-medium text-gray-700 mb-2">Fecha Fin</label>
                     <input type="date" name="fecha_fin" id="fecha_fin" value="{{ request('fecha_fin') }}"
-                           class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                           class="w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
                 </div>
 
                 <!-- Botones -->
@@ -75,7 +75,7 @@
 
     <!-- Lista de Cultos -->
     <div class="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100">
-        <div class="px-6 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 flex flex-wrap justify-between items-center gap-3">
+        <div class="px-6 py-4 bg-brand-700 flex flex-wrap justify-between items-center gap-3">
             <div>
                 <h3 class="text-lg font-semibold text-white flex items-center gap-2">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -83,7 +83,7 @@
                     </svg>
                     Registros de Asistencia
                 </h3>
-                <p class="text-blue-100 text-sm mt-1">Lista completa de cultos y asistencias registradas</p>
+                <p class="text-brand-100 text-sm mt-1">Lista completa de cultos y asistencias registradas</p>
             </div>
             <div class="flex gap-2">
                 <a href="{{ route('ingresos-asistencia.pdf-asistencia', ['fecha_inicio' => request('fecha_inicio'), 'fecha_fin' => request('fecha_fin')]) }}"
@@ -122,7 +122,7 @@
                         {{ $culto->fecha->format('d/m/Y') }}
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-sm">
-                        <span class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                        <span class="px-2 py-1 text-xs font-semibold rounded-full bg-brand-100 text-brand-800">
                             {{ ucfirst($culto->tipo_culto) }}
                         </span>
                     </td>
@@ -151,7 +151,7 @@
                         @if($culto->asistencia)
                             <div class="flex items-center justify-end gap-1">
                                 @if(!$culto->asistencia->cerrado)
-                                    <a href="{{ route('asistencia.edit', $culto->asistencia) }}" class="btn-row text-blue-700 hover:bg-blue-50">Editar</a>
+                                    <a href="{{ route('asistencia.edit', $culto->asistencia) }}" class="btn-row text-brand-700 hover:bg-brand-50">Editar</a>
                                     <form action="{{ route('asistencia.destroy', $culto->asistencia) }}" method="POST" class="inline" onsubmit="return confirm('¿Estás seguro de eliminar esta asistencia?')">
                                         @csrf
                                         @method('DELETE')
@@ -187,20 +187,20 @@
     </div>
 
     <!-- Descargas por Mes -->
-    <div class="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl shadow-md p-6 border border-purple-100">
+    <div class="bg-gray-50 rounded-xl shadow-md p-6 border border-gray-100">
         <h3 class="text-lg font-semibold mb-4 flex items-center gap-2 text-gray-800">
-            <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
             </svg>
             Descargas Mensuales
         </h3>
         <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
             @foreach($mesesDisponibles as $mes)
-            <div class="p-4 bg-white border border-purple-200 rounded-lg hover:border-purple-400 hover:shadow-lg transition-all duration-200">
+            <div class="p-4 bg-white border border-gray-200 rounded-lg hover:border-gray-400 hover:shadow-lg transition-all duration-200">
                 <div class="flex flex-wrap justify-between items-center gap-2">
                     <div>
                         <p class="text-sm text-gray-600 font-medium">{{ $mes['nombre'] }}</p>
-                        <p class="text-lg font-semibold text-purple-700">{{ $mes['año'] }}</p>
+                        <p class="text-lg font-semibold text-gray-700">{{ $mes['año'] }}</p>
                     </div>
                     <div class="flex gap-1">
                         <a href="{{ route('ingresos-asistencia.pdf-asistencia-mes', ['mes' => $mes['numero'], 'año' => $mes['año']]) }}"

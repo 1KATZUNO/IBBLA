@@ -342,4 +342,7 @@ Route::middleware(['auth'])->prefix('asistencia-app')->group(function () {
     Route::post('/personas/quick-add', [App\Http\Controllers\AsistenciaAppController::class, 'quickAddPersona']);
 });
 
+// Barra superior: buscador global y manual de usuario
+require __DIR__.'/ui.php';
+
 require __DIR__.'/auth.php';

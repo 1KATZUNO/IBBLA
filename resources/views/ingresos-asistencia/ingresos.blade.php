@@ -12,7 +12,7 @@
                 <div>
                     <label for="tipo_reporte" class="block text-sm font-medium text-gray-700 mb-2">Tipo de Reporte</label>
                     <select name="tipo_reporte" id="tipo_reporte" 
-                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
                         <option value="culto" {{ request('tipo_reporte') == 'culto' ? 'selected' : '' }}>Por Culto</option>
                         <option value="semana" {{ request('tipo_reporte') == 'semana' ? 'selected' : '' }}>Por Semana</option>
                         <option value="mes" {{ request('tipo_reporte') == 'mes' ? 'selected' : '' }}>Por Mes</option>
@@ -21,12 +21,12 @@
                 <div>
                     <label for="fecha_inicio" class="block text-sm font-medium text-gray-700 mb-2">Fecha Inicio</label>
                     <input type="date" name="fecha_inicio" id="fecha_inicio" value="{{ request('fecha_inicio') }}"
-                           class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                           class="w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
                 </div>
                 <div>
                     <label for="fecha_fin" class="block text-sm font-medium text-gray-700 mb-2">Fecha Fin</label>
                     <input type="date" name="fecha_fin" id="fecha_fin" value="{{ request('fecha_fin') }}"
-                           class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                           class="w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
                 </div>
                 <div class="flex items-end">
                     <button type="submit" class="btn-primary w-full">
@@ -81,7 +81,7 @@
                             {{ $registro['fecha'] }}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm">
-                            <span class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                            <span class="px-2 py-1 text-xs font-semibold rounded-full bg-brand-100 text-brand-800">
                                 {{ $registro['tipo'] }}
                             </span>
                         </td>
@@ -102,7 +102,7 @@
                             </a>
                                     <a href="{{ route('ingresos-asistencia.pdf-recuento-transferencias', $registro['culto_id']) }}"
                                         target="_blank"
-                                        class="btn-row text-blue-700 hover:bg-blue-50">Transferencias</a>
+                                        class="btn-row text-brand-700 hover:bg-brand-50">Transferencias</a>
                             @endif
                         </td>
                     </tr>

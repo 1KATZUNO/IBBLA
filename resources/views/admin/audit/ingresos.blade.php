@@ -7,7 +7,7 @@
 <div class="space-y-6">
 
     @if($errores->isNotEmpty())
-    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+    <div class="alert-error" role="alert">
         <p class="font-semibold">Hay filtros que no se aplicaron:</p>
         @foreach($errores->all() as $mensaje)
             <p class="text-sm">{{ $mensaje }}</p>
@@ -22,11 +22,11 @@
                 <div>
                     <label for="usuario" class="block text-sm font-medium text-gray-700 mb-1">Usuario (nombre o correo)</label>
                     <input type="text" name="usuario" id="usuario" maxlength="100" value="{{ $entrada['usuario'] }}"
-                           class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                           class="w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
                 </div>
                 <div>
                     <label for="evento" class="block text-sm font-medium text-gray-700 mb-1">Evento</label>
-                    <select name="evento" id="evento" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    <select name="evento" id="evento" class="w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
                         <option value="">Todos</option>
                         <option value="ingreso" {{ $entrada['evento'] === 'ingreso' ? 'selected' : '' }}>Inicios de sesión</option>
                         <option value="salida" {{ $entrada['evento'] === 'salida' ? 'selected' : '' }}>Cierres de sesión</option>
@@ -36,25 +36,26 @@
                 <div>
                     <label for="fecha_inicio" class="block text-sm font-medium text-gray-700 mb-1">Desde</label>
                     <input type="date" name="fecha_inicio" id="fecha_inicio" value="{{ $entrada['fecha_inicio'] }}"
-                           class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                           class="w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
                 </div>
                 <div>
                     <label for="fecha_fin" class="block text-sm font-medium text-gray-700 mb-1">Hasta</label>
                     <input type="date" name="fecha_fin" id="fecha_fin" value="{{ $entrada['fecha_fin'] }}"
-                           class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                           class="w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
                 </div>
             </div>
 
             <div class="flex flex-wrap items-center gap-3">
-                <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-semibold">Filtrar</button>
+                <button type="submit" class="btn-primary">Filtrar</button>
                 @if($hayFiltros)
-                    <a href="{{ route('admin.auditoria.ingresos') }}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300">Quitar filtros</a>
+                    <a href="{{ route('admin.auditoria.ingresos') }}" class="btn-ghost">Quitar filtros</a>
                 @endif
                 <a href="{{ route('admin.auditoria.ingresos.exportar', array_filter($filtros)) }}"
-                   class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 font-semibold">
+                   class="btn-secondary">
+                    <x-icono nombre="descargar" class="h-5 w-5" />
                     Descargar CSV
                 </a>
-                <a href="{{ route('admin.auditoria.index') }}" class="text-sm text-blue-600 hover:underline ml-auto">Ver auditoría completa</a>
+                <a href="{{ route('admin.auditoria.index') }}" class="btn-ghost ml-auto">Ver auditoría completa</a>
             </div>
         </form>
     </div>

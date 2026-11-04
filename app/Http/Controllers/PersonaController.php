@@ -41,16 +41,18 @@ class PersonaController extends Controller
     {
         $query = Persona::withCount(['sobres', 'promesas']);
         
-        // Búsqueda por nombre o pin
+        // Búsqueda por nombre, pin o teléfono
         if ($request->filled('buscar')) {
             $buscar = $request->buscar;
             $query->where(function ($q) use ($buscar) {
                 $q->where('nombre', 'like', '%' . $buscar . '%')
-                  ->orWhere('pin', $buscar);
+                  ->orWhere('pin', $buscar)
+                  ->orWhere('telefono', 'like', '%' . $buscar . '%');
             });
         }
-        
-        $personas = $query->paginate(20);
+
+        // Activas primero y por orden alfabético (antes salían por orden de alta, con las inactivas arriba)
+        $personas = $query->orderByDesc('activo')->orderBy('nombre')->paginate(20);
         $personasInactivas = Persona::where('activo', false)->count();
         return view('personas.index', compact('personas', 'personasInactivas'));
     }

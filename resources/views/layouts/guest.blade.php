@@ -9,16 +9,16 @@
         <meta name="apple-mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
-        <title>Iniciar Sesion - Sistema de Administracion</title>
+        <title>Iniciar sesión - Sistema de Administración</title>
 
         <!-- PWA Manifest -->
         <link rel="manifest" href="{{ asset('manifest.json') }}">
 
         <!-- Favicon & App Icons -->
-        <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('images/Logo_ANGEDA_azul.png') }}">
-        <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('images/Logo_ANGEDA_azul.png') }}">
-        <link rel="shortcut icon" href="{{ asset('images/Logo_ANGEDA_azul.png') }}">
-        <link rel="apple-touch-icon" href="{{ asset('images/angeda_deep_ocean.png') }}">
+        <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('images/Logo.png') }}">
+        <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('images/Logo.png') }}">
+        <link rel="shortcut icon" href="{{ asset('images/Logo.png') }}">
+        <link rel="apple-touch-icon" href="{{ asset('images/Logo.png') }}">
 
         <!-- Google Fonts -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -28,33 +28,24 @@
         <!-- Scripts -->
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
-    <body class="font-sans antialiased">
-        <!-- Background degradado -->
-        <div class="fixed inset-0 bg-gradient-to-br from-slate-900 via-blue-900 to-cyan-800"></div>
-
-        <!-- Patron decorativo sutil -->
-        <div class="fixed inset-0 opacity-10" style="background-image: radial-gradient(circle at 25% 25%, rgba(255,255,255,0.2) 1px, transparent 1px), radial-gradient(circle at 75% 75%, rgba(255,255,255,0.15) 1px, transparent 1px); background-size: 50px 50px;"></div>
-
-        <div class="min-h-screen min-h-dvh flex flex-col sm:justify-center items-center px-4 py-6 sm:pt-0 relative z-10">
-            <!-- Logo y Titulo -->
-            <div class="mb-8 text-center animate-fade-in">
-                <div class="inline-block p-4">
-                    <img src="{{ asset('images/Logo_ANGEDA_azul.png') }}" alt="Logo" class="w-20 h-20 mx-auto mb-4 drop-shadow-lg">
-                    <h1 class="text-2xl font-bold text-white">Sistema Admin</h1>
-                    <p class="text-cyan-200 font-medium mt-1 text-sm">Administracion de Iglesia</p>
+    <body class="font-sans antialiased bg-gray-50 text-gray-900">
+        <div class="flex min-h-screen min-h-dvh flex-col items-center justify-center px-4 py-8">
+            <div class="w-full max-w-md">
+                <!-- Encabezado de marca -->
+                <div class="mb-6 flex flex-col items-center text-center">
+                    <span class="flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-800 shadow-card">
+                        <img src="{{ asset('images/Logo.png') }}" alt="" class="h-11 w-11 object-contain">
+                    </span>
+                    <h1 class="mt-4 text-2xl font-semibold tracking-tight text-gray-900">Administración de la iglesia</h1>
+                    <p class="mt-1 text-sm text-gray-500">Sobres, personas, asistencia y reportes en un solo lugar</p>
                 </div>
-            </div>
 
-            <!-- Tarjeta de login -->
-            <div class="w-full sm:max-w-md animate-fade-in-up">
-                <div class="bg-white/95 backdrop-blur-sm rounded-xl p-8 shadow-2xl border-t-4 border-cyan-500">
+                <!-- Tarjeta -->
+                <div class="rounded-xl border border-gray-200 bg-white p-6 shadow-card sm:p-8">
                     {{ $slot }}
                 </div>
 
-                <!-- Footer -->
-                <div class="text-center mt-6 text-sm text-cyan-200/70">
-                    <p>&copy; {{ date('Y') }} Sistema de Administracion. Todos los derechos reservados.</p>
-                </div>
+                <p class="mt-6 text-center text-xs text-gray-400">&copy; {{ date('Y') }} Sistema de Administración</p>
             </div>
         </div>
     <script>

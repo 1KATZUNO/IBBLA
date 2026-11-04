@@ -1,96 +1,58 @@
 <x-guest-layout>
-    <!-- Session Status -->
+    <div class="mb-6">
+        <h2 class="text-xl font-semibold tracking-tight text-gray-900">Iniciar sesión</h2>
+        <p class="mt-1 text-sm text-gray-500">Entra con el correo y la contraseña que te dio el administrador de tu iglesia.</p>
+    </div>
+
     <x-auth-session-status class="mb-4" :status="session('status')" />
 
     <form method="POST" action="{{ route('login') }}" id="loginForm">
         @csrf
 
-        <!-- Email Address -->
         <div>
-            <x-input-label for="email" :value="__('Email')" class="text-gray-700 font-medium" />
-            <x-text-input id="email" class="input-primary mt-2" type="email" name="email" :value="old('email')" required autofocus autocomplete="username" placeholder="tu@email.com" />
+            <x-input-label for="email" :value="__('Email')" />
+            <x-text-input id="email" class="mt-1.5" type="email" name="email" :value="old('email')" required autofocus autocomplete="username" placeholder="tu@correo.com" inputmode="email" />
             <x-input-error :messages="$errors->get('email')" class="mt-2" />
         </div>
 
-        <!-- Password -->
-        <div class="mt-5">
-            <x-input-label for="password" :value="__('Password')" class="text-gray-700 font-medium" />
-            <x-text-input id="password" class="input-primary mt-2"
-                            type="password"
-                            name="password"
-                            required autocomplete="current-password"
-                            placeholder="••••••••" />
+        <div class="mt-4">
+            <x-input-label for="password" :value="__('Password')" />
+            <x-text-input id="password" class="mt-1.5" type="password" name="password" required autocomplete="current-password" placeholder="Tu contraseña" />
             <x-input-error :messages="$errors->get('password')" class="mt-2" />
         </div>
 
-        <!-- Remember Me -->
-        <div class="flex items-center justify-between mt-5">
-            <label for="remember_me" class="inline-flex items-center cursor-pointer">
-                <input id="remember_me" type="checkbox" class="rounded border-gray-300 text-blue-600 shadow-sm focus:ring-blue-500 transition-all" name="remember">
-                <span class="ms-2 text-sm text-gray-600 hover:text-blue-600 transition-colors">{{ __('Remember me') }}</span>
+        <div class="mt-4 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+            <label for="remember_me" class="inline-flex min-h-[44px] cursor-pointer items-center">
+                <input id="remember_me" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-brand-600 shadow-sm focus:ring-brand-500" name="remember">
+                <span class="ms-2 text-sm text-gray-600">{{ __('Remember me') }}</span>
             </label>
 
             @if (Route::has('password.request'))
-                <a class="text-sm text-blue-600 hover:text-blue-700 font-medium transition-colors" href="{{ route('password.request') }}">
+                <a class="inline-flex min-h-[44px] items-center text-sm font-medium text-brand-700 hover:text-brand-800 hover:underline" href="{{ route('password.request') }}">
                     {{ __('Forgot your password?') }}
                 </a>
             @endif
         </div>
 
-        <div class="mt-6">
-            <button type="submit" class="btn-primary w-full">
-                {{ __('Log in') }}
-            </button>
-        </div>
+        <button type="submit" id="loginBoton" class="btn-primary mt-2 w-full">
+            <span id="loginTexto">{{ __('Log in') }}</span>
+            <svg id="loginGiro" class="hidden h-5 w-5 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+            </svg>
+        </button>
     </form>
 
-    <!-- Loading Overlay -->
-    <div id="loadingOverlay" class="fixed inset-0 bg-blue-700 z-[9999] flex items-center justify-center opacity-0 pointer-events-none transition-opacity duration-300">
-        <div class="text-center">
-            <!-- Checkmark Icon -->
-            <div class="mb-8">
-                <svg class="w-24 h-24 mx-auto text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                </svg>
-            </div>
-
-            <!-- Spinner -->
-            <div class="w-12 h-12 mx-auto mb-6">
-                <div class="w-full h-full border-4 border-white/30 border-t-white rounded-full animate-spin"></div>
-            </div>
-
-            <!-- Texto -->
-            <h2 class="text-2xl font-display font-bold text-white mb-2">¡Bienvenido!</h2>
-            <p class="text-blue-100">Preparando tu panel de control...</p>
-
-            <!-- Barra de progreso -->
-            <div class="w-48 h-1 bg-white/20 rounded-full mx-auto mt-6 overflow-hidden">
-                <div class="h-full bg-white rounded-full animate-progress"></div>
-            </div>
-        </div>
-    </div>
-
-    <style>
-        @keyframes progress {
-            0% { width: 0%; }
-            100% { width: 100%; }
-        }
-        .animate-progress {
-            animation: progress 2s ease-in-out infinite;
-        }
-    </style>
+    <p class="mt-6 border-t border-gray-100 pt-4 text-center text-xs text-gray-500">
+        ¿No tienes usuario? Pídeselo al administrador de tu iglesia: solo entran las personas que él agregó.
+    </p>
 
     <script>
-        document.getElementById('loginForm').addEventListener('submit', function(e) {
-            const overlay = document.getElementById('loadingOverlay');
-            overlay.classList.remove('opacity-0', 'pointer-events-none');
-            overlay.classList.add('opacity-100');
-        });
-
-        document.getElementById('guestForm').addEventListener('submit', function(e) {
-            const overlay = document.getElementById('loadingOverlay');
-            overlay.classList.remove('opacity-0', 'pointer-events-none');
-            overlay.classList.add('opacity-100');
+        document.getElementById('loginForm').addEventListener('submit', function (e) {
+            if (!this.checkValidity()) { return; }
+            document.getElementById('loginBoton').setAttribute('aria-busy', 'true');
+            document.getElementById('loginTexto').textContent = 'Entrando…';
+            document.getElementById('loginGiro').classList.remove('hidden');
         });
     </script>
 </x-guest-layout>

@@ -53,16 +53,16 @@
 
     <!-- Cards de Resumen (gradient) -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div class="bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl shadow-lg p-6 text-white">
+        <div class="bg-brand-600 rounded-xl shadow-lg p-6 text-white">
             <div class="flex items-center justify-between mb-2">
                 <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
                 </svg>
             </div>
-            <p class="text-sm text-blue-100 font-medium mb-1">Total Prometido</p>
+            <p class="text-sm text-brand-100 font-medium mb-1">Total Prometido</p>
             <p class="text-3xl font-bold">₡{{ number_format($resumen['prometido'], 0, ',', '.') }}</p>
         </div>
-        <div class="bg-gradient-to-br from-green-500 to-green-700 rounded-xl shadow-lg p-6 text-white">
+        <div class="bg-green-600 rounded-xl shadow-lg p-6 text-white">
             <div class="flex items-center justify-between mb-2">
                 <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -71,7 +71,7 @@
             <p class="text-sm text-green-100 font-medium mb-1">Total Dado</p>
             <p class="text-3xl font-bold">₡{{ number_format($resumen['dado'], 0, ',', '.') }}</p>
         </div>
-        <div class="bg-gradient-to-br from-red-500 to-red-700 rounded-xl shadow-lg p-6 text-white">
+        <div class="bg-red-600 rounded-xl shadow-lg p-6 text-white">
             <div class="flex items-center justify-between mb-2">
                 <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -80,13 +80,13 @@
             <p class="text-sm text-red-100 font-medium mb-1">Total Faltante</p>
             <p class="text-3xl font-bold">₡{{ number_format($resumen['faltante'], 0, ',', '.') }}</p>
         </div>
-        <div class="bg-gradient-to-br from-purple-500 to-purple-700 rounded-xl shadow-lg p-6 text-white">
+        <div class="bg-gray-700 rounded-xl shadow-lg p-6 text-white">
             <div class="flex items-center justify-between mb-2">
                 <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
                 </svg>
             </div>
-            <p class="text-sm text-purple-100 font-medium mb-1">Total Profit</p>
+            <p class="text-sm text-gray-100 font-medium mb-1">Total Profit</p>
             <p class="text-3xl font-bold">₡{{ number_format($resumen['profit'], 0, ',', '.') }}</p>
         </div>
     </div>
@@ -123,7 +123,7 @@
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
                                 {{ $cat['categoria'] }}
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-right text-blue-600 font-medium">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-right text-brand-600 font-medium">
                                 ₡{{ number_format($cat['total_prometido'], 0, ',', '.') }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-right text-green-600 font-medium">
@@ -132,7 +132,7 @@
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-right text-red-600 font-bold">
                                 ₡{{ number_format($cat['faltante'], 0, ',', '.') }}
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-right text-purple-600 font-bold">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-600 font-bold">
                                 ₡{{ number_format($cat['profit'], 0, ',', '.') }}
                             </td>
                         </tr>
@@ -146,7 +146,7 @@
                         @if(count($datosPorCategoria) > 0)
                         <tr class="bg-gray-100 font-bold text-gray-900">
                             <td class="px-6 py-4 text-sm">TOTALES GENERALES</td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-right text-blue-700">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-right text-brand-700">
                                 ₡{{ number_format($resumen['prometido'], 0, ',', '.') }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-right text-green-700">
@@ -155,7 +155,7 @@
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-right text-red-700">
                                 ₡{{ number_format($resumen['faltante'], 0, ',', '.') }}
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap text-sm text-right text-purple-700">
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-right text-gray-700">
                                 ₡{{ number_format($resumen['profit'], 0, ',', '.') }}
                             </td>
                         </tr>
@@ -203,7 +203,7 @@
                                     </div>
                                 </div>
                             </td>
-                            <td class="px-6 py-4 text-right text-sm text-blue-600 font-medium">
+                            <td class="px-6 py-4 text-right text-sm text-brand-600 font-medium">
                                 ₡{{ number_format($dato['prometido'], 0, ',', '.') }}
                             </td>
                             <td class="px-6 py-4 text-right text-sm text-green-600 font-medium">
@@ -212,7 +212,7 @@
                             <td class="px-6 py-4 text-right text-sm text-red-600 font-bold">
                                 ₡{{ number_format($dato['faltante'], 0, ',', '.') }}
                             </td>
-                            <td class="px-6 py-4 text-right text-sm text-purple-600 font-bold">
+                            <td class="px-6 py-4 text-right text-sm text-gray-600 font-bold">
                                 ₡{{ number_format($dato['profit'], 0, ',', '.') }}
                             </td>
                             <td class="px-6 py-4 text-center">
@@ -238,10 +238,10 @@
                         @endphp
                         <tr class="bg-gray-100 font-bold text-gray-900">
                             <td class="px-6 py-4 text-sm">TOTALES</td>
-                            <td class="px-6 py-4 text-right text-sm text-blue-700">₡{{ number_format($resumen['prometido'], 0, ',', '.') }}</td>
+                            <td class="px-6 py-4 text-right text-sm text-brand-700">₡{{ number_format($resumen['prometido'], 0, ',', '.') }}</td>
                             <td class="px-6 py-4 text-right text-sm text-green-700">₡{{ number_format($resumen['dado'], 0, ',', '.') }}</td>
                             <td class="px-6 py-4 text-right text-sm text-red-700">₡{{ number_format($resumen['faltante'], 0, ',', '.') }}</td>
-                            <td class="px-6 py-4 text-right text-sm text-purple-700">₡{{ number_format($resumen['profit'], 0, ',', '.') }}</td>
+                            <td class="px-6 py-4 text-right text-sm text-gray-700">₡{{ number_format($resumen['profit'], 0, ',', '.') }}</td>
                             <td class="px-6 py-4 text-center text-sm">{{ $pctTotal }}%</td>
                         </tr>
                         @endif
@@ -260,15 +260,15 @@
     @endif
 
     <!-- Nota informativa -->
-    <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
+    <div class="bg-brand-50 border-l-4 border-brand-500 p-4 rounded">
         <div class="flex">
             <div class="flex-shrink-0">
-                <svg class="h-5 w-5 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+                <svg class="h-5 w-5 text-brand-500" fill="currentColor" viewBox="0 0 20 20">
                     <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
                 </svg>
             </div>
             <div class="ml-3">
-                <p class="text-sm text-blue-700">
+                <p class="text-sm text-brand-700">
                     <span class="font-bold">Nota:</span> El calculo de montos prometidos considera la frecuencia de cada promesa (semanal = domingos x monto, quincenal = 2 x monto, mensual = monto). El profit representa el monto extra dado por encima de lo prometido.
                 </p>
             </div>
