@@ -192,3 +192,16 @@ Del lider del proyecto (David):
   Pendiente de menu (ROLES.md final): "Yo" con tieneMiPerfil(), dashboard de asistencia con
   puedeVerDashboardAsistencia(), entrada "Agregar persona", ocultar Cumpleaneros al miembro.
   Siguiente: suite completa final, revision visual rapida, QA de entrega (opus), tag y deploy E1.
+- 2026-11-04 (noche, PAUSA por tope de uso): integracion/oct-2026 en a0c67bb con TODO integrado: equipos
+  6, 3a, 2, 5, 4 + build (32ec4fd) + logo propio de IBBLA (a58d443: Logo.png/Logo2.png/SVG/favicon, sin
+  el de IBBSC) + arreglo de promesas duplicadas por categoria y de Mi perfil (3a: 30975f0, 369c97d).
+  Suite completa ANTES del ultimo merge: 828 tests, 31 fallos = 15 Breeze + 16 de Mi perfil (ya
+  corregidos). Tras el merge, el filtro MiPerfil|InformePersonaRuta|InicioPorRol|PerfilUsuarioWhatsApp|
+  ContratoReportes|PromesasMismaCategoria da 56 tests con 1 fallo pendiente:
+  InicioPorRolTest::test_mi_perfil_solo_se_ofrece_con_persona_vinculada (equipo 2 esperaba que Mi perfil
+  no se ofrezca sin persona; el equipo 5 lo cambio para mostrar la pantalla "sin persona": decidir y
+  ajustar test o menu). Falta: suite completa final con -d memory_limit=1G, cambiar el seeder a IBBLA
+  (AdminUserSeeder sigue sembrando "Santa Cruz"/IBBSC), regenerar las 34 capturas del manual con el logo
+  nuevo (tools/manual/capturar.mjs), pendientes de menu de ROLES.md, QA de entrega (opus), tag y deploy
+  con deploy/hostinger.sh (hay migraciones: migrate --force), correr ibbla:verificar en el servidor y
+  cambiar las contrasenas del seeder si siguen en produccion. Servidor local de integracion: 8100.
