@@ -33,21 +33,21 @@
         @endphp
         <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg shadow p-6 text-white">
             <p class="text-blue-100 text-sm">Le corresponde al {{ $d['corte'] }}</p>
-            <p class="text-3xl font-bold mt-2">{{ $colon($d['total_esperado']) }}</p>
+            <p class="text-2xl lg:text-3xl font-bold mt-2 break-words">{{ $colon($d['total_esperado']) }}</p>
             <p class="text-blue-100 text-xs mt-1">Meses completos: {{ $d['meses_cobrados'] ?: 'ninguno todavía' }}</p>
         </div>
 
         <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-lg shadow p-6 text-white">
             <p class="text-green-100 text-sm">He dado en mis compromisos</p>
-            <p class="text-3xl font-bold mt-2">{{ $colon($d['dado_en_compromisos']) }}</p>
+            <p class="text-2xl lg:text-3xl font-bold mt-2 break-words">{{ $colon($d['dado_en_compromisos']) }}</p>
             <p class="text-green-100 text-xs mt-1">Total contribuido en el año: {{ $colon($d['total_dado']) }}</p>
         </div>
 
-        <div class="bg-gradient-to-br {{ $d['al_dia'] ? 'from-emerald-600 to-emerald-700' : 'from-amber-500 to-amber-600' }} rounded-lg shadow p-6 text-white">
-            <p class="text-white/80 text-sm">Estado</p>
-            <p class="text-3xl font-bold mt-2">{{ $d['tiene_compromisos'] ? $d['estado'] : 'Sin promesa' }}</p>
+        <div class="bg-gradient-to-br {{ $d['al_dia'] || ! $d['tiene_compromisos'] ? 'from-green-500 to-green-600' : 'from-red-500 to-red-600' }} rounded-lg shadow p-6 text-white">
+            <p class="{{ $d['al_dia'] || ! $d['tiene_compromisos'] ? 'text-green-100' : 'text-red-100' }} text-sm">Estado</p>
+            <p class="text-2xl lg:text-3xl font-bold mt-2 break-words">{{ $d['tiene_compromisos'] ? $d['estado'] : 'Sin promesa' }}</p>
             @if($d['tiene_compromisos'])
-                <p class="text-white/80 text-xs mt-1">Diferencia: {{ $d['diferencia'] >= 0 ? '+' : '' }}{{ $colon($d['diferencia']) }}</p>
+                <p class="{{ $d['al_dia'] ? 'text-green-100' : 'text-red-100' }} text-xs mt-1">Diferencia: {{ $d['diferencia'] >= 0 ? '+' : '' }}{{ $colon($d['diferencia']) }}</p>
             @endif
         </div>
     </div>
@@ -77,7 +77,7 @@
                         </div>
 
                         <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
-                            <div class="h-full rounded-full {{ $c['al_dia'] ? 'bg-green-500' : 'bg-amber-500' }}" style="width: {{ number_format($porcentaje, 1, '.', '') }}%"></div>
+                            <div class="h-full rounded-full {{ $c['al_dia'] ? 'bg-green-500' : 'bg-yellow-500' }}" style="width: {{ number_format($porcentaje, 1, '.', '') }}%"></div>
                         </div>
 
                         <div class="mt-2 flex items-center justify-between text-sm">

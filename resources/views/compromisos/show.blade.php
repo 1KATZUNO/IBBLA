@@ -58,17 +58,17 @@
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div class="bg-white rounded-lg shadow p-6">
             <p class="text-sm text-gray-600">Le corresponde al {{ $d['corte'] }}</p>
-            <p class="text-2xl font-bold text-blue-600">{{ $colon($d['total_esperado']) }}</p>
+            <p class="text-xl xl:text-2xl font-bold text-blue-600 break-words">{{ $colon($d['total_esperado']) }}</p>
             <p class="text-xs text-gray-500 mt-1">Meses completos: {{ $d['meses_cobrados'] ?: 'ninguno todavía' }}</p>
         </div>
         <div class="bg-white rounded-lg shadow p-6">
             <p class="text-sm text-gray-600">Ha dado en sus compromisos</p>
-            <p class="text-2xl font-bold text-green-600">{{ $colon($d['dado_en_compromisos']) }}</p>
+            <p class="text-xl xl:text-2xl font-bold text-green-600 break-words">{{ $colon($d['dado_en_compromisos']) }}</p>
             <p class="text-xs text-gray-500 mt-1">Hasta el {{ $d['corte'] }}, incluido el mes en curso</p>
         </div>
         <div class="bg-white rounded-lg shadow p-6">
             <p class="text-sm text-gray-600">Diferencia</p>
-            <p class="text-2xl font-bold {{ $d['diferencia'] >= 0 ? 'text-green-600' : 'text-red-600' }}">{{ $conSigno($d['diferencia']) }}</p>
+            <p class="text-xl xl:text-2xl font-bold break-words {{ $d['diferencia'] >= 0 ? 'text-green-600' : 'text-red-600' }}">{{ $conSigno($d['diferencia']) }}</p>
         </div>
         <div class="bg-white rounded-lg shadow p-6">
             <p class="text-sm text-gray-600">Estado</p>
