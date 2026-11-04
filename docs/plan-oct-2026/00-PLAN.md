@@ -173,3 +173,12 @@ Del lider del proyecto (David):
   de prueba recibido 7:31 PM; clave solo en el .env del worktree del equipo 5 (max 3 pruebas reales).
   Para REANUDAR: mandar "continua" a cada agente (conservan contexto) o relanzar con 03-BRIEFS +
   esta nota; luego integrar 3a -> 2 -> 5 -> 4 (+6), suite, build, QA de entrega, deploy E1.
+- 2026-11-04 (tarde): REANUDACION. Agentes relanzados (los del 13/10 perdieron contexto) con 04-DECISIONES.md.
+  Integrados: Equipo 6 deploy (2760faa: deploy/hostinger.sh, ibbla:verificar, DEPLOY-HOSTINGER.md,
+  .env.example limpio, vendor ignorado) y Equipo 3a motor (d7efce7: reglas definitivas en el motor,
+  compromisos:sincronizar + CierreCultoObserver, ConversorUsd, permisos de descargas, test de contrato,
+  REGLAS-CALCULO.md; 188 tests de reportes verdes; suite completa necesita -d memory_limit=1G por
+  zipstream). Pedido nuevo de Roy (04/11) sobre sobres "Anonimo" ya resuelto en la rama del equipo 2.
+  Prueba real de whatsapp:probar del equipo 5 llego a David 16:02 (2 de 3 mensajes reales usados).
+  Pendientes de integrar: 2 (recuento), 5 (WhatsApp), 4 (UI, layouts al final); luego npm run build,
+  suite completa, QA de entrega, tag y deploy con deploy/hostinger.sh.
