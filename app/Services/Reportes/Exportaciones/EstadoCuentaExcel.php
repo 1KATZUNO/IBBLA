@@ -2,7 +2,6 @@
 
 namespace App\Services\Reportes\Exportaciones;
 
-use App\Services\InformePersonaService;
 use App\Services\Reportes\FiltroPersonas;
 use App\Services\Reportes\LoteEstadosCuenta;
 use App\Support\Excel\LibroExcel;
