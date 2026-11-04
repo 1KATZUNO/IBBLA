@@ -32,9 +32,9 @@ class MiPerfilController extends Controller
         $user = Auth::user();
         $persona = $user->persona;
 
-        if (!$persona) {
-            return redirect()->route('principal')
-                ->with('error', 'No se encontró información de persona asociada.');
+        // Cuenta del sistema sin ficha de persona (QA-014): no es un error, se muestra lo que sí tiene (sus avisos).
+        if (! $persona) {
+            return view('mi-perfil.sin-persona', ['usuario' => $user]);
         }
 
         $persona->load(['sobres.detalles', 'promesas', 'compromisos']);

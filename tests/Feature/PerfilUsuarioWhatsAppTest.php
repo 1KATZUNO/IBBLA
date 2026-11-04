@@ -181,6 +181,40 @@ class PerfilUsuarioWhatsAppTest extends TestCase
         $this->assertSame('', trim(\Illuminate\Support\Facades\Blade::render('<x-whatsapp-activacion :receptor="null" />')));
     }
 
+    public function test_mi_perfil_de_una_cuenta_sin_persona_se_abre_con_sus_datos_y_la_tarjeta_sin_error(): void
+    {
+        $asistente = $this->crearUsuarioConRol('asistente');
+        $asistente->update(['telefono' => '8888-1003']);
+
+        foreach ([$this->tesorero, $asistente] as $usuario) {
+            $this->actingAs($usuario)->get(route('mi-perfil.index'))
+                ->assertOk()
+                ->assertSessionMissing('error')
+                ->assertSee($usuario->name)
+                ->assertSee($usuario->email)
+                ->assertSee('no está ligada a la ficha de una persona')
+                ->assertSee('Avisos por WhatsApp')
+                ->assertSee(route('profile.whatsapp.guardar'), false)
+                ->assertDontSee('Mi estado de cuenta (PDF)')
+                ->assertDontSee('Promesas Activas');
+        }
+    }
+
+    public function test_mi_perfil_sin_persona_funciona_aunque_no_haya_telefono_ni_driver_callmebot(): void
+    {
+        $this->actingAs($this->tesorero);
+        $this->tesorero->update(['telefono' => null]);
+
+        $this->get(route('mi-perfil.index'))->assertOk()->assertSee('Su cuenta es del sistema');
+
+        config(['whatsapp.driver' => 'link']);
+        $this->get(route('mi-perfil.index'))->assertOk()->assertSee('Su cuenta es del sistema')->assertDontSee('Avisos por WhatsApp');
+    }
+
+    public function test_el_estado_de_cuenta_de_una_cuenta_sin_persona_vuelve_a_mi_perfil_que_ya_no_da_error(): void
+    {
+        $this->actingAs($this->tesorero)->get(route('mi-perfil.informe'))->assertRedirect(route('mi-perfil.index'));
+    }
     public function test_con_otro_driver_la_tarjeta_sin_persona_tampoco_se_dibuja(): void
     {
         config(['whatsapp.driver' => 'link']);

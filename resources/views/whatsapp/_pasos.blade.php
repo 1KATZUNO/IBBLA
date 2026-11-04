@@ -7,7 +7,7 @@
 @php
     $imagen = fn (string $archivo) => asset('images/manual/whatsapp/'.$archivo);
 @endphp
-<ol class="grid grid-cols-1 md:grid-cols-3 gap-4">
+<ol class="grid grid-cols-1 xl:grid-cols-3 gap-4">
     <li class="border border-gray-200 rounded-lg overflow-hidden">
         <img src="{{ $imagen('paso-1-contacto.png') }}" width="600" height="1000" loading="lazy"
              alt="Pantalla de contacto nuevo en el teléfono, con el nombre CallMeBot y el botón Guardar" class="w-full max-w-xs mx-auto">
