@@ -30,12 +30,12 @@
     </li>
     <li class="border border-gray-200 rounded-lg overflow-hidden">
         <img src="{{ $imagen('paso-3-enlace.png') }}" width="600" height="1000" loading="lazy"
-             alt="Mensaje de respuesta del bot con el enlace resaltado y el botón Copiar" class="w-full max-w-xs mx-auto">
+             alt="Mensaje de respuesta del bot con la clave resaltada y el botón Copiar" class="w-full max-w-xs mx-auto">
         <div class="p-4 space-y-2">
             <h4 class="text-lg font-semibold text-gray-900">Paso 3. Copie la respuesta del bot</h4>
-            <p class="text-base text-gray-700">El bot le responde con un mensaje que trae un <strong>enlace largo</strong>. Deje el dedo sobre ese mensaje y toque <strong>Copiar</strong>.</p>
+            <p class="text-base text-gray-700">El bot le responde con un mensaje que dice <strong>Your APIKEY is</strong> y un número (su clave). Deje el dedo sobre ese mensaje y toque <strong>Copiar</strong>.</p>
             <p class="text-base text-gray-700">Después péguelo en el cuadro de aquí abajo.</p>
-            <p class="text-sm text-gray-600">Si el bot le dice «You already have an apikey», no se preocupe: ese mensaje también trae su enlace y sirve igual.</p>
+            <p class="text-sm text-gray-600">Si el bot le dice «You already have an apikey», no se preocupe: ese mensaje también trae su clave (y a veces un enlace largo) y sirve igual.</p>
         </div>
     </li>
 </ol>

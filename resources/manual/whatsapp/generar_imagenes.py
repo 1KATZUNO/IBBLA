@@ -107,8 +107,7 @@ def paso3():
   <div class="resalta" style="width:84px;height:84px;border-radius:50%;display:flex;align-items:center;justify-content:center">{ICONO_COPIAR}</div>
   <span style="font-size:48px;color:#fff">&#8942;</span></div>
 <div class="wa-chat" style="padding-top:118px">
-  <div class="bur entra" style="background:#cfe9ff;box-shadow:0 0 0 6px #f59e0b;max-width:92%;font-size:30px">API Activated for your phone number. Your APIKEY is 1234567<br><br>You can now send messages using the API:<br>
-    <span class="link">https://api.callmebot.com/whatsapp.php?phone=+506xxxxxxxx&amp;text=This+is+a+test&amp;apikey=1234567</span><span class="hora">10:42</span></div>
+  <div class="bur entra" style="background:#cfe9ff;box-shadow:0 0 0 6px #f59e0b;max-width:92%;font-size:34px">API Activated for your phone number. Your APIKEY is<br><span class="link" style="font-weight:800;font-size:44px;white-space:nowrap;word-break:normal;display:inline-block;margin-top:8px">1234567</span><span class="hora">10:42</span></div>
 </div>
 <div class="nota" style="right:22px;top:142px;max-width:400px">Toque este botón para copiar</div>
 <div class="pie">Deje el dedo sobre el mensaje del bot y toque Copiar</div>""")
