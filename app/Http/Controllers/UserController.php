@@ -47,7 +47,7 @@ class UserController extends Controller
             'email' => 'required|string|email|max:255|unique:users',
             'telefono' => $this->reglaTelefono(),
             'password' => 'required|string|min:8|confirmed',
-            'rol' => 'required|in:admin,tesorero,asistente,servidor,miembro,invitado',
+            'rol' => 'required|in:admin,tesorero,asistente,servidor,miembro',
             'tenant_role_id' => 'nullable|exists:tenant_roles,id',
         ]);
 
@@ -95,7 +95,7 @@ class UserController extends Controller
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($usuario->id)],
             'telefono' => $this->reglaTelefono(),
             'password' => 'nullable|string|min:8|confirmed',
-            'rol' => 'required|in:admin,tesorero,asistente,servidor,miembro,invitado',
+            'rol' => 'required|in:admin,tesorero,asistente,servidor,miembro',
             'tenant_role_id' => 'nullable|exists:tenant_roles,id',
         ]);
 

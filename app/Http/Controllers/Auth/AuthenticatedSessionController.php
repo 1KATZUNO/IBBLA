@@ -67,27 +67,6 @@ class AuthenticatedSessionController extends Controller
     }
 
     /**
-     * Login as guest without credentials.
-     */
-    public function guestLogin(Request $request): RedirectResponse
-    {
-        $guest = User::firstOrCreate(
-            ['email' => 'invitado@ibbsc.local'],
-            [
-                'name' => 'Invitado',
-                'password' => bcrypt(str()->random(32)),
-                'rol' => 'invitado',
-            ]
-        );
-
-        Auth::login($guest);
-
-        $request->session()->regenerate();
-
-        return redirect()->route('principal');
-    }
-
-    /**
      * Destroy an authenticated session.
      */
     public function destroy(Request $request): RedirectResponse
