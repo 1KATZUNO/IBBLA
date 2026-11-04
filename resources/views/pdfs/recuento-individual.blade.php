@@ -62,41 +62,47 @@
         @endif
     </div>
 
-    @php $transferenciasOnly = isset($transferenciasOnly) && $transferenciasOnly === true; @endphp
-    @if($culto->totales)
-        @if(!$transferenciasOnly)
-        <div class="summary-grid">
-            <div class="summary-card">
-                <div class="label">Total General</div>
-                <div class="value">{{ number_format($culto->totales->total_general, 2) }}</div>
-            </div>
-            <div class="summary-card">
-                <div class="label">Cantidad Sobres</div>
-                <div class="value">{{ $culto->totales->cantidad_sobres }}</div>
-            </div>
-            @foreach($categories->where('es_ofrenda_suelta', false)->take(2) as $cat)
-            <div class="summary-card">
-                <div class="label">{{ $cat->nombre }}</div>
-                <div class="value">{{ number_format($culto->totales->getCategoryTotal($cat->slug), 2) }}</div>
-            </div>
-            @endforeach
-            <div class="summary-card">
-                <div class="label">Transferencias</div>
-                <div class="value">{{ $culto->totales->cantidad_transferencias }}</div>
-            </div>
+    @php
+        // Todos los numeros salen de App\Support\ResumenCulto (los mismos de la pantalla del culto):
+        // colones convertidos, USD aparte entre parentesis y un solo total (QA-026).
+        $transferenciasOnly = isset($transferenciasOnly) && $transferenciasOnly === true;
+        $usdTotal = $resumen->totalUsdSobres();
+        $conUsd = fn (float $usd) => $usd > 0 ? ' (incluye USD $'.number_format($usd, 2).')' : '';
+    @endphp
+    @if(!$transferenciasOnly)
+    <div class="summary-grid">
+        <div class="summary-card">
+            <div class="label">Total General (₡)</div>
+            <div class="value">{{ number_format($resumen->total(), 2) }}</div>
+            @if($usdTotal > 0)<div style="font-size: 8px; color: #6b7280;">{{ trim($conUsd($usdTotal)) }}</div>@endif
         </div>
-        @else
-        <div class="summary-grid">
-            <div class="summary-card">
-                <div class="label">Total Transferencias</div>
-                <div class="value">{{ number_format($culto->totales->total_transferencias ?? ($culto->sobres->where('metodo_pago','transferencia')->sum('total_declarado')), 2) }}</div>
-            </div>
+        <div class="summary-card">
+            <div class="label">Cantidad Sobres</div>
+            <div class="value">{{ $resumen->cantidadSobres }}</div>
         </div>
-        @endif
+        @foreach($categories->take(2) as $cat)
+        <div class="summary-card">
+            <div class="label">{{ $cat->nombre }}</div>
+            <div class="value">{{ number_format($resumen->porCategoria[$cat->slug] ?? 0, 2) }}</div>
+        </div>
+        @endforeach
+        <div class="summary-card">
+            <div class="label">Transferencias</div>
+            <div class="value">{{ $resumen->cantidadTransferencias }}</div>
+        </div>
+    </div>
+    @else
+    <div class="summary-grid">
+        <div class="summary-card">
+            <div class="label">Total Transferencias (₡)</div>
+            <div class="value">{{ number_format($resumen->transferencias(), 2) }}</div>
+            @if($usdTotal > 0)<div style="font-size: 8px; color: #6b7280;">{{ trim($conUsd($usdTotal)) }}</div>@endif
+        </div>
+    </div>
     @endif
 
-    <!-- Tabla de Sobres -->
-    <h3 style="margin-top: 20px; margin-bottom: 10px; font-size: 11px;">Detalle de Sobres{{ $transferenciasOnly ? ' (solo transferencias)' : ' y Dinero Suelto' }}</h3>
+    <!-- Tabla de Sobres: montos en colones; los sobres en dolares llevan su monto en USD debajo -->
+    <h3 style="margin-top: 20px; margin-bottom: 10px; font-size: 11px;">Detalle de Sobres{{ $transferenciasOnly ? ' (solo transferencias)' : ' y Dinero Suelto' }} (₡)</h3>
     <table>
         <thead>
             <tr>
@@ -114,18 +120,8 @@
             </tr>
         </thead>
         <tbody>
-            @php
-                $totalGeneral = 0;
-                $totalEfectivo = 0;
-                $totalTransferencias = 0;
-            @endphp
-            
-            @foreach($culto->sobres->filter(fn($s) => !$transferenciasOnly || $s->metodo_pago === 'transferencia') as $sobre)
-            @php
-                $detallesPorCategoria = $sobre->detalles->keyBy('categoria');
-                $totalGeneral += $sobre->total_declarado;
-                if ($sobre->metodo_pago === 'transferencia') { $totalTransferencias += $sobre->total_declarado; } else { $totalEfectivo += $sobre->total_declarado; }
-            @endphp
+            @foreach($resumen->filas as $fila)
+            @php $sobre = $fila['sobre']; $esUsd = $fila['subtotal_usd'] > 0; @endphp
             <tr class="sobre-row">
                 @if(!$transferenciasOnly)
                 <td class="text-center"><strong>#{{ $sobre->numero_sobre }}</strong></td>
@@ -139,12 +135,17 @@
                 <td>{{ $sobre->metodo_pago === 'transferencia' ? ($sobre->comprobante_numero ?? '-') : '-' }}</td>
                 <td>{{ $sobre->notas ? $sobre->notas : '-' }}</td>
                 @foreach($categories as $cat)
-                <td class="text-right">{{ number_format($detallesPorCategoria->get($cat->slug)->monto ?? 0, 2) }}</td>
+                <td class="text-right">
+                    {{ number_format($fila['crc'][$cat->slug] ?? 0, 2) }}
+                    @if($esUsd && ($fila['usd'][$cat->slug] ?? 0) > 0)
+                        <br><span style="font-size: 7px; color: #6b7280;">(${{ number_format($fila['usd'][$cat->slug], 2) }})</span>
+                    @endif
+                </td>
                 @endforeach
                 <td class="text-right subtotal">
-                    {{ number_format($sobre->total_declarado, 2) }}
-                    @if(($sobre->moneda ?? 'CRC') === 'USD')
-                        <br><span class="badge-usd">USD ${{ number_format($sobre->monto_original_usd ?? $sobre->total_declarado, 2) }}</span>
+                    {{ number_format($fila['subtotal_crc'], 2) }}
+                    @if($esUsd)
+                        <br><span class="badge-usd">(USD ${{ number_format($fila['subtotal_usd'], 2) }} × {{ number_format($fila['tipo_cambio'], 2) }})</span>
                     @endif
                 </td>
             </tr>
@@ -152,7 +153,6 @@
 
             @if(!$transferenciasOnly)
                 @foreach($culto->ofrendasSueltas as $ofrenda)
-                @php $totalGeneral += $ofrenda->monto; @endphp
                 <tr class="suelto-row">
                     <td class="text-center">-</td>
                     <td>
@@ -167,11 +167,13 @@
                     @foreach($categories as $cat)
                     <td class="text-right">-</td>
                     @endforeach
-                    <td class="text-right subtotal">{{ number_format($ofrenda->monto, 2) }}</td>
+                    <td class="text-right subtotal">
+                        {{ number_format($ofrenda->moneda === 'USD' ? (float) $ofrenda->monto * ((float) $ofrenda->tipo_cambio_venta ?: $resumen->tipoCambioRespaldo ?: 1) : (float) $ofrenda->monto, 2) }}
+                        @if($ofrenda->moneda === 'USD')<br><span class="badge-usd">(USD ${{ number_format((float) $ofrenda->monto, 2) }})</span>@endif
+                    </td>
                 </tr>
                 @endforeach
                 @foreach($culto->egresos as $egreso)
-                @php $totalGeneral -= $egreso->monto; @endphp
                 <tr class="egreso-row">
                     <td class="text-center">-</td>
                     <td>
@@ -186,18 +188,21 @@
                     @foreach($categories as $cat)
                     <td class="text-right">-</td>
                     @endforeach
-                    <td class="text-right subtotal">-{{ number_format($egreso->monto, 2) }}</td>
+                    <td class="text-right subtotal">
+                        -{{ number_format($egreso->moneda === 'USD' ? (float) $egreso->monto * ((float) $egreso->tipo_cambio_venta ?: $resumen->tipoCambioRespaldo ?: 1) : (float) $egreso->monto, 2) }}
+                        @if($egreso->moneda === 'USD')<br><span class="badge-usd">(USD ${{ number_format((float) $egreso->monto, 2) }})</span>@endif
+                    </td>
                 </tr>
                 @endforeach
             @endif
 
-            <!-- Totales -->
+            <!-- Totales: el mismo Total General de la cabecera -->
             <tr class="total-row">
-                <td colspan="{{ $transferenciasOnly ? 4 : 5 }}" class="text-right">TOTALES</td>
+                <td colspan="{{ $transferenciasOnly ? 4 : 5 }}" class="text-right">TOTALES (₡)</td>
                 @foreach($categories as $cat)
-                <td class="text-right">{{ number_format($totalesPorCategoria[$cat->slug] ?? 0, 2) }}</td>
+                <td class="text-right">{{ number_format($resumen->porCategoria[$cat->slug] ?? 0, 2) }}</td>
                 @endforeach
-                <td class="text-right">{{ number_format($totalGeneral, 2) }}</td>
+                <td class="text-right">{{ number_format($transferenciasOnly ? $resumen->transferencias() : $resumen->total(), 2) }}</td>
             </tr>
         </tbody>
     </table>
@@ -205,23 +210,23 @@
     @if(!$transferenciasOnly)
     <div class="summary-grid" style="margin-top: 10px;">
         <div class="summary-card">
-            <div class="label">Total Efectivo</div>
-            <div class="value">{{ number_format($totalEfectivo, 2) }}</div>
+            <div class="label">Total Efectivo (sobres + suelto − egresos)</div>
+            <div class="value">{{ number_format($resumen->efectivo(), 2) }}</div>
         </div>
         <div class="summary-card">
             <div class="label">Total Transferencias</div>
-            <div class="value">{{ number_format($totalTransferencias, 2) }}</div>
+            <div class="value">{{ number_format($resumen->transferencias(), 2) }}</div>
         </div>
     </div>
     @endif
 
     <!-- Resumen por Categorías -->
     <div class="resumen-box">
-        <h3>Resumen por Categorías</h3>
+        <h3>Resumen por Categorías (₡)</h3>
         <div>
             @foreach($categories as $cat)
             <span class="categoria-item">
-                <span class="categoria-label">{{ $cat->nombre }}:</span> {{ number_format($totalesPorCategoria[$cat->slug] ?? 0, 2) }}
+                <span class="categoria-label">{{ $cat->nombre }}:</span> {{ number_format($resumen->porCategoria[$cat->slug] ?? 0, 2) }}
             </span>
             @endforeach
         </div>
@@ -270,10 +275,10 @@
         </table>
     </div>
 
-    @php $tipoCambio = \App\Models\TipoCambio::hoy(); @endphp
-    @if($tipoCambio && $culto->sobres->where('moneda', 'USD')->count() > 0)
+    @if($resumen->tieneUsd)
     <div style="background-color: #fef3c7; padding: 8px; border-radius: 5px; margin-top: 10px; font-size: 8px; border-left: 4px solid #f59e0b;">
-        <strong>Nota:</strong> Los sobres en USD fueron convertidos a ₡ colones usando tipo de cambio ₡{{ number_format($tipoCambio->venta, 2) }} ({{ $tipoCambio->fecha->format('d/m/Y') }}).
+        <strong>Nota:</strong> Todos los montos están en colones. Los sobres en dólares se convirtieron con el tipo de cambio guardado en cada sobre (se indica en la fila);
+        si un sobre no lo tenía, con el de venta de la fecha del culto (₡{{ number_format($resumen->tipoCambioRespaldo, 2) }}). El monto en USD va entre paréntesis, solo como referencia.
     </div>
     @endif
 
