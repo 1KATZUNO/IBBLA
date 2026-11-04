@@ -77,6 +77,26 @@ Route::middleware(['auth'])->group(function () {
 Route::middleware(['auth', 'role:miembro,servidor,tesorero,asistente,admin'])->group(function () {
     Route::get('/mi-perfil', [App\Http\Controllers\MiPerfilController::class, 'index'])->name('mi-perfil.index');
     Route::get('/mi-perfil/informe', [App\Http\Controllers\MiPerfilController::class, 'informe'])->name('mi-perfil.informe');
+
+    // Avisos por WhatsApp (CallMeBot): la persona pega el enlace que le responde el bot, hace la prueba o lo desactiva.
+    // Solo existen con WHATSAPP_DRIVER=callmebot (con otro driver responden 404).
+    Route::post('/mi-perfil/whatsapp', [App\Http\Controllers\ActivacionWhatsAppController::class, 'guardar'])
+        ->defaults('tipo', 'persona')->name('mi-perfil.whatsapp.guardar');
+    Route::post('/mi-perfil/whatsapp/probar', [App\Http\Controllers\ActivacionWhatsAppController::class, 'probar'])
+        ->defaults('tipo', 'persona')->middleware('throttle:6,1')->name('mi-perfil.whatsapp.probar');
+    Route::delete('/mi-perfil/whatsapp', [App\Http\Controllers\ActivacionWhatsAppController::class, 'desactivar'])
+        ->defaults('tipo', 'persona')->name('mi-perfil.whatsapp.desactivar');
+});
+
+// Lo mismo para los usuarios del sistema (admin, tesorero, asistente), desde su perfil de usuario: es el
+// teléfono que recibe los avisos de rol (culto creado, sobres alcanzados).
+Route::middleware(['auth', 'role:admin,tesorero,asistente'])->group(function () {
+    Route::post('/profile/whatsapp', [App\Http\Controllers\ActivacionWhatsAppController::class, 'guardar'])
+        ->defaults('tipo', 'usuario')->name('profile.whatsapp.guardar');
+    Route::post('/profile/whatsapp/probar', [App\Http\Controllers\ActivacionWhatsAppController::class, 'probar'])
+        ->defaults('tipo', 'usuario')->middleware('throttle:6,1')->name('profile.whatsapp.probar');
+    Route::delete('/profile/whatsapp', [App\Http\Controllers\ActivacionWhatsAppController::class, 'desactivar'])
+        ->defaults('tipo', 'usuario')->name('profile.whatsapp.desactivar');
 });
 
 // Ruta para servidores - Marcar Asistencia
@@ -93,10 +113,14 @@ Route::middleware(['auth', 'role:admin,tesorero'])->group(function () {
 
     // Enviar el informe de una persona por WhatsApp (abre wa.me con el enlace firmado al PDF)
     Route::get('personas/{persona}/whatsapp', App\Http\Controllers\PersonaWhatsAppController::class)->name('personas.whatsapp');
+    // Con WHATSAPP_DRIVER=callmebot y una persona que activó WhatsApp en su perfil, el informe se manda solo (POST)
+    Route::post('personas/{persona}/whatsapp', [App\Http\Controllers\PersonaWhatsAppController::class, 'enviarAutomatico'])
+        ->middleware('throttle:20,1')->name('personas.whatsapp.enviar');
 
     // Avisos de WhatsApp a los líderes (culto creado, sobres alcanzados): panel con pendientes e historial
     Route::get('avisos', [App\Http\Controllers\AvisoWhatsAppController::class, 'index'])->name('avisos.index');
     Route::post('avisos/{aviso}/enviado', [App\Http\Controllers\AvisoWhatsAppController::class, 'marcarEnviado'])->name('avisos.enviado');
+    Route::post('avisos/{aviso}/enviar', [App\Http\Controllers\AvisoWhatsAppController::class, 'enviarAhora'])->middleware('throttle:20,1')->name('avisos.enviar-ahora');
     Route::post('avisos/{aviso}/descartar', [App\Http\Controllers\AvisoWhatsAppController::class, 'descartar'])->name('avisos.descartar');
 
     // Recuento (Sobres)

@@ -18,6 +18,9 @@ use Illuminate\Http\Request;
  * deja constancia en la auditoría y abre el chat de WhatsApp con el mensaje ya escrito
  * (driver «link»): quien lo pulsa solo toca «enviar». Con el driver «meta» y credenciales
  * el mensaje sale solo y se vuelve a la pantalla con el resultado.
+ *
+ * Con el driver «callmebot» la clave es de cada persona: a quien activó WhatsApp en su perfil el
+ * informe se le manda solo (POST, enviarAutomatico); a quien no, el botón sigue abriendo wa.me como siempre.
  */
 class PersonaWhatsAppController extends Controller
 {
@@ -75,6 +78,64 @@ class PersonaWhatsAppController extends Controller
         }
 
         return redirect()->away($whatsapp->enlace($telefono, $mensaje));
+    }
+
+    /**
+     * Envía el informe solo, con la clave de CallMeBot que la persona activó en su perfil. Es un POST porque
+     * escribe un mensaje de verdad (un GET podría dispararlo un enlace o una vista previa) y vuelve a la
+     * pantalla de donde salió con el resultado. Si la persona ya no tiene WhatsApp automático (desactivó, cambió
+     * de teléfono) no manda nada: el botón de wa.me sigue disponible para mandarlo a mano.
+     */
+    public function enviarAutomatico(
+        Request $request,
+        Persona $persona,
+        WhatsAppService $whatsapp,
+        InformePersonaService $informe,
+    ): RedirectResponse {
+        abort_unless($whatsapp->usaClavePorReceptor(), 404);
+
+        $destinatario = $whatsapp->destinatario($persona);
+
+        if ($destinatario->telefono === null) {
+            return $this->volver()->with('error', $this->telefonoNoValido($persona));
+        }
+
+        if (! $destinatario->tieneClave()) {
+            return $this->volver()->with('error', "{$persona->nombre} no tiene WhatsApp automático activado (no lo activó, lo desactivó o cambió de teléfono). "
+                .'Use «Abrir WhatsApp» para mandarle el informe a mano.');
+        }
+
+        $vence = $informe->vence();
+        $mensaje = MensajesWhatsApp::informe($persona, $informe->urlFirmada($persona, $vence), $vence);
+        $error = null;
+
+        try {
+            $whatsapp->enviarA($destinatario, $mensaje);
+        } catch (WhatsAppEnvioException $e) {
+            $error = $e->getMessage();
+        }
+
+        AuditoriaWhatsApp::registrar($request, 'Enviar informe por WhatsApp', 'personas.whatsapp.enviar', array_filter([
+            'persona_id' => $persona->id,
+            'persona' => $persona->nombre,
+            'telefono' => $destinatario->telefono,
+            'driver' => $whatsapp->driver()->nombre(),
+            'resultado' => $error === null ? 'enviado' : 'error',
+            'error' => $error,
+            'vence' => $vence->toDateTimeString(),
+        ], fn ($valor) => $valor !== null));
+
+        if ($error !== null) {
+            return $this->volver()->with(
+                'error',
+                "No se pudo enviar el informe de {$persona->nombre} por WhatsApp: {$error} Puede mandarlo a mano con «Abrir WhatsApp»."
+            );
+        }
+
+        return $this->volver()->with(
+            'success',
+            'Informe enviado por WhatsApp a '.$persona->nombre.' ('.WhatsAppService::formatearTelefono($destinatario->telefono).').'
+        );
     }
 
     /**

@@ -14,6 +14,16 @@
         @if($envioAutomatico)
         <p class="mt-2 text-sm text-green-700">Envío automático activo: los avisos nuevos se envían solos. Aquí quedan los que no se pudieron enviar.</p>
         @endif
+        @if($envioPorClave)
+        <p class="mt-2 text-sm text-green-700">
+            Quien activó WhatsApp en su perfil recibe sus avisos solo. Aquí quedan los de quienes no lo activaron (o cuyo envío falló), para mandarlos con un toque.
+        </p>
+        @unless($yoRecibo)
+        <p class="mt-2 text-sm text-gray-600">
+            ¿Quiere recibir sus avisos solo, sin tocar nada? <a href="{{ route('profile.edit') }}#whatsapp" class="underline text-blue-700">Active WhatsApp en su perfil</a>.
+        </p>
+        @endunless
+        @endif
 
         <div class="mt-4 flex gap-2 border-b border-gray-200">
             <a href="{{ route('avisos.index') }}"
@@ -47,12 +57,29 @@
                             · {{ $aviso->telefono_formateado }}
                             · {{ $aviso->created_at->diffForHumans() }}
                         </p>
+                        @if($envioPorClave)
+                        <p class="mt-1 text-sm {{ in_array($aviso->id, $automaticos, true) ? 'text-amber-700' : 'text-gray-500' }}">
+                            @if(in_array($aviso->id, $automaticos, true))
+                                Tiene WhatsApp automático, pero este aviso no salió: pulse «Enviar ahora» para reintentarlo.
+                            @else
+                                No tiene WhatsApp automático: se manda con «Abrir WhatsApp».
+                            @endif
+                        </p>
+                        @endif
                         <details class="mt-2 text-sm text-gray-500">
                             <summary class="cursor-pointer">Ver mensaje</summary>
                             <p class="mt-1 p-3 bg-gray-50 rounded-md" style="white-space: pre-line;">{{ $aviso->mensaje }}</p>
                         </details>
                     </div>
                     <div class="flex flex-wrap items-center gap-2">
+                        @if($envioPorClave && in_array($aviso->id, $automaticos, true))
+                        <form action="{{ route('avisos.enviar-ahora', $aviso) }}" method="POST" onsubmit="this.querySelector('button').disabled = true;">
+                            @csrf
+                            <button type="submit" class="inline-flex items-center justify-center min-h-[44px] px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors">
+                                Enviar ahora
+                            </button>
+                        </form>
+                        @endif
                         <a href="{{ $aviso->enlace_whatsapp }}" target="_blank" rel="noopener"
                            class="inline-flex items-center justify-center min-h-[44px] px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-md hover:bg-green-700 transition-colors">
                             Abrir WhatsApp

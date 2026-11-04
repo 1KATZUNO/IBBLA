@@ -15,6 +15,22 @@ class WhatsAppNoConfiguradoException extends RuntimeException
         );
     }
 
+    public static function callmebotSinClave(): self
+    {
+        return new self(
+            'CallMeBot necesita la clave personal de quien recibe el mensaje: esa persona debe activar el bot '
+            .'desde su WhatsApp y pegar su enlace en su perfil. Mientras tanto se usa el enlace de WhatsApp (wa.me).'
+        );
+    }
+
+    public static function receptorSinClave(string $nombre): self
+    {
+        return new self(
+            "{$nombre} no tiene activado WhatsApp automático (no ha pegado su enlace de CallMeBot, lo desactivó "
+            .'o cambió de número). Use el enlace de WhatsApp (wa.me).'
+        );
+    }
+
     public static function sinEnvioAutomatico(string $driver): self
     {
         return new self(

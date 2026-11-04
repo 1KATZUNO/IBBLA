@@ -2,6 +2,7 @@
 
 namespace Tests\Concerns;
 
+use App\Models\ActivacionWhatsApp;
 use App\Models\Culto;
 use App\Models\Persona;
 use App\Models\Sobre;
@@ -56,6 +57,28 @@ trait CreaEscenarioWhatsApp
             'tenant_id' => $iglesia->id,
             'tenant_role_id' => $rol?->id,
             'telefono' => $telefono,
+        ]);
+    }
+
+    /**
+     * Activación de CallMeBot ya hecha para una persona o un usuario (la clave queda cifrada, como en la app).
+     * El teléfono de la activación es, por defecto, el que el receptor tiene registrado.
+     *
+     * @param  array<string, mixed>  $extra  atributos que pisan los de por defecto
+     */
+    protected function activarWhatsApp(Persona|User $receptor, string $clave = '123456', ?string $telefono = null, array $extra = []): ActivacionWhatsApp
+    {
+        $esPersona = $receptor instanceof Persona;
+
+        return ActivacionWhatsApp::create($extra + [
+            'tenant_id' => $receptor->tenant_id,
+            'persona_id' => $esPersona ? $receptor->id : null,
+            'user_id' => $esPersona ? null : $receptor->id,
+            'telefono' => $telefono ?? \App\Services\WhatsApp\WhatsAppService::normalizarTelefono($receptor->telefono),
+            'apikey' => $clave,
+            'activo' => true,
+            'consentimiento_at' => now(),
+            'consentimiento_version' => 'v1',
         ]);
     }
 

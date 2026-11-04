@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\AvisoWhatsApp;
 use App\Services\WhatsApp\AuditoriaWhatsApp;
+use App\Services\WhatsApp\AvisosWhatsAppService;
 use App\Services\WhatsApp\WhatsAppService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -23,7 +24,15 @@ class AvisoWhatsAppController extends Controller
     {
         $pestana = $request->query('tab') === 'historial' ? 'historial' : 'pendientes';
 
-        $pendientes = AvisoWhatsApp::pendientes()->orderBy('created_at')->orderBy('id')->get();
+        $whatsapp = app(WhatsAppService::class);
+        $pendientes = AvisoWhatsApp::pendientes()->with('usuario.activacionWhatsApp')->orderBy('created_at')->orderBy('id')->get();
+
+        // Con callmebot cada líder decide: quien activó WhatsApp en su perfil recibe los avisos solo.
+        // Los pendientes de esos líderes son avisos que no salieron (falló el envío o se crearon antes de activar).
+        $envioPorClave = $whatsapp->usaClavePorReceptor();
+        $automaticos = $envioPorClave
+            ? $pendientes->filter(fn (AvisoWhatsApp $a) => $a->usuario !== null && $whatsapp->puedeEnviarA($a->usuario))->pluck('id')->all()
+            : [];
 
         $historial = $pestana === 'historial'
             ? AvisoWhatsApp::historial()->with('atendidoPor')->orderByDesc('updated_at')->orderByDesc('id')->paginate(25)->withQueryString()
@@ -34,8 +43,36 @@ class AvisoWhatsAppController extends Controller
             'grupos' => $this->agruparPorEvento($pendientes),
             'totalPendientes' => $pendientes->count(),
             'historial' => $historial,
-            'envioAutomatico' => app(WhatsAppService::class)->puedeEnviar(),
+            'envioAutomatico' => $whatsapp->puedeEnviar(),
+            'envioPorClave' => $envioPorClave,
+            'automaticos' => $automaticos,
+            'yoRecibo' => $envioPorClave && $whatsapp->puedeEnviarA($request->user()),
         ]);
+    }
+
+    /**
+     * Reintenta ahora el envío automático de un aviso pendiente (driver callmebot): para los avisos de
+     * líderes que activaron WhatsApp y cuyo envío falló. Lo demás sigue siendo manual (wa.me).
+     */
+    public function enviarAhora(Request $request, AvisoWhatsApp $aviso, AvisosWhatsAppService $avisos): RedirectResponse
+    {
+        abort_unless(app(WhatsAppService::class)->usaClavePorReceptor(), 404);
+
+        if (! $aviso->estaPendiente()) {
+            return $this->yaAtendido();
+        }
+
+        $motivo = $avisos->enviarAviso($aviso, $request->user());
+
+        if ($motivo !== null) {
+            return redirect()->route('avisos.index')
+                ->with('error', "No se pudo enviar el aviso para {$aviso->destinatario_nombre} por WhatsApp. {$motivo} Puede mandarlo a mano con «Abrir WhatsApp».");
+        }
+
+        AuditoriaWhatsApp::registrar($request, 'Enviar aviso de WhatsApp (CallMeBot)', 'avisos.enviar-ahora', $this->detalles($aviso));
+
+        return redirect()->route('avisos.index')
+            ->with('success', "Aviso para {$aviso->destinatario_nombre} enviado por WhatsApp.");
     }
 
     public function marcarEnviado(Request $request, AvisoWhatsApp $aviso): RedirectResponse

@@ -47,6 +47,7 @@
                 <label class="text-sm font-medium text-gray-500">Fecha de registro</label>
                 <p class="mt-1 text-base text-gray-900">{{ $persona->created_at->format('d/m/Y') }}</p>
             </div>
+            <x-whatsapp-estado :persona="$persona" style="grid-column: 1 / -1;" />
         </div>
 
         @if($persona->notas)

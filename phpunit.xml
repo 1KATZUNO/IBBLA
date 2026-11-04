@@ -28,6 +28,10 @@
         <env name="MAIL_MAILER" value="array"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="SESSION_DRIVER" value="array"/>
+        <env name="WHATSAPP_DRIVER" value="link"/>
+        <env name="WHATSAPP_CALLMEBOT_URL" value="https://api.callmebot.com/whatsapp.php"/>
+        <env name="CALLMEBOT_TEST_PHONE" value=""/>
+        <env name="CALLMEBOT_TEST_APIKEY" value=""/>
         <env name="PULSE_ENABLED" value="false"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>

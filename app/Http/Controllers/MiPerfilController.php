@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Carbon\Carbon;
 
 class MiPerfilController extends Controller
 {
@@ -26,24 +27,56 @@ class MiPerfilController extends Controller
         return $request->input('accion') === 'descargar' ? $pdf->download($nombre) : $pdf->stream($nombre);
     }
 
-    /**
-     * Mi perfil del miembro: su estado de compromisos ACUMULADO al dia de hoy, con las mismas cifras
-     * del PDF "Mi estado de cuenta" (sale del mismo calculo, InformePersonaService sobre el motor
-     * unico). El mes a mes va plegado y solo como detalle: sin "deudas" por mes (regla 2.2). Solo
-     * lee, no escribe nada.
-     */
-    public function index(\App\Services\InformePersonaService $informe)
+    public function index()
     {
         $user = Auth::user();
         $persona = $user->persona;
 
+        // Cuenta del sistema sin ficha de persona (QA-014): no es un error, se muestra lo que sí tiene (sus avisos).
         if (! $persona) {
-            return redirect()->route('principal')
-                ->with('error', 'No se encontró información de persona asociada.');
+            return view('mi-perfil.sin-persona', ['usuario' => $user]);
         }
 
-        $datos = $informe->datos($persona);
+        $persona->load(['sobres.detalles', 'promesas', 'compromisos']);
+        
+        // Calcular cumplimiento de promesas del mes actual
+        $promesasConEstatus = $persona->promesas->map(function ($promesa) use ($persona) {
+            $montoPagado = $persona->sobres()
+                ->whereHas('detalles', function ($query) use ($promesa) {
+                    $query->where('categoria', $promesa->categoria);
+                })
+                ->whereHas('culto', function ($query) {
+                    $query->whereMonth('fecha', Carbon::now()->month)
+                          ->whereYear('fecha', Carbon::now()->year);
+                })
+                ->get()
+                ->sum(function ($sobre) use ($promesa) {
+                    return $sobre->detalles()
+                        ->where('categoria', $promesa->categoria)
+                        ->sum('monto');
+                });
 
-        return view('mi-perfil.index', compact('persona', 'datos'));
+            return [
+                'promesa' => $promesa,
+                'pagado' => $montoPagado,
+                'faltante' => max(0, $promesa->monto - $montoPagado),
+                'cumplido' => $montoPagado >= $promesa->monto,
+                'porcentaje' => $promesa->monto > 0 ? min(100, ($montoPagado / $promesa->monto) * 100) : 0,
+            ];
+        });
+
+        // Obtener compromisos con saldo negativo (deudas)
+        $compromisos = $persona->compromisos()
+            ->where('saldo_actual', '<', 0)
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->map(function($compromiso) {
+                $compromiso->deuda = abs($compromiso->saldo_actual); // Convertir a positivo para mostrar
+                $compromiso->descripcion = ucfirst($compromiso->categoria) . ' ' . 
+                    now()->locale('es')->parse($compromiso->año . '-' . $compromiso->mes . '-01')->isoFormat('MMMM YYYY');
+                return $compromiso;
+            });
+
+        return view('mi-perfil.index', compact('persona', 'promesasConEstatus', 'compromisos'));
     }
 }

@@ -13,6 +13,12 @@
                 </div>
             </div>
 
+            {{-- Avisos por WhatsApp (CallMeBot) para quienes administran: culto creado, sobres alcanzados.
+                 La tarjeta solo se dibuja con WHATSAPP_DRIVER=callmebot. --}}
+            @if($user->canAccessAdmin() || $user->canAccessRecuento() || $user->canAccessAsistencia())
+            <x-whatsapp-activacion :receptor="$user" tipo="usuario" />
+            @endif
+
             <div class="p-4 sm:p-8 bg-white shadow sm:rounded-lg">
                 <div class="max-w-xl">
                     @include('profile.partials.update-password-form')
