@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AuditLog;
 use App\Models\Persona;
 use App\Models\Promesa;
 use App\Models\Compromiso;
@@ -402,17 +403,27 @@ class PersonaController extends Controller
     public function quickStore(Request $request)
     {
         $validated = $request->validate([
-            'nombre' => 'required|string|max:255'
+            'nombre' => 'required|string|max:255',
+            'telefono' => 'nullable|string|max:30',
+            'correo' => 'nullable|email|max:255',
         ]);
 
         $persona = Persona::create([
-            'nombre' => $validated['nombre'],
-            'activo' => true
+            'nombre' => trim($validated['nombre']),
+            'telefono' => $validated['telefono'] ?? null,
+            'correo' => $validated['correo'] ?? null,
+            'activo' => true,
         ]);
+
+        AuditLog::registrar('Alta rápida de persona', ['persona_id' => $persona->id, 'nombre' => $persona->nombre]);
+
+        if (! $request->expectsJson()) {
+            return back()->with('success', "Persona agregada: {$persona->nombre}.");
+        }
 
         return response()->json([
             'success' => true,
-            'persona' => $persona
+            'persona' => $persona->only(['id', 'nombre', 'pin', 'telefono']),
         ]);
     }
 

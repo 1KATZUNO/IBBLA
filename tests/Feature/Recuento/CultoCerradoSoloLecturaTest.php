@@ -111,6 +111,7 @@ class CultoCerradoSoloLecturaTest extends TestCase
             ->assertDontSee('class="accion-bloqueada"', false);
 
         $comoAdmin->put(route('recuento.update', $sobre), [
+            'anonimo' => '1',
             'metodo_pago' => 'efectivo',
             'detalles' => [['categoria' => 'diezmo', 'monto' => 12000]],
         ])->assertRedirect(route('recuento.culto', $this->cerrado));

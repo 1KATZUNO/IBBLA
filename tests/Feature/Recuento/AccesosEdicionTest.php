@@ -142,6 +142,7 @@ class AccesosEdicionTest extends TestCase
             ->assertDontSee('class="accion-bloqueada"', false);
 
         $this->actingAs($this->tesorero)->put(route('recuento.update', $sobre), [
+            'anonimo' => '1',
             'metodo_pago' => 'efectivo',
             'detalles' => [['categoria' => 'diezmo', 'monto' => 12500]],
         ])->assertRedirect(route('recuento.culto', $culto));

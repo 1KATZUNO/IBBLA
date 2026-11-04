@@ -29,7 +29,8 @@
 
             {{-- Barra fija: total y guardar siempre a la vista --}}
             <div class="action-bar">
-                <div class="mr-auto text-sm text-gray-600">
+                @include('recuento.partials.barra-persona', ['sobre' => $sobre])
+                <div class="text-sm text-gray-600">
                     Total: <span class="text-lg font-bold text-blue-700 tabular-nums" id="totalBarra">₡0.00</span>
                     <span class="hidden ml-1 text-xs text-gray-500" id="totalConvertido"></span>
                 </div>

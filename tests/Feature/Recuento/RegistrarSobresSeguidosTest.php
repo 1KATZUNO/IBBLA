@@ -39,6 +39,7 @@ class RegistrarSobresSeguidosTest extends TestCase
     {
         return $datos + [
             'culto_id' => $this->culto->id,
+            'anonimo' => '1',
             'metodo_pago' => 'efectivo',
             'moneda' => 'CRC',
             'envio' => (string) Str::uuid(),
@@ -148,6 +149,7 @@ class RegistrarSobresSeguidosTest extends TestCase
         // Guardar sin tocar la persona (lo que manda el formulario) la conserva
         $this->actingAs($this->tesorero)->put(route('recuento.update', $sobre), [
             'persona_id' => $inactiva->id,
+            'anonimo' => '1',
             'metodo_pago' => 'efectivo',
             'detalles' => [['categoria' => 'diezmo', 'monto' => '51000']],
         ])->assertRedirect(route('recuento.culto', $this->culto));
@@ -195,6 +197,7 @@ class RegistrarSobresSeguidosTest extends TestCase
 
         $this->actingAs($this->tesorero)->put(route('recuento.update', $sobre), [
             'persona_id' => $persona->id,
+            'anonimo' => '1',
             'metodo_pago' => 'efectivo',
             'detalles' => [['categoria' => 'diezmo', 'monto' => '12000'], ['categoria' => 'misiones', 'monto' => '500']],
         ])->assertRedirect(route('recuento.culto', $this->culto));

@@ -81,3 +81,47 @@ encabezado; "Guardar cambios" vuelve a la pantalla del culto.
   después 3 (escribir nombre + Enter, escribir monto, Enter) y una carga.
 - Pruebas: guardar y siguiente vuelve al formulario del mismo culto; dos anónimos seguidos se
   guardan; el mismo envío dos veces guarda uno; sobre en cero no se guarda; editar vuelve al culto.
+
+## Sobres que quedaban "Anónimo" sin querer (pedido de Roy, 04/11/2026)
+
+**Síntoma:** al registrar un sobre se escribía el nombre de la persona, se guardaba y en el reporte
+salía "Anónimo"; la ofrenda quedaba sin dueño.
+
+**Causa raíz (reproducida):** el nombre escrito en el buscador y la persona del sobre eran dos cosas
+distintas. La persona solo quedaba elegida al **tocar la sugerencia** de la lista. Si se escribía el
+nombre completo y se seguía con Tab, con un clic en un monto o (en el formulario viejo de producción)
+con Enter, el buscador seguía mostrando el nombre pero el campo oculto `persona_id` quedaba vacío y el
+servidor lo guardaba como Anónimo sin preguntar. En el formulario viejo además había un select con
+"Anónimo" preseleccionado debajo del buscador, y Enter en el buscador enviaba el formulario.
+En la edición, una persona inactiva caía a Anónimo (QA-002, ya corregido).
+
+**Arreglo (servidor, la garantía):**
+- Un sobre sin persona solo se guarda si se marcó **"Sobre anónimo (sin persona)"** (`anonimo=1`).
+- El texto del buscador viaja como `persona_nombre`. Si no hay `persona_id` pero hay nombre escrito,
+  se busca la persona por nombre (sin tildes ni mayúsculas, espacios normalizados) o por PIN: si hay
+  **una sola**, el sobre queda con ella; si no hay ninguna o hay varias, **no se guarda** y se pide
+  elegirla o agregarla. Un nombre escrito gana sobre la casilla de anónimo (nunca se pierde un nombre).
+- Tras un error de validación (p. ej. transferencia sin comprobante) la persona elegida y el texto
+  escrito vuelven al formulario (`old()`), nunca como Anónimo.
+
+**Arreglo (pantalla de registrar y editar sobre, PC y tablet):**
+- En la barra fija de abajo, junto a Guardar, va **"Sobre de" + el nombre en grande**; si no hay
+  persona dice **ANÓNIMO en rojo**. Es lo que David le prometió al cliente.
+- Al salir del buscador con un nombre que coincide exactamente con una persona, queda elegida sola.
+- Al guardar sin persona y sin la casilla: si se escribió un nombre que no coincide con nadie, no se
+  envía y se abre el **alta rápida** (nombre y teléfono) con el nombre ya puesto; si no se escribió
+  nada, se pide confirmar "¿Guardarlo como ANÓNIMO?".
+- El alta rápida es la del tesorero (`personas.quick-store`, admin y tesorero), queda auditada
+  ("Alta rápida de persona") y elige a la persona nueva en el sobre.
+
+**Corrección posterior (pantalla del culto):**
+- Los sobres sin persona llevan la etiqueta roja **ANÓNIMO**.
+- Botón **"Solo anónimos (N)"** (`/recuento/culto/{id}?anonimos=1`) para ver solo esos.
+- En cada fila anónima, **"Asignar persona"**: nombre o PIN con sugerencias; asigna la persona sin
+  tocar montos (`PATCH /recuento/{sobre}/persona`, ruta `recuento.asignar-persona`). Sigue la misma
+  regla que editar el sobre (culto cerrado: admin o acceso de edición) y queda en la auditoría
+  ("Asignar persona a sobre anónimo", con sobre, culto, total y persona; si el culto está cerrado
+  también como corrección del culto).
+
+**Pruebas:** `tests/Feature/Recuento/SobreSinPersonaPorDescuidoTest.php` y
+`tests/Feature/Recuento/AsignarPersonaASobreAnonimoTest.php`.

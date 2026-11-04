@@ -96,13 +96,21 @@ class RecuentoController extends Controller
         $resumen = ResumenCulto::calcular($sobres, $ofrendasSueltas, $egresos, $categorias);
         // Una sola respuesta de la regla para toda la pantalla: habilita, deshabilita (con motivo) u oculta acciones
         $permisoEditar = Gate::inspect('puedeEditarCulto', $culto);
+
+        // Sobres anonimos: se marcan, se pueden ver solos y se les asigna persona desde la fila
+        $cantidadAnonimos = $sobres->whereNull('persona_id')->count();
+        $soloAnonimos = $request->boolean('anonimos');
+        $personasParaAsignar = $cantidadAnonimos > 0 && $permisoEditar->allowed()
+            ? Persona::where('activo', true)->orderBy('nombre')->get(['id', 'nombre', 'pin'])
+            : collect();
         // Si el culto esta cerrado y lo puede corregir alguien que no es admin, es por un acceso de edicion
         $user = $request->user();
         $accesoUsado = $culto->cerrado && $permisoEditar->allowed() && ! $user->isAdmin() && ! $user->isSuperAdmin()
             ? $this->permisosEdicion->permisoQueCubre($user, $culto)
             : null;
 
-        return view('recuento.culto', compact('culto', 'categorias', 'sobres', 'ofrendasSueltas', 'egresos', 'resumen', 'permisoEditar', 'accesoUsado'));
+        return view('recuento.culto', compact('culto', 'categorias', 'sobres', 'ofrendasSueltas', 'egresos', 'resumen', 'permisoEditar', 'accesoUsado',
+            'cantidadAnonimos', 'soloAnonimos', 'personasParaAsignar'));
     }
 
     /** Antes un culto cerrado se veia en un modal; ahora tiene su pantalla (en solo lectura si corresponde). */
@@ -272,6 +280,40 @@ class RecuentoController extends Controller
         $this->despuesDeCambiar($request, $culto, 'Eliminar sobre', $datos);
 
         return $this->alCulto($culto->id, 'success', 'Sobre eliminado correctamente.');
+    }
+
+    /**
+     * Corregir un sobre que quedo Anonimo por error: se le asigna la persona sin tocar montos.
+     * Misma regla que editar el sobre (culto cerrado: admin o acceso de edicion) y queda auditado.
+     */
+    public function asignarPersona(Request $request, Sobre $sobre): RedirectResponse
+    {
+        $culto = $this->cultoDe($sobre);
+        Gate::authorize('puedeEditarCulto', $culto);
+
+        if ($sobre->persona_id) {
+            return $this->alCulto($culto->id, 'warning', "El sobre #{$sobre->numero_sobre} ya tiene persona; para cambiarla usa Editar.");
+        }
+
+        $request->validate(['persona_nombre' => 'required|string|max:255'], [
+            'persona_nombre.required' => 'Escribe el nombre (o el PIN) de la persona del sobre.',
+        ]);
+        try {
+            $personaId = $this->personaPorNombre(trim((string) $request->input('persona_nombre')), 'no se cambió nada');
+        } catch (ValidationException $e) {
+            return redirect()->route('recuento.culto', ['culto' => $culto->id, 'anonimos' => 1])
+                ->with('error', "Sobre #{$sobre->numero_sobre}: ".$e->validator->errors()->first('persona_id'));
+        }
+
+        $sobre->update(['persona_id' => $personaId]);
+        $sobre->load('persona');
+
+        $detalles = $this->datosSobre($sobre) + ['persona_id' => $personaId, 'persona' => $sobre->persona?->nombre, 'antes' => 'Anónimo'];
+        AuditLog::registrar('Asignar persona a sobre anónimo', $detalles, 'recuento.asignar-persona');
+        $this->despuesDeCambiar($request, $culto, 'Asignar persona a sobre anónimo', $detalles);
+
+        return redirect()->route('recuento.culto', ['culto' => $culto->id, 'anonimos' => $request->boolean('anonimos') ? 1 : null])
+            ->with('success', "Sobre #{$sobre->numero_sobre} asignado a {$sobre->persona?->nombre}.");
     }
 
     public function storeSuelto(Request $request)
@@ -531,7 +573,9 @@ class RecuentoController extends Controller
     private function validarSobre(Request $request): array
     {
         $validated = $request->validate([
-            'persona_id' => 'nullable|exists:personas,id',
+            'persona_id' => 'nullable|integer|exists:personas,id',
+            'persona_nombre' => 'nullable|string|max:255',
+            'anonimo' => 'nullable|boolean',
             'metodo_pago' => 'required|in:efectivo,transferencia',
             'comprobante_numero' => 'nullable|required_if:metodo_pago,transferencia|string|max:100',
             'moneda' => 'nullable|in:CRC,USD',
@@ -549,7 +593,63 @@ class RecuentoController extends Controller
             throw ValidationException::withMessages(['detalles' => 'Escribe al menos un monto mayor que cero.']);
         }
 
+        $validated['persona_id'] = $this->personaDelSobre($request, $validated['persona_id'] ?? null);
+
         return $validated;
+    }
+
+    /**
+     * A quien pertenece el sobre. Pedido del cliente (04/11): sobres que se guardaban como "Anonimo"
+     * aunque el tesorero habia escrito el nombre (el buscador mostraba el nombre pero la persona nunca
+     * quedaba elegida). Ahora un sobre sin persona solo se guarda si se marco "Sobre anonimo"; si se
+     * escribio un nombre, tiene que coincidir con una sola persona o se pide elegirla o agregarla.
+     */
+    private function personaDelSobre(Request $request, mixed $personaId): ?int
+    {
+        if (filled($personaId)) {
+            // Persona de esta iglesia (el alcance por iglesia del modelo deja fuera a las demas)
+            if (! Persona::whereKey((int) $personaId)->exists()) {
+                throw ValidationException::withMessages(['persona_id' => 'La persona elegida no existe en esta iglesia.']);
+            }
+
+            return (int) $personaId;
+        }
+
+        $nombre = trim((string) $request->input('persona_nombre', ''));
+        if ($nombre !== '') {
+            return $this->personaPorNombre($nombre);
+        }
+
+        if (! $request->boolean('anonimo')) {
+            throw ValidationException::withMessages(['persona_id' => 'Elige la persona del sobre o marca «Sobre anónimo (sin persona)». El sobre no se guardó.']);
+        }
+
+        return null;
+    }
+
+    /** La unica persona de esta iglesia con ese nombre (o PIN); si no hay o hay varias, error para el formulario. */
+    private function personaPorNombre(string $nombre, string $sufijo = 'el sobre no se guardó'): int
+    {
+        $clave = self::claveNombre($nombre);
+        $coinciden = Persona::query()->get(['id', 'nombre', 'pin', 'activo'])
+            ->filter(fn (Persona $p) => self::claveNombre($p->nombre) === $clave || ($p->pin && (string) $p->pin === $clave));
+        $activas = $coinciden->where('activo', true);
+        $candidatas = $activas->isNotEmpty() ? $activas : $coinciden;
+
+        if ($candidatas->count() === 1) {
+            return (int) $candidatas->first()->id;
+        }
+
+        throw ValidationException::withMessages(['persona_id' => $candidatas->isEmpty()
+            ? "No hay ninguna persona llamada «{$nombre}». Elígela de la lista o agrégala con «+ Nueva persona»; {$sufijo}."
+            : "Hay varias personas llamadas «{$nombre}». Elige la correcta en la lista (sale con su PIN); {$sufijo}.",
+        ]);
+    }
+
+    /** Nombre comparable: sin tildes, sin mayusculas y con un solo espacio entre palabras. */
+    private static function claveNombre(?string $nombre): string
+    {
+        return (string) Str::of((string) $nombre)->ascii()->lower()->squish();
     }
 
     /** @param  array<int, array{categoria: string, monto: mixed}>  $detalles */

@@ -133,6 +133,7 @@ class RecuentoPorLineasTest extends TestCase
 
         $this->actingAs($this->tesorero)->post(route('recuento.store'), [
             'culto_id' => $culto->id,
+            'anonimo' => '1',
             'metodo_pago' => 'efectivo',
             'detalles' => [['categoria' => 'diezmo', 'monto' => 15000]],
         ])->assertRedirect(route('recuento.culto', $culto));

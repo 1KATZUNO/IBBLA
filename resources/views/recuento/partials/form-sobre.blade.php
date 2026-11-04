@@ -7,6 +7,10 @@
     $editando = isset($sobre) && $sobre;
     $personaId = old('persona_id', $editando ? $sobre->persona_id : null);
     $personaElegida = $personaId ? $personas->firstWhere('id', (int) $personaId) : null;
+    // Texto del buscador: el nombre elegido o lo que se escribio antes de un error de validacion
+    $textoBuscador = old('persona_nombre', $personaElegida['nombre'] ?? '');
+    // Anonimo solo si se marco a proposito (o si se edita un sobre que ya era anonimo)
+    $esAnonimo = (bool) old('anonimo', $editando && ! $sobre->persona_id);
     $metodo = old('metodo_pago', $editando ? $sobre->metodo_pago : 'efectivo');
     $moneda = old('moneda', $editando ? ($sobre->moneda ?? 'CRC') : 'CRC');
     $simbolo = $moneda === 'USD' ? '$' : '₡';
@@ -26,37 +30,51 @@
     <div class="flex flex-wrap gap-2">
         <div class="relative flex-1 min-w-[14rem]">
             <label for="buscarPersona" class="sr-only">Buscar persona por nombre o PIN</label>
-            <input type="search" id="buscarPersona" autocomplete="off" spellcheck="false" enterkeyhint="next"
-                   placeholder="Escribe el nombre o el PIN" value="{{ $personaElegida['nombre'] ?? '' }}"
+            <input type="search" id="buscarPersona" name="persona_nombre" autocomplete="off" spellcheck="false" enterkeyhint="next"
+                   placeholder="Escribe el nombre o el PIN" value="{{ $textoBuscador }}"
                    role="combobox" aria-expanded="false" aria-controls="resultadosPersona" aria-autocomplete="list"
                    class="{{ $campo }}" @if(! $editando) autofocus @endif>
             <ul id="resultadosPersona" role="listbox" aria-label="Personas"
                 class="hidden absolute z-30 mt-1 w-full max-h-72 overflow-y-auto rounded-md border border-gray-200 bg-white py-1 shadow-lg"></ul>
         </div>
-        <button type="button" class="btn-secondary" id="btnAnonimo">Anónimo</button>
-        <button type="button" class="btn-secondary" id="btnPersonaNueva">+ Nueva</button>
+        <button type="button" class="btn-secondary" id="btnPersonaNueva">+ Nueva persona</button>
     </div>
+    <label class="inline-flex items-center gap-2 min-h-[44px] cursor-pointer text-sm text-gray-800">
+        <input type="checkbox" name="anonimo" value="1" id="chkAnonimo" class="h-5 w-5 rounded border-gray-300 text-red-600 focus:ring-red-500" @checked($esAnonimo && ! $personaElegida)>
+        Sobre anónimo (sin persona)
+    </label>
     <p class="text-sm text-gray-600" id="personaEstado" aria-live="polite">
         @if($personaElegida)
             Sobre de <strong class="text-gray-900">{{ $personaElegida['nombre'] }}</strong>
             @if($personaElegida['inactiva'] ?? false)
                 <span class="ml-1 rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700">persona inactiva</span>
             @endif
+        @elseif($esAnonimo)
+            Sin persona: se guarda como <strong class="text-red-700">Anónimo</strong>
         @else
-            Sin persona: se guarda como <strong class="text-gray-900">Anónimo</strong>
+            Elige a la persona en la lista (o marca «Sobre anónimo»).
         @endif
     </p>
     <div id="cajaPersonaNueva" class="hidden rounded-lg border border-green-200 bg-green-50 p-3">
-        <label for="nombrePersonaNueva" class="block text-sm font-medium text-gray-800 mb-1">Nombre completo de la persona nueva</label>
-        <div class="flex flex-wrap gap-2">
-            <input type="text" id="nombrePersonaNueva" autocomplete="off" class="{{ $campo }} flex-1 min-w-[12rem]" placeholder="Ej.: Juan Pérez Gómez">
-            <button type="button" class="btn-success" id="btnGuardarPersonaNueva">Agregar</button>
+        <p id="avisoPersonaNueva" class="hidden mb-2 text-sm font-medium text-red-700"></p>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <div class="sm:col-span-2">
+                <label for="nombrePersonaNueva" class="block text-sm font-medium text-gray-800 mb-1">Nombre completo</label>
+                <input type="text" id="nombrePersonaNueva" autocomplete="off" class="{{ $campo }}" placeholder="Ej.: Juan Pérez Gómez">
+            </div>
+            <div>
+                <label for="telefonoPersonaNueva" class="block text-sm font-medium text-gray-800 mb-1">Teléfono <span class="font-normal text-gray-500">(opcional)</span></label>
+                <input type="tel" id="telefonoPersonaNueva" autocomplete="off" inputmode="tel" class="{{ $campo }}" placeholder="8888-8888">
+            </div>
+        </div>
+        <div class="mt-2 flex flex-wrap gap-2">
+            <button type="button" class="btn-success" id="btnGuardarPersonaNueva">Agregar y elegir</button>
             <button type="button" class="btn-secondary" id="btnCancelarPersonaNueva">Cancelar</button>
         </div>
-        <p class="mt-1 text-xs text-gray-600">Queda activa y sin usuario. Sus datos se completan después en Personas.</p>
+        <p class="mt-1 text-xs text-gray-600">Queda activa y sin usuario. El resto de sus datos los completa el administrador.</p>
     </div>
     @error('persona_id')
-        <p class="text-sm text-red-600">{{ $message }}</p>
+        <p class="rounded-md bg-red-50 px-3 py-2 text-sm font-medium text-red-700" id="errorPersona">{{ $message }}</p>
     @enderror
 </section>
 
@@ -142,6 +160,8 @@
     const buscador = document.getElementById('buscarPersona');
     const lista = document.getElementById('resultadosPersona');
     const estado = document.getElementById('personaEstado');
+    const chkAnonimo = document.getElementById('chkAnonimo');
+    const barra = document.getElementById('barraPersona');
     const montos = Array.from(document.querySelectorAll('.detalle-monto'));
     const primerMonto = montos[0];
     let resultados = [];
@@ -154,7 +174,35 @@
         estado.innerHTML = persona
             ? 'Sobre de <strong class="text-gray-900">' + escapar(persona.nombre) + '</strong>'
                 + (persona.inactiva ? ' <span class="ml-1 rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700">persona inactiva</span>' : '')
-            : 'Sin persona: se guarda como <strong class="text-gray-900">Anónimo</strong>';
+            : (chkAnonimo.checked
+                ? 'Sin persona: se guarda como <strong class="text-red-700">Anónimo</strong>'
+                : 'Elige a la persona en la lista (o marca «Sobre anónimo»).');
+        // Nombre grande junto a Guardar: ANÓNIMO en rojo si no hay persona
+        if (barra) {
+            barra.textContent = persona ? persona.nombre : 'ANÓNIMO';
+            barra.dataset.anonimo = persona ? '0' : '1';
+            barra.classList.toggle('text-red-600', !persona);
+            barra.classList.toggle('text-gray-900', !!persona);
+        }
+    }
+    function personaElegida() {
+        return personas.find(p => String(p.id) === campoId.value) || null;
+    }
+    // Un nombre escrito completo que coincide con UNA sola persona cuenta como elegido (antes quedaba Anónimo)
+    function resolverEscrito() {
+        if (campoId.value) return personaElegida();
+        const texto = normalizar(buscador.value).replace(/\s+/g, ' ');
+        if (!texto) return null;
+        let iguales = personas.filter(p => normalizar(p.nombre).replace(/\s+/g, ' ') === texto || (p.pin && String(p.pin) === texto));
+        if (iguales.length > 1) iguales = iguales.filter(p => !p.inactiva);
+        if (iguales.length === 1) {
+            campoId.value = iguales[0].id;
+            buscador.value = iguales[0].nombre;
+            chkAnonimo.checked = false;
+            pintarEstado(iguales[0]);
+            return iguales[0];
+        }
+        return null;
     }
     function cerrarLista() {
         lista.classList.add('hidden');
@@ -165,6 +213,9 @@
     function elegir(persona) {
         campoId.value = persona ? persona.id : '';
         buscador.value = persona ? persona.nombre : '';
+        if (persona) chkAnonimo.checked = false;
+        const error = document.getElementById('errorPersona');
+        if (error && persona) error.remove();
         pintarEstado(persona);
         cerrarLista();
         primerMonto && primerMonto.focus();
@@ -183,6 +234,7 @@
         const elegida = personas.find(p => String(p.id) === campoId.value);
         if (elegida && normalizar(elegida.nombre) !== texto) { campoId.value = ''; pintarEstado(null); }
         if (texto === '') { cerrarLista(); return; }
+        if (chkAnonimo.checked) { chkAnonimo.checked = false; pintarEstado(null); }
 
         resultados = personas.filter(p => normalizar(p.nombre).includes(texto) || (p.pin && String(p.pin) === texto)).slice(0, 8);
         lista.innerHTML = resultados.map((p, i) =>
@@ -219,19 +271,28 @@
         e.preventDefault();
         opcion.dataset.nueva ? abrirPersonaNueva(buscador.value.trim()) : elegir(resultados[Number(opcion.dataset.indice)]);
     });
-    buscador.addEventListener('blur', function () { setTimeout(cerrarLista, 150); });
-    document.getElementById('btnAnonimo').addEventListener('click', function () { elegir(null); });
+    buscador.addEventListener('blur', function () { setTimeout(function () { cerrarLista(); resolverEscrito(); }, 150); });
+    chkAnonimo.addEventListener('change', function () {
+        if (chkAnonimo.checked) { elegir(null); } else { pintarEstado(personaElegida()); buscador.focus(); }
+    });
 
     // Persona nueva sin salir del sobre
     const cajaNueva = document.getElementById('cajaPersonaNueva');
     const nombreNueva = document.getElementById('nombrePersonaNueva');
+    const telefonoNueva = document.getElementById('telefonoPersonaNueva');
+    const avisoNueva = document.getElementById('avisoPersonaNueva');
     const guardarNueva = document.getElementById('btnGuardarPersonaNueva');
-    function abrirPersonaNueva(nombre) {
+    function abrirPersonaNueva(nombre, aviso) {
         cerrarLista();
         cajaNueva.classList.remove('hidden');
+        avisoNueva.textContent = aviso || '';
+        avisoNueva.classList.toggle('hidden', !aviso);
         nombreNueva.value = nombre || '';
         nombreNueva.focus();
     }
+    @if($errors->has('persona_id') && ! $personaElegida && trim((string) $textoBuscador) !== '')
+    abrirPersonaNueva(@json(trim((string) $textoBuscador)), @json($errors->first('persona_id')));
+    @endif
     document.getElementById('btnPersonaNueva').addEventListener('click', function () { abrirPersonaNueva(buscador.value.trim()); });
     document.getElementById('btnCancelarPersonaNueva').addEventListener('click', function () { cajaNueva.classList.add('hidden'); buscador.focus(); });
     nombreNueva.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); guardarNueva.click(); } });
@@ -242,11 +303,12 @@
         fetch(@json(route('personas.quick-store')), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': @json(csrf_token()) },
-            body: JSON.stringify({ nombre: nombre })
+            body: JSON.stringify({ nombre: nombre, telefono: telefonoNueva.value.trim() || null })
         }).then(r => r.ok ? r.json() : Promise.reject(r)).then(function (datos) {
             const persona = { id: datos.persona.id, nombre: datos.persona.nombre, pin: datos.persona.pin || null };
             personas.push(persona);
             cajaNueva.classList.add('hidden');
+            telefonoNueva.value = '';
             elegir(persona);
         }).catch(function () {
             alert('No se pudo agregar la persona. Revisa la conexión e intenta de nuevo.');
@@ -306,9 +368,26 @@
     });
 
     // Un solo envio por formulario (el servidor ademas ignora el mismo codigo de envio dos veces)
+    // Nunca un Anónimo por descuido (pedido del cliente 04/11): sin persona hay que marcar
+    // «Sobre anónimo» o confirmarlo; un nombre que no coincide con nadie abre el alta rápida.
     let enviando = false;
     formulario.addEventListener('submit', function (e) {
         if (enviando) { e.preventDefault(); return; }
+        if (!resolverEscrito() && !chkAnonimo.checked) {
+            const escrito = buscador.value.trim();
+            if (escrito) {
+                e.preventDefault();
+                abrirPersonaNueva(escrito, '«' + escrito + '» no coincide con ninguna persona. Elígela de la lista o agrégala aquí. El sobre todavía no se guardó.');
+                return;
+            }
+            if (!window.confirm('Este sobre no tiene persona. ¿Guardarlo como ANÓNIMO?')) {
+                e.preventDefault();
+                buscador.focus();
+                return;
+            }
+            chkAnonimo.checked = true;
+            pintarEstado(null);
+        }
         enviando = true;
         formulario.querySelectorAll('[data-boton-guardar]').forEach(function (b) {
             b.setAttribute('aria-disabled', 'true');

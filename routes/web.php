@@ -112,6 +112,7 @@ Route::middleware(['auth', 'role:admin,tesorero'])->group(function () {
         Route::get('/{sobre}/edit', [RecuentoController::class, 'edit'])->name('edit');
         Route::put('/{sobre}', [RecuentoController::class, 'update'])->name('update');
         Route::delete('/{sobre}', [RecuentoController::class, 'destroy'])->name('destroy');
+        Route::patch('/{sobre}/persona', [RecuentoController::class, 'asignarPersona'])->name('asignar-persona');
         // Firmas del recuento
         Route::post('/firmas/{culto}', [RecuentoController::class, 'actualizarFirmas'])->name('firmas.update');
     });
