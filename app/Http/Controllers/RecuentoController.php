@@ -109,8 +109,10 @@ class RecuentoController extends Controller
             ? $this->permisosEdicion->permisoQueCubre($user, $culto)
             : null;
 
+        $puedeFirmar = Gate::allows('corregirFirmas', $culto);
+
         return view('recuento.culto', compact('culto', 'categorias', 'sobres', 'ofrendasSueltas', 'egresos', 'resumen', 'permisoEditar', 'accesoUsado',
-            'cantidadAnonimos', 'soloAnonimos', 'personasParaAsignar'));
+            'cantidadAnonimos', 'soloAnonimos', 'personasParaAsignar', 'puedeFirmar'));
     }
 
     /** Antes un culto cerrado se veia en un modal; ahora tiene su pantalla (en solo lectura si corresponde). */
@@ -469,10 +471,15 @@ class RecuentoController extends Controller
         return $this->alCulto($culto->id, 'success', 'Culto cerrado correctamente. Tipo de cambio congelado: ₡'.($tipoCambioVenta ? number_format((float) $tipoCambioVenta, 2) : 'N/A'));
     }
 
-    /** Firmas del recuento: pastor y tesoreros (nombre y firma dibujada). */
+    /**
+     * Firmas del recuento: pastor y tesoreros (nombre y firma dibujada). Se pueden corregir despues
+     * de firmadas, aun con el culto cerrado, por admin y tesoreria (decision del cliente 13/10); cada
+     * cambio queda en la auditoria con que firma cambio, quien y cuando.
+     */
     public function actualizarFirmas(Request $request, Culto $culto): RedirectResponse
     {
-        Gate::authorize('puedeEditarCulto', $culto);
+        Gate::authorize('corregirFirmas', $culto);
+        $antes = $this->resumenFirmas($culto);
 
         $data = $request->validate([
             'firma_pastor' => 'nullable|string|max:255',
@@ -501,9 +508,65 @@ class RecuentoController extends Controller
             'firmas_tesoreros_imagenes' => $tesorerosImagenes,
         ]);
 
-        $this->permisosEdicion->registrarCambioEnCerrado($request, $culto, 'Actualizar firmas');
+        $despues = $this->resumenFirmas($culto->fresh());
+        $cambios = $this->cambiosDeFirmas($antes, $despues);
+        if ($cambios === []) {
+            return $this->alCulto($culto->id, 'success', 'Las firmas no cambiaron.');
+        }
 
-        return $this->alCulto($culto->id, 'success', 'Firmas de recuento actualizadas.');
+        $firmadoAntes = collect($antes)->contains(fn ($f) => $f['firmada']);
+        AuditLog::registrar($firmadoAntes ? 'Corregir firmas del recuento' : 'Firmar recuento', [
+            'culto_id' => $culto->id,
+            'fecha_culto' => $culto->fecha->toDateString(),
+            'culto_cerrado' => (bool) $culto->cerrado,
+            'cambios' => $cambios,
+        ], 'recuento.firmas.update');
+
+        return $this->alCulto($culto->id, 'success', $firmadoAntes ? 'Firmas corregidas. El cambio quedó en la auditoría.' : 'Firmas de recuento guardadas.');
+    }
+
+    /**
+     * Quien firma y si tiene firma dibujada, sin las imagenes (pesan mucho para la auditoria; de
+     * cada imagen se guarda una huella corta para saber si cambio).
+     *
+     * @return array<string, array{nombre: string, firmada: bool, huella: ?string}>
+     */
+    private function resumenFirmas(Culto $culto): array
+    {
+        $huella = fn (?string $img) => $img ? substr(sha1($img), 0, 10) : null;
+        $firmas = ['Pastor' => [
+            'nombre' => (string) $culto->firma_pastor,
+            'firmada' => (bool) $culto->firma_pastor_imagen,
+            'huella' => $huella($culto->firma_pastor_imagen),
+        ]];
+        foreach (array_values($culto->firmas_tesoreros_imagenes ?? []) as $i => $t) {
+            $firmas['Tesorero '.($i + 1)] = [
+                'nombre' => (string) ($t['nombre'] ?? ''),
+                'firmada' => ! empty($t['imagen']),
+                'huella' => $huella($t['imagen'] ?? null),
+            ];
+        }
+
+        return $firmas;
+    }
+
+    /** @return array<int, array{firma: string, antes: string, despues: string}> */
+    private function cambiosDeFirmas(array $antes, array $despues): array
+    {
+        $texto = fn (?array $f) => $f === null || ($f['nombre'] === '' && ! $f['firmada'])
+            ? '(vacía)'
+            : ($f['nombre'] !== '' ? $f['nombre'] : 'sin nombre').($f['firmada'] ? ' [firma '.$f['huella'].']' : ' [sin firma]');
+
+        $cambios = [];
+        foreach (array_unique(array_merge(array_keys($antes), array_keys($despues))) as $firma) {
+            $a = $texto($antes[$firma] ?? null);
+            $d = $texto($despues[$firma] ?? null);
+            if ($a !== $d) {
+                $cambios[] = ['firma' => $firma, 'antes' => $a, 'despues' => $d];
+            }
+        }
+
+        return $cambios;
     }
 
     /**

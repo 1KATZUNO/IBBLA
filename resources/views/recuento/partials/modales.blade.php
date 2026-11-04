@@ -41,7 +41,10 @@
         </form>
     </div>
 </div>
+@endif
 
+{{-- Firmas: se corrigen aunque el culto este cerrado (decision del cliente 13/10) --}}
+@if($puedeFirmar)
 <div id="modalFirma" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" role="dialog" aria-modal="true" aria-labelledby="modalFirmaTitulo">
     <div class="bg-white rounded-xl shadow-2xl max-w-lg w-full">
         <div class="flex justify-between items-center p-4 border-b">

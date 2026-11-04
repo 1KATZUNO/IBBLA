@@ -10,7 +10,7 @@
 <section class="bg-white rounded-lg shadow p-4 sm:p-6" aria-labelledby="titulo-firmas">
     <h3 id="titulo-firmas" class="text-lg font-semibold text-gray-900 mb-4">Firmas del recuento</h3>
 
-    @if(! $puedeEditar)
+    @if(! $puedeFirmar)
         {{-- Solo lectura: se ven las firmas, sin campos --}}
         <dl class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
             <div class="rounded-lg border border-gray-200 p-3">
@@ -43,6 +43,9 @@
     @else
         <form method="POST" action="{{ route('recuento.firmas.update', $culto->id) }}" class="space-y-4" id="firmasForm">
             @csrf
+            @if($culto->cerrado)
+                <p class="rounded-md bg-amber-50 px-3 py-2 text-sm text-amber-900">El culto está cerrado, pero las firmas se pueden corregir. Cada cambio queda en la auditoría con quién lo hizo y cuándo.</p>
+            @endif
 
             <div class="border rounded-lg p-4 bg-gray-50">
                 <label for="firma_pastor_nombre" class="block text-sm font-medium text-gray-700 mb-2">Pastor</label>

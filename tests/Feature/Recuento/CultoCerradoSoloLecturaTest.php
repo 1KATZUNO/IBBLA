@@ -49,7 +49,8 @@ class CultoCerradoSoloLecturaTest extends TestCase
             ->assertSee('Cerrado el 11/10 por Ana Tesorera', false)
             ->assertDontSee('id="form-eliminar-sobre-'.$sobre->id.'"', false)
             ->assertDontSee('id="formMovimiento"', false)
-            ->assertDontSee('id="firmasForm"', false)
+            // Las firmas si se corrigen con el culto cerrado (decision del cliente 13/10, auditado)
+            ->assertSee('id="firmasForm"', false)
             ->getContent();
 
         // Agregar sobre, dinero suelto, egreso y las acciones de cada sobre: deshabilitadas, no ocultas
@@ -76,7 +77,6 @@ class CultoCerradoSoloLecturaTest extends TestCase
             ['post', route('recuento.store-egreso'), ['culto_id' => $this->cerrado->id, 'monto' => 100]],
             ['put', route('recuento.update-egreso', $egreso), ['monto' => 1]],
             ['delete', route('recuento.destroy-egreso', $egreso), []],
-            ['post', route('recuento.firmas.update', $this->cerrado), ['firma_pastor' => 'Otro']],
         ];
 
         foreach ($intentos as [$metodo, $url, $datos]) {
@@ -89,7 +89,6 @@ class CultoCerradoSoloLecturaTest extends TestCase
         $this->assertSame(1, $this->cerrado->sobres()->count());
         $this->assertSame('1000.00', (string) $suelto->fresh()->monto);
         $this->assertNotNull($egreso->fresh());
-        $this->assertNull($this->cerrado->fresh()->firma_pastor);
     }
 
     public function test_la_respuesta_json_tambien_trae_el_motivo(): void

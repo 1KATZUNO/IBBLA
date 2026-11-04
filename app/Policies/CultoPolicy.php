@@ -62,6 +62,21 @@ class CultoPolicy
     }
 
     /**
+     * Firmas del recuento (decision del cliente 13/10): admin y tesoreria las pueden corregir despues
+     * de firmadas, incluso con el culto cerrado. Cada cambio se audita (RecuentoController).
+     */
+    public function corregirFirmas(User $user, Culto $culto): Response
+    {
+        if (! $this->esDeSuIglesia($user, $culto)) {
+            return Response::denyAsNotFound();
+        }
+
+        return $user->isSuperAdmin() || $user->isAdmin() || $user->canAccessRecuento()
+            ? Permiso::permitir()
+            : Permiso::ocultar('Tu rol no firma el recuento.');
+    }
+
+    /**
      * Eliminar un culto (decision del cliente 13/10, QA-003): solo el administrador. Si el culto esta
      * cerrado o tiene movimientos, el controlador ademas pide confirmacion y motivo y lo audita todo.
      * Los demas roles no ven el boton.
