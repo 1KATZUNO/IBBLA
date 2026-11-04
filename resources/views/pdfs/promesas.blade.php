@@ -69,7 +69,7 @@
             <h3>{{ number_format($totales['grand_total']['faltante'], 2) }}</h3>
         </div>
         <div class="summary-card purple">
-            <p>Total Profit</p>
+            <p>Total excedente</p>
             <h3>{{ number_format($totales['grand_total']['profit'], 2) }}</h3>
         </div>
     </div>
@@ -82,7 +82,7 @@
                 <th>Total Prometido</th>
                 <th>Total Dado</th>
                 <th>Faltante</th>
-                <th>Profit</th>
+                <th>Excedente</th>
             </tr>
         </thead>
         <tbody>

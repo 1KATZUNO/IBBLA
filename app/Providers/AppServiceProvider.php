@@ -3,6 +3,8 @@
 namespace App\Providers;
 
 use App\Listeners\RegistrarAccesoSubscriber;
+use App\Models\Culto;
+use App\Observers\CierreCultoObserver;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Schema;
@@ -35,5 +37,8 @@ class AppServiceProvider extends ServiceProvider
 
         // Historial de ingresos: Login / Logout / Failed -> audit_logs
         Event::subscribe(RegistrarAccesoSubscriber::class);
+
+        // Al cerrar un culto, compromisos de su mes recalculados con el motor (QA-025)
+        Culto::observe(CierreCultoObserver::class);
     }
 }

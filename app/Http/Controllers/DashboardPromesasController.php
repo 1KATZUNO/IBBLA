@@ -34,11 +34,11 @@ class DashboardPromesasController extends Controller
         // Compromiso no tiene alcance por iglesia propio; se limita por su persona (Persona sí lo tiene).
         $compromisos = Compromiso::whereHas('persona')
             ->tap($enRango)
-            ->get(['año', 'mes', 'monto_prometido', 'monto_dado']);
+            ->get(['año', 'mes', 'monto_prometido_crc', 'monto_dado_crc']);
 
         // KPIs del período
-        $prometido = (float) $compromisos->sum('monto_prometido');
-        $dado = (float) $compromisos->sum('monto_dado');
+        $prometido = (float) $compromisos->sum('monto_prometido_crc');
+        $dado = (float) $compromisos->sum('monto_dado_crc');
         $saldo = $dado - $prometido;
         $cumplimiento = $prometido > 0 ? round(($dado / $prometido) * 100, 1) : 0;
 
@@ -48,15 +48,15 @@ class DashboardPromesasController extends Controller
 
             return [
                 'mes' => $mes->locale('es')->translatedFormat($meses->inicio->year === $meses->fin->year ? 'M' : 'M y'),
-                'prometido' => (float) $delMes->sum('monto_prometido'),
-                'dado' => (float) $delMes->sum('monto_dado'),
+                'prometido' => (float) $delMes->sum('monto_prometido_crc'),
+                'dado' => (float) $delMes->sum('monto_dado_crc'),
             ];
         });
 
         // Top contribuyentes (por monto dado en el período)
         $topContribuyentes = Persona::with(['promesas'])
-            ->withSum(['compromisos as dado_total' => $enRango], 'monto_dado')
-            ->withSum(['compromisos as prometido_total' => $enRango], 'monto_prometido')
+            ->withSum(['compromisos as dado_total' => $enRango], 'monto_dado_crc')
+            ->withSum(['compromisos as prometido_total' => $enRango], 'monto_prometido_crc')
             ->orderByDesc('dado_total')
             ->limit(10)
             ->get()

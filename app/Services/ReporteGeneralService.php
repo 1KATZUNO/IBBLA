@@ -3,64 +3,55 @@
 namespace App\Services;
 
 use App\Models\Persona;
-use Carbon\Carbon;
+use App\Services\Reportes\Dinero;
+use App\Services\Reportes\MotorReportes;
+use App\Services\Reportes\PeriodoReporte;
 
 /**
  * Datos del "Reporte General" de Gestion de Personas: lo dado vs lo esperado
- * (segun la promesa) por persona, mes y categoria con promesa, de enero al mes
- * indicado.
+ * (segun la promesa) por persona, mes y categoria de compromiso, de enero al
+ * mes indicado.
  *
- * Mantiene exactamente las reglas que tenia PersonaController::reporteGeneral:
+ * Los numeros salen del motor unico (Reportes\MotorReportes), el mismo del
+ * estado de cuenta, Compromisos y el reporte de cumplimiento. Reglas propias de
+ * este reporte, las de siempre:
  * - solo personas activas, ordenadas por nombre;
- * - "dado" = suma de los detalles de sus sobres en cultos del anio, por mes del
- *   culto, sin convertir moneda;
- * - "esperado" = monto de la promesa segun frecuencia (semanal x domingos del
- *   mes, quincenal x 2, mensual x 1); si hay dos promesas de la misma categoria
- *   vale la ultima;
- * - se omiten las personas sin nada dado ni esperado.
- *
- * Lo que cambia es el costo: cada sobre se recorre una sola vez (antes se
- * recorrian todos los sobres de la persona por cada mes), los domingos de cada
- * mes se cuentan una vez y solo se traen de la BD las columnas que se usan.
+ * - columnas = categorias de compromiso (las no excluidas de promesas); el
+ *   diezmo no entra;
+ * - "dado" = lo de sus sobres en cultos del periodo hasta hoy, por mes del culto
+ *   (los dolares ya convertidos a colones por el motor), SOLO en las categorias
+ *   en que la persona tiene promesa (regla 2.1: lo demas no cuenta para el
+ *   cumplimiento; se ve en el estado de cuenta y en el reporte de contribuciones);
+ * - "esperado" = promesa segun frecuencia (semanal x domingos del mes,
+ *   quincenal x 2, mensual x 1) de los meses completos antes de hoy: el mes en
+ *   curso sale con esperado 0 (no se cobra) y lo dado en el si cuenta; si hay dos
+ *   promesas de la misma categoria vale la ultima;
+ * - se omiten las personas sin nada dado ni esperado (p. ej. sin promesa).
  */
 class ReporteGeneralService
 {
-    public const MESES = ['', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-        'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+    public const MESES = PeriodoReporte::NOMBRES_MESES;
+
+    public function __construct(private readonly MotorReportes $motor) {}
 
     /**
      * @return array{reporteData: array, totalesGenerales: array, categoriasConPromesa: array}
      */
     public function generar(int $anio, int $mesHasta): array
     {
-        // Categorias con subdivision (dado/esperado): las que no se excluyen de promesas.
-        $categoriasConPromesa = tenant_categories(['excluir_de_promesas' => false])->pluck('slug')->toArray();
-
         $personas = Persona::where('activo', true)
-            ->select(['id', 'nombre'])
-            ->with([
-                'promesas:id,persona_id,categoria,monto,frecuencia',
-                'sobres' => function ($query) use ($anio) {
-                    $query->select(['id', 'persona_id', 'culto_id'])
-                        ->whereHas('culto', function ($q) use ($anio) {
-                            $q->whereYear('fecha', $anio);
-                        })
-                        ->with(['detalles:id,sobre_id,categoria,monto', 'culto:id,fecha']);
-                },
-            ])
             ->orderBy('nombre')
-            ->get();
+            ->get(['id', 'nombre', 'activo']);
 
-        $domingosPorMes = [];
-        for ($mes = 1; $mes <= $mesHasta; $mes++) {
-            $domingosPorMes[$mes] = $this->contarDomingos($anio, $mes);
-        }
+        $resultado = $this->motor->calcular(PeriodoReporte::deMeses($anio, 1, $mesHasta), $personas);
+        $categoriasConPromesa = $resultado->categoriasCompromiso;
 
         $reporteData = [];
 
-        foreach ($personas as $persona) {
+        foreach ($resultado->cuentas() as $cuenta) {
+            $conPromesa = array_flip($cuenta->categoriasConPromesa());
             $datosPersona = [
-                'nombre' => $persona->nombre,
+                'nombre' => $cuenta->nombre,
                 'meses' => [],
                 'totales' => [
                     'dado' => 0,
@@ -68,150 +59,107 @@ class ReporteGeneralService
                     'diferencia' => 0,
                 ],
             ];
+            $dadoPersona = 0;
+            $esperadoPersona = 0;
 
-            // Mapa de promesas por categoria (si se repite la categoria, gana la ultima).
-            $promesasMap = [];
-            foreach ($persona->promesas as $promesa) {
-                $promesasMap[$promesa->categoria] = $promesa;
-            }
-
-            // Sobres agrupados por mes del culto, conservando su orden original.
-            $sobresPorMes = [];
-            foreach ($persona->sobres as $sobre) {
-                if ($sobre->culto) {
-                    $sobresPorMes[Carbon::parse($sobre->culto->fecha)->month][] = $sobre;
-                }
-            }
-
-            for ($mes = 1; $mes <= $mesHasta; $mes++) {
+            foreach ($resultado->periodo->meses() as $mes) {
                 $mesDatos = [
-                    'nombre' => self::MESES[$mes],
+                    'nombre' => $mes->nombre,
                     'categorias' => [],
                     'total_dado' => 0,
                     'total_esperado' => 0,
                     'diferencia' => 0,
                 ];
+                $dadoMes = 0;
+                $esperadoMes = 0;
 
-                // Lo dado por categoria en este mes.
-                $dadoPorCategoria = array_fill_keys($categoriasConPromesa, 0);
-                foreach ($sobresPorMes[$mes] ?? [] as $sobre) {
-                    foreach ($sobre->detalles as $detalle) {
-                        $cat = $detalle->categoria;
-                        if (isset($dadoPorCategoria[$cat])) {
-                            $dadoPorCategoria[$cat] += $detalle->monto;
-                        }
-                    }
-                }
-
-                // Esperado y acumulados de cada categoria con promesa.
                 foreach ($categoriasConPromesa as $cat) {
-                    $dado = $dadoPorCategoria[$cat];
-                    $esperado = 0;
-
-                    if (isset($promesasMap[$cat])) {
-                        $esperado = $this->esperadoDelMes($promesasMap[$cat], $domingosPorMes[$mes]);
-                    }
+                    $dado = isset($conPromesa[$cat]) ? $cuenta->dadoCentimos($mes->clave, [$cat]) : 0;
+                    $esperado = $cuenta->esperadoCentimos($mes->clave, $cat);
 
                     $mesDatos['categorias'][$cat] = [
-                        'dado' => $dado,
-                        'esperado' => $esperado,
+                        'dado' => Dinero::colones($dado),
+                        'esperado' => Dinero::colones($esperado),
                     ];
-
-                    $mesDatos['total_dado'] += $dado;
-                    $mesDatos['total_esperado'] += $esperado;
+                    $dadoMes += $dado;
+                    $esperadoMes += $esperado;
                 }
 
-                $mesDatos['diferencia'] = $mesDatos['total_dado'] - $mesDatos['total_esperado'];
-
+                $mesDatos['total_dado'] = Dinero::colones($dadoMes);
+                $mesDatos['total_esperado'] = Dinero::colones($esperadoMes);
+                $mesDatos['diferencia'] = Dinero::colones($dadoMes - $esperadoMes);
                 $datosPersona['meses'][] = $mesDatos;
 
-                $datosPersona['totales']['dado'] += $mesDatos['total_dado'];
-                $datosPersona['totales']['esperado'] += $mesDatos['total_esperado'];
+                $dadoPersona += $dadoMes;
+                $esperadoPersona += $esperadoMes;
             }
 
-            $datosPersona['totales']['diferencia'] = $datosPersona['totales']['dado'] - $datosPersona['totales']['esperado'];
+            $datosPersona['totales'] = [
+                'dado' => Dinero::colones($dadoPersona),
+                'esperado' => Dinero::colones($esperadoPersona),
+                'diferencia' => Dinero::colones($dadoPersona - $esperadoPersona),
+            ];
 
             // Solo personas con algo dado o esperado.
-            if ($datosPersona['totales']['dado'] > 0 || $datosPersona['totales']['esperado'] > 0) {
+            if ($dadoPersona > 0 || $esperadoPersona > 0) {
                 $reporteData[] = $datosPersona;
             }
         }
 
         return [
             'reporteData' => $reporteData,
-            'totalesGenerales' => $this->totalesGenerales($reporteData, $categoriasConPromesa, $mesHasta),
+            'totalesGenerales' => $this->totalesGenerales($reporteData, $categoriasConPromesa, $resultado->periodo->cantidadMeses()),
             'categoriasConPromesa' => $categoriasConPromesa,
         ];
     }
 
     private function totalesGenerales(array $reporteData, array $categoriasConPromesa, int $mesHasta): array
     {
-        $totalesGenerales = [
-            'meses' => [],
-            'total_dado' => 0,
-            'total_esperado' => 0,
-            'total_diferencia' => 0,
-        ];
-
+        // Se suma en centimos para que el gran total cuadre al centimo con la suma de las personas.
+        $centimos = [];
         for ($mes = 1; $mes <= $mesHasta; $mes++) {
-            $totalesGenerales['meses'][$mes] = [
+            $centimos[$mes] = [
                 'categorias' => array_fill_keys($categoriasConPromesa, ['dado' => 0, 'esperado' => 0]),
                 'total_dado' => 0,
                 'total_esperado' => 0,
-                'diferencia' => 0,
             ];
         }
+        $totalDado = 0;
+        $totalEsperado = 0;
 
         foreach ($reporteData as $persona) {
             foreach ($persona['meses'] as $idx => $mesDatos) {
                 $mes = $idx + 1;
                 foreach ($categoriasConPromesa as $cat) {
-                    $totalesGenerales['meses'][$mes]['categorias'][$cat]['dado'] += $mesDatos['categorias'][$cat]['dado'];
-                    $totalesGenerales['meses'][$mes]['categorias'][$cat]['esperado'] += $mesDatos['categorias'][$cat]['esperado'];
+                    $centimos[$mes]['categorias'][$cat]['dado'] += Dinero::centimos($mesDatos['categorias'][$cat]['dado']);
+                    $centimos[$mes]['categorias'][$cat]['esperado'] += Dinero::centimos($mesDatos['categorias'][$cat]['esperado']);
                 }
-                $totalesGenerales['meses'][$mes]['total_dado'] += $mesDatos['total_dado'];
-                $totalesGenerales['meses'][$mes]['total_esperado'] += $mesDatos['total_esperado'];
-                $totalesGenerales['meses'][$mes]['diferencia'] += $mesDatos['diferencia'];
+                $centimos[$mes]['total_dado'] += Dinero::centimos($mesDatos['total_dado']);
+                $centimos[$mes]['total_esperado'] += Dinero::centimos($mesDatos['total_esperado']);
             }
-            $totalesGenerales['total_dado'] += $persona['totales']['dado'];
-            $totalesGenerales['total_esperado'] += $persona['totales']['esperado'];
-            $totalesGenerales['total_diferencia'] += $persona['totales']['diferencia'];
+            $totalDado += Dinero::centimos($persona['totales']['dado']);
+            $totalEsperado += Dinero::centimos($persona['totales']['esperado']);
+        }
+
+        $totalesGenerales = [
+            'meses' => [],
+            'total_dado' => Dinero::colones($totalDado),
+            'total_esperado' => Dinero::colones($totalEsperado),
+            'total_diferencia' => Dinero::colones($totalDado - $totalEsperado),
+        ];
+
+        foreach ($centimos as $mes => $datos) {
+            $totalesGenerales['meses'][$mes] = [
+                'categorias' => array_map(fn (array $c) => [
+                    'dado' => Dinero::colones($c['dado']),
+                    'esperado' => Dinero::colones($c['esperado']),
+                ], $datos['categorias']),
+                'total_dado' => Dinero::colones($datos['total_dado']),
+                'total_esperado' => Dinero::colones($datos['total_esperado']),
+                'diferencia' => Dinero::colones($datos['total_dado'] - $datos['total_esperado']),
+            ];
         }
 
         return $totalesGenerales;
-    }
-
-    /**
-     * Monto esperado de una promesa en un mes segun su frecuencia.
-     */
-    private function esperadoDelMes($promesa, int $domingosDelMes): float
-    {
-        switch ($promesa->frecuencia) {
-            case 'semanal':
-                return $promesa->monto * $domingosDelMes;
-
-            case 'quincenal':
-                return $promesa->monto * 2;
-
-            case 'mensual':
-            default:
-                return $promesa->monto;
-        }
-    }
-
-    private function contarDomingos(int $anio, int $mes): int
-    {
-        $domingos = 0;
-        $fecha = Carbon::create($anio, $mes, 1)->startOfMonth();
-        $finMes = $fecha->copy()->endOfMonth();
-
-        while ($fecha->lte($finMes)) {
-            if ($fecha->dayOfWeek === Carbon::SUNDAY) {
-                $domingos++;
-            }
-            $fecha->addDay();
-        }
-
-        return $domingos;
     }
 }

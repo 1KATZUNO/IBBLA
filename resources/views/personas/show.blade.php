@@ -76,8 +76,11 @@
         <div class="bg-white rounded-lg shadow p-6">
             <div class="flex items-center">
                 <div class="flex-1">
-                    <p class="text-sm font-medium text-gray-500">Total Ofrendado</p>
-                    <p class="text-2xl font-bold text-green-600">₡{{ number_format($persona->sobres->sum('total_declarado'), 2) }}</p>
+                    <p class="text-sm font-medium text-gray-500">Dado en {{ $estadoCuenta['anio'] }} (al {{ $estadoCuenta['corte'] }})</p>
+                    <p class="text-2xl font-bold text-green-600">₡{{ number_format($estadoCuenta['total_dado'], 2) }}</p>
+                    @if($estadoCuenta['tiene_compromisos'])
+                        <p class="text-xs text-gray-500 mt-1">Compromisos: {{ $estadoCuenta['estado'] }} ({{ $estadoCuenta['diferencia'] >= 0 ? '+' : '-' }}₡{{ number_format(abs($estadoCuenta['diferencia']), 2) }})</p>
+                    @endif
                 </div>
                 <div class="p-3 bg-green-100 rounded-full">
                     <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -124,7 +127,7 @@
                             {{ ucfirst($promesa->categoria) }}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-green-600">
-                            ₡{{ number_format($promesa->monto, 2) }}
+                            {{ $promesa->moneda === 'USD' ? '$' : '₡' }}{{ number_format($promesa->monto, 2) }}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                             <span class="px-2 py-1 text-xs font-semibold rounded-full 

@@ -150,7 +150,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path>
                 </svg>
             </div>
-            <p class="text-sm text-purple-100 font-medium mb-1">Total Profit</p>
+            <p class="text-sm text-purple-100 font-medium mb-1">Total excedente</p>
             <p class="text-3xl font-bold">₡{{ number_format($totales['grand_total']['profit'], 0, ',', '.') }}</p>
         </div>
     </div>
@@ -178,7 +178,7 @@
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total Prometido</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total Dado</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Faltante</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Profit</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Excedente</th>
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
@@ -229,7 +229,7 @@
         </div>
     </div>
 
-    <!-- Nota sobre el Profit -->
+    <!-- Nota sobre el excedente -->
     <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
         <div class="flex">
             <div class="flex-shrink-0">
@@ -239,7 +239,7 @@
             </div>
             <div class="ml-3">
                 <p class="text-sm text-blue-700">
-                    <span class="font-bold">Nota:</span> Este reporte muestra los datos del mes seleccionado. El profit representa el monto extra dado por encima de lo prometido en ese mes específico.
+                    <span class="font-bold">Nota:</span> Este reporte muestra los datos del mes seleccionado. El excedente es el monto extra dado por encima de lo prometido en ese mes específico.
                 </p>
             </div>
         </div>

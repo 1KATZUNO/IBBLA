@@ -6,10 +6,14 @@ use App\Models\ClaseAsistencia;
 use App\Models\Persona;
 use App\Models\Promesa;
 use App\Models\SobreDetalle;
-use App\Models\TipoCambio;
+use App\Services\Reportes\Dinero;
+use App\Services\Reportes\MotorReportes;
+use App\Services\Reportes\PeriodoReporte;
+use App\Support\Moneda\ConversorUsd;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class PromesasReporteController extends Controller
 {
@@ -227,187 +231,119 @@ class PromesasReporteController extends Controller
         ];
     }
 
+    /** @var array<int, array{prometido: array, dado: array, nombres: array}> por año */
+    private array $porAnio = [];
+
+    private ?ConversorUsd $conversor = null;
+
+    /**
+     * Totales de un mes por categoría de compromiso: lo prometido (motor único: personas activas,
+     * la última promesa de cada categoría, semanal x domingos, quincenal x 2, dólares al tipo de
+     * cambio de fin de mes) y TODO lo que entró a la categoría ese mes (incluidos anónimos y quien no
+     * prometió; dólares con el conversor único). Nada posterior a hoy cuenta.
+     *
+     * Antes se hacían ~4.000 consultas para el reporte anual (las categorías y el tipo de cambio se
+     * leían por cada promesa y mes): ahora el año se calcula una sola vez (QA-030).
+     */
     private function calcularTotales($año, $mes, $categoria = null)
     {
-        // Obtener todas las personas activas con promesas
-        $personas = Persona::where('activo', true)->with('promesas')->get();
+        $datos = $this->datosDelAnio((int) $año);
+        $mes = (int) $mes;
 
         $totalesPorCategoria = [];
-        $grandTotal = [
-            'prometido' => 0,
-            'dado' => 0,
-            'faltante' => 0,
-            'profit' => 0,
-        ];
+        $grandTotal = ['prometido' => 0, 'dado' => 0, 'faltante' => 0, 'profit' => 0];
 
-        // PASO 1: Calcular montos prometidos por categoría
-        foreach ($personas as $persona) {
-            foreach ($persona->promesas as $promesa) {
-                // Excluir categorías marcadas como excluir_de_promesas
-                $catLower = strtolower($promesa->categoria);
-                $categoriasExcluidas = tenant_categories(['excluir_de_promesas' => true])->pluck('slug')->map(fn ($s) => strtolower($s))->toArray();
-                if (in_array($catLower, $categoriasExcluidas)) {
-                    continue;
-                }
-                // Filtrar por categoría si se especificó
-                if ($categoria && $promesa->categoria != $categoria) {
-                    continue;
-                }
-
-                $cat = $promesa->categoria;
-
-                if (! isset($totalesPorCategoria[$cat])) {
-                    $totalesPorCategoria[$cat] = [
-                        'categoria' => ucfirst($cat),
-                        'total_prometido' => 0,
-                        'total_dado' => 0,
-                        'faltante' => 0,
-                        'profit' => 0,
-                    ];
-                }
-
-                // Calcular monto prometido para ESTE MES específico
-                $montoPrometidoMes = $this->calcularMontoPrometidoMes($promesa, $año, $mes);
-                $totalesPorCategoria[$cat]['total_prometido'] += $montoPrometidoMes;
-            }
-        }
-
-        // PASO 2: Calcular TODOS los montos dados en el mes (incluyendo anónimos)
-        // Convertir USD a CRC para comparación uniforme
-        $categoriasPromesa = tenant_categories(['excluir_de_promesas' => false])->pluck('slug')->toArray();
-        $categorias = $categoria ? [$categoria] : $categoriasPromesa;
-        // Sanear cuando piden una categoría excluida
-        $categoriasExcluidasSlugs = tenant_categories(['excluir_de_promesas' => true])->pluck('slug')->map(fn ($s) => strtolower($s))->toArray();
-        if ($categoria && in_array(strtolower($categoria), $categoriasExcluidasSlugs)) {
-            $categorias = [];
-            $totalesPorCategoria = [];
-        }
-
-        $tipoCambioActual = TipoCambio::hoy();
-        $tcVenta = $tipoCambioActual ? (float) $tipoCambioActual->venta : 0;
-
-        foreach ($categorias as $cat) {
-            // Sobres CRC
-            $montoDadoCrc = SobreDetalle::whereHas('sobre', function ($query) use ($año, $mes) {
-                $query->where('moneda', '!=', 'USD')
-                    ->whereHas('culto', function ($q) use ($año, $mes) {
-                        $q->whereYear('fecha', $año)->whereMonth('fecha', $mes);
-                    });
-            })
-                ->where('categoria', $cat)
-                ->sum('monto');
-
-            // Sobres USD - convertir cada uno con su tipo de cambio
-            $detallesUsd = SobreDetalle::whereHas('sobre', function ($query) use ($año, $mes) {
-                $query->where('moneda', 'USD')
-                    ->whereHas('culto', function ($q) use ($año, $mes) {
-                        $q->whereYear('fecha', $año)->whereMonth('fecha', $mes);
-                    });
-            })
-                ->where('categoria', $cat)
-                ->with('sobre')
-                ->get();
-
-            $montoDadoUsdConvertido = 0;
-            foreach ($detallesUsd as $detalle) {
-                $tc = (float) ($detalle->sobre->tipo_cambio_venta ?? $tcVenta);
-                $montoDadoUsdConvertido += $tc > 0 ? round((float) $detalle->monto * $tc, 2) : (float) $detalle->monto;
-            }
-
-            $montoDadoTotal = $montoDadoCrc + $montoDadoUsdConvertido;
-
-            // Si hay dinero dado pero no hay promesas en esta categoría, crear el registro
-            if ($montoDadoTotal > 0 && ! isset($totalesPorCategoria[$cat])) {
-                $totalesPorCategoria[$cat] = [
-                    'categoria' => ucfirst($cat),
-                    'total_prometido' => 0,
-                    'total_dado' => 0,
-                    'faltante' => 0,
-                    'profit' => 0,
-                ];
-            }
-
-            // Actualizar el total dado (en CRC)
-            if (isset($totalesPorCategoria[$cat])) {
-                $totalesPorCategoria[$cat]['total_dado'] = $montoDadoTotal;
-            }
-        }
-
-        // PASO 3: Calcular faltante y profit POR CATEGORÍA
-        foreach ($totalesPorCategoria as $cat => $datos) {
-            $catKey = strtolower($cat);
-            if (in_array($catKey, $categoriasExcluidasSlugs)) {
-                unset($totalesPorCategoria[$cat]);
-
+        foreach ($datos['nombres'] as $cat => $nombre) {
+            if ($categoria && $cat !== $categoria) {
                 continue;
             }
-            $saldo = $datos['total_dado'] - $datos['total_prometido'];
-
-            if ($saldo < 0) {
-                // Faltante (debe)
-                $totalesPorCategoria[$cat]['faltante'] = abs($saldo);
-                $totalesPorCategoria[$cat]['profit'] = 0;
-            } else {
-                // Profit (dio de más o igual)
-                $totalesPorCategoria[$cat]['profit'] = $saldo;
-                $totalesPorCategoria[$cat]['faltante'] = 0;
+            $prometido = Dinero::colones($datos['prometido'][$mes][$cat] ?? 0);
+            $dado = Dinero::colones($datos['dado'][$mes][$cat] ?? 0);
+            if ($prometido <= 0 && $dado <= 0) {
+                continue;
             }
+            $saldo = round($dado - $prometido, 2);
+            $totalesPorCategoria[] = [
+                'categoria' => $nombre,
+                'total_prometido' => $prometido,
+                'total_dado' => $dado,
+                'faltante' => $saldo < 0 ? abs($saldo) : 0,
+                'profit' => $saldo > 0 ? $saldo : 0,
+            ];
+        }
 
-            $grandTotal['prometido'] += $datos['total_prometido'];
-            $grandTotal['dado'] += $datos['total_dado'];
-            $grandTotal['faltante'] += $totalesPorCategoria[$cat]['faltante'];
-            $grandTotal['profit'] += $totalesPorCategoria[$cat]['profit'];
+        foreach ($totalesPorCategoria as $fila) {
+            $grandTotal['prometido'] += $fila['total_prometido'];
+            $grandTotal['dado'] += $fila['total_dado'];
+            $grandTotal['faltante'] += $fila['faltante'];
+            $grandTotal['profit'] += $fila['profit'];
         }
 
         return [
-            'categorias' => array_values($totalesPorCategoria),
+            'categorias' => $totalesPorCategoria,
             'grand_total' => $grandTotal,
         ];
     }
 
-    /**
-     * Calcula el monto prometido en un mes específico según la frecuencia.
-     * Retorna en CRC (convierte si la promesa es en USD).
-     */
-    private function calcularMontoPrometidoMes($promesa, $año, $mes): float
+    /** Prometido y dado (en céntimos) por mes y categoría de compromiso de todo un año, una sola vez. */
+    private function datosDelAnio(int $año): array
     {
-        $fechaMes = Carbon::create($año, $mes, 1);
-        $montoBase = (float) $promesa->monto;
-
-        switch ($promesa->frecuencia) {
-            case 'semanal':
-                $domingos = 0;
-                $fecha = $fechaMes->copy()->startOfMonth();
-                $finMes = $fechaMes->copy()->endOfMonth();
-
-                while ($fecha->lte($finMes)) {
-                    if ($fecha->dayOfWeek === Carbon::SUNDAY) {
-                        $domingos++;
-                    }
-                    $fecha->addDay();
-                }
-
-                $montoTotal = $montoBase * $domingos;
-                break;
-
-            case 'quincenal':
-                $montoTotal = $montoBase * 2;
-                break;
-
-            case 'mensual':
-            default:
-                $montoTotal = $montoBase;
+        if (isset($this->porAnio[$año])) {
+            return $this->porAnio[$año];
         }
 
-        // Si la promesa es en USD, convertir a CRC
-        if (($promesa->moneda ?? 'CRC') === 'USD') {
-            $tipoCambio = TipoCambio::hoy();
-            if ($tipoCambio) {
-                $montoTotal = round($montoTotal * (float) $tipoCambio->venta, 2);
+        $nombres = tenant_categories(['excluir_de_promesas' => false])->pluck('nombre', 'slug')->all();
+        $prometido = [];
+        $dado = [];
+        $hoy = Carbon::today();
+
+        if ($año <= $hoy->year) {
+            $personas = Persona::where('activo', true)->whereHas('promesas')->get(['id', 'nombre', 'activo']);
+            $resultado = app(MotorReportes::class)->calcular(PeriodoReporte::deMeses($año, 1, 12), $personas);
+            foreach ($resultado->cuentas() as $cuenta) {
+                foreach ($resultado->periodo->meses() as $mesPeriodo) {
+                    foreach (array_keys($cuenta->promesas()) as $cat) {
+                        $prometido[$mesPeriodo->mes][$cat] = ($prometido[$mesPeriodo->mes][$cat] ?? 0) + $cuenta->esperadoDelMesCentimos($mesPeriodo->clave, $cat);
+                    }
+                }
+            }
+
+            $conversor = $this->conversor ??= app(ConversorUsd::class);
+            $hasta = $año === $hoy->year ? $hoy->toDateString() : $año.'-12-31';
+            $filas = DB::table('sobre_detalles as d')
+                ->join('sobres as s', 's.id', '=', 'd.sobre_id')
+                ->join('cultos as c', 'c.id', '=', 's.culto_id')
+                ->where('c.tenant_id', tenant()?->id)
+                ->whereBetween('c.fecha', [$año.'-01-01', $hasta])
+                ->whereIn('d.categoria', array_keys($nombres))
+                ->get(['c.fecha', 'd.categoria', 'd.monto', 's.moneda', 's.tipo_cambio_venta']);
+            foreach ($filas as $fila) {
+                $mes = (int) substr((string) $fila->fecha, 5, 2);
+                $dado[$mes][$fila->categoria] = ($dado[$mes][$fila->categoria] ?? 0)
+                    + $conversor->centimosSobre($fila->monto, $fila->moneda, $fila->tipo_cambio_venta, substr((string) $fila->fecha, 0, 10));
             }
         }
 
-        return $montoTotal;
+        return $this->porAnio[$año] = ['prometido' => $prometido, 'dado' => $dado, 'nombres' => $nombres];
+    }
+
+    /**
+     * Monto prometido de una promesa en un mes según la frecuencia, en colones (los dólares, al tipo
+     * de cambio del último día del mes, regla única del ConversorUsd). Lo usa el reporte por clase.
+     */
+    private function calcularMontoPrometidoMes($promesa, $año, $mes): float
+    {
+        $domingos = PeriodoReporte::domingosDelMes(\Carbon\CarbonImmutable::create((int) $año, (int) $mes, 1));
+        $montoBase = (float) $promesa->monto;
+        $montoTotal = match ($promesa->frecuencia) {
+            'semanal' => $montoBase * $domingos,
+            'quincenal' => $montoBase * 2,
+            default => $montoBase,
+        };
+
+        $this->conversor ??= app(ConversorUsd::class);
+
+        return $this->conversor->promesaAColones($montoTotal, $promesa->moneda ?? 'CRC', (int) $año, (int) $mes);
     }
 
     /**

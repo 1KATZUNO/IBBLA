@@ -134,7 +134,7 @@
             <p class="text-3xl font-bold">₡{{ number_format($totales['grand_total']['faltante'], 0, ',', '.') }}</p>
         </div>
         <div class="bg-gradient-to-br from-purple-500 to-purple-700 rounded-xl shadow-lg p-6 text-white">
-            <p class="text-sm text-purple-100 font-medium mb-1">Total Profit</p>
+            <p class="text-sm text-purple-100 font-medium mb-1">Total excedente</p>
             <p class="text-3xl font-bold">₡{{ number_format($totales['grand_total']['profit'], 0, ',', '.') }}</p>
         </div>
     </div>
@@ -152,7 +152,7 @@
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total Prometido</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total Dado</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Faltante</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Profit</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Excedente</th>
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">

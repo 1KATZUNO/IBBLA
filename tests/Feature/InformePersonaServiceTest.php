@@ -77,7 +77,11 @@ class InformePersonaServiceTest extends TestCase
         $datos = $this->servicio()->datos($this->cargarAna());
 
         $this->assertSame(2026, $datos['anio']);
-        $this->assertSame('Enero - Octubre 2026', $datos['periodo']);
+        // De enero a hoy (15/10): el informe tiene corte hoy.
+        $this->assertSame('Corte al 15/10/2026', $datos['periodo']);
+        $this->assertSame('15/10/2026', $datos['corte']);
+        $this->assertSame('enero a septiembre', $datos['meses_cobrados']);
+        $this->assertSame('Octubre', $datos['mes_en_curso']);
         $this->assertCount(10, $datos['meses']);
 
         // Enero: diezmo y misiones. Febrero: misiones (₡10.000 + $20 x 510) y construcción.
@@ -111,16 +115,17 @@ class InformePersonaServiceTest extends TestCase
         $datos = $this->servicio()->datos($this->cargarAna());
         $porCategoria = collect($datos['compromisos'])->keyBy('categoria');
 
-        // Mensual: 10 meses x 10.000. Semanal: 43 domingos x 2.000. Quincenal en dólares: 2 x $5 x ₡500 x 10 meses.
-        $this->assertEquals(100000, $porCategoria['misiones']['esperado']);
+        // Se cobran enero a septiembre (octubre está en curso). Mensual: 9 x 10.000. Semanal: 39
+        // domingos x 2.000. Quincenal en dólares: 2 x $5 x ₡500 x 9 meses.
+        $this->assertEquals(90000, $porCategoria['misiones']['esperado']);
         $this->assertEquals(30200, $porCategoria['misiones']['dado']);
-        $this->assertEquals(-69800, $porCategoria['misiones']['diferencia']);
+        $this->assertEquals(-59800, $porCategoria['misiones']['diferencia']);
         $this->assertFalse($porCategoria['misiones']['al_dia']);
 
-        $this->assertEquals(86000, $porCategoria['construccion']['esperado']);
+        $this->assertEquals(78000, $porCategoria['construccion']['esperado']);
         $this->assertEquals(2000, $porCategoria['construccion']['dado']);
 
-        $this->assertEquals(50000, $porCategoria['seminario']['esperado']);
+        $this->assertEquals(45000, $porCategoria['seminario']['esperado']);
         $this->assertEquals(0, $porCategoria['seminario']['dado']);
 
         $this->assertSame('₡10,000.00 mensual', $porCategoria['misiones']['detalle']);
@@ -128,10 +133,11 @@ class InformePersonaServiceTest extends TestCase
         $this->assertSame('$5.00 cada quincena', $porCategoria['seminario']['detalle']);
 
         $this->assertTrue($datos['tiene_compromisos']);
-        $this->assertEquals(236000, $datos['total_esperado']);
+        $this->assertEquals(213000, $datos['total_esperado']);
         // La diferencia compara solo lo dado en categorías prometidas: el diezmo no la infla.
         $this->assertEquals(32200, $datos['dado_en_compromisos']);
-        $this->assertEquals(-203800, $datos['diferencia']);
+        $this->assertEquals(-180800, $datos['diferencia']);
+        $this->assertSame('PENDIENTE', $datos['estado']);
     }
 
     public function test_un_compromiso_cumplido_aparece_al_dia(): void
@@ -142,8 +148,10 @@ class InformePersonaServiceTest extends TestCase
 
         $datos = $this->servicio()->datos($ana);
 
+        // Enero a septiembre: 9 x 1.000 = 9.000; dio 10.000.
         $this->assertTrue($datos['compromisos'][0]['al_dia']);
-        $this->assertEquals(0, $datos['diferencia']);
+        $this->assertEquals(1000, $datos['diferencia']);
+        $this->assertSame('AL DÍA', $datos['estado']);
     }
 
     public function test_sin_promesas_no_hay_compromisos_pero_si_el_total_contribuido(): void

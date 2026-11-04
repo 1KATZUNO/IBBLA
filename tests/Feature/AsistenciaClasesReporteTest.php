@@ -391,13 +391,14 @@ class AsistenciaClasesReporteTest extends TestCase
             ->assertSee('La clase elegida no existe.');
     }
 
-    public function test_solo_entran_admin_y_asistente(): void
+    public function test_entran_admin_tesorero_y_asistente_pero_no_el_miembro(): void
     {
         $url = route('ingresos-asistencia.asistencia-clases', $this->parametros());
 
         $this->get($url)->assertRedirect(route('login'));
 
-        $this->actingAs($this->crearUsuarioConRol('tesorero'))->get($url)->assertForbidden();
+        // Regla 2.5 de 04-DECISIONES.md: los reportes de asistencia tambien son del tesorero.
+        $this->actingAs($this->crearUsuarioConRol('tesorero'))->get($url)->assertOk();
         $this->actingAs($this->crearUsuarioConRol('miembro'))->get($url)->assertForbidden();
         $this->actingAs($this->crearUsuarioConRol('asistente'))->get($url)->assertOk();
         $this->actingAs($this->admin)->get($url)->assertOk();

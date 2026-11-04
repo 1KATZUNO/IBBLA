@@ -14,6 +14,21 @@
             : 'Los compromisos se calculan por mes: se incluyen los meses completos ('.$rangoMeses->etiqueta().').',
     ])
 
+    {{-- Estos números salen de la tabla compromisos (en colones), que se recalcula al cerrar cada culto.
+         El admin puede rehacerla del año en curso; el cumplimiento por persona al corte está en Reportes. --}}
+    <div class="flex flex-wrap items-center justify-between gap-3 text-sm text-gray-600">
+        <p>Montos en colones por mes de culto. Para quién está al día al corte, ver
+            <a href="{{ route('reportes.cumplimiento') }}" class="text-blue-700 underline">Cumplimiento de promesas</a>.</p>
+        @if(auth()->user()?->isAdmin())
+            <form method="POST" action="{{ route('compromisos.recalcular') }}">
+                @csrf
+                <button type="submit" class="min-h-[44px] px-4 py-2 border border-gray-300 rounded-md bg-white hover:bg-gray-50 font-medium text-gray-700">
+                    Recalcular compromisos del año
+                </button>
+            </form>
+        @endif
+    </div>
+
     {{-- KPIs --}}
     <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div class="bg-purple-50 border-l-4 border-purple-500 rounded-lg p-4">

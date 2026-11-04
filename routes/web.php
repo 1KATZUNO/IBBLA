@@ -164,12 +164,19 @@ Route::middleware(['auth', 'role:admin,tesorero'])->group(function () {
     Route::get('/ingresos-asistencia/promesas-por-clase', [App\Http\Controllers\PromesasReporteController::class, 'porClase'])->name('ingresos-asistencia.promesas-por-clase');
 });
 
-// Rutas para Admin y Asistente - Asistencia
-Route::middleware(['auth', 'role:admin,asistente', 'audit'])->group(function () {
-    // Asistencia
-    Route::post('asistencia/{asistencium}/cerrar', [AsistenciaController::class, 'cerrarAsistencia'])->name('asistencia.cerrar');
-    Route::resource('asistencia', AsistenciaController::class);
+// Descargas financieras (regla 2.5 de 04-DECISIONES.md, QA-010): admin y tesorero. Reporte General,
+// contribuciones y estado de cuenta de cualquier persona; Excel de ingresos y de promesas.
+Route::middleware(['auth', 'role:admin,tesorero', 'audit'])->group(function () {
+    Route::get('/ingresos-asistencia/excel-ingresos', [IngresosAsistenciaController::class, 'excelIngresos'])->name('ingresos-asistencia.excel-ingresos');
+    Route::get('/ingresos-asistencia/excel-promesas', [IngresosAsistenciaController::class, 'excelPromesas'])->name('ingresos-asistencia.excel-promesas');
+    Route::get('personas/reporte-pdf', [PersonaController::class, 'reportePdf'])->name('personas.reporte-pdf');
+    Route::get('personas/reporte-general', [PersonaController::class, 'reporteGeneral'])->name('personas.reporte-general');
+    // Estado de cuenta de la persona en PDF (el mismo informe que se manda por WhatsApp), ?accion=ver|descargar
+    Route::get('personas/{persona}/informe', [App\Http\Controllers\InformePersonaController::class, 'show'])->name('personas.informe');
+});
 
+// Reportes de asistencia (regla 2.5): admin, tesorero y asistente. Registrar asistencia sigue en el grupo de abajo.
+Route::middleware(['auth', 'role:admin,tesorero,asistente', 'audit'])->group(function () {
     // Reportes de asistencia
     Route::get('/ingresos-asistencia/asistencia', [IngresosAsistenciaController::class, 'asistencia'])->name('ingresos-asistencia.asistencia');
     Route::get('/ingresos-asistencia/pdf-asistencia', [IngresosAsistenciaController::class, 'pdfAsistencia'])->name('ingresos-asistencia.pdf-asistencia');
@@ -185,8 +192,27 @@ Route::middleware(['auth', 'role:admin,asistente', 'audit'])->group(function () 
     // Excel exports (Fase 2): paralelos a los PDFs
     Route::get('/ingresos-asistencia/excel-asistencia', [IngresosAsistenciaController::class, 'excelAsistencia'])->name('ingresos-asistencia.excel-asistencia');
     Route::get('/ingresos-asistencia/excel-asistencia-mes', [IngresosAsistenciaController::class, 'excelAsistenciaMes'])->name('ingresos-asistencia.excel-asistencia-mes');
-    Route::get('/ingresos-asistencia/excel-ingresos', [IngresosAsistenciaController::class, 'excelIngresos'])->name('ingresos-asistencia.excel-ingresos');
-    Route::get('/ingresos-asistencia/excel-promesas', [IngresosAsistenciaController::class, 'excelPromesas'])->name('ingresos-asistencia.excel-promesas');
+});
+
+// Reportes de dinero por persona con el motor unico (equipo 3a): admin y tesorero.
+Route::middleware(['auth', 'role:admin,tesorero'])->prefix('reportes')->name('reportes.')->group(function () {
+    // Cumplimiento de promesas con corte a la fecha (HU-R13): pantalla, PDF (?accion=ver|descargar) y Excel
+    Route::get('/cumplimiento', [App\Http\Controllers\Reportes\CumplimientoController::class, 'index'])->name('cumplimiento');
+    Route::get('/cumplimiento/pdf', [App\Http\Controllers\Reportes\CumplimientoController::class, 'pdf'])->name('cumplimiento.pdf');
+    Route::get('/cumplimiento/excel', [App\Http\Controllers\Reportes\CumplimientoController::class, 'excel'])->name('cumplimiento.excel');
+
+    // Estados de cuenta de un grupo (HU-R5): pantalla, PDF con portada e indice, ZIP con un PDF por persona y Excel
+    Route::get('/estados-de-cuenta', [App\Http\Controllers\Reportes\EstadosCuentaController::class, 'index'])->name('estados-cuenta');
+    Route::get('/estados-de-cuenta/pdf', [App\Http\Controllers\Reportes\EstadosCuentaController::class, 'pdf'])->name('estados-cuenta.pdf');
+    Route::get('/estados-de-cuenta/zip', [App\Http\Controllers\Reportes\EstadosCuentaController::class, 'zip'])->name('estados-cuenta.zip');
+    Route::get('/estados-de-cuenta/excel', [App\Http\Controllers\Reportes\EstadosCuentaController::class, 'excel'])->name('estados-cuenta.excel');
+});
+
+// Rutas para Admin y Asistente - Asistencia
+Route::middleware(['auth', 'role:admin,asistente', 'audit'])->group(function () {
+    // Asistencia
+    Route::post('asistencia/{asistencium}/cerrar', [AsistenciaController::class, 'cerrarAsistencia'])->name('asistencia.cerrar');
+    Route::resource('asistencia', AsistenciaController::class);
 });
 
 // Solo admin
@@ -218,15 +244,11 @@ Route::middleware(['auth', 'role:admin', 'audit'])->group(function () {
     // Personas y Promesas
     Route::post('personas/{persona}/reiniciar-compromisos', [PersonaController::class, 'reiniciarCompromisos'])->name('personas.reiniciar-compromisos');
     Route::post('personas/{persona}/limpiar-todo', [PersonaController::class, 'limpiarTodo'])->name('personas.limpiar-todo');
-    Route::get('personas/reporte-pdf', [PersonaController::class, 'reportePdf'])->name('personas.reporte-pdf');
-    Route::get('personas/reporte-general', [PersonaController::class, 'reporteGeneral'])->name('personas.reporte-general');
     Route::resource('personas', PersonaController::class);
     Route::resource('promesas', PromesaController::class);
 
     // Compromisos
     Route::get('personas/{persona}/compromisos', [App\Http\Controllers\CompromisoController::class, 'show'])->name('compromisos.show');
-    // Estado de cuenta de la persona en PDF (el mismo informe que se manda por WhatsApp), ?accion=ver|descargar
-    Route::get('personas/{persona}/informe', [App\Http\Controllers\InformePersonaController::class, 'show'])->name('personas.informe');
     Route::post('compromisos/recalcular', [App\Http\Controllers\CompromisoController::class, 'recalcular'])->name('compromisos.recalcular');
 
     // Limpieza de personas inactivas (temporal)
