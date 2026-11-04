@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\Culto;
 use App\Models\Tenant;
 use App\Services\CalculoTotalesCultoService;
+use App\Services\Reportes\SincronizadorCompromisos;
 use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
@@ -18,14 +19,15 @@ use Illuminate\Support\Facades\DB;
  * "Reporte General" dado vs esperado de Gestion de Personas, que daba 504).
  * Crea en el primer tenant (el de AdminUserSeeder):
  *  - 150 personas (140 activas, 10 inactivas),
- *  - ~70 cultos del anio actual (todos los domingos + un miercoles de cada tres)
- *    y 4 domingos de diciembre del anio anterior (para probar el filtro por anio),
+ *  - los cultos del anio actual HASTA HOY (todos los domingos + un miercoles de
+ *    cada tres; nada con fecha futura) y 4 domingos de diciembre del anio
+ *    anterior (para probar el filtro por anio),
  *  - ~2500 sobres del anio actual con 1-3 detalles (5% anonimos, 5% en USD,
  *    algunos montos con centimos),
  *  - promesas para ~60% de las personas (incluye un par de categorias repetidas
  *    y alguna promesa de diezmo, como pasa en datos reales),
- *  - compromisos mensuales sincronizados de enero al mes actual con la misma
- *    formula que CompromisoController (prometido por frecuencia, dado del mes),
+ *  - compromisos de los meses con cultos, con SincronizadorCompromisos (lo mismo
+ *    que corre al cerrar un culto o con compromisos:sincronizar),
  *  - totales_culto recalculados con CalculoTotalesCultoService.
  *
  * Es determinista (semilla fija) y re-ejecutable: antes de sembrar borra lo que
@@ -69,10 +71,12 @@ class VolumenDevSeeder extends Seeder
             $anio = (int) now()->year;
             $personas = $this->crearPersonas($tenant->id);
             $cultos = $this->crearCultos($tenant->id, $anio);
-            $sobres = $this->crearSobres($cultos, $personas);
-            $promesas = $this->crearPromesas($personas);
-            $this->crearCompromisos($promesas, $sobres, $anio, (int) now()->month);
+            $this->crearSobres($cultos, $personas);
+            $this->crearPromesas($personas);
         });
+
+        // Compromisos con el mismo sincronizador que usa la app (comando compromisos:sincronizar).
+        app(SincronizadorCompromisos::class)->sincronizar($tenant, (int) now()->year);
 
         // Totales por culto (dashboards e ingresos) con el mismo servicio que usa la app.
         $servicio = app(CalculoTotalesCultoService::class);
@@ -155,14 +159,15 @@ class VolumenDevSeeder extends Seeder
         while ($d->dayOfWeek !== Carbon::SUNDAY) {
             $d->addDay();
         }
-        for (; $d->year === $anio; $d->addWeek()) {
+        // Solo hasta hoy: nada de cultos ni sobres con fecha futura (QA-033).
+        for (; $d->year === $anio && $d->lte($hoy); $d->addWeek()) {
             $fechas[] = [$d->copy(), true, false];
         }
         $w = Carbon::create($anio, 1, 1);
         while ($w->dayOfWeek !== Carbon::WEDNESDAY) {
             $w->addDay();
         }
-        for ($i = 0; $w->year === $anio; $w->addWeek(), $i++) {
+        for ($i = 0; $w->year === $anio && $w->lte($hoy); $w->addWeek(), $i++) {
             if ($i % 3 === 0) {
                 $fechas[] = [$w->copy(), false, false];
             }
@@ -392,76 +397,5 @@ class VolumenDevSeeder extends Seeder
         DB::table('promesas')->insert($filas);
 
         return $vigentes;
-    }
-
-    /**
-     * Misma formula que CompromisoController::calcularCompromisos (cada mes independiente, saldo en CRC).
-     */
-    private function crearCompromisos(array $promesas, array $detalles, int $anio, int $mesActual): void
-    {
-        $dado = [];
-        $dadoCrc = [];
-        foreach ($detalles as $d) {
-            if ($d['anio'] !== $anio) {
-                continue;
-            }
-            $k = $d['persona_id'].'|'.$d['categoria'].'|'.$d['mes'];
-            $dado[$k] = ($dado[$k] ?? 0) + $d['monto'];
-            $dadoCrc[$k] = ($dadoCrc[$k] ?? 0) + ($d['usd'] ? round($d['monto'] * self::TIPO_CAMBIO, 2) : $d['monto']);
-        }
-
-        $ahora = now();
-        $filas = [];
-        foreach ($promesas as $personaId => $porCategoria) {
-            foreach ($porCategoria as $categoria => $promesa) {
-                for ($mes = 1; $mes <= $mesActual; $mes++) {
-                    $prometido = $this->montoPrometido($promesa, $anio, $mes);
-                    $prometidoCrc = $promesa['moneda'] === 'USD' ? round($prometido * self::TIPO_CAMBIO, 2) : $prometido;
-                    $k = $personaId.'|'.$categoria.'|'.$mes;
-                    $filas[] = [
-                        'persona_id' => $personaId,
-                        'categoria' => $categoria,
-                        'año' => $anio,
-                        'mes' => $mes,
-                        'monto_prometido' => $prometido,
-                        'monto_dado' => $dado[$k] ?? 0,
-                        'saldo_anterior' => 0,
-                        'saldo_actual' => round(($dadoCrc[$k] ?? 0) - $prometidoCrc, 2),
-                        'moneda_promesa' => $promesa['moneda'],
-                        'monto_prometido_crc' => $prometidoCrc,
-                        'monto_dado_crc' => $dadoCrc[$k] ?? 0,
-                        'tipo_cambio_usado' => self::TIPO_CAMBIO,
-                        'created_at' => $ahora,
-                        'updated_at' => $ahora,
-                    ];
-                }
-            }
-        }
-        foreach (array_chunk($filas, 1000) as $lote) {
-            DB::table('compromisos')->insert($lote);
-        }
-    }
-
-    private function montoPrometido(array $promesa, int $anio, int $mes): float
-    {
-        return match ($promesa['frecuencia']) {
-            'semanal' => $promesa['monto'] * $this->domingosDelMes($anio, $mes),
-            'quincenal' => $promesa['monto'] * 2,
-            default => $promesa['monto'],
-        };
-    }
-
-    private function domingosDelMes(int $anio, int $mes): int
-    {
-        $domingos = 0;
-        $fecha = Carbon::create($anio, $mes, 1);
-        $fin = $fecha->copy()->endOfMonth();
-        for (; $fecha->lte($fin); $fecha->addDay()) {
-            if ($fecha->dayOfWeek === Carbon::SUNDAY) {
-                $domingos++;
-            }
-        }
-
-        return $domingos;
     }
 }
