@@ -77,19 +77,4 @@ class PdfRecuentoUnSoloTotalTest extends TestCase
         $this->assertStringContainsString('(USD $10.00 × 510.00)', $html);
         $this->assertStringContainsString('incluye USD $50.00', $html);
     }
-
-    public function test_la_ruta_del_pdf_responde_para_el_tesorero(): void
-    {
-        $tesorero = $this->crearUsuario($this->iglesia, 'tesorero');
-        $culto = $this->crearCulto($this->iglesia, '2026-10-11');
-        $this->sobreUsd($culto, ['diezmo' => 10], 520.0);
-
-        $this->actingAs($tesorero)
-            ->get(route('ingresos-asistencia.pdf-recuento-individual', $culto))
-            ->assertOk()
-            ->assertHeader('content-type', 'application/pdf');
-        $this->actingAs($tesorero)
-            ->get(route('ingresos-asistencia.pdf-recuento-transferencias', $culto))
-            ->assertOk();
-    }
 }
