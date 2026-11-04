@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AuditLog;
 use App\Models\Persona;
 use App\Models\Promesa;
 use App\Models\Compromiso;
@@ -382,20 +383,39 @@ class PersonaController extends Controller
             ->with('success', 'Persona y sus promesas eliminadas correctamente. Los sobres quedan registrados.');
     }
 
+    /**
+     * Pantalla de alta rapida (nombre, telefono y correo opcionales) para quien registra sobres: el
+     * tesorero agrega personas sin ver la lista ni las fichas (decision del cliente 13/10).
+     */
+    public function altaRapida()
+    {
+        return view('personas.alta-rapida');
+    }
+
     public function quickStore(Request $request)
     {
         $validated = $request->validate([
-            'nombre' => 'required|string|max:255'
+            'nombre' => 'required|string|max:255',
+            'telefono' => 'nullable|string|max:30',
+            'correo' => 'nullable|email|max:255',
         ]);
 
         $persona = Persona::create([
-            'nombre' => $validated['nombre'],
-            'activo' => true
+            'nombre' => trim($validated['nombre']),
+            'telefono' => $validated['telefono'] ?? null,
+            'correo' => $validated['correo'] ?? null,
+            'activo' => true,
         ]);
+
+        AuditLog::registrar('Alta rápida de persona', ['persona_id' => $persona->id, 'nombre' => $persona->nombre]);
+
+        if (! $request->expectsJson()) {
+            return back()->with('success', "Persona agregada: {$persona->nombre}.");
+        }
 
         return response()->json([
             'success' => true,
-            'persona' => $persona
+            'persona' => $persona->only(['id', 'nombre', 'pin', 'telefono']),
         ]);
     }
 

@@ -40,6 +40,30 @@ class AuditLog extends Model
         'details',
     ];
 
+    /**
+     * Deja una accion de negocio en la auditoria con el usuario y la peticion actuales
+     * (quien, desde donde, que y con que datos). Para las acciones que la auditoria automatica
+     * por ruta no describe bien: borrar un culto, corregir firmas, asignar persona a un sobre...
+     */
+    public static function registrar(string $accion, array $detalles = [], ?string $ruta = null): self
+    {
+        $request = request();
+        $user = $request->user();
+
+        return self::create([
+            'tenant_id' => $user?->tenant_id,
+            'user_id' => $user?->id,
+            'user_name' => $user?->name,
+            'user_email' => $user?->email,
+            'ip_address' => $request->ip(),
+            'user_agent' => substr((string) $request->userAgent(), 0, 255),
+            'method' => $request->method(),
+            'route' => $ruta ?? $request->route()?->getName(),
+            'action' => $accion,
+            'details' => json_encode($detalles, JSON_UNESCAPED_UNICODE),
+        ]);
+    }
+
     /** Solo los eventos de acceso: ingresos, salidas e intentos fallidos. */
     public function scopeAccesos(Builder $query): Builder
     {

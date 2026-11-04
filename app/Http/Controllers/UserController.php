@@ -47,8 +47,8 @@ class UserController extends Controller
             'email' => 'required|string|email|max:255|unique:users',
             'telefono' => $this->reglaTelefono(),
             'password' => 'required|string|min:8|confirmed',
-            'rol' => 'required|in:admin,tesorero,asistente,servidor,miembro,invitado',
-            'tenant_role_id' => 'nullable|exists:tenant_roles,id',
+            'rol' => 'required|in:admin,tesorero,asistente,servidor,miembro',
+            'tenant_role_id' => $this->reglaRolDeLaIglesia(),
         ]);
 
         $validated['password'] = Hash::make($validated['password']);
@@ -67,18 +67,11 @@ class UserController extends Controller
     }
 
     /**
-     * Display the specified resource.
-     */
-    public function show(User $usuario)
-    {
-        return view('admin.usuarios.show', compact('usuario'));
-    }
-
-    /**
      * Show the form for editing the specified resource.
      */
     public function edit(User $usuario)
     {
+        $this->soloDeEstaIglesia($usuario);
         $tenant = tenant();
         $roles = $tenant ? $tenant->roles()->orderBy('orden')->get() : collect();
 
@@ -90,13 +83,15 @@ class UserController extends Controller
      */
     public function update(Request $request, User $usuario)
     {
+        $this->soloDeEstaIglesia($usuario);
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($usuario->id)],
             'telefono' => $this->reglaTelefono(),
             'password' => 'nullable|string|min:8|confirmed',
-            'rol' => 'required|in:admin,tesorero,asistente,servidor,miembro,invitado',
-            'tenant_role_id' => 'nullable|exists:tenant_roles,id',
+            'rol' => 'required|in:admin,tesorero,asistente,servidor,miembro',
+            'tenant_role_id' => $this->reglaRolDeLaIglesia(),
         ]);
 
         if ($request->filled('password')) {
@@ -116,6 +111,28 @@ class UserController extends Controller
 
         return redirect()->route('usuarios.index')
             ->with('success', 'Usuario actualizado exitosamente.');
+    }
+
+    /**
+     * QA-012: el administrador de una iglesia solo ve y cambia usuarios de SU iglesia, y nunca a un
+     * Super Admin (ni para editarlo ni para borrarlo). Para cualquier otro usuario la ruta no existe.
+     */
+    private function soloDeEstaIglesia(User $usuario): void
+    {
+        $actual = auth()->user();
+        $deOtraIglesia = (int) $usuario->tenant_id !== (int) ($actual->tenant_id ?? tenant()?->id);
+
+        if ($usuario->isSuperAdmin() || ($deOtraIglesia && ! $actual->isSuperAdmin())) {
+            abort(404);
+        }
+    }
+
+    /** El rol dinamico elegido tiene que ser de esta iglesia. */
+    private function reglaRolDeLaIglesia(): array
+    {
+        $tenantId = auth()->user()->tenant_id ?? tenant()?->id;
+
+        return ['nullable', Rule::exists('tenant_roles', 'id')->where('tenant_id', $tenantId)];
     }
 
     /**
@@ -139,6 +156,8 @@ class UserController extends Controller
      */
     public function destroy(User $usuario)
     {
+        $this->soloDeEstaIglesia($usuario);
+
         // No permitir eliminar el propio usuario
         if ($usuario->id === auth()->id()) {
             return redirect()->route('usuarios.index')

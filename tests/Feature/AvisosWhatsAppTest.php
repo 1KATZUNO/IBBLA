@@ -63,6 +63,7 @@ class AvisosWhatsAppTest extends TestCase
         $this->actingAs($this->admin)->post(route('recuento.store'), [
             'culto_id' => $culto->id,
             'persona_id' => $persona->id,
+            'anonimo' => '1',
             'metodo_pago' => 'efectivo',
             'moneda' => 'CRC',
             'detalles' => [['categoria' => 'diezmo', 'monto' => 1000]],

@@ -480,52 +480,47 @@ class IngresosAsistenciaController extends Controller
         return $pdf->download('ingresos_transferencias_'.$tipoReporte.'_'.now()->format('Y-m-d').'.pdf');
     }
 
+    /**
+     * PDF de recuento de un culto (el que firman los tesoreros). Usa los mismos numeros que la
+     * pantalla del culto (App\Support\ResumenCulto): todo en colones convertidos, USD aparte entre
+     * parentesis y un solo total en cabecera, tabla y resumen (QA-026).
+     */
     public function pdfRecuentoIndividual(Culto $culto)
     {
-        $culto->load(['sobres.persona', 'sobres.detalles', 'ofrendasSueltas', 'totales']);
-        $categories = tenant_categories();
-
-        // Build totalesPorCategoria dynamically
-        $totalesPorCategoria = [];
-        foreach ($categories as $cat) {
-            $totalesPorCategoria[$cat->slug] = 0;
-        }
-        foreach ($culto->sobres as $sobre) {
-            foreach ($sobre->detalles as $detalle) {
-                $slug = strtolower($detalle->categoria);
-                if (isset($totalesPorCategoria[$slug])) {
-                    $totalesPorCategoria[$slug] += $detalle->monto;
-                }
-            }
-        }
-
-        $pdf = Pdf::loadView('pdfs.recuento-individual', compact('culto', 'totalesPorCategoria', 'categories'));
-
-        return $pdf->download('recuento_'.$culto->fecha->format('Y-m-d').'_'.$culto->tipo_culto.'.pdf');
+        return $this->pdfRecuento($culto, false)
+            ->download('recuento_'.$culto->fecha->format('Y-m-d').'_'.$culto->tipo_culto.'.pdf');
     }
 
     public function pdfRecuentoTransferencias(Culto $culto)
     {
-        $culto->load(['sobres' => function ($q) {
-            $q->where('metodo_pago', 'transferencia');
-        }, 'sobres.persona', 'sobres.detalles', 'totales']);
+        return $this->pdfRecuento($culto, true)
+            ->download('recuento_transferencias_'.$culto->fecha->format('Y-m-d').'_'.$culto->tipo_culto.'.pdf');
+    }
+
+    private function pdfRecuento(Culto $culto, bool $transferenciasOnly)
+    {
+        $culto->load(['sobres.persona', 'sobres.detalles', 'ofrendasSueltas', 'egresos', 'totales', 'cerradoPor:id,name']);
         $categories = tenant_categories();
+        $categoriasSobre = $categories->where('es_ofrenda_suelta', false)->values();
 
-        $totalesPorCategoria = [];
-        foreach ($categories as $cat) {
-            $totalesPorCategoria[$cat->slug] = 0;
-        }
-        foreach ($culto->sobres as $sobre) {
-            foreach ($sobre->detalles as $detalle) {
-                $slug = strtolower($detalle->categoria);
-                if (isset($totalesPorCategoria[$slug])) {
-                    $totalesPorCategoria[$slug] += $detalle->monto;
-                }
-            }
+        $sobres = $culto->sobres->sortBy('numero_sobre')->values();
+        if ($transferenciasOnly) {
+            $sobres = $sobres->where('metodo_pago', 'transferencia')->values();
         }
 
-        $pdf = Pdf::loadView('pdfs.recuento-individual', ['culto' => $culto, 'totalesPorCategoria' => $totalesPorCategoria, 'transferenciasOnly' => true, 'categories' => $categories]);
+        $resumen = \App\Support\ResumenCulto::calcular(
+            $sobres,
+            $transferenciasOnly ? collect() : $culto->ofrendasSueltas,
+            $transferenciasOnly ? collect() : $culto->egresos,
+            $categoriasSobre,
+            \App\Support\ResumenCulto::tipoCambioDelCulto($culto),
+        );
 
-        return $pdf->download('recuento_transferencias_'.$culto->fecha->format('Y-m-d').'_'.$culto->tipo_culto.'.pdf');
+        return Pdf::loadView('pdfs.recuento-individual', [
+            'culto' => $culto,
+            'categories' => $categoriasSobre,
+            'resumen' => $resumen,
+            'transferenciasOnly' => $transferenciasOnly,
+        ]);
     }
 }

@@ -8,6 +8,9 @@
     <div class="bg-white rounded-lg shadow p-6">
         <form action="{{ route('cultos.store') }}" method="POST">
             @csrf
+            @if($desdeRecuento)
+                <input type="hidden" name="desde" value="recuento">
+            @endif
 
             <div class="space-y-4">
                 <div>
@@ -52,7 +55,7 @@
             </div>
 
             <div class="mt-6 flex justify-end gap-3">
-                <a href="{{ route('cultos.index') }}" class="btn-secondary">
+                <a href="{{ $desdeRecuento ? route('recuento.index') : route('cultos.index') }}" class="btn-secondary">
                     Cancelar
                 </a>
                 <button type="submit" class="btn-primary">

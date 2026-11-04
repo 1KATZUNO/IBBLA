@@ -38,12 +38,11 @@
                             <select name="rol" id="rol" required
                                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
                                 <option value="">Seleccionar rol...</option>
-                                <option value="admin" {{ old('rol') === 'admin' ? 'selected' : '' }}>Admin - Acceso total</option>
-                                <option value="tesorero" {{ old('rol') === 'tesorero' ? 'selected' : '' }}>Tesorero - Dashboard + Recuento</option>
-                                <option value="asistente" {{ old('rol') === 'asistente' ? 'selected' : '' }}>Asistente - Dashboard + Asistencia</option>
-                                <option value="servidor" {{ old('rol') === 'servidor' ? 'selected' : '' }}>Servidor - Marcar Asistencia</option>
-                                <option value="miembro" {{ old('rol') === 'miembro' ? 'selected' : '' }}>Miembro - Mi Perfil</option>
-                                <option value="invitado" {{ old('rol') === 'invitado' ? 'selected' : '' }}>Invitado - Solo Dashboard</option>
+                                <option value="admin" {{ old('rol') === 'admin' ? 'selected' : '' }}>Administrador - Todo, incluida la configuración</option>
+                                <option value="tesorero" {{ old('rol') === 'tesorero' ? 'selected' : '' }}>Tesorero - Recuento, dashboards y reportes financieros</option>
+                                <option value="asistente" {{ old('rol') === 'asistente' ? 'selected' : '' }}>Asistente - Asistencia y sus reportes</option>
+                                <option value="servidor" {{ old('rol') === 'servidor' ? 'selected' : '' }}>Servidor - Marcar su asistencia y Mi perfil</option>
+                                <option value="miembro" {{ old('rol') === 'miembro' ? 'selected' : '' }}>Miembro - Mi perfil y su estado de cuenta</option>
                             </select>
                             @error('rol')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>

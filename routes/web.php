@@ -14,8 +14,11 @@ use App\Http\Controllers\SuperAdmin\TenantController as SATenantController;
 use App\Services\BccrExchangeRateService;
 use Illuminate\Support\Facades\Route;
 
+// Con sesion, cada rol a su inicio (QA-011: la app instalada abre "/" y antes daba 403)
 Route::get('/', function () {
-    return redirect()->route('login');
+    return auth()->check()
+        ? redirect()->route(auth()->user()->rutaDeInicio())
+        : redirect()->route('login');
 });
 
 // Informe individual de una persona por enlace firmado: se comparte por WhatsApp, no requiere
@@ -57,6 +60,10 @@ Route::middleware(['auth', 'role:admin,tesorero', 'audit'])->group(function () {
 
     // Dashboards específicos (Fase 4) — además del general, no en su lugar
     Route::get('/dashboard/promesas', [App\Http\Controllers\DashboardPromesasController::class, 'index'])->name('dashboard.promesas');
+});
+
+// Dashboard de asistencia: admin, tesorero y asistente (decision 2.7, QA-015)
+Route::middleware(['auth', 'role:admin,tesorero,asistente', 'audit'])->group(function () {
     Route::get('/dashboard/asistencia', [App\Http\Controllers\DashboardAsistenciaController::class, 'index'])->name('dashboard.asistencia');
 });
 
@@ -66,8 +73,8 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-// Ruta Mi Perfil - accesible para miembros, servidores, tesorero y asistente
-Route::middleware(['auth', 'role:miembro,servidor,tesorero,asistente'])->group(function () {
+// Mi Perfil: cualquier rol con persona vinculada, tambien el admin (QA-014)
+Route::middleware(['auth', 'role:miembro,servidor,tesorero,asistente,admin'])->group(function () {
     Route::get('/mi-perfil', [App\Http\Controllers\MiPerfilController::class, 'index'])->name('mi-perfil.index');
     Route::get('/mi-perfil/informe', [App\Http\Controllers\MiPerfilController::class, 'informe'])->name('mi-perfil.informe');
 });
@@ -80,7 +87,8 @@ Route::middleware(['auth', 'role:servidor'])->group(function () {
 
 // Rutas para Admin y Tesorero - Recuento e Ingresos
 Route::middleware(['auth', 'role:admin,tesorero'])->group(function () {
-    // Crear persona rapida (desde recuento)
+    // Alta rapida de personas (desde el sobre o desde su pantalla): el tesorero no entra a Personas
+    Route::get('personas/alta-rapida', [PersonaController::class, 'altaRapida'])->name('personas.alta-rapida');
     Route::post('personas/quick-store', [PersonaController::class, 'quickStore'])->name('personas.quick-store');
 
     // Enviar el informe de una persona por WhatsApp (abre wa.me con el enlace firmado al PDF)
@@ -106,47 +114,15 @@ Route::middleware(['auth', 'role:admin,tesorero'])->group(function () {
         Route::put('/egreso/{egreso}', [RecuentoController::class, 'updateEgreso'])->name('update-egreso');
         Route::delete('/egreso/{egreso}', [RecuentoController::class, 'destroyEgreso'])->name('destroy-egreso');
         Route::post('/{culto}/cerrar', [RecuentoController::class, 'cerrarCulto'])->name('cerrar-culto');
+        // Pantalla de un culto (abierto o cerrado). La vieja ruta del modal de cerrados redirige aqui.
+        Route::get('/culto/{culto}', [RecuentoController::class, 'culto'])->name('culto');
         Route::get('/culto-cerrado/{culto}', [RecuentoController::class, 'verCultoCerrado'])->name('ver-culto-cerrado');
         Route::get('/{sobre}/edit', [RecuentoController::class, 'edit'])->name('edit');
         Route::put('/{sobre}', [RecuentoController::class, 'update'])->name('update');
         Route::delete('/{sobre}', [RecuentoController::class, 'destroy'])->name('destroy');
+        Route::patch('/{sobre}/persona', [RecuentoController::class, 'asignarPersona'])->name('asignar-persona');
         // Firmas del recuento
-        Route::post('/firmas/{culto}', function (\Illuminate\Http\Request $request, \App\Models\Culto $culto) {
-            $data = $request->validate([
-                'firma_pastor' => 'nullable|string|max:255',
-                'firma_pastor_imagen' => 'nullable|string',
-                'firmas_tesoreros' => 'nullable|array',
-                'firmas_tesoreros.*.nombre' => 'nullable|string|max:255',
-                'firmas_tesoreros.*.imagen' => 'nullable|string',
-            ]);
-
-            // Procesar tesoreros (filtrar vacíos)
-            $tesoreros = [];
-            $tesorerosImagenes = [];
-            if (! empty($data['firmas_tesoreros'])) {
-                foreach ($data['firmas_tesoreros'] as $t) {
-                    $nombre = $t['nombre'] ?? '';
-                    $imagen = $t['imagen'] ?? '';
-                    if (! empty($nombre) || ! empty($imagen)) {
-                        $tesoreros[] = $nombre;
-                        $tesorerosImagenes[] = [
-                            'nombre' => $nombre,
-                            'imagen' => $imagen,
-                        ];
-                    }
-                }
-            }
-
-            $culto->update([
-                'firma_pastor' => $data['firma_pastor'] ?? null,
-                'firma_pastor_imagen' => $data['firma_pastor_imagen'] ?? null,
-                'firmas_tesoreros' => $tesoreros,
-                'firmas_tesoreros_imagenes' => $tesorerosImagenes,
-            ]);
-
-            return redirect()->route('recuento.index', ['culto_id' => $culto->id])
-                ->with('success', 'Firmas de recuento actualizadas.');
-        })->name('firmas.update');
+        Route::post('/firmas/{culto}', [RecuentoController::class, 'actualizarFirmas'])->name('firmas.update');
     });
 
     // Reportes de ingresos
@@ -215,10 +191,22 @@ Route::middleware(['auth', 'role:admin,asistente', 'audit'])->group(function () 
     Route::resource('asistencia', AsistenciaController::class);
 });
 
+// Crear cultos: el administrador y quien tenga un acceso de edicion vigente (CultoPolicy::create).
+// Va antes del grupo de admin para que 'cultos/create' no lo tome la ruta cultos/{culto}.
+Route::middleware(['auth', 'can:create,App\Models\Culto', 'audit'])->group(function () {
+    Route::get('cultos/create', [CultoController::class, 'create'])->name('cultos.create');
+    Route::post('cultos', [CultoController::class, 'store'])->name('cultos.store');
+});
+
 // Solo admin
 Route::middleware(['auth', 'role:admin', 'audit'])->group(function () {
-    // Cultos
-    Route::resource('cultos', CultoController::class);
+    // Cultos (crear esta arriba, con su propia regla)
+    Route::resource('cultos', CultoController::class)->except(['create', 'store']);
+
+    // Accesos de edicion: quien puede corregir cultos cerrados, hasta cuando, y lo que cambio con ellos
+    Route::get('/admin/accesos', [App\Http\Controllers\AccesoEdicionController::class, 'index'])->name('admin.accesos.index');
+    Route::post('/admin/accesos', [App\Http\Controllers\AccesoEdicionController::class, 'store'])->name('admin.accesos.store');
+    Route::delete('/admin/accesos/{permiso}', [App\Http\Controllers\AccesoEdicionController::class, 'destroy'])->name('admin.accesos.destroy');
 
     // Administración de Ministerios / Áreas de Servicio
     Route::prefix('admin/ministerios')->name('admin.ministerios.')->group(function () {
@@ -256,7 +244,8 @@ Route::middleware(['auth', 'role:admin', 'audit'])->group(function () {
     Route::post('personas/resetear-promesas', [PersonaController::class, 'resetearPromesas'])->name('personas.resetear-promesas');
 
     // Gestión de Usuarios
-    Route::resource('usuarios', App\Http\Controllers\UserController::class);
+    // Sin "show": no hay pantalla de detalle (antes daba 500, QA-012)
+    Route::resource('usuarios', App\Http\Controllers\UserController::class)->except(['show']);
 
     // Carga retroactiva de asistencias (import Excel)
     Route::get('/admin/asistencia/importar', [App\Http\Controllers\AsistenciaImportController::class, 'index'])->name('asistencia.importar.index');
@@ -315,7 +304,8 @@ Route::middleware(['auth'])->group(function () {
 // Asistencia App (React SPA)
 Route::get('/app/asistencia', fn () => view('asistencia-app.shell'));
 
-Route::post('/asistencia-app/login', [App\Http\Controllers\AsistenciaAppController::class, 'login']);
+// Mismo limite de intentos que el login web (QA-013)
+Route::post('/asistencia-app/login', [App\Http\Controllers\AsistenciaAppController::class, 'login'])->middleware('throttle:5,1');
 
 Route::middleware(['auth'])->prefix('asistencia-app')->group(function () {
     Route::get('/user', [App\Http\Controllers\AsistenciaAppController::class, 'user']);

@@ -5,7 +5,10 @@
 
 @section('content')
 <div class="space-y-6">
-    <div class="flex justify-end">
+    <div class="flex flex-wrap justify-end gap-2">
+        @if(Route::has('admin.accesos.index'))
+            <a href="{{ route('admin.accesos.index') }}" class="btn-secondary">Accesos de edición</a>
+        @endif
         <a href="{{ route('usuarios.create') }}" class="btn-primary">
             + Nuevo Usuario
         </a>

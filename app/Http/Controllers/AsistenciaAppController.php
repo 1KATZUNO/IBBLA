@@ -7,6 +7,7 @@ use App\Models\AsistenciaClaseDetalle;
 use App\Models\ClaseAsistencia;
 use App\Models\Culto;
 use App\Models\Persona;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -26,10 +27,10 @@ class AsistenciaAppController extends Controller
         }
 
         $user = Auth::user();
-
-        // Reject miembro and invitado roles
         $rol = $user->rol ?? '';
-        if (in_array($rol, ['miembro', 'invitado'])) {
+
+        // Mismas reglas que la web (QA-013): asistencia (admin, asistente) o maestra de alguna clase
+        if (! self::accesoTotal($user) && self::clasesDeMaestra($user) === []) {
             Auth::logout();
             $request->session()->invalidate();
             $request->session()->regenerateToken();
@@ -64,6 +65,7 @@ class AsistenciaAppController extends Controller
 
     public function cultos()
     {
+        $this->exigirAcceso();
         $cultos = Culto::where('cerrado', false)
             ->orderBy('fecha', 'desc')
             ->get()
@@ -81,7 +83,11 @@ class AsistenciaAppController extends Controller
 
     public function clases()
     {
+        $user = $this->exigirAcceso();
+        $soloSuyas = self::accesoTotal($user) ? null : self::clasesDeMaestra($user);
+
         $clases = ClaseAsistencia::activas()->regulares()->ordenadas()
+            ->when($soloSuyas !== null, fn ($q) => $q->whereIn('id', $soloSuyas))
             ->with(['maestros' => function ($q) {
                 $q->where('activo', true)->orderBy('nombre');
             }, 'estudiantes' => function ($q) {
@@ -112,6 +118,7 @@ class AsistenciaAppController extends Controller
 
     public function cumpleaneros(ClaseAsistencia $clase)
     {
+        $this->exigirAcceso($clase->id);
         $mes = request('mes', Carbon::now()->month);
 
         $personaIds = $clase->personas()->pluck('personas.id');
@@ -134,6 +141,7 @@ class AsistenciaAppController extends Controller
 
     public function resumenCulto(Culto $culto)
     {
+        $this->exigirAcceso(null, true);
         $asistencia = $culto->asistencia;
 
         if (! $asistencia) {
@@ -200,6 +208,7 @@ class AsistenciaAppController extends Controller
 
     public function guardarAsistenciaClase(Request $request)
     {
+        $this->exigirAcceso(is_numeric($request->input('clase_asistencia_id')) ? (int) $request->input('clase_asistencia_id') : null);
         // Mismo tope que el formulario web (Asistencia::MAX_CANTIDAD)
         $cantidad = 'integer|min:0|max:'.Asistencia::MAX_CANTIDAD;
 
@@ -251,6 +260,7 @@ class AsistenciaAppController extends Controller
 
     public function guardarAsistenciaCapilla(Request $request)
     {
+        $this->exigirAcceso(null, true);
         // Mismo tope que el formulario web (Asistencia::MAX_CANTIDAD)
         $cantidad = 'integer|min:0|max:'.Asistencia::MAX_CANTIDAD;
 
@@ -315,6 +325,7 @@ class AsistenciaAppController extends Controller
 
     public function quickAddPersona(Request $request)
     {
+        $this->exigirAcceso(is_numeric($request->input('clase_asistencia_id')) ? (int) $request->input('clase_asistencia_id') : null);
         $validated = $request->validate([
             'nombre' => 'required|string|max:255',
             'fecha_nacimiento' => 'nullable|date',
@@ -348,5 +359,44 @@ class AsistenciaAppController extends Controller
             + $asistencia->getTotalClases()
             + $asistencia->getTotalRegistrosExtraAsistencia();
         $asistencia->update(['total_asistencia' => $total]);
+    }
+
+    /**
+     * QA-013: la app de asistencia sigue las mismas reglas que la web. Admin y asistente (rol con
+     * Asistencia) usan todo; una maestra solo sus clases (no la capilla ni el resumen del culto);
+     * los demas roles (tesorero, miembro, servidor) reciben 403 aunque tengan sesion.
+     *
+     * @param  int|null  $claseId  clase que se toca (null = ninguna en particular)
+     * @param  bool  $soloAsistencia  la accion es solo para el rol de asistencia (capilla, resumen)
+     */
+    private function exigirAcceso(?int $claseId = null, bool $soloAsistencia = false): User
+    {
+        $user = request()->user();
+        if (self::accesoTotal($user)) {
+            return $user;
+        }
+
+        $suyas = self::clasesDeMaestra($user);
+        $permitido = ! $soloAsistencia && $suyas !== [] && ($claseId === null || in_array($claseId, $suyas, true));
+        abort_unless($permitido, 403, 'No tienes permiso para registrar esta asistencia.');
+
+        return $user;
+    }
+
+    private static function accesoTotal(User $user): bool
+    {
+        return $user->isSuperAdmin() || $user->isAdmin() || $user->canAccessAsistencia();
+    }
+
+    /** @return array<int, int> ids de las clases donde el usuario es maestra (asignada o como persona) */
+    private static function clasesDeMaestra(User $user): array
+    {
+        $ids = $user->clase_asistencia_id ? [(int) $user->clase_asistencia_id] : [];
+        if ($user->persona) {
+            $ids = array_merge($ids, $user->persona->clasesAsistencia()->wherePivot('es_maestro', true)
+                ->pluck('clases_asistencia.id')->map(fn ($id) => (int) $id)->all());
+        }
+
+        return array_values(array_unique($ids));
     }
 }
