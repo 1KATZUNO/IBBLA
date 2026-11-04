@@ -89,6 +89,9 @@ trait ConDatosDeDashboard
             'mes' => $mes,
             'monto_prometido' => $prometido,
             'monto_dado' => $dado,
+            // En colones: el dashboard suma las columnas *_crc (QA-027).
+            'monto_prometido_crc' => $prometido,
+            'monto_dado_crc' => $dado,
         ]);
     }
 }
