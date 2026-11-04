@@ -196,32 +196,12 @@ class PersonaController extends Controller
             ->orderBy('año', 'desc')
             ->pluck('año');
         
-        // Calcular cumplimiento de promesas
-        $promesasConEstatus = $persona->promesas->map(function ($promesa) use ($persona) {
-            $montoPagado = $persona->sobres()
-                ->whereHas('detalles', function ($query) use ($promesa) {
-                    $query->where('categoria', $promesa->categoria);
-                })
-                ->whereHas('culto', function ($query) {
-                    $query->whereMonth('fecha', Carbon::now()->month)
-                          ->whereYear('fecha', Carbon::now()->year);
-                })
-                ->get()
-                ->sum(function ($sobre) use ($promesa) {
-                    return $sobre->detalles()
-                        ->where('categoria', $promesa->categoria)
-                        ->sum('monto');
-                });
+        // Lo dado en el año y el estado de compromisos: las mismas cifras del estado de cuenta (motor
+        // único, corte hoy, dólares convertidos). Antes la ficha sumaba total_declarado de todos los
+        // años sin convertir dólares (QA-033).
+        $estadoCuenta = app(\App\Services\InformePersonaService::class)->datos($persona);
 
-            return [
-                'promesa' => $promesa,
-                'pagado' => $montoPagado,
-                'faltante' => max(0, $promesa->monto - $montoPagado),
-                'cumplido' => $montoPagado >= $promesa->monto,
-            ];
-        });
-
-        return view('personas.show', compact('persona', 'promesasConEstatus', 'añosDisponibles'));
+        return view('personas.show', compact('persona', 'estadoCuenta', 'añosDisponibles'));
     }
 
     public function edit(Persona $persona)

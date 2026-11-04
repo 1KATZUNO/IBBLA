@@ -28,7 +28,7 @@ use Tests\TestCase;
  *
  * Salidas: el motor, el estado de cuenta (datos y PDF), el lote de estados de cuenta (datos y
  * Excel), el cumplimiento con corte (datos, pantalla, PDF y Excel), el Reporte General (datos y
- * PDF), la pantalla de Compromisos, Mi perfil del miembro y el reporte de contribuciones (PDF).
+ * PDF), la ficha, la pantalla de Compromisos, Mi perfil del miembro y el reporte de contribuciones (PDF).
  * Dias: 20/03/2026 (marzo en curso) y 15/10/2026 (octubre en curso); todo con corte hoy.
  */
 class ContratoReportesTest extends TestCase
@@ -166,7 +166,13 @@ class ContratoReportesTest extends TestCase
             $categoriasIglesia = array_keys($resultado->categorias);
             $this->assertStringContainsString('₡'.number_format($cuenta->dado(null, $categoriasIglesia), 2), $textoContribuciones, "$nombre: total en el reporte de contribuciones");
 
-            // 6. Pantalla de Compromisos (admin) y 7. Mi perfil (el miembro): mismas cifras y estado.
+            // 6. Ficha de la persona: lo dado en el anio al corte (dolares convertidos, nada futuro).
+            $ficha = $this->get(route('personas.show', $persona))->assertOk()->assertSee('₡'.number_format($cuenta->dado(), 2));
+            if ($cuenta->tienePromesa()) {
+                $ficha->assertSee('Compromisos: '.$estado->etiqueta());
+            }
+
+            // 7. Pantalla de Compromisos (admin) y 8. Mi perfil (el miembro): mismas cifras y estado.
             $pantallaCompromisos = $this->get(route('compromisos.show', $persona))->assertOk();
             $miPerfil = $this->actingAs($this->miembroDe($persona))->get(route('mi-perfil.index'))->assertOk();
             $this->actingAs($this->admin);
