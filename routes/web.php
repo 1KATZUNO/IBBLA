@@ -274,7 +274,8 @@ Route::middleware(['auth'])->group(function () {
 // Asistencia App (React SPA)
 Route::get('/app/asistencia', fn () => view('asistencia-app.shell'));
 
-Route::post('/asistencia-app/login', [App\Http\Controllers\AsistenciaAppController::class, 'login']);
+// Mismo limite de intentos que el login web (QA-013)
+Route::post('/asistencia-app/login', [App\Http\Controllers\AsistenciaAppController::class, 'login'])->middleware('throttle:5,1');
 
 Route::middleware(['auth'])->prefix('asistencia-app')->group(function () {
     Route::get('/user', [App\Http\Controllers\AsistenciaAppController::class, 'user']);
