@@ -76,7 +76,7 @@
                         {{ $culto->fecha->format('d/m/Y') }}
                     </td>
                     <td class="px-4 py-3 whitespace-nowrap text-sm">
-                        <span class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                        <span class="px-2 py-1 text-xs font-semibold rounded-full bg-brand-100 text-brand-800">
                             {{ ucfirst($culto->tipo_culto) }}
                         </span>
                     </td>
@@ -106,7 +106,7 @@
                             @if(!$culto->asistencia->cerrado)
                             <!-- Desktop actions -->
                             <div class="hidden sm:flex sm:items-center sm:justify-end sm:gap-1">
-                                <a href="{{ route('asistencia.edit', $culto->asistencia) }}" class="btn-row text-blue-700 hover:bg-blue-50">
+                                <a href="{{ route('asistencia.edit', $culto->asistencia) }}" class="btn-row text-brand-700 hover:bg-brand-50">
                                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
                                     Editar
                                 </a>
@@ -132,9 +132,9 @@
                                 </button>
                                 <div id="dropdown-{{ $culto->asistencia->id }}" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 border border-gray-200">
                                     <div class="py-1">
-                                        <a href="{{ route('asistencia.edit', $culto->asistencia) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50">
+                                        <a href="{{ route('asistencia.edit', $culto->asistencia) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-brand-50">
                                             <span class="flex items-center gap-2">
-                                                <svg class="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                                                <svg class="w-4 h-4 text-brand-600" fill="currentColor" viewBox="0 0 20 20">
                                                     <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z"></path>
                                                     <path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd"></path>
                                                 </svg>
@@ -232,7 +232,7 @@
                     <div class="bg-gray-50 rounded-lg p-3 mb-3">
                         <div class="flex justify-between items-center mb-2">
                             <span class="text-xs text-gray-600">Total Asistencia</span>
-                            <span class="text-lg font-bold text-blue-600">{{ $asistencia->total_asistencia }}</span>
+                            <span class="text-lg font-bold text-brand-600">{{ $asistencia->total_asistencia }}</span>
                         </div>
                         <div class="grid grid-cols-2 gap-2 text-xs text-gray-600">
                             <div class="flex justify-between">

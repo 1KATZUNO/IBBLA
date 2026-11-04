@@ -72,8 +72,8 @@
                     <p class="text-sm font-medium text-gray-500">Total Suelto</p>
                     <p class="text-2xl font-bold text-gray-900 mt-1">₡{{ number_format($resumen['total_suelto'], 0, ',', '.') }}</p>
                 </div>
-                <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                    <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="w-12 h-12 bg-brand-100 rounded-lg flex items-center justify-center">
+                    <svg class="w-6 h-6 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path>
                     </svg>
                 </div>
@@ -100,8 +100,8 @@
                     <p class="text-sm font-medium text-gray-500">Cantidad de Cultos</p>
                     <p class="text-2xl font-bold text-gray-900 mt-1">{{ $resumen['cantidad_cultos'] }}</p>
                 </div>
-                <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
-                    <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
+                    <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                     </svg>
                 </div>
@@ -199,7 +199,7 @@
                             <td class="px-6 py-4 text-right font-semibold text-green-600">
                                 ₡{{ number_format($dato['total_general'], 0, ',', '.') }}
                             </td>
-                            <td class="px-6 py-4 text-right text-sm text-blue-600">
+                            <td class="px-6 py-4 text-right text-sm text-brand-600">
                                 ₡{{ number_format($dato['total_suelto'], 0, ',', '.') }}
                             </td>
                             <td class="px-6 py-4 text-right text-sm text-red-600">
@@ -220,7 +220,7 @@
                         <tr class="bg-gray-100 font-bold">
                             <td class="px-6 py-4 text-sm text-gray-900">TOTALES</td>
                             <td class="px-6 py-4 text-right text-green-700">₡{{ number_format($resumen['total_general'], 0, ',', '.') }}</td>
-                            <td class="px-6 py-4 text-right text-blue-700">₡{{ number_format($resumen['total_suelto'], 0, ',', '.') }}</td>
+                            <td class="px-6 py-4 text-right text-brand-700">₡{{ number_format($resumen['total_suelto'], 0, ',', '.') }}</td>
                             <td class="px-6 py-4 text-right text-red-700">₡{{ number_format($resumen['total_egresos'], 0, ',', '.') }}</td>
                             <td class="px-6 py-4 text-center text-gray-900">{{ $resumen['cantidad_cultos'] }}</td>
                         </tr>

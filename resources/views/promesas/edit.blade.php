@@ -73,7 +73,7 @@
                     $porcentaje = $promesa->monto_total > 0 ? ($montoRecibido / $promesa->monto_total) * 100 : 0;
                 @endphp
 
-                <div class="bg-blue-50 rounded-lg p-4">
+                <div class="bg-brand-50 rounded-lg p-4">
                     <div class="space-y-2">
                         <div class="flex justify-between text-sm">
                             <span class="font-medium text-gray-700">Monto Recibido:</span>
@@ -85,7 +85,7 @@
                         </div>
                         <div class="mt-2">
                             <div class="w-full bg-gray-200 rounded-full h-2.5">
-                                <div class="bg-blue-600 h-2.5 rounded-full" style="width: {{ min($porcentaje, 100) }}%"></div>
+                                <div class="bg-brand-600 h-2.5 rounded-full" style="width: {{ min($porcentaje, 100) }}%"></div>
                             </div>
                             <p class="text-center text-sm font-medium text-gray-700 mt-1">{{ number_format($porcentaje, 1) }}% completado</p>
                         </div>

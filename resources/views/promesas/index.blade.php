@@ -49,13 +49,13 @@
                     <td class="px-6 py-4 whitespace-nowrap text-sm">
                         <div class="flex items-center">
                             <div class="w-24 bg-gray-200 rounded-full h-2 mr-2">
-                                <div class="bg-blue-600 h-2 rounded-full" style="width: {{ min($porcentaje, 100) }}%"></div>
+                                <div class="bg-brand-600 h-2 rounded-full" style="width: {{ min($porcentaje, 100) }}%"></div>
                             </div>
                             <span class="text-xs font-medium text-gray-700">{{ number_format($porcentaje, 0) }}%</span>
                         </div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                        <a href="{{ route('promesas.edit', $promesa) }}" class="text-blue-600 hover:text-blue-900 mr-3">Editar</a>
+                        <a href="{{ route('promesas.edit', $promesa) }}" class="text-brand-600 hover:text-brand-900 mr-3">Editar</a>
                         <button type="button" onclick="mostrarModalEliminar({{ $promesa->id }}, '{{ $promesa->persona->nombre }}')" class="text-red-600 hover:text-red-900">
                             Eliminar
                         </button>

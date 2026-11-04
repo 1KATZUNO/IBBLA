@@ -4,7 +4,7 @@
         'success' => ['alert-success', 'text-green-600', 'ok', 'Listo'],
         'error' => ['alert-error', 'text-red-600', 'error', 'Error'],
         'warning' => ['alert-warning', 'text-yellow-600', 'alerta', 'Atención'],
-        'info' => ['alert-info', 'text-blue-600', 'info', 'Aviso'],
+        'info' => ['alert-info', 'text-brand-600', 'info', 'Aviso'],
     ];
 @endphp
 @foreach($avisos as $clave => [$claseAviso, $colorIcono, $iconoAviso, $tituloAviso])

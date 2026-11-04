@@ -115,8 +115,8 @@
                     <tr class="hover:bg-gray-50">
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="flex items-center">
-                                <div class="flex-shrink-0 h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
-                                    <span class="text-blue-600 font-semibold text-sm">{{ strtoupper(substr($servidor->name, 0, 1)) }}</span>
+                                <div class="flex-shrink-0 h-8 w-8 rounded-full bg-brand-100 flex items-center justify-center">
+                                    <span class="text-brand-600 font-semibold text-sm">{{ strtoupper(substr($servidor->name, 0, 1)) }}</span>
                                 </div>
                                 <div class="ml-3">
                                     <div class="text-sm font-medium text-gray-900">{{ $servidor->name }}</div>

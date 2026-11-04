@@ -18,7 +18,7 @@
                     <div>
                         <label for="nombre" class="block text-sm font-medium text-gray-700 mb-2">Nombre Completo *</label>
                         <input type="text" name="nombre" id="nombre" value="{{ old('nombre', $persona->nombre) }}" 
-                               class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
+                               class="w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500" required>
                         @error('nombre')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
@@ -28,7 +28,7 @@
                         <div>
                             <label for="telefono" class="block text-sm font-medium text-gray-700 mb-2">Teléfono</label>
                             <input type="text" name="telefono" id="telefono" value="{{ old('telefono', $persona->telefono) }}"
-                                   class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                   class="w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
                             @error('telefono')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
@@ -37,7 +37,7 @@
                         <div>
                             <label for="correo" class="block text-sm font-medium text-gray-700 mb-2">Correo Electrónico</label>
                             <input type="email" name="correo" id="correo" value="{{ old('correo', $persona->correo) }}"
-                                   class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                   class="w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
                             @error('correo')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
@@ -48,7 +48,7 @@
                         <div>
                             <label for="fecha_nacimiento" class="block text-sm font-medium text-gray-700 mb-2">Fecha de Nacimiento</label>
                             <input type="date" name="fecha_nacimiento" id="fecha_nacimiento" value="{{ old('fecha_nacimiento', $persona->fecha_nacimiento?->format('Y-m-d')) }}"
-                                   class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                   class="w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
                             @error('fecha_nacimiento')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
@@ -57,7 +57,7 @@
                         <div>
                             <label for="pin" class="block text-sm font-medium text-gray-700 mb-2">PIN</label>
                             <input type="text" name="pin" id="pin" value="{{ old('pin', $persona->pin) }}"
-                                   class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                   class="w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500"
                                    placeholder="Identificador único">
                             <p class="mt-1 text-xs text-gray-500">Usado para buscar rápidamente en recuento</p>
                             @error('pin')
@@ -68,7 +68,7 @@
                     <div>
                         <label class="inline-flex items-center min-h-[44px] pr-3 cursor-pointer">
                             <input type="checkbox" name="activo" value="1" {{ old('activo', $persona->activo) ? 'checked' : '' }}
-                                   class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                   class="rounded border-gray-300 text-brand-600 shadow-sm focus:border-brand-500 focus:ring-brand-500">
                             <span class="ml-2 text-sm text-gray-700">Activo <span class="text-gray-500">(aparece en la lista de personas del recuento)</span></span>
                         </label>
                     </div>
@@ -76,7 +76,7 @@
                     <div>
                         <label for="notas" class="block text-sm font-medium text-gray-700 mb-2">Notas</label>
                         <textarea name="notas" id="notas" rows="3" 
-                                  class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">{{ old('notas', $persona->notas) }}</textarea>
+                                  class="w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">{{ old('notas', $persona->notas) }}</textarea>
                         @error('notas')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
@@ -95,8 +95,8 @@
                         </p>
                     </div>
                     @else
-                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-                        <p class="text-sm text-blue-800">
+                    <div class="bg-brand-50 border border-brand-200 rounded-lg p-4 mb-4">
+                        <p class="text-sm text-brand-800">
                             <svg class="inline w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                             </svg>
@@ -109,7 +109,7 @@
                             {{ $persona->user_id ? 'Nueva Contraseña (dejar vacío para mantener actual)' : 'Contraseña *' }}
                         </label>
                         <input type="password" name="password" id="password" 
-                               class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                               class="w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
                         <p class="mt-1 text-xs text-gray-500">
                             @if($persona->user_id)
                                 Solo completa este campo si deseas cambiar la contraseña
@@ -131,7 +131,7 @@
                         <div class="flex items-center justify-between">
                             <label class="block text-sm font-medium text-gray-700">Clases</label>
                             <button type="button" x-show="entries.length < 4" @click="addEntry()"
-                                    class="btn-row text-blue-700 hover:bg-blue-50">
+                                    class="btn-row text-brand-700 hover:bg-brand-50">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                                 Agregar clase
                             </button>
@@ -140,7 +140,7 @@
                         <template x-for="(entry, idx) in entries" :key="idx">
                             <div class="flex items-center gap-3 bg-gray-50 p-3 rounded-lg">
                                 <select :name="'clases['+idx+'][clase_id]'" x-model="entry.clase_id"
-                                        class="flex-1 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm">
+                                        class="flex-1 rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500 text-sm">
                                     <option value="">-- Seleccionar --</option>
                                     @foreach($clases as $clase)
                                         <option value="{{ $clase->id }}">{{ $clase->nombre }}</option>
@@ -148,7 +148,7 @@
                                 </select>
                                 <label class="flex items-center min-h-[44px] whitespace-nowrap cursor-pointer">
                                     <input type="checkbox" :name="'clases['+idx+'][es_maestro]'" value="1" x-model="entry.es_maestro"
-                                           class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                           class="rounded border-gray-300 text-brand-600 shadow-sm focus:border-brand-500 focus:ring-brand-500">
                                     <span class="ml-1 text-sm text-gray-700">Maestro(a)</span>
                                 </label>
                                 <button type="button" @click="removeEntry(idx)" class="btn-icon text-red-600 hover:bg-red-50 hover:text-red-700" aria-label="Quitar" title="Quitar">

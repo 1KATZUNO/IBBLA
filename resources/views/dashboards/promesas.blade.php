@@ -16,9 +16,9 @@
 
     {{-- KPIs --}}
     <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div class="bg-purple-50 border-l-4 border-purple-500 rounded-lg p-4">
-            <p class="text-xs text-purple-700 uppercase font-medium">Prometido del período</p>
-            <p class="text-2xl font-bold text-purple-900 mt-1">₡{{ number_format($prometido, 2, '.', ',') }}</p>
+        <div class="bg-gray-50 border-l-4 border-gray-500 rounded-lg p-4">
+            <p class="text-xs text-gray-700 uppercase font-medium">Prometido del período</p>
+            <p class="text-2xl font-bold text-gray-900 mt-1">₡{{ number_format($prometido, 2, '.', ',') }}</p>
         </div>
         <div class="bg-emerald-50 border-l-4 border-emerald-500 rounded-lg p-4">
             <p class="text-xs text-emerald-700 uppercase font-medium">Dado en el período</p>
@@ -62,7 +62,7 @@
                         <td class="px-4 py-2 text-sm font-medium">{{ $p['nombre'] }}</td>
                         <td class="px-4 py-2 text-sm text-right">₡{{ number_format($p['prometido'], 2, '.', ',') }}</td>
                         <td class="px-4 py-2 text-sm text-right text-emerald-700 font-semibold">₡{{ number_format($p['dado'], 2, '.', ',') }}</td>
-                        <td class="px-4 py-2 text-sm text-right {{ $p['saldo'] >= 0 ? 'text-blue-700' : 'text-red-700' }}">
+                        <td class="px-4 py-2 text-sm text-right {{ $p['saldo'] >= 0 ? 'text-brand-700' : 'text-red-700' }}">
                             {{ $p['saldo'] >= 0 ? '+' : '' }}₡{{ number_format($p['saldo'], 2, '.', ',') }}
                         </td>
                         <td class="px-4 py-2 text-sm text-right font-semibold">{{ $p['pct'] }}%</td>

@@ -52,16 +52,16 @@
 
     <!-- Resumen -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div class="bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl shadow-lg p-6 text-white">
-            <p class="text-sm text-blue-100 font-medium mb-1">Total Servidores</p>
+        <div class="bg-brand-600 rounded-xl shadow-lg p-6 text-white">
+            <p class="text-sm text-brand-100 font-medium mb-1">Total Servidores</p>
             <p class="text-3xl font-bold">{{ $servidores->count() }}</p>
         </div>
-        <div class="bg-gradient-to-br from-green-500 to-green-700 rounded-xl shadow-lg p-6 text-white">
+        <div class="bg-green-600 rounded-xl shadow-lg p-6 text-white">
             <p class="text-sm text-green-100 font-medium mb-1">Cultos en {{ $meses[$mes] }}</p>
             <p class="text-3xl font-bold">{{ $totalCultosMes }}</p>
         </div>
-        <div class="bg-gradient-to-br from-purple-500 to-purple-700 rounded-xl shadow-lg p-6 text-white">
-            <p class="text-sm text-purple-100 font-medium mb-1">Promedio Asistencia</p>
+        <div class="bg-gray-700 rounded-xl shadow-lg p-6 text-white">
+            <p class="text-sm text-gray-100 font-medium mb-1">Promedio Asistencia</p>
             <p class="text-3xl font-bold">
                 @if($servidores->count() > 0 && $totalCultosMes > 0)
                     {{ round($asistenciasPorServidor->sum() / $servidores->count() / $totalCultosMes * 100) }}%
@@ -100,8 +100,8 @@
                     <tr class="hover:bg-gray-50">
                         <td class="px-4 py-3 whitespace-nowrap">
                             <div class="flex items-center">
-                                <div class="flex-shrink-0 h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
-                                    <span class="text-blue-600 font-semibold text-sm">{{ strtoupper(substr($servidor->name, 0, 1)) }}</span>
+                                <div class="flex-shrink-0 h-8 w-8 rounded-full bg-brand-100 flex items-center justify-center">
+                                    <span class="text-brand-600 font-semibold text-sm">{{ strtoupper(substr($servidor->name, 0, 1)) }}</span>
                                 </div>
                                 <div class="ml-3">
                                     <div class="text-sm font-medium text-gray-900">{{ $servidor->name }}</div>
@@ -138,7 +138,7 @@
                             @if($promesas->count() > 0)
                                 <div class="space-y-1">
                                     @foreach($promesas as $promesa)
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-brand-100 text-brand-800">
                                             {{ ucfirst($promesa->categoria) }}
                                         </span>
                                     @endforeach
@@ -163,7 +163,7 @@
                         <td class="px-4 py-3 whitespace-nowrap text-center">
                             <a href="{{ route('admin.servidores.pdf-individual', ['servidor' => $servidor->id, 'ano' => $ano, 'mes' => $mes]) }}"
                                target="_blank"
-                               class="btn-row text-purple-700 hover:bg-purple-50">
+                               class="btn-row text-gray-700 hover:bg-gray-50">
                                 PDF
                             </a>
                         </td>

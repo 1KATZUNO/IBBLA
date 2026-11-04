@@ -60,7 +60,7 @@
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">Archivo Excel (.xlsx o .xls, máx 5 MB)</label>
                 <input type="file" name="archivo" accept=".xlsx,.xls" required
-                       class="block w-full text-sm text-gray-700 file:mr-3 file:py-2 file:px-4 file:rounded-md file:border-0 file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                       class="block w-full text-sm text-gray-700 file:mr-3 file:py-2 file:px-4 file:rounded-md file:border-0 file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100">
                 @error('archivo')
                     <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
                 @enderror

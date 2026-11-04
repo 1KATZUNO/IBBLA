@@ -41,7 +41,7 @@
     <div class="flex items-center gap-2">
         <input type="hidden" name="activo" value="0">
         <input type="checkbox" name="activo" id="activo" value="1" {{ old('activo', $m->activo ?? true) ? 'checked' : '' }}
-               class="rounded border-gray-300 text-blue-600 focus:ring-brand-500">
+               class="rounded border-gray-300 text-brand-600 focus:ring-brand-500">
         <label for="activo" class="text-sm">Activo <span class="text-gray-500">(los inactivos no se ofrecen al asignar personas)</span></label>
     </div>
 

@@ -20,7 +20,7 @@
         <div class="flex items-center gap-3 px-4 py-3 rounded-lg border
             {{ $alerta['tipo'] === 'danger' ? 'bg-red-50 border-red-200 text-red-800' : '' }}
             {{ $alerta['tipo'] === 'warning' ? 'bg-amber-50 border-amber-200 text-amber-800' : '' }}
-            {{ $alerta['tipo'] === 'info' ? 'bg-blue-50 border-blue-200 text-blue-800' : '' }}
+            {{ $alerta['tipo'] === 'info' ? 'bg-brand-50 border-brand-200 text-brand-800' : '' }}
             {{ $alerta['tipo'] === 'success' ? 'bg-green-50 border-green-200 text-green-800' : '' }}
         ">
             @if($alerta['icono'] === 'trending-down')
@@ -108,14 +108,14 @@
             <!-- Total Mensual -->
             <div class="stat-card">
                 <div class="flex flex-col h-full">
-                    <div class="bg-blue-600 rounded-lg p-2.5 w-fit mb-3">
+                    <div class="bg-brand-600 rounded-lg p-2.5 w-fit mb-3">
                         <svg class="h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                         </svg>
                     </div>
                     <dl class="flex-1">
                         <dt class="text-sm font-medium text-gray-500 mb-1">Total Mensual</dt>
-                        <dd class="text-lg font-display font-bold text-blue-700">₡{{ number_format($totalesPeriodo['total_general'], 2) }}</dd>
+                        <dd class="text-lg font-display font-bold text-brand-700">₡{{ number_format($totalesPeriodo['total_general'], 2) }}</dd>
                     </dl>
                 </div>
             </div>
@@ -139,14 +139,14 @@
             <!-- Suelto -->
             <div class="stat-card">
                 <div class="flex flex-col h-full">
-                    <div class="bg-indigo-500 rounded-lg p-2.5 w-fit mb-3">
+                    <div class="bg-brand-500 rounded-lg p-2.5 w-fit mb-3">
                         <svg class="h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path>
                         </svg>
                     </div>
                     <dl class="flex-1">
                         <dt class="text-sm font-medium text-gray-500 mb-1">Suelto</dt>
-                        <dd class="text-lg font-display font-bold text-indigo-600">₡{{ number_format($totalesPeriodo['total_suelto'], 2) }}</dd>
+                        <dd class="text-lg font-display font-bold text-brand-600">₡{{ number_format($totalesPeriodo['total_suelto'], 2) }}</dd>
                     </dl>
                 </div>
             </div>

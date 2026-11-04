@@ -25,4 +25,4 @@
        onwheel="this.blur()"
        onblur="if (this.value === '') this.value = '0'"
        oninput="if (/^0\d/.test(this.value)) this.value = this.value.replace(/^0+(?=\d)/, '')"
-       {{ $attributes->class(['w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500', 'asistencia-input' => $suma]) }}>
+       {{ $attributes->class(['w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500', 'asistencia-input' => $suma]) }}>

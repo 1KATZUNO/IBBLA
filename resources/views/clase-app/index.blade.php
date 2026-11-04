@@ -5,7 +5,7 @@
 
 @section('content')
 <div class="space-y-6 max-w-6xl mx-auto">
-    <div class="bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl shadow-md p-6 border border-amber-200">
+    <div class="bg-amber-50 rounded-2xl shadow-md p-6 border border-amber-200">
         <h2 class="text-xl font-semibold text-gray-800 mb-2">Selecciona una clase</h2>
         <p class="text-sm text-gray-600">
             Registro digital de Escuela Dominical: miembros, visitas, asistencia individual por domingo

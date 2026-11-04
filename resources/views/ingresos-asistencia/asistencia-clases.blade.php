@@ -27,16 +27,16 @@
                 <div>
                     <label for="desde" class="block text-sm font-medium text-gray-700 mb-2">Desde</label>
                     <input type="date" name="desde" id="desde" value="{{ $filtros['desde']->toDateString() }}" required
-                           class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                           class="w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
                 </div>
                 <div>
                     <label for="hasta" class="block text-sm font-medium text-gray-700 mb-2">Hasta</label>
                     <input type="date" name="hasta" id="hasta" value="{{ $filtros['hasta']->toDateString() }}" required
-                           class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                           class="w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
                 </div>
                 <div>
                     <label for="clase_id" class="block text-sm font-medium text-gray-700 mb-2">Clase</label>
-                    <select name="clase_id" id="clase_id" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    <select name="clase_id" id="clase_id" class="w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
                         <option value="">Todas las clases</option>
                         @foreach($clases as $clase)
                             <option value="{{ $clase->id }}" @selected($filtros['clase_id'] === $clase->id)>{{ $clase->nombre }}{{ $clase->activa ? '' : ' (inactiva)' }}</option>
@@ -44,7 +44,7 @@
                     </select>
                 </div>
                 <div class="flex items-end gap-2">
-                    <button type="submit" class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+                    <button type="submit" class="flex-1 px-4 py-2 bg-brand-600 text-white rounded-md hover:bg-brand-700 transition-colors">
                         Consultar
                     </button>
                     <a href="{{ route('ingresos-asistencia.asistencia-clases') }}" title="Volver a los últimos 2 meses, todas las clases"
@@ -55,14 +55,14 @@
             </div>
             <label class="flex items-center gap-2 text-sm text-gray-700">
                 <input type="checkbox" name="incluir_ceros" value="1" @checked($filtros['incluir_ceros'])
-                       class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                       class="rounded border-gray-300 text-brand-600 shadow-sm focus:border-brand-500 focus:ring-brand-500">
                 Contar también las fechas en 0 (clase con 0 niños, 0 niñas y 0 maestros)
             </label>
         </form>
     </div>
 
     <!-- Cómo se calcula -->
-    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-blue-900">
+    <div class="bg-brand-50 border border-brand-200 rounded-lg p-4 text-sm text-brand-900">
         <p class="font-semibold mb-1">Cómo se calcula el promedio</p>
         <ul class="list-disc list-inside space-y-1">
             <li>Promedio de una clase = suma de la clase en el rango ÷ fechas en que la clase tiene registro. Lo mismo para niños, niñas, maestros y total.</li>
@@ -81,23 +81,23 @@
 
     <!-- Resultado -->
     <div class="bg-white rounded-xl shadow-lg overflow-hidden border border-gray-100">
-        <div class="px-6 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 flex flex-wrap justify-between items-center gap-3">
+        <div class="px-6 py-4 bg-brand-700 flex flex-wrap justify-between items-center gap-3">
             <div>
                 <h3 class="text-lg font-semibold text-white">
                     Del {{ $filtros['desde']->format('d/m/Y') }} al {{ $filtros['hasta']->format('d/m/Y') }}
                 </h3>
-                <p class="text-blue-100 text-sm mt-1">
+                <p class="text-brand-100 text-sm mt-1">
                     {{ $reporte['clase_nombre'] ?? 'Todas las clases' }}
                     · {{ $general['fechas'] }} {{ $general['fechas'] === 1 ? 'fecha con registro' : 'fechas con registro' }}
                 </p>
             </div>
             <div class="flex gap-2">
                 <a href="{{ route('ingresos-asistencia.asistencia-clases.pdf', $descarga) }}"
-                   class="px-4 py-2 bg-white text-blue-600 rounded-lg hover:bg-blue-50 transition-colors font-semibold shadow-md">
+                   class="px-4 py-2 bg-white text-brand-600 rounded-lg hover:bg-brand-50 transition-colors font-semibold shadow-md">
                     PDF
                 </a>
                 <a href="{{ route('ingresos-asistencia.asistencia-clases.csv', $descarga) }}"
-                   class="px-4 py-2 bg-white text-blue-600 rounded-lg hover:bg-blue-50 transition-colors font-semibold shadow-md">
+                   class="px-4 py-2 bg-white text-brand-600 rounded-lg hover:bg-brand-50 transition-colors font-semibold shadow-md">
                     CSV
                 </a>
                 <a href="{{ route('ingresos-asistencia.asistencia-clases.excel', $descarga) }}"
@@ -117,13 +117,13 @@
         @else
             <!-- Promedio general por fecha -->
             <div class="p-6 grid grid-cols-2 md:grid-cols-4 gap-4 border-b border-gray-100">
-                <div class="bg-blue-50 border-l-4 border-blue-500 rounded-lg p-4">
-                    <p class="text-xs text-blue-700 uppercase font-medium">Promedio niños</p>
-                    <p class="text-2xl font-bold text-blue-900 mt-1">{{ $formato($general['promedios']['ninos']) }}</p>
+                <div class="bg-brand-50 border-l-4 border-brand-500 rounded-lg p-4">
+                    <p class="text-xs text-brand-700 uppercase font-medium">Promedio niños</p>
+                    <p class="text-2xl font-bold text-brand-900 mt-1">{{ $formato($general['promedios']['ninos']) }}</p>
                 </div>
-                <div class="bg-purple-50 border-l-4 border-purple-500 rounded-lg p-4">
-                    <p class="text-xs text-purple-700 uppercase font-medium">Promedio niñas</p>
-                    <p class="text-2xl font-bold text-purple-900 mt-1">{{ $formato($general['promedios']['ninas']) }}</p>
+                <div class="bg-gray-50 border-l-4 border-gray-500 rounded-lg p-4">
+                    <p class="text-xs text-gray-700 uppercase font-medium">Promedio niñas</p>
+                    <p class="text-2xl font-bold text-gray-900 mt-1">{{ $formato($general['promedios']['ninas']) }}</p>
                 </div>
                 <div class="bg-green-50 border-l-4 border-green-500 rounded-lg p-4">
                     <p class="text-xs text-green-700 uppercase font-medium">Promedio maestros</p>
@@ -164,22 +164,22 @@
                                     <td class="px-3 py-3 text-sm text-center font-bold text-gray-900">{{ $fila['total'] }}</td>
                                 </tr>
                             @endforeach
-                            <tr class="bg-blue-50 font-semibold">
-                                <td colspan="2" class="px-3 py-3 text-sm text-blue-900">Total {{ $clase['nombre'] }} ({{ $clase['fechas'] }} {{ $clase['fechas'] === 1 ? 'fecha' : 'fechas' }})</td>
-                                <td class="px-3 py-3 text-sm text-center text-blue-900">{{ $clase['totales']['ninos'] }}</td>
-                                <td class="px-3 py-3 text-sm text-center text-blue-900">{{ $clase['totales']['ninas'] }}</td>
-                                <td class="px-3 py-3 text-sm text-center text-blue-900">{{ $clase['totales']['maestros'] }}</td>
-                                <td class="px-3 py-3 text-sm text-center text-blue-900">{{ $clase['totales']['total'] }}</td>
+                            <tr class="bg-brand-50 font-semibold">
+                                <td colspan="2" class="px-3 py-3 text-sm text-brand-900">Total {{ $clase['nombre'] }} ({{ $clase['fechas'] }} {{ $clase['fechas'] === 1 ? 'fecha' : 'fechas' }})</td>
+                                <td class="px-3 py-3 text-sm text-center text-brand-900">{{ $clase['totales']['ninos'] }}</td>
+                                <td class="px-3 py-3 text-sm text-center text-brand-900">{{ $clase['totales']['ninas'] }}</td>
+                                <td class="px-3 py-3 text-sm text-center text-brand-900">{{ $clase['totales']['maestros'] }}</td>
+                                <td class="px-3 py-3 text-sm text-center text-brand-900">{{ $clase['totales']['total'] }}</td>
                             </tr>
-                            <tr class="bg-indigo-50 font-semibold">
-                                <td colspan="2" class="px-3 py-3 text-sm text-indigo-900">
+                            <tr class="bg-brand-50 font-semibold">
+                                <td colspan="2" class="px-3 py-3 text-sm text-brand-900">
                                     Promedio {{ $clase['nombre'] }}
-                                    <span class="font-normal text-xs text-indigo-700">(total ÷ {{ $clase['fechas'] }} {{ $clase['fechas'] === 1 ? 'fecha' : 'fechas' }})</span>
+                                    <span class="font-normal text-xs text-brand-700">(total ÷ {{ $clase['fechas'] }} {{ $clase['fechas'] === 1 ? 'fecha' : 'fechas' }})</span>
                                 </td>
-                                <td class="px-3 py-3 text-sm text-center text-indigo-900">{{ $formato($clase['promedios']['ninos']) }}</td>
-                                <td class="px-3 py-3 text-sm text-center text-indigo-900">{{ $formato($clase['promedios']['ninas']) }}</td>
-                                <td class="px-3 py-3 text-sm text-center text-indigo-900">{{ $formato($clase['promedios']['maestros']) }}</td>
-                                <td class="px-3 py-3 text-sm text-center text-indigo-900">{{ $formato($clase['promedios']['total']) }}</td>
+                                <td class="px-3 py-3 text-sm text-center text-brand-900">{{ $formato($clase['promedios']['ninos']) }}</td>
+                                <td class="px-3 py-3 text-sm text-center text-brand-900">{{ $formato($clase['promedios']['ninas']) }}</td>
+                                <td class="px-3 py-3 text-sm text-center text-brand-900">{{ $formato($clase['promedios']['maestros']) }}</td>
+                                <td class="px-3 py-3 text-sm text-center text-brand-900">{{ $formato($clase['promedios']['total']) }}</td>
                             </tr>
                         @endforeach
 

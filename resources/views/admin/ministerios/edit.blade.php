@@ -20,9 +20,9 @@
             @endif
                 <li class="py-2 flex items-center justify-between gap-3 text-sm">
                     <span>
-                        <a href="{{ route('personas.edit', $persona) }}" class="text-blue-600 hover:underline">{{ $persona->nombre }}</a>
+                        <a href="{{ route('personas.edit', $persona) }}" class="text-brand-600 hover:underline">{{ $persona->nombre }}</a>
                         @if($persona->pivot->es_lider)
-                            <span class="ml-2 px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 text-xs">Líder</span>
+                            <span class="ml-2 px-2 py-0.5 rounded-full bg-gray-100 text-gray-700 text-xs">Líder</span>
                         @endif
                     </span>
                     <span class="text-xs text-gray-500">

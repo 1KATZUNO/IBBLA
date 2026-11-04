@@ -11,37 +11,37 @@
 
     {{-- KPIs --}}
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div class="bg-blue-50 border-l-4 border-blue-500 rounded-lg p-4">
-            <p class="text-xs text-blue-700 uppercase font-medium">Total del período</p>
-            <p class="text-2xl font-bold text-blue-900 mt-1">{{ number_format($totalPeriodo) }}</p>
+        <div class="bg-brand-50 border-l-4 border-brand-500 rounded-lg p-4">
+            <p class="text-xs text-brand-700 uppercase font-medium">Total del período</p>
+            <p class="text-2xl font-bold text-brand-900 mt-1">{{ number_format($totalPeriodo) }}</p>
         </div>
-        <div class="bg-indigo-50 border-l-4 border-indigo-500 rounded-lg p-4">
-            <p class="text-xs text-indigo-700 uppercase font-medium">Promedio / culto</p>
-            <p class="text-2xl font-bold text-indigo-900 mt-1">{{ $promedio }}</p>
+        <div class="bg-brand-50 border-l-4 border-brand-500 rounded-lg p-4">
+            <p class="text-xs text-brand-700 uppercase font-medium">Promedio / culto</p>
+            <p class="text-2xl font-bold text-brand-900 mt-1">{{ $promedio }}</p>
         </div>
         <div class="bg-emerald-50 border-l-4 border-emerald-500 rounded-lg p-4">
             <p class="text-xs text-emerald-700 uppercase font-medium">Capilla</p>
             <p class="text-2xl font-bold text-emerald-900 mt-1">{{ number_format($capilla) }}</p>
         </div>
-        <div class="bg-purple-50 border-l-4 border-purple-500 rounded-lg p-4">
-            <p class="text-xs text-purple-700 uppercase font-medium">Niños</p>
-            <p class="text-2xl font-bold text-purple-900 mt-1">{{ number_format($ninos) }}</p>
+        <div class="bg-gray-50 border-l-4 border-gray-500 rounded-lg p-4">
+            <p class="text-xs text-gray-700 uppercase font-medium">Niños</p>
+            <p class="text-2xl font-bold text-gray-900 mt-1">{{ number_format($ninos) }}</p>
         </div>
         <div class="bg-amber-50 border-l-4 border-amber-500 rounded-lg p-4">
             <p class="text-xs text-amber-700 uppercase font-medium">Transmisión</p>
             <p class="text-2xl font-bold text-amber-900 mt-1">{{ number_format($transmision) }}</p>
         </div>
-        <div class="bg-pink-50 border-l-4 border-pink-500 rounded-lg p-4">
-            <p class="text-xs text-pink-700 uppercase font-medium">Visitas</p>
-            <p class="text-2xl font-bold text-pink-900 mt-1">{{ number_format($visitas) }}</p>
+        <div class="bg-gray-50 border-l-4 border-gray-500 rounded-lg p-4">
+            <p class="text-xs text-gray-700 uppercase font-medium">Visitas</p>
+            <p class="text-2xl font-bold text-gray-900 mt-1">{{ number_format($visitas) }}</p>
         </div>
         <div class="bg-green-50 border-l-4 border-green-500 rounded-lg p-4">
             <p class="text-xs text-green-700 uppercase font-medium">Salvos</p>
             <p class="text-2xl font-bold text-green-900 mt-1">{{ number_format($salvos) }}</p>
         </div>
-        <div class="bg-sky-50 border-l-4 border-sky-500 rounded-lg p-4">
-            <p class="text-xs text-sky-700 uppercase font-medium">Bautismos</p>
-            <p class="text-2xl font-bold text-sky-900 mt-1">{{ number_format($bautismos) }}</p>
+        <div class="bg-brand-50 border-l-4 border-brand-500 rounded-lg p-4">
+            <p class="text-xs text-brand-700 uppercase font-medium">Bautismos</p>
+            <p class="text-2xl font-bold text-brand-900 mt-1">{{ number_format($bautismos) }}</p>
         </div>
     </div>
 

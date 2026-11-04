@@ -20,7 +20,7 @@
                            value="{{ request('buscar') }}"
                            placeholder="Buscar por nombre, PIN o teléfono..."
                            aria-label="Buscar por nombre, PIN o teléfono"
-                           class="block w-full min-h-[44px] pl-10 pr-3 border border-gray-300 rounded-lg focus:ring-blue-500 focus:border-blue-500">
+                           class="block w-full min-h-[44px] pl-10 pr-3 border border-gray-300 rounded-lg focus:ring-brand-500 focus:border-brand-500">
                 </div>
                 <div class="flex gap-2">
                     <button type="submit" class="btn-secondary flex-1 sm:flex-none">
@@ -41,13 +41,13 @@
         <div class="toolbar mt-3 pt-3 border-t border-gray-100">
             <span class="text-sm text-gray-500 mr-1">Reportes:</span>
             <button type="button" onclick="mostrarModalReporte()" class="btn-secondary">
-                <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                 </svg>
                 Reporte PDF
             </button>
             <button type="button" onclick="mostrarModalReporteGeneral()" class="btn-secondary">
-                <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                <svg class="w-5 h-5 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"></path>
                 </svg>
                 Reporte General
@@ -74,7 +74,7 @@
                 @forelse($personas as $persona)
                 <tr class="hover:bg-gray-50">
                     <td class="px-4 py-3 text-sm">
-                        <a href="{{ route('personas.show', $persona) }}" class="font-medium text-gray-900 hover:text-blue-700 hover:underline">{{ $persona->nombre }}</a>
+                        <a href="{{ route('personas.show', $persona) }}" class="font-medium text-gray-900 hover:text-brand-700 hover:underline">{{ $persona->nombre }}</a>
                         @if($persona->pin || $persona->telefono)
                         <div class="xl:hidden mt-0.5 text-xs text-gray-500">
                             {{ collect([$persona->pin ? 'PIN ' . $persona->pin : null, $persona->telefono])->filter()->implode(' · ') }}
@@ -106,14 +106,14 @@
                             <a href="{{ route('personas.show', $persona) }}" class="btn-icon text-green-700 hover:bg-green-50" aria-label="Ver {{ $persona->nombre }}" title="Ver detalle">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                             </a>
-                            <a href="{{ route('compromisos.show', $persona) }}" class="btn-icon text-purple-700 hover:bg-purple-50" aria-label="Compromisos de {{ $persona->nombre }}" title="Compromisos">
+                            <a href="{{ route('compromisos.show', $persona) }}" class="btn-icon text-gray-700 hover:bg-gray-50" aria-label="Compromisos de {{ $persona->nombre }}" title="Compromisos">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
                             </a>
                             <x-whatsapp-enviar :persona="$persona" :compacto="true" />
                             <a href="{{ route('personas.informe', ['persona' => $persona, 'accion' => 'ver']) }}" target="_blank" rel="noopener" class="btn-icon text-green-700 hover:bg-green-50" aria-label="Estado de cuenta en PDF de {{ $persona->nombre }}" title="Estado de cuenta (PDF)">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6M7 4h7l5 5v11a2 2 0 01-2 2H7a2 2 0 01-2-2V6a2 2 0 012-2z"/></svg>
                             </a>
-                            <a href="{{ route('personas.edit', $persona) }}" class="btn-row text-blue-700 hover:bg-blue-50">
+                            <a href="{{ route('personas.edit', $persona) }}" class="btn-row text-brand-700 hover:bg-brand-50">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
                                 Editar
                             </a>
@@ -227,7 +227,7 @@
     <div class="relative top-20 mx-auto p-6 border w-full max-w-md shadow-lg rounded-lg bg-white">
         <div class="mt-3">
             <div class="flex items-center justify-between mb-6">
-                <h3 class="text-xl font-bold text-blue-900 flex items-center gap-2">
+                <h3 class="text-xl font-bold text-brand-900 flex items-center gap-2">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
                     </svg>
@@ -241,15 +241,15 @@
             </div>
 
             <div class="space-y-4">
-                <div class="bg-blue-50 rounded-lg p-4 border border-blue-200 text-center">
+                <div class="bg-brand-50 rounded-lg p-4 border border-brand-200 text-center">
                     <p class="text-sm text-gray-600 mb-1">Período del reporte:</p>
-                    <p class="text-lg font-bold text-blue-700">Enero - {{ $meses[$mesActual] }} {{ $añoActual }}</p>
+                    <p class="text-lg font-bold text-brand-700">Enero - {{ $meses[$mesActual] }} {{ $añoActual }}</p>
                     <p class="text-xs text-gray-500 mt-2">Contribuciones acumuladas de todas las personas</p>
                 </div>
 
                 <form action="{{ route('personas.reporte-pdf') }}" method="GET" target="_blank">
                     <div class="flex gap-3">
-                        <button type="submit" name="accion" value="ver" class="flex-1 px-4 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center justify-center gap-2">
+                        <button type="submit" name="accion" value="ver" class="flex-1 px-4 py-3 bg-brand-600 text-white rounded-md hover:bg-brand-700 transition-colors flex items-center justify-center gap-2">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
@@ -280,7 +280,7 @@
     <div class="relative top-20 mx-auto p-6 border w-full max-w-md shadow-lg rounded-lg bg-white">
         <div class="mt-3">
             <div class="flex items-center justify-between mb-6">
-                <h3 class="text-xl font-bold text-indigo-900 flex items-center gap-2">
+                <h3 class="text-xl font-bold text-brand-900 flex items-center gap-2">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"></path>
                     </svg>
@@ -294,9 +294,9 @@
             </div>
 
             <div class="space-y-4">
-                <div class="bg-indigo-50 rounded-lg p-4 border border-indigo-200 text-center">
+                <div class="bg-brand-50 rounded-lg p-4 border border-brand-200 text-center">
                     <p class="text-sm text-gray-600 mb-1">Periodo del reporte:</p>
-                    <p class="text-lg font-bold text-indigo-700">Enero - {{ $meses[$mesActual] }} {{ $añoActual }}</p>
+                    <p class="text-lg font-bold text-brand-700">Enero - {{ $meses[$mesActual] }} {{ $añoActual }}</p>
                     <p class="text-xs text-gray-500 mt-2">Dado vs Esperado por mes y categoria</p>
                 </div>
 
@@ -313,7 +313,7 @@
 
                 <form action="{{ route('personas.reporte-general') }}" method="GET" target="_blank">
                     <div class="flex gap-3">
-                        <button type="submit" name="accion" value="ver" class="flex-1 px-4 py-3 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors flex items-center justify-center gap-2">
+                        <button type="submit" name="accion" value="ver" class="flex-1 px-4 py-3 bg-brand-600 text-white rounded-md hover:bg-brand-700 transition-colors flex items-center justify-center gap-2">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
