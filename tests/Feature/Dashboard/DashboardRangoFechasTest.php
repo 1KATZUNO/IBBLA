@@ -372,7 +372,7 @@ class DashboardRangoFechasTest extends TestCase
         $this->assertStringContainsString('href="'.route('dashboard').$periodo.'"', $html);
 
         // el dashboard en el que se está aparece resaltado y los otros no
-        $this->assertMatchesRegularExpression('/class="tab tab-active"\s+aria-current="page">General<\/a>/', $html);
+        $this->assertMatchesRegularExpression('/class="tab tab-active"\s+aria-current="page"\s*>General<\/a>/', $html);
         $this->assertMatchesRegularExpression('/class="tab "\s*>Asistencia<\/a>/', $html);
         $this->assertMatchesRegularExpression('/class="tab "\s*>Promesas<\/a>/', $html);
     }
