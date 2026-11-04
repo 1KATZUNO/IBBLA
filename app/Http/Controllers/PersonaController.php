@@ -506,70 +506,29 @@ class PersonaController extends Controller
      * montos de los sobres en dolares como si fueran colones; ahora van convertidos con el tipo de
      * cambio del sobre, igual que en el estado de cuenta y el Reporte General.
      */
-    public function reportePdf(Request $request, MotorReportes $motor)
+    public function reportePdf(Request $request, MotorReportes $motor, \App\Services\Reportes\Exportaciones\ContribucionesPdf $pdf)
     {
         $validated = $request->validate([
             'accion' => 'required|in:ver,descargar',
         ]);
 
-        // Calcular desde enero del anio actual hasta el mes actual
+        // Desde enero del anio actual hasta hoy (el motor no cuenta nada posterior a hoy)
         $anioActual = now()->year;
         $mesActual = now()->month;
-        $periodo = PeriodoReporte::deMeses($anioActual, 1, $mesActual);
-        $tituloPeriodo = $periodo->etiqueta();
-
-        // Categorías dinámicas del tenant
-        $categorias = tenant_categories()->pluck('slug')->toArray();
-
         $personas = Persona::where('activo', true)
             ->orderBy('nombre')
             ->get(['id', 'nombre', 'activo']);
-        $resultado = $motor->calcular($periodo, $personas);
+        $resultado = $motor->calcular(PeriodoReporte::deMeses($anioActual, 1, $mesActual), $personas);
 
-        // Totales por categoría, en centimos para que el total general cuadre con las filas
-        $totalesPorCategoria = array_fill_keys($categorias, 0);
-        $totalGeneral = 0;
-
-        foreach ($personas as $persona) {
-            $cuenta = $resultado->cuenta($persona->id);
-            $contribuciones = [];
-            $totalPersona = 0;
-
-            foreach ($categorias as $cat) {
-                $monto = $cuenta->dadoCentimos(null, [$cat]);
-                $contribuciones[$cat] = Dinero::colones($monto);
-                $totalesPorCategoria[$cat] += $monto;
-                $totalPersona += $monto;
-            }
-            $totalGeneral += $totalPersona;
-
-            $persona->contribuciones = $contribuciones;
-            $persona->total_dado = Dinero::colones($totalPersona);
-        }
-        $totalesPorCategoria = array_map(fn (int $c) => Dinero::colones($c), $totalesPorCategoria);
-
-        // Filtrar solo personas que han dado algo
-        $personas = $personas->filter(function($persona) {
-            return $persona->total_dado > 0;
-        });
-
-        $pdf = \PDF::loadView('pdfs.reporte-contribuciones', [
-            'personas' => $personas,
-            'tituloPeriodo' => $tituloPeriodo,
-            'categorias' => $categorias,
-            'totalesPorCategoria' => $totalesPorCategoria,
-            'totalGeneral' => Dinero::colones($totalGeneral),
-        ]);
-
-        $pdf->setPaper('letter', 'landscape');
-
+        $contenido = $pdf->generar($resultado, $personas);
         $nombreArchivo = 'reporte-contribuciones-' . $anioActual . '-' . str_pad($mesActual, 2, '0', STR_PAD_LEFT) . '.pdf';
+        $disposicion = $validated['accion'] === 'descargar' ? 'attachment' : 'inline';
 
-        if ($validated['accion'] === 'descargar') {
-            return $pdf->download($nombreArchivo);
-        } else {
-            return $pdf->stream($nombreArchivo);
-        }
+        return response($contenido, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => HeaderUtils::makeDisposition($disposicion, $nombreArchivo),
+            'Content-Length' => strlen($contenido),
+        ]);
     }
 
     /**
