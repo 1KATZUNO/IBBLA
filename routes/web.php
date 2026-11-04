@@ -214,7 +214,8 @@ Route::middleware(['auth', 'role:admin', 'audit'])->group(function () {
     Route::post('personas/resetear-promesas', [PersonaController::class, 'resetearPromesas'])->name('personas.resetear-promesas');
 
     // Gestión de Usuarios
-    Route::resource('usuarios', App\Http\Controllers\UserController::class);
+    // Sin "show": no hay pantalla de detalle (antes daba 500, QA-012)
+    Route::resource('usuarios', App\Http\Controllers\UserController::class)->except(['show']);
 
     // Carga retroactiva de asistencias (import Excel)
     Route::get('/admin/asistencia/importar', [App\Http\Controllers\AsistenciaImportController::class, 'index'])->name('asistencia.importar.index');
