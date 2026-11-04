@@ -203,8 +203,9 @@ class ContratoReportesTest extends TestCase
         // Ana: esperado ene (10.000 + 2.000 x 4 + $10 x 500) + feb (10.000 + 2.000 x 4 + 5.000) = 46.000;
         // dado misiones 30.200,50 + construccion 2.000 + seminario 3.625 (sin campa ni diezmo).
         $this->assertEquals(['dado' => 35825.5, 'esperado' => 46000, 'diferencia' => -10174.5], $reporte['Ana Mora']['totales']);
-        // Carla: campa 9.000,10 + micro 3.000; esperado (3.000 + 3.000) x 2. pro_templo no es de compromiso.
-        $this->assertEquals(['dado' => 12000.1, 'esperado' => 12000, 'diferencia' => 0.1], $reporte['Carla Solano']['totales']);
+        // Carla: campa 9.000,10 + micro 3.000; esperado (campa 2.000 + 3.000, que se suman, + micro 3.000) x 2.
+        // pro_templo no es de compromiso.
+        $this->assertEquals(['dado' => 12000.1, 'esperado' => 16000, 'diferencia' => -3999.9], $reporte['Carla Solano']['totales']);
         // Beto no tiene promesa; ni la inactiva ni la de otra iglesia.
         $this->assertSame(['Ana Mora', 'Carla Solano'], $reporte->keys()->all());
     }

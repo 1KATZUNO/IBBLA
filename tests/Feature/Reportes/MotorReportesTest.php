@@ -86,15 +86,16 @@ class MotorReportesTest extends TestCase
         $this->assertSame(['misiones', 'seminario', 'construccion'], array_keys($ana->promesas()));
     }
 
-    public function test_vale_la_ultima_promesa_de_cada_categoria_y_las_excluidas_no_cuentan(): void
+    public function test_las_promesas_de_una_categoria_se_suman_y_las_excluidas_no_cuentan(): void
     {
         $carla = $this->calcular(PeriodoReporte::deMeses(2026, 1, 1))->cuenta($this->carla->id);
 
-        // campa: 2.000 y después 3.000 -> 3.000. El diezmo prometido no se espera. micro quincenal: 1.500 x 2.
+        // campa: 2.000 y 3.000 -> 5.000. El diezmo prometido no se espera. micro quincenal: 1.500 x 2.
         $this->assertSame(['campa', 'micro'], array_keys($carla->promesas()));
-        $this->assertEquals(3000, $carla->esperado('2026-01', 'campa'));
+        $this->assertEquals(5000, $carla->esperado('2026-01', 'campa'));
+        $this->assertSame('₡2,000.00 mensual + ₡3,000.00 mensual', $carla->promesas()['campa']->descripcion());
         $this->assertEquals(0, $carla->esperado('2026-01', 'diezmo'));
-        $this->assertEquals(6000, $carla->esperado('2026-01'));
+        $this->assertEquals(8000, $carla->esperado('2026-01'));
     }
 
     public function test_al_corte_el_mes_en_curso_no_se_cobra_pero_lo_dado_hasta_el_corte_si_cuenta(): void
@@ -120,7 +121,7 @@ class MotorReportesTest extends TestCase
         Carbon::setTestNow('2026-11-01 10:00:00');
         $carla = $this->calcular(PeriodoReporte::alCorte('2026-10-31'))->cuenta($this->carla->id);
 
-        $this->assertEquals(10 * 6000, $carla->estado()->leCorresponde());
+        $this->assertEquals(10 * 8000, $carla->estado()->leCorresponde());
         $this->assertEquals(13000.1, $carla->estado()->haDado());
     }
 

@@ -25,7 +25,7 @@ use App\Services\Reportes\PeriodoReporte;
  * - "esperado" = promesa segun frecuencia (semanal x domingos del mes,
  *   quincenal x 2, mensual x 1) de los meses completos antes de hoy: el mes en
  *   curso sale con esperado 0 (no se cobra) y lo dado en el si cuenta; si hay dos
- *   promesas de la misma categoria vale la ultima;
+ *   promesas de la misma categoria se suman;
  * - se omiten las personas sin nada dado ni esperado (p. ej. sin promesa).
  */
 class ReporteGeneralService

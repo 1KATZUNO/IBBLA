@@ -17,8 +17,9 @@ use Illuminate\Support\Facades\DB;
  *  - Dado: detalles de los sobres de la persona en cultos con fecha dentro del periodo, por mes del
  *    culto y categoria, de TODAS las categorias (se muestran). Los dolares se convierten con
  *    ConversorUsd: tipo de cambio del sobre, si no el de la fecha del culto, si no el de hoy.
- *  - Esperado: por cada categoria de compromiso (las de la iglesia no excluidas de promesas) vale la
- *    ultima promesa de la persona; semanal x domingos del mes, quincenal x 2, mensual x 1. Las
+ *  - Esperado: por cada categoria de compromiso (las de la iglesia no excluidas de promesas) la SUMA
+ *    de todas las promesas de la persona en ella, cada una por su frecuencia (semanal x domingos del
+ *    mes, quincenal x 2, mensual x 1) y su moneda. Las
  *    promesas en dolares, al tipo de cambio del ultimo dia de cada mes (el de hoy para el mes en
  *    curso). Las promesas en categorias excluidas (p. ej. diezmo) no cuentan.
  *  - Para el estado solo se cobran los meses completos anteriores al corte (PeriodoReporte) y solo
@@ -143,33 +144,32 @@ final class MotorReportes
     }
 
     /**
-     * Promesas vigentes: una por categoria de compromiso (la ultima), en el orden de la iglesia.
+     * Promesas vigentes: TODAS las de cada categoria de compromiso (si tiene dos de seminario, lo
+     * esperado es la suma de las dos), en el orden de la iglesia.
      *
      * @param  list<int>  $ids
      * @param  list<string>  $deCompromiso
      */
     private function leerPromesas(array &$acumulado, array $ids, array $deCompromiso): void
     {
-        $ultimas = [];
+        $porPersona = [];
         $filas = DB::table('promesas')
             ->whereIn('persona_id', $ids)
             ->orderBy('id')
             ->get(['persona_id', 'categoria', 'monto', 'moneda', 'frecuencia']);
 
         foreach ($filas as $fila) {
-            $ultimas[(int) $fila->persona_id][$fila->categoria] = $fila;
+            $porPersona[(int) $fila->persona_id][$fila->categoria][] = [
+                'monto' => (float) $fila->monto,
+                'moneda' => $fila->moneda ?: 'CRC',
+                'frecuencia' => (string) $fila->frecuencia,
+            ];
         }
 
-        foreach ($ultimas as $id => $porCategoria) {
+        foreach ($porPersona as $id => $porCategoria) {
             foreach ($deCompromiso as $categoria) {
                 if (isset($porCategoria[$categoria])) {
-                    $fila = $porCategoria[$categoria];
-                    $acumulado['promesas'][$id][$categoria] = new PromesaVigente(
-                        $categoria,
-                        (float) $fila->monto,
-                        $fila->moneda ?: 'CRC',
-                        (string) $fila->frecuencia,
-                    );
+                    $acumulado['promesas'][$id][$categoria] = new PromesaVigente($categoria, $porCategoria[$categoria]);
                 }
             }
         }

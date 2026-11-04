@@ -22,7 +22,7 @@ use App\Models\TipoCambio;
  *   15/02 CRC  misiones 5.000 + diezmo 20.000
  *   02/08 CRC  préstamo 1.234,56
  *
- * Carla Solano — promesas: campa ₡2.000 y después campa ₡3.000 (vale la última), diezmo ₡50.000
+ * Carla Solano — promesas: campa ₡2.000 y campa ₡3.000 (se suman: ₡5.000), diezmo ₡50.000
  *   (categoría excluida de promesas: no cuenta), micro ₡1.500 quincenal.
  *   11/01 CRC  campa 3.000 + micro 3.000
  *   08/03 CRC  campa 6.000,10 + pro_templo 500 (categoría que la iglesia ya no tiene)

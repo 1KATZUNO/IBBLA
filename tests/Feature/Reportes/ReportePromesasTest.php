@@ -40,9 +40,9 @@ class ReportePromesasTest extends TestCase
             ->viewData('totales');
 
         $porCategoria = collect($totales['categorias'])->keyBy('categoria');
-        // Ana: misiones 10.000, construccion 2.000 x 4, seminario $5 x 2 x 500; Carla: campa 3.000 (la ultima) y micro 1.500 x 2.
-        $this->assertEquals(29000, $totales['grand_total']['prometido']);
-        $this->assertEquals(3000, $porCategoria['CAMPA']['total_prometido']);
+        // Ana: misiones 10.000, construccion 2.000 x 4, seminario $5 x 2 x 500; Carla: campa 2.000 + 3.000 y micro 1.500 x 2.
+        $this->assertEquals(31000, $totales['grand_total']['prometido']);
+        $this->assertEquals(5000, $porCategoria['CAMPA']['total_prometido']);
         // Dado: misiones 10.000 + $20 x 510 + 5.000 de Beto; construccion 2.000; campa 3.000 (sin diezmo).
         $this->assertEquals(25200, $porCategoria['Misiones']['total_dado']);
         $this->assertEquals(30200, $totales['grand_total']['dado']);

@@ -145,12 +145,13 @@ class CumplimientoPromesasTest extends TestCase
         $this->assertSame(2, $resumen['al_dia']);
         $this->assertSame(4, $resumen['pendientes']);
         $this->assertSame(1, $resumen['sin_promesa']);
-        // Le correspondia: Ana 213.000 + Carla 54.000 + Gabriel 9.000 + Hilda 27.000 + Elena 9.000 + Fabio 18.000
-        $this->assertEquals(330000, $resumen['le_correspondia']);
+        // Le correspondia: Ana 213.000 + Carla 72.000 (campa 2.000 + 3.000 y micro 3.000 por mes) + Gabriel 9.000
+        // + Hilda 27.000 + Elena 9.000 + Fabio 18.000
+        $this->assertEquals(348000, $resumen['le_correspondia']);
         // Ha dado (con promesa): 58.826,25 + 13.000,10 + 8.000 + 9.000 + 12.000 + 18.000
         $this->assertEquals(118826.35, $resumen['ha_dado']);
-        // Faltante de los pendientes: 154.173,75 + 40.999,90 + 1.000 + 18.000
-        $this->assertEquals(214173.65, $resumen['faltante']);
+        // Faltante de los pendientes: 154.173,75 + 58.999,90 + 1.000 + 18.000
+        $this->assertEquals(232173.65, $resumen['faltante']);
         $this->assertEquals(6234.56, $resumen['dado_sin_promesa']);
     }
 
@@ -278,7 +279,7 @@ class CumplimientoPromesasTest extends TestCase
         $this->assertStringContainsString('Aportan sin promesa registrada (1)', $texto);
         $this->assertStringContainsString('Beto Rojas (₡6,235)', $texto);
         $this->assertStringContainsString('-₡154,174', $texto);
-        $this->assertStringContainsString('₡330,000', $texto);
+        $this->assertStringContainsString('₡348,000', $texto);
         $this->assertStringContainsString('Página 1 de 1', $texto);
 
         $auditoria = AuditLog::where('action', AuditoriaReportes::ACCION)->sole();
@@ -315,7 +316,7 @@ class CumplimientoPromesasTest extends TestCase
         // Tarjetas (filas 6 y 7) y tabla desde la fila 9.
         $this->assertSame('Personas con promesa', $resumen->getCell('A6')->getValue());
         $this->assertEquals(6, $resumen->getCell('A7')->getValue());
-        $this->assertEquals(330000, $resumen->getCell('D7')->getValue());
+        $this->assertEquals(348000, $resumen->getCell('D7')->getValue());
         $this->assertSame('Le correspondía (ene-sep)', $resumen->getCell('C9')->getValue());
         $this->assertSame('Ana Mora', $resumen->getCell('B10')->getValue());
         $this->assertEquals(213000, $resumen->getCell('C10')->getValue());
@@ -325,7 +326,7 @@ class CumplimientoPromesasTest extends TestCase
         $this->assertSame('04/10/2026', $resumen->getCell('G10')->getFormattedValue());
         $this->assertSame('"₡"#,##0;[Red]-"₡"#,##0', $resumen->getStyle('C10')->getNumberFormat()->getFormatCode());
         $this->assertSame('TOTAL', $resumen->getCell('B16')->getValue());
-        $this->assertEquals(330000, $resumen->getCell('C16')->getValue());
+        $this->assertEquals(348000, $resumen->getCell('C16')->getValue());
         $this->assertSame('A9:I15', $resumen->getAutoFilter()->getRange());
         $this->assertSame('A10', $resumen->getFreezePane());
         // AL DÍA / PENDIENTE con color por formato condicional.
