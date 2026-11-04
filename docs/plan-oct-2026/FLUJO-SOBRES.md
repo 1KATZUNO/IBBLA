@@ -93,7 +93,8 @@ nombre completo y se seguía con Tab, con un clic en un monto o (en el formulari
 con Enter, el buscador seguía mostrando el nombre pero el campo oculto `persona_id` quedaba vacío y el
 servidor lo guardaba como Anónimo sin preguntar. En el formulario viejo además había un select con
 "Anónimo" preseleccionado debajo del buscador, y Enter en el buscador enviaba el formulario.
-En la edición, una persona inactiva caía a Anónimo (QA-002, ya corregido).
+En la edición, una persona inactiva caía a Anónimo (QA-002, ya corregido). Además, en el buscador nuevo
+la tecla Escape (para cerrar la lista) borraba lo escrito, porque es un campo de búsqueda; ya no.
 
 **Arreglo (servidor, la garantía):**
 - Un sobre sin persona solo se guarda si se marcó **"Sobre anónimo (sin persona)"** (`anonimo=1`).
