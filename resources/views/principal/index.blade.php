@@ -43,7 +43,8 @@
             ($usuario->canAccessRecuento() || $usuario->canAccessAsistencia()) ? [$usuario->canAccessRecuento() ? 'ingresos-asistencia.index' : 'ingresos-asistencia.asistencia', 'Reportes', 'PDF y Excel', 'M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z', 'bg-purple-50 text-purple-700'] : null,
             $usuario->canAccessAdmin() ? ['personas.index', 'Personas', 'Buscar, agregar y editar', 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z', 'bg-amber-50 text-amber-700'] : null,
             $usuario->canAccessAdmin() ? ['cultos.index', 'Cultos', 'Crear el culto de hoy', 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z', 'bg-sky-50 text-sky-700'] : null,
-            ($usuario->isMiembro() || in_array($usuario->rol, ['servidor', 'tesorero', 'asistente'])) ? ['mi-perfil.index', 'Mi perfil', 'Mis promesas y compromisos', 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z', 'bg-gray-100 text-gray-700'] : null,
+            ($usuario->puedeAltaRapidaPersonas() && ! $usuario->canAccessAdmin()) ? ['personas.alta-rapida', 'Agregar persona', 'Alta rápida: nombre y teléfono', 'M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z', 'bg-green-50 text-green-700'] : null,
+            $usuario->tieneMiPerfil() ? ['mi-perfil.index', 'Mi perfil', 'Mis promesas y compromisos', 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z', 'bg-gray-100 text-gray-700'] : null,
         ]));
     @endphp
     @if(count($accesos))

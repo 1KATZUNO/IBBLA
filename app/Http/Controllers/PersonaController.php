@@ -400,6 +400,15 @@ class PersonaController extends Controller
             ->with('success', 'Persona y sus promesas eliminadas correctamente. Los sobres quedan registrados.');
     }
 
+    /**
+     * Pantalla de alta rapida (nombre, telefono y correo opcionales) para quien registra sobres: el
+     * tesorero agrega personas sin ver la lista ni las fichas (decision del cliente 13/10).
+     */
+    public function altaRapida()
+    {
+        return view('personas.alta-rapida');
+    }
+
     public function quickStore(Request $request)
     {
         $validated = $request->validate([

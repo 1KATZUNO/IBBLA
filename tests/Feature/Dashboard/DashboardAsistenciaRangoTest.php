@@ -232,11 +232,14 @@ class DashboardAsistenciaRangoTest extends TestCase
             ->assertSee('Atajos:');
     }
 
-    public function test_solo_admin_y_tesorero(): void
+    /** Decision 2.7 (04-DECISIONES.md): admin, tesorero y asistente; el miembro no. */
+    public function test_admin_tesorero_y_asistente(): void
     {
-        $this->actingAs($this->crearUsuario($this->iglesia, 'tesorero'))->get(route('dashboard.asistencia'))->assertOk();
+        foreach (['tesorero', 'asistente'] as $rol) {
+            $this->actingAs($this->crearUsuario($this->iglesia, $rol))->get(route('dashboard.asistencia'))->assertOk();
+        }
 
-        foreach (['asistente', 'miembro'] as $rol) {
+        foreach (['miembro'] as $rol) {
             $this->actingAs($this->crearUsuario($this->iglesia, $rol))->get(route('dashboard.asistencia'))->assertForbidden();
         }
     }

@@ -58,12 +58,8 @@ class AuthenticatedSessionController extends Controller
             }
         }
 
-        // Redirect miembro to their profile (not servidor)
-        if ($user->rol === 'miembro') {
-            return redirect()->intended(route('mi-perfil.index', absolute: false));
-        }
-
-        return redirect()->intended(route('principal', absolute: false));
+        // Cada rol a su inicio (miembro: Mi perfil; los demas: Principal)
+        return redirect()->intended(route($user->rutaDeInicio(), absolute: false));
     }
 
     /**

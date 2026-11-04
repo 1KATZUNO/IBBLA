@@ -19,6 +19,9 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\ResolveTenant::class,
         ]);
 
+        // Quien ya tiene sesion y abre /login o /register va a SU inicio, no a /dashboard (QA-011)
+        $middleware->redirectUsersTo(fn (Request $request) => route($request->user()?->rutaDeInicio() ?? 'principal'));
+
         $middleware->alias([
             'role' => \App\Http\Middleware\CheckRole::class,
             'audit' => \App\Http\Middleware\AuditLogMiddleware::class,

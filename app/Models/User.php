@@ -121,6 +121,44 @@ class User extends Authenticatable
         return $this->hasPermission('mi_perfil') || in_array($this->rol, ['miembro', 'servidor']);
     }
 
+    // --- Reglas de pantalla (docs/ROLES.md): una sola respuesta para menu, Principal y rutas ---
+
+    /**
+     * Pantalla de inicio de cada rol (QA-011): el miembro va a Mi perfil; los demas (servidor incluido,
+     * que marca su asistencia desde Principal) a Principal.
+     * Se usa al iniciar sesion, al abrir "/" o la app instalada, y cuando alguien con sesion abre
+     * /login o /register (antes iba a /dashboard y daba 403 al asistente y al miembro).
+     */
+    public function rutaDeInicio(): string
+    {
+        return $this->isMiembro() && ! $this->isAdmin() && ! $this->hasPermission('marcar_asistencia') ? 'mi-perfil.index' : 'principal';
+    }
+
+    /**
+     * "Yo / Mi perfil" (QA-014): solo si el usuario tiene una persona vinculada (sus sobres, promesas
+     * y estado de cuenta son los de esa persona). Vale tambien para el administrador, que es hermano
+     * de la iglesia. Sin persona no se muestra el acceso.
+     */
+    public function tieneMiPerfil(): bool
+    {
+        return $this->persona()->exists();
+    }
+
+    /** Dashboard de asistencia: admin, tesorero y asistente (decision 2.7 de 04-DECISIONES.md, QA-015). */
+    public function puedeVerDashboardAsistencia(): bool
+    {
+        return $this->isSuperAdmin() || $this->isAdmin() || $this->canAccessRecuento() || $this->canAccessAsistencia();
+    }
+
+    /**
+     * Alta rapida de personas (nombre y telefono) sin entrar al modulo Personas: admin y tesoreria
+     * (decision del cliente 13/10: el tesorero no ve Personas pero si agrega personas rapido).
+     */
+    public function puedeAltaRapidaPersonas(): bool
+    {
+        return $this->isSuperAdmin() || $this->isAdmin() || $this->canAccessRecuento();
+    }
+
     // --- Dynamic permission system ---
 
     public function hasPermission(string $permission): bool

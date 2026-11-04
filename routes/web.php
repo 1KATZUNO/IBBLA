@@ -14,8 +14,11 @@ use App\Http\Controllers\SuperAdmin\TenantController as SATenantController;
 use App\Services\BccrExchangeRateService;
 use Illuminate\Support\Facades\Route;
 
+// Con sesion, cada rol a su inicio (QA-011: la app instalada abre "/" y antes daba 403)
 Route::get('/', function () {
-    return redirect()->route('login');
+    return auth()->check()
+        ? redirect()->route(auth()->user()->rutaDeInicio())
+        : redirect()->route('login');
 });
 
 // Informe individual de una persona por enlace firmado: se comparte por WhatsApp, no requiere
@@ -57,6 +60,10 @@ Route::middleware(['auth', 'role:admin,tesorero', 'audit'])->group(function () {
 
     // Dashboards específicos (Fase 4) — además del general, no en su lugar
     Route::get('/dashboard/promesas', [App\Http\Controllers\DashboardPromesasController::class, 'index'])->name('dashboard.promesas');
+});
+
+// Dashboard de asistencia: admin, tesorero y asistente (decision 2.7, QA-015)
+Route::middleware(['auth', 'role:admin,tesorero,asistente', 'audit'])->group(function () {
     Route::get('/dashboard/asistencia', [App\Http\Controllers\DashboardAsistenciaController::class, 'index'])->name('dashboard.asistencia');
 });
 
@@ -66,8 +73,8 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-// Ruta Mi Perfil - accesible para miembros, servidores, tesorero y asistente
-Route::middleware(['auth', 'role:miembro,servidor,tesorero,asistente'])->group(function () {
+// Mi Perfil: cualquier rol con persona vinculada, tambien el admin (QA-014)
+Route::middleware(['auth', 'role:miembro,servidor,tesorero,asistente,admin'])->group(function () {
     Route::get('/mi-perfil', [App\Http\Controllers\MiPerfilController::class, 'index'])->name('mi-perfil.index');
     Route::get('/mi-perfil/informe', [App\Http\Controllers\MiPerfilController::class, 'informe'])->name('mi-perfil.informe');
 });
@@ -80,7 +87,8 @@ Route::middleware(['auth', 'role:servidor'])->group(function () {
 
 // Rutas para Admin y Tesorero - Recuento e Ingresos
 Route::middleware(['auth', 'role:admin,tesorero'])->group(function () {
-    // Crear persona rapida (desde recuento)
+    // Alta rapida de personas (desde el sobre o desde su pantalla): el tesorero no entra a Personas
+    Route::get('personas/alta-rapida', [PersonaController::class, 'altaRapida'])->name('personas.alta-rapida');
     Route::post('personas/quick-store', [PersonaController::class, 'quickStore'])->name('personas.quick-store');
 
     // Enviar el informe de una persona por WhatsApp (abre wa.me con el enlace firmado al PDF)
