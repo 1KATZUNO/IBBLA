@@ -2,140 +2,54 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Compromiso;
 use App\Models\Persona;
-use App\Models\TipoCambio;
-use App\Services\Reportes\CuentaPersona;
-use App\Services\Reportes\MotorReportes;
-use App\Services\Reportes\PeriodoReporte;
+use App\Services\InformePersonaService;
+use App\Services\Reportes\SincronizadorCompromisos;
 use Carbon\Carbon;
-use Illuminate\Support\Collection;
 
 class CompromisoController extends Controller
 {
-    public function __construct(private readonly MotorReportes $motor) {}
+    /** Años que se pueden consultar hacia atrás. */
+    private const ANIOS_ATRAS = 2;
 
     /**
-     * Muestra el estado de compromisos de una persona
+     * Estado de compromisos de una persona en un año, SOLO LECTURA (QA-025): las mismas cifras del
+     * estado de cuenta en PDF, de Mi perfil y del reporte de cumplimiento, porque salen del mismo
+     * cálculo (InformePersonaService sobre el motor único). Año en curso: corte hoy; años pasados:
+     * al 31 de diciembre. Ya no guarda nada en la tabla compromisos (eso lo hace
+     * compromisos:sincronizar).
      */
-    public function show(Persona $persona)
+    public function show(Persona $persona, InformePersonaService $informe)
     {
-        $año = (int) request('año', Carbon::now()->year);
-        $mes = (int) request('mes', Carbon::now()->month);
+        $hoy = Carbon::today();
+        $año = (int) request('año', $hoy->year);
+        $año = max($hoy->year - self::ANIOS_ATRAS, min($hoy->year, $año));
 
-        // Obtener o calcular compromisos para el mes seleccionado
-        $compromisos = $this->sincronizarMes(collect([$persona]), $año, $mes)[$persona->id] ?? collect();
+        $hasta = $año === $hoy->year ? $hoy : Carbon::create($año, 12, 31);
+        $datos = $informe->datos($persona, $hasta);
 
-        // Obtener historial de compromisos solo desde la fecha de creación de la persona
-        $fechaCreacion = Carbon::parse($persona->created_at);
-        $historial = Compromiso::where('persona_id', $persona->id)
-            ->where(function ($query) use ($fechaCreacion) {
-                $query->where('año', '>', $fechaCreacion->year)
-                    ->orWhere(function ($q) use ($fechaCreacion) {
-                        $q->where('año', '=', $fechaCreacion->year)
-                            ->where('mes', '>=', $fechaCreacion->month);
-                    });
-            })
-            ->orderBy('año', 'desc')
-            ->orderBy('mes', 'desc')
-            ->get()
-            ->groupBy(function ($item) {
-                return $item->año.'-'.str_pad($item->mes, 2, '0', STR_PAD_LEFT);
-            });
+        $anios = range($hoy->year, $hoy->year - self::ANIOS_ATRAS);
 
-        // Calcular resumen total (siempre en CRC)
-        $resumenTotal = [
-            'total_prometido' => $compromisos->sum('monto_prometido_crc'),
-            'total_dado' => $compromisos->sum('monto_dado_crc'),
-            'saldo_total' => $compromisos->sum('saldo_actual'),
-        ];
-
-        // Tipo de cambio actual para referencia
-        $tipoCambio = TipoCambio::hoy();
-
-        return view('compromisos.show', compact('persona', 'compromisos', 'año', 'mes', 'historial', 'resumenTotal', 'tipoCambio'));
+        return view('compromisos.show', compact('persona', 'año', 'anios', 'datos'));
     }
 
     /**
-     * Guarda en la tabla compromisos el mes indicado de cada persona y los devuelve.
-     *
-     * Cada mes es independiente (sin arrastrar saldos) y la comparación es en colones. Los montos
-     * en colones salen del motor único de reportes, el mismo del estado de cuenta y del Reporte
-     * General: una fila por categoría de compromiso con promesa (si hay dos promesas de la misma
-     * categoría vale la última, antes salían dos filas y el resumen las sumaba dos veces), lo
-     * prometido según la frecuencia y lo dado con los dólares convertidos.
-     *
-     * @param  iterable<Persona>  $personas
-     * @return array<int, Collection<int, Compromiso>> id de persona => sus compromisos del mes
+     * Botón del admin "Recalcular compromisos": rehace la tabla compromisos del año en curso de la
+     * iglesia con el motor (idempotente, solo meses con cultos). La usan el Dashboard de promesas y
+     * el Excel de promesas.
      */
-    private function sincronizarMes(iterable $personas, int $año, int $mes): array
+    public function recalcular(SincronizadorCompromisos $sincronizador)
     {
-        // Con detalle: de ahí sale lo dado "en la moneda del sobre" que guarda la columna monto_dado.
-        $resultado = $this->motor->calcular(PeriodoReporte::deMeses($año, $mes, $mes), $personas, conDetalle: true);
-        $delMes = $resultado->periodo->meses()[0];
-        $tipoCambio = $resultado->tipoCambioHoy > 0 ? $resultado->tipoCambioHoy : null;
-
-        $porPersona = [];
-        foreach ($resultado->cuentas() as $cuenta) {
-            $compromisos = collect();
-
-            foreach ($cuenta->promesas() as $categoria => $promesa) {
-                $prometidoCrc = $cuenta->esperado($delMes->clave, $categoria);
-                $dadoCrc = $cuenta->dado($delMes->clave, [$categoria]);
-
-                $compromiso = Compromiso::firstOrNew([
-                    'persona_id' => $cuenta->id,
-                    'categoria' => $categoria,
-                    'año' => $año,
-                    'mes' => $mes,
-                ]);
-                $compromiso->fill([
-                    'monto_prometido' => $promesa->montoDelMes($delMes->domingos),
-                    'monto_dado' => $this->dadoSinConvertir($cuenta, $categoria),
-                    'saldo_anterior' => 0,
-                    'moneda_promesa' => $promesa->moneda,
-                    'monto_prometido_crc' => $prometidoCrc,
-                    'monto_dado_crc' => $dadoCrc,
-                    'tipo_cambio_usado' => $tipoCambio,
-                    // Saldo en CRC: dado_crc - prometido_crc
-                    'saldo_actual' => $dadoCrc - $prometidoCrc,
-                ]);
-                $compromiso->save();
-
-                $compromisos->push($compromiso);
-            }
-
-            $porPersona[$cuenta->id] = $compromisos;
+        $tenant = tenant();
+        if (! $tenant) {
+            return redirect()->back()->with('error', 'No hay iglesia activa.');
         }
 
-        return $porPersona;
-    }
+        $r = $sincronizador->sincronizar($tenant, Carbon::now()->year);
 
-    /**
-     * Suma de los montos tal como se anotaron en los sobres (sin convertir dólares): es lo que
-     * siempre guardó la columna monto_dado y lo que leen el Dashboard de promesas y Servidores.
-     */
-    private function dadoSinConvertir(CuentaPersona $cuenta, string $categoria): float
-    {
-        $centimos = 0;
-        foreach ($cuenta->detalle as $renglon) {
-            if ($renglon['categoria'] === $categoria) {
-                $centimos += (int) round($renglon['monto'] * 100);
-            }
-        }
-
-        return $centimos / 100;
-    }
-
-    /**
-     * Recalcula los compromisos del mes en curso de todas las personas activas
-     */
-    public function recalcular()
-    {
-        $personas = Persona::where('activo', true)->get(['id', 'nombre', 'activo']);
-
-        $this->sincronizarMes($personas, Carbon::now()->year, Carbon::now()->month);
-
-        return redirect()->back()->with('success', 'Compromisos recalculados correctamente.');
+        return redirect()->back()->with('success', sprintf(
+            'Compromisos recalculados (%d meses con cultos): %d nuevos, %d actualizados, %d borrados, %d sin cambios.',
+            count($r['meses']), $r['creados'], $r['actualizados'], $r['borrados'], $r['sin_cambios'],
+        ));
     }
 }
