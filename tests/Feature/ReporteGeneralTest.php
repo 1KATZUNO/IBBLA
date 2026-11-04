@@ -60,12 +60,12 @@ class ReporteGeneralTest extends TestCase
         [$ana, $elena] = $reporte['reporteData'];
 
         // Ana: misiones semanal 1.000 (x domingos), construccion mensual 5.000 y campa
-        // mensual (dos promesas: vale la ultima, 3.000). El diezmo no entra al reporte.
-        $this->assertMes($ana['meses'][0], 'Enero', ['misiones' => 1500, 'construccion' => 5000], ['misiones' => 4000, 'construccion' => 5000, 'campa' => 3000]);
-        $this->assertMes($ana['meses'][1], 'Febrero', ['misiones' => 4000], ['misiones' => 4000, 'construccion' => 5000, 'campa' => 3000]);
+        // mensual (dos promesas: se suman, 2.000 + 3.000). El diezmo no entra al reporte.
+        $this->assertMes($ana['meses'][0], 'Enero', ['misiones' => 1500, 'construccion' => 5000], ['misiones' => 4000, 'construccion' => 5000, 'campa' => 5000]);
+        $this->assertMes($ana['meses'][1], 'Febrero', ['misiones' => 4000], ['misiones' => 4000, 'construccion' => 5000, 'campa' => 5000]);
         // Marzo esta en curso (hoy 20/03): no se cobra, pero lo dado si cuenta.
         $this->assertMes($ana['meses'][2], 'Marzo', ['construccion' => 2500.5, 'campa' => 3000], []);
-        $this->assertEquals(['dado' => 16000.5, 'esperado' => 24000, 'diferencia' => -7999.5], $ana['totales']);
+        $this->assertEquals(['dado' => 16000.5, 'esperado' => 28000, 'diferencia' => -11999.5], $ana['totales']);
 
         // Elena: promesa quincenal (x2 por mes) y nada dado.
         $this->assertEquals(['dado' => 0, 'esperado' => 4000, 'diferencia' => -4000], $elena['totales']);
@@ -74,10 +74,10 @@ class ReporteGeneralTest extends TestCase
         // Totales generales (el sobre anonimo no se atribuye a nadie).
         $totales = $reporte['totalesGenerales'];
         $this->assertEquals(16000.5, $totales['total_dado']);
-        $this->assertEquals(28000, $totales['total_esperado']);
-        $this->assertEquals(-11999.5, $totales['total_diferencia']);
+        $this->assertEquals(32000, $totales['total_esperado']);
+        $this->assertEquals(-15999.5, $totales['total_diferencia']);
         $this->assertEquals(6500, $totales['meses'][1]['total_dado']);
-        $this->assertEquals(14000, $totales['meses'][1]['total_esperado']);
+        $this->assertEquals(16000, $totales['meses'][1]['total_esperado']);
         $this->assertEquals(4000, $totales['meses'][2]['total_dado']);
         $this->assertEquals(5500.5, $totales['meses'][3]['total_dado']);
         $this->assertEquals(0, $totales['meses'][3]['total_esperado']);
@@ -104,8 +104,8 @@ class ReporteGeneralTest extends TestCase
         $this->assertStringContainsString('TOTAL ANA MORA', $texto);
         // number_format(x, 0) como la vista anterior: .5 se redondea alejandose de cero.
         $this->assertStringContainsString('16,001', $texto);       // total dado de Ana (16.000,5)
-        $this->assertStringContainsString('-8,000', $texto);       // su diferencia (-7.999,5)
-        $this->assertStringContainsString('-12,000', $texto);      // diferencia del gran total (-11.999,5)
+        $this->assertStringContainsString('-12,000', $texto);      // su diferencia (-11.999,5)
+        $this->assertStringContainsString('-16,000', $texto);      // diferencia del gran total (-15.999,5)
         $this->assertStringContainsString('TOTALES GENERALES - TODAS LAS PERSONAS', $texto);
         $this->assertStringNotContainsString('Carla', $texto);
         $this->assertStringNotContainsString('BETO', $texto);

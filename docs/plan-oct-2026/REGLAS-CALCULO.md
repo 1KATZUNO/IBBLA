@@ -36,7 +36,9 @@ estas salidas al céntimo.
 
 ## 3. Lo esperado por promesa
 
-- Vale la **última** promesa de la persona en cada categoría (si hay dos de "misiones", la de id mayor).
+- Si la persona tiene **varias promesas en la misma categoría**, lo esperado es la **suma** de todas,
+  cada una con su frecuencia y su moneda; el detalle las lista ("₡10.000 cada domingo + $20 mensual").
+  En la tabla `compromisos`, si mezclan colones y dólares, `monto_prometido` se guarda en colones.
 - Solo categorías de compromiso: las de la iglesia **no** marcadas `excluir_de_promesas` (el diezmo
   prometido no se espera).
 - Por mes: **semanal × domingos del mes**, **quincenal × 2**, **mensual × 1**.
@@ -101,7 +103,7 @@ $mes = $conversor->promesaAColones($montoDelMes, $promesa->moneda, $anio, $mes);
 
 ## 8. Reporte de promesas por categoría
 
-- Prometido: lo del motor (personas activas, última promesa por categoría, dólares a fin de mes). Meses
+- Prometido: lo del motor (personas activas, suma de las promesas de cada categoría, dólares a fin de mes). Meses
   futuros: 0.
 - Dado: **todo lo que entró** a cada categoría de compromiso en el mes (incluidos anónimos y quien no
   prometió), con los dólares convertidos con `ConversorUsd`. Por eso su "dado" es mayor que el del

@@ -189,14 +189,15 @@ final class SincronizadorCompromisos
                         'categoria' => $categoria,
                         'año' => $anio,
                         'mes' => $mes->mes,
-                        'monto_prometido' => round($promesa->montoDelMes($mes->domingos), 2),
+                        // Si mezcla colones y dolares no hay una sola moneda: se guarda en colones.
+                        'monto_prometido' => $promesa->moneda === PromesaVigente::MIXTA ? Dinero::colones($prometidoCrc) : round($promesa->montoDelMes($mes->domingos), 2),
                         'monto_dado' => Dinero::colones($crudo[$mes->clave.'|'.$categoria] ?? 0),
                         'saldo_anterior' => 0,
                         'saldo_actual' => Dinero::colones($dadoCrc - $prometidoCrc),
-                        'moneda_promesa' => $promesa->moneda,
+                        'moneda_promesa' => $promesa->moneda === PromesaVigente::MIXTA ? 'CRC' : $promesa->moneda,
                         'monto_prometido_crc' => Dinero::colones($prometidoCrc),
                         'monto_dado_crc' => Dinero::colones($dadoCrc),
-                        'tipo_cambio_usado' => $promesa->esUsd() ? ($this->conversor->tipoCambioDePromesa($anio, $mes->mes) ?: null) : null,
+                        'tipo_cambio_usado' => $promesa->tieneUsd() ? ($this->conversor->tipoCambioDePromesa($anio, $mes->mes) ?: null) : null,
                     ];
                 }
             }

@@ -172,7 +172,7 @@ final class CuentaPersona
     public function tienePromesa(): bool
     {
         foreach ($this->promesas as $promesa) {
-            if ($promesa->monto > 0) {
+            if ($promesa->tieneMonto()) {
                 return true;
             }
         }
@@ -185,7 +185,7 @@ final class CuentaPersona
     {
         $categorias = [];
         foreach ($this->promesas as $categoria => $promesa) {
-            if ($promesa->monto > 0) {
+            if ($promesa->tieneMonto()) {
                 $categorias[] = $categoria;
             }
         }

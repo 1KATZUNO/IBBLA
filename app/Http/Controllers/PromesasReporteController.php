@@ -238,7 +238,7 @@ class PromesasReporteController extends Controller
 
     /**
      * Totales de un mes por categoría de compromiso: lo prometido (motor único: personas activas,
-     * la última promesa de cada categoría, semanal x domingos, quincenal x 2, dólares al tipo de
+     * la suma de las promesas de cada categoría, semanal x domingos, quincenal x 2, dólares al tipo de
      * cambio de fin de mes) y TODO lo que entró a la categoría ese mes (incluidos anónimos y quien no
      * prometió; dólares con el conversor único). Nada posterior a hoy cuenta.
      *
