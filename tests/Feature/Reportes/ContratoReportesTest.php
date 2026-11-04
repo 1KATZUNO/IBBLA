@@ -3,11 +3,13 @@
 namespace Tests\Feature\Reportes;
 
 use App\Models\Compromiso;
-use App\Models\Persona;
+use App\Models\TenantRole;
+use App\Models\User;
 use App\Services\InformePersonaService;
 use App\Services\ReporteGeneralService;
 use App\Services\Reportes\CumplimientoPromesasService;
 use App\Services\Reportes\Dinero;
+use App\Services\Reportes\EstadoCuentaLoteService;
 use App\Services\Reportes\FiltroPersonas;
 use App\Services\Reportes\MotorReportes;
 use App\Services\Reportes\PeriodoReporte;
@@ -20,14 +22,14 @@ use Tests\Concerns\LeeReportes;
 use Tests\TestCase;
 
 /**
- * Contrato de los reportes de dinero: para las mismas 3 personas y el mismo periodo, TODAS las
- * salidas dicen los mismos números, al céntimo (HU-R7). Si una salida nueva calcula por su cuenta,
- * esta prueba la delata.
+ * Contrato de los reportes de dinero (HU-R7, QA-024): para las mismas 3 personas y el mismo dia,
+ * TODAS las salidas dicen lo mismo, al centimo: le corresponde, ha dado, diferencia y estado. Si una
+ * pantalla vuelve a calcular por su cuenta, esta prueba la delata.
  *
- * Salidas: el motor, el Reporte General (datos y PDF), el estado de cuenta (datos y PDF), el
- * reporte de contribuciones (PDF), el cumplimiento de promesas con corte al ultimo dia del periodo
- * (datos, PDF y Excel) y la pantalla de Compromisos (tabla compromisos).
- * Periodos: enero a marzo y enero a octubre de 2026 (el "mes en curso" de cada reporte).
+ * Salidas: el motor, el estado de cuenta (datos y PDF), el lote de estados de cuenta (datos y
+ * Excel), el cumplimiento con corte (datos, pantalla, PDF y Excel), el Reporte General (datos y
+ * PDF), la pantalla de Compromisos, Mi perfil del miembro y el reporte de contribuciones (PDF).
+ * Dias: 20/03/2026 (marzo en curso) y 15/10/2026 (octubre en curso); todo con corte hoy.
  */
 class ContratoReportesTest extends TestCase
 {
@@ -49,120 +51,173 @@ class ContratoReportesTest extends TestCase
         parent::tearDown();
     }
 
-    /** @return array<string, array{0: string}> el "hoy" de cada periodo */
-    public static function periodos(): array
+    /** @return array<string, array{0: string}> */
+    public static function dias(): array
     {
         return [
-            'enero a marzo' => ['2026-03-20'],
-            'enero a octubre' => ['2026-10-15'],
+            'marzo en curso' => ['2026-03-20'],
+            'octubre en curso' => ['2026-10-15'],
         ];
     }
 
-    #[DataProvider('periodos')]
+    #[DataProvider('dias')]
     public function test_todas_las_salidas_dan_los_mismos_numeros_al_centimo(string $hoy): void
     {
         Carbon::setTestNow($hoy.' 10:00:00');
         $this->actingAs($this->admin);
-        $periodo = PeriodoReporte::deMeses(2026, 1, now()->month);
-        $resultado = app(MotorReportes::class)->calcular($periodo, [$this->ana, $this->beto, $this->carla]);
+        $personas = [$this->ana, $this->beto, $this->carla];
+        $resultado = app(MotorReportes::class)->calcular(PeriodoReporte::alCorte($hoy), $personas);
+        $periodoAnio = PeriodoReporte::deMeses(2026, 1, now()->month);
 
+        // Salidas de grupo: una vez para las tres personas.
         $reporteGeneral = collect(app(ReporteGeneralService::class)->generar(2026, now()->month)['reporteData'])->keyBy('nombre');
         $textoReporteGeneral = $this->textoDelPdf($this->get(route('personas.reporte-general', ['accion' => 'ver']))->assertOk()->getContent());
         $textoContribuciones = $this->textoDelPdf($this->get(route('personas.reporte-pdf', ['accion' => 'ver']))->assertOk()->getContent());
 
-        // Cumplimiento con corte el ultimo dia del periodo (se cobran los mismos meses). El corte no
-        // puede ser futuro: se pide "al dia siguiente" y se vuelve al hoy del periodo.
-        $corte = $periodo->hasta->toDateString();
-        Carbon::setTestNow($periodo->hasta->addDay()->setTime(10, 0));
         $cumplimiento = [];
-        foreach (app(CumplimientoPromesasService::class)->generar(PeriodoReporte::alCorte($corte), FiltroPersonas::todas())->filas as $filaCumplimiento) {
-            $cumplimiento[$filaCumplimiento->nombre] = $filaCumplimiento;
+        foreach (app(CumplimientoPromesasService::class)->generar(PeriodoReporte::alCorte($hoy), FiltroPersonas::todas())->filas as $fila) {
+            $cumplimiento[$fila->nombre] = $fila;
         }
-        $textoCumplimiento = $this->textoDelPdf($this->get(route('reportes.cumplimiento.pdf', ['corte' => $corte]))->assertOk()->getContent());
-        $excelCumplimiento = $this->leerExcel($this->get(route('reportes.cumplimiento.excel', ['corte' => $corte]))->assertOk()->getContent());
-        Carbon::setTestNow($hoy.' 10:00:00');
+        $pantallaCumplimiento = $this->get(route('reportes.cumplimiento'))->assertOk()->getContent();
+        $textoCumplimiento = $this->textoDelPdf($this->get(route('reportes.cumplimiento.pdf'))->assertOk()->getContent());
+        $excelCumplimiento = $this->leerExcel($this->get(route('reportes.cumplimiento.excel'))->assertOk()->getContent());
 
-        foreach ([$this->ana, $this->beto, $this->carla] as $persona) {
-            $cuenta = $resultado->cuenta($persona->id);
+        $lote = app(EstadoCuentaLoteService::class)->generar($periodoAnio, FiltroPersonas::todas());
+        $parametrosLote = ['periodo' => 'meses', 'anio' => 2026, 'mes_desde' => 1, 'mes_hasta' => now()->month];
+        $excelLote = $this->leerExcel($this->get(route('reportes.estados-cuenta.excel', $parametrosLote))->assertOk()->getContent())->getSheetByName('Resumen');
+
+        $compromisosAntes = Compromiso::count();
+
+        foreach ($personas as $i => $persona) {
             $nombre = $persona->nombre;
+            $cuenta = $resultado->cuenta($persona->id);
+            $estado = $cuenta->estado();
+            $leCorresponde = $estado->leCorresponde();
+            $haDado = $estado->haDado();
+            $diferencia = $estado->diferencia();
 
-            // 1. Reporte General: totales y cada mes x categoría de compromiso.
-            $fila = $reporteGeneral[$nombre];
-            $this->assertCentimos($cuenta->dadoEnCompromisos(), $fila['totales']['dado'], "$nombre: dado del Reporte General");
-            $this->assertCentimos($cuenta->esperado(), $fila['totales']['esperado'], "$nombre: esperado del Reporte General");
-            foreach ($periodo->meses() as $i => $mes) {
-                foreach ($fila['meses'][$i]['categorias'] as $categoria => $valores) {
-                    $this->assertCentimos($cuenta->dado($mes->clave, [$categoria]), $valores['dado'], "$nombre {$mes->nombre} $categoria: dado");
-                    $this->assertCentimos($cuenta->esperado($mes->clave, $categoria), $valores['esperado'], "$nombre {$mes->nombre} $categoria: esperado");
-                }
-            }
-            // El PDF imprime los mismos totales (sin decimales).
-            $this->assertStringContainsString('TOTAL '.mb_strtoupper($nombre), $textoReporteGeneral);
-            $this->assertStringContainsString(number_format($cuenta->dadoEnCompromisos(), 0), $textoReporteGeneral, "$nombre: total dado en el PDF del Reporte General");
-
-            // 2. Estado de cuenta (el informe que va por WhatsApp): datos y PDF.
+            // 1. Estado de cuenta (el PDF de la ficha, Compromisos, la lista, Mi perfil y WhatsApp).
             $informe = app(InformePersonaService::class)->datos($persona);
             $this->assertCentimos($cuenta->dado(), $informe['total_dado'], "$nombre: total contribuido del estado de cuenta");
-            foreach ($cuenta->dadoPorCategoria() as $categoria => $monto) {
-                $this->assertCentimos($monto, $informe['totales_categoria'][$categoria], "$nombre: $categoria en el estado de cuenta");
-            }
-            foreach ($periodo->meses() as $i => $mes) {
-                $this->assertCentimos($cuenta->dado($mes->clave), $informe['meses'][$i]['total'], "$nombre {$mes->nombre}: total del mes en el estado de cuenta");
-            }
             if ($cuenta->tienePromesa()) {
-                $this->assertCentimos($cuenta->esperado(), $informe['total_esperado'], "$nombre: compromisos a la fecha");
-                $this->assertCentimos($cuenta->dadoEnCompromisos(), $informe['dado_en_compromisos'], "$nombre: dado en compromisos");
-                $this->assertCentimos($fila['totales']['diferencia'], $informe['diferencia'], "$nombre: diferencia del estado de cuenta = la del Reporte General");
-                $this->assertCentimos($informe['dado_en_compromisos'], array_sum(array_column($informe['compromisos'], 'dado')), "$nombre: la tabla de compromisos cuadra con el resumen");
+                $this->assertCentimos($leCorresponde, $informe['total_esperado'], "$nombre: le corresponde en el estado de cuenta");
+                $this->assertCentimos($haDado, $informe['dado_en_compromisos'], "$nombre: ha dado en el estado de cuenta");
+                $this->assertCentimos($diferencia, $informe['diferencia'], "$nombre: diferencia del estado de cuenta");
+                $this->assertSame($estado->etiqueta(), $informe['estado'], "$nombre: estado del estado de cuenta");
+                $this->assertCentimos($haDado, array_sum(array_column($informe['compromisos'], 'dado')), "$nombre: la tabla de compromisos cuadra con el resumen");
+                $this->assertCentimos($leCorresponde, array_sum(array_column($informe['compromisos'], 'esperado')), "$nombre: lo que corresponde cuadra con el resumen");
             }
             $textoInforme = $this->textoDelPdf(app(InformePersonaService::class)->pdf($persona)->output());
             $this->assertStringContainsString('₡'.number_format($cuenta->dado(), 2), $textoInforme, "$nombre: total en el PDF del estado de cuenta");
+            if ($cuenta->tienePromesa()) {
+                $this->assertStringContainsString('₡'.number_format($leCorresponde, 2), $textoInforme, "$nombre: le corresponde en el PDF");
+                $this->assertStringContainsString('₡'.number_format($haDado, 2), $textoInforme, "$nombre: ha dado en el PDF");
+            }
 
-            // 3. Reporte de contribuciones: total por persona (todas las categorías de la iglesia).
+            // 2. Lote de estados de cuenta (datos y Excel): lo mismo que el individual.
+            $this->assertSame($nombre, $lote->estados[$i]['persona']->nombre);
+            foreach (['total_dado', 'total_esperado', 'dado_en_compromisos', 'diferencia', 'estado'] as $clave) {
+                $this->assertEquals($informe[$clave], $lote->estados[$i][$clave], "$nombre: $clave en el lote");
+            }
+            $filaLote = $this->filaDe($excelLote, 'A', $nombre);
+            if ($cuenta->tienePromesa()) {
+                $columnaCorresponde = $this->columnaDe($excelLote, 'Le corresponde');
+                $columnaHaDado = $this->columnaDe($excelLote, 'Ha dado en compromisos');
+                $this->assertCentimos($leCorresponde, $excelLote->getCell($columnaCorresponde.$filaLote)->getValue(), "$nombre: le corresponde en el Excel del lote");
+                $this->assertCentimos($haDado, $excelLote->getCell($columnaHaDado.$filaLote)->getValue(), "$nombre: ha dado en el Excel del lote");
+            }
+
+            // 3. Cumplimiento con corte hoy: datos, pantalla, PDF y Excel.
+            $fila = $cumplimiento[$nombre];
+            $this->assertSame($estado->etiqueta(), $fila->estado, "$nombre: estado en el cumplimiento");
+            $this->assertCentimos($haDado, $fila->haDado(), "$nombre: ha dado en el cumplimiento");
+            $this->assertStringContainsString(Dinero::formato($fila->haDado()), $textoCumplimiento, "$nombre: ha dado en el PDF del cumplimiento");
+            $this->assertStringContainsString(e(Dinero::formato($fila->haDado())), $pantallaCumplimiento, "$nombre: ha dado en la pantalla del cumplimiento");
+            if ($cuenta->tienePromesa()) {
+                $this->assertCentimos($leCorresponde, $fila->leCorresponde(), "$nombre: le correspondia en el cumplimiento");
+                $this->assertCentimos($diferencia, $fila->diferencia(), "$nombre: diferencia del cumplimiento");
+                $hoja = $excelCumplimiento->getSheetByName('Resumen');
+                $filaExcel = $this->filaDe($hoja, 'B', $nombre);
+                $this->assertCentimos($leCorresponde, $hoja->getCell('C'.$filaExcel)->getValue(), "$nombre: le correspondia en el Excel");
+                $this->assertCentimos($haDado, $hoja->getCell('D'.$filaExcel)->getValue(), "$nombre: ha dado en el Excel");
+            } else {
+                $hoja = $excelCumplimiento->getSheetByName('Sin promesa');
+                $this->assertCentimos($fila->haDado(), $hoja->getCell('B'.$this->filaDe($hoja, 'A', $nombre))->getValue(), "$nombre: ha dado en el Excel (sin promesa)");
+            }
+
+            // 4. Reporte General: totales y cada mes x categoria (solo quien tiene promesa).
+            if ($cuenta->tienePromesa()) {
+                $filaRg = $reporteGeneral[$nombre];
+                $this->assertCentimos($haDado, $filaRg['totales']['dado'], "$nombre: dado del Reporte General");
+                $this->assertCentimos($leCorresponde, $filaRg['totales']['esperado'], "$nombre: esperado del Reporte General");
+                $this->assertCentimos($diferencia, $filaRg['totales']['diferencia'], "$nombre: diferencia del Reporte General");
+                foreach ($resultado->periodo->meses() as $m => $mes) {
+                    foreach ($filaRg['meses'][$m]['categorias'] as $categoria => $valores) {
+                        $this->assertCentimos($cuenta->esperado($mes->clave, $categoria), $valores['esperado'], "$nombre {$mes->nombre} $categoria: esperado del Reporte General");
+                    }
+                }
+                $this->assertStringContainsString('TOTAL '.mb_strtoupper($nombre), $textoReporteGeneral);
+                $this->assertStringContainsString(number_format($haDado, 0), $textoReporteGeneral, "$nombre: total dado en el PDF del Reporte General");
+            } else {
+                $this->assertArrayNotHasKey($nombre, $reporteGeneral->all(), "$nombre: sin promesa no va en el Reporte General");
+            }
+
+            // 5. Reporte de contribuciones: total por persona (todas las categorias de la iglesia).
             $categoriasIglesia = array_keys($resultado->categorias);
             $this->assertStringContainsString('₡'.number_format($cuenta->dado(null, $categoriasIglesia), 2), $textoContribuciones, "$nombre: total en el reporte de contribuciones");
 
-            // 4. Cumplimiento de promesas: pantalla/servicio, PDF y Excel.
-            $filaCumplimiento = $cumplimiento[$nombre];
-            $this->assertCentimos($cuenta->dadoEnCompromisos(), $filaCumplimiento->haDado(), "$nombre: ha dado en el cumplimiento");
-            $this->assertStringContainsString(Dinero::formato($filaCumplimiento->haDado()), $textoCumplimiento, "$nombre: ha dado en el PDF del cumplimiento");
-            if ($cuenta->tienePromesa()) {
-                $this->assertCentimos($cuenta->esperado(), $filaCumplimiento->leCorresponde(), "$nombre: le correspondia en el cumplimiento");
-                $this->assertCentimos($fila['totales']['diferencia'], $filaCumplimiento->diferencia(), "$nombre: diferencia del cumplimiento = la del Reporte General");
-                $hoja = $excelCumplimiento->getSheetByName('Resumen');
-                $filaExcel = $this->filaDe($hoja, 'B', $nombre);
-                $this->assertCentimos($filaCumplimiento->leCorresponde(), $hoja->getCell('C'.$filaExcel)->getValue(), "$nombre: le correspondia en el Excel");
-                $this->assertCentimos($filaCumplimiento->haDado(), $hoja->getCell('D'.$filaExcel)->getValue(), "$nombre: ha dado en el Excel");
-            } else {
-                $hoja = $excelCumplimiento->getSheetByName('Sin promesa');
-                $this->assertCentimos($filaCumplimiento->haDado(), $hoja->getCell('B'.$this->filaDe($hoja, 'A', $nombre))->getValue(), "$nombre: ha dado en el Excel (sin promesa)");
-            }
-
-            // 5. Compromisos: cada mes y categoría prometida, en colones.
-            foreach ($periodo->meses() as $mes) {
-                $this->get(route('compromisos.show', ['persona' => $persona, 'año' => $mes->anio, 'mes' => $mes->mes]))->assertOk();
-                foreach ($cuenta->promesas() as $categoria => $promesa) {
-                    $compromiso = Compromiso::where(['persona_id' => $persona->id, 'categoria' => $categoria, 'año' => $mes->anio, 'mes' => $mes->mes])->sole();
-                    $this->assertCentimos($cuenta->esperado($mes->clave, $categoria), $compromiso->monto_prometido_crc, "$nombre {$mes->nombre} $categoria: prometido en Compromisos");
-                    $this->assertCentimos($cuenta->dado($mes->clave, [$categoria]), $compromiso->monto_dado_crc, "$nombre {$mes->nombre} $categoria: dado en Compromisos");
+            // 6. Pantalla de Compromisos (admin) y 7. Mi perfil (el miembro): mismas cifras y estado.
+            $pantallaCompromisos = $this->get(route('compromisos.show', $persona))->assertOk();
+            $miPerfil = $this->actingAs($this->miembroDe($persona))->get(route('mi-perfil.index'))->assertOk();
+            $this->actingAs($this->admin);
+            foreach (['Compromisos' => $pantallaCompromisos, 'Mi perfil' => $miPerfil] as $pantalla => $respuesta) {
+                if ($cuenta->tienePromesa()) {
+                    $respuesta->assertSee('₡'.number_format($leCorresponde, 2))
+                        ->assertSee('₡'.number_format($haDado, 2))
+                        ->assertSee($estado->etiqueta());
+                    $this->assertStringNotContainsString('Deuda pendiente', $respuesta->getContent(), "$nombre: $pantalla sin deudas por mes");
+                } else {
+                    $respuesta->assertSee('₡'.number_format($cuenta->dado(), 2));
                 }
             }
         }
+
+        // Ninguna de estas lecturas escribio en la tabla compromisos (QA-025).
+        $this->assertSame($compromisosAntes, Compromiso::count());
     }
 
     public function test_los_numeros_de_referencia_a_mano(): void
     {
-        // Ancla independiente del motor (cuentas hechas a mano en CreaEscenarioReportes), enero a marzo.
+        // Ancla independiente del motor (cuentas hechas a mano en CreaEscenarioReportes), hoy 20/03:
+        // se cobran enero y febrero; lo dado cuenta hasta hoy y solo en categorias prometidas.
         Carbon::setTestNow('2026-03-20 10:00:00');
         $this->actingAs($this->admin);
         $reporte = collect(app(ReporteGeneralService::class)->generar(2026, 3)['reporteData'])->keyBy('nombre');
 
-        $this->assertEquals(['dado' => 38825.5, 'esperado' => 71000, 'diferencia' => -32174.5], $reporte['Ana Mora']['totales']);
-        $this->assertEquals(['dado' => 5000, 'esperado' => 0, 'diferencia' => 5000], $reporte['Beto Rojas']['totales']);
-        // Carla: campa 9.000,10 + micro 3.000; esperado (campa 3.000 + micro 3.000) x 3. pro_templo no es de compromiso.
-        $this->assertEquals(['dado' => 12000.1, 'esperado' => 18000, 'diferencia' => -5999.9], $reporte['Carla Solano']['totales']);
-        // Ni la inactiva ni la de otra iglesia.
-        $this->assertSame(['Ana Mora', 'Beto Rojas', 'Carla Solano'], $reporte->keys()->all());
+        // Ana: esperado ene (10.000 + 2.000 x 4 + $10 x 500) + feb (10.000 + 2.000 x 4 + 5.000) = 46.000;
+        // dado misiones 30.200,50 + construccion 2.000 + seminario 3.625 (sin campa ni diezmo).
+        $this->assertEquals(['dado' => 35825.5, 'esperado' => 46000, 'diferencia' => -10174.5], $reporte['Ana Mora']['totales']);
+        // Carla: campa 9.000,10 + micro 3.000; esperado (3.000 + 3.000) x 2. pro_templo no es de compromiso.
+        $this->assertEquals(['dado' => 12000.1, 'esperado' => 12000, 'diferencia' => 0.1], $reporte['Carla Solano']['totales']);
+        // Beto no tiene promesa; ni la inactiva ni la de otra iglesia.
+        $this->assertSame(['Ana Mora', 'Carla Solano'], $reporte->keys()->all());
+    }
+
+    /** Usuario miembro ligado a la persona (para ver su Mi perfil). */
+    private function miembroDe($persona): User
+    {
+        $rol = TenantRole::where('tenant_id', $this->iglesia->id)->where('slug', 'miembro')->firstOrFail();
+        $usuario = User::firstOrCreate(['email' => 'miembro'.$persona->id.'@prueba.test'], [
+            'name' => $persona->nombre,
+            'password' => 'secreto-123',
+            'rol' => 'miembro',
+            'is_super_admin' => false,
+            'tenant_id' => $this->iglesia->id,
+            'tenant_role_id' => $rol->id,
+        ]);
+        $persona->forceFill(['user_id' => $usuario->id])->save();
+
+        return $usuario;
     }
 
     /** Fila de la hoja en que la columna $columna tiene $valor. */
@@ -174,6 +229,19 @@ class ContratoReportesTest extends TestCase
             }
         }
         $this->fail("No encontre \"$valor\" en la columna $columna de la hoja {$hoja->getTitle()}");
+    }
+
+    /** Letra de la columna cuyo encabezado es $titulo. */
+    private function columnaDe(Worksheet $hoja, string $titulo): string
+    {
+        foreach ($hoja->getRowIterator() as $fila) {
+            foreach ($fila->getCellIterator() as $celda) {
+                if ($celda->getValue() === $titulo) {
+                    return $celda->getColumn();
+                }
+            }
+        }
+        $this->fail("No encontre la columna \"$titulo\" en la hoja {$hoja->getTitle()}");
     }
 
     private function assertCentimos(float|int|string $esperado, float|int|string $real, string $mensaje): void
