@@ -51,7 +51,8 @@ Route::middleware(['auth'])->get('/api/tipo-cambio', function (BccrExchangeRateS
 // Principal - Para todos los usuarios autenticados
 Route::middleware(['auth'])->group(function () {
     Route::get('/principal', [PrincipalController::class, 'index'])->name('principal');
-    Route::get('/cumpleaneros', [\App\Http\Controllers\CumpleanerosController::class, 'index'])->name('cumpleaneros.index');
+    // Cumpleaneros: admin, tesorero y asistente (decision 2.7); el miembro no lo ve ni lo abre.
+    Route::get('/cumpleaneros', [\App\Http\Controllers\CumpleanerosController::class, 'index'])->middleware('role:admin,tesorero,asistente')->name('cumpleaneros.index');
 });
 
 // Dashboard - Solo para Admin y Tesorero

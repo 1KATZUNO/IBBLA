@@ -206,9 +206,10 @@ class BuscadorGlobalTest extends TestCase
 
         $this->assertContains('Asistencia', $this->titulos($this->buscar($this->asistente, 'asistencia'), 'pantallas'));
 
-        // El miembro solo tiene Principal, Cumpleaneros y su perfil
+        // El miembro solo tiene Principal y su perfil: Cumpleaneros es de admin, tesorero y asistente (decision 2.7)
         $this->assertSame([], $this->titulos($this->buscar($this->miembro, 'recuento'), 'pantallas'));
-        $this->assertContains('Cumpleañeros', $this->titulos($this->buscar($this->miembro, 'cumpleaneros'), 'pantallas'));
+        $this->assertNotContains('Cumpleañeros', $this->titulos($this->buscar($this->miembro, 'cumpleaneros'), 'pantallas'));
+        $this->assertContains('Cumpleañeros', $this->titulos($this->buscar($this->asistente, 'cumpleaneros'), 'pantallas'));
         $this->assertContains('Mi cuenta', $this->titulos($this->buscar($this->miembro, 'cuenta'), 'pantallas'));
     }
 

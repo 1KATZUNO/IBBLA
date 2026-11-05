@@ -97,7 +97,7 @@ class Menu
             'admin' => $u->canAccessAdmin(),
             'appClase' => $u->isAdmin() || $u->isSuperAdmin() || $u->clase_asistencia_id
                 || ($u->persona && $u->persona->clasesAsistencia()->wherePivot('es_maestro', true)->exists()),
-            'miPerfil' => $u->isMiembro() || in_array($u->rol, ['servidor', 'tesorero', 'asistente']),
+            'miPerfil' => $u->tieneMiPerfil(),
         ];
     }
 
@@ -115,8 +115,9 @@ class Menu
         $def = [
             [null, [
                 self::it('principal', 'Principal', 'home', 'principal', true, 'inicio bienvenida accesos rapidos mision vision'),
-                self::it('cumpleaneros.index', 'Cumpleañeros', 'regalo', 'cumpleaneros.*', true, 'cumpleanos fecha de nacimiento cumple felicitar'),
+                self::it('cumpleaneros.index', 'Cumpleañeros', 'regalo', 'cumpleaneros.*', ! $u->isMiembro() && $u->rol !== 'servidor', 'cumpleanos fecha de nacimiento cumple felicitar'),
                 self::it('mi-perfil.index', 'Yo', 'usuario', 'mi-perfil.*', $p['miPerfil'], 'mi perfil mis promesas mis compromisos mi estado de cuenta informe whatsapp'),
+                self::it('personas.alta-rapida', 'Agregar persona', 'usuario', 'personas.alta-rapida', $u->puedeAltaRapidaPersonas() && ! $u->canAccessAdmin(), 'agregar persona alta rapida nueva persona registrar'),
                 self::it('marcar-asistencia.index', 'Marcar Asistencia', 'check', 'marcar-asistencia.*', $u->hasPermission('marcar_asistencia'), 'servidor qr escanear codigo marcar mi asistencia'),
                 self::it('clase-app.index', 'App de Clases', 'libro', 'clase-app.*', $p['appClase'], 'clase maestra alumnos asistencia por alumno visitacion'),
             ]],
@@ -128,7 +129,7 @@ class Menu
             ['Consultas', [
                 self::it('dashboard', 'Dashboard', 'barras', 'dashboard', $p['recuento'], 'resumen graficos ingresos del mes estadisticas indicadores'),
                 self::it('dashboard.promesas', 'Dashboard de promesas', 'barras', 'dashboard.promesas', $p['recuento'], 'promesas cumplimiento compromisos graficos'),
-                self::it('dashboard.asistencia', 'Dashboard de asistencia', 'barras', 'dashboard.asistencia', $p['recuento'], 'asistencia graficos promedio tendencia'),
+                self::it('dashboard.asistencia', 'Dashboard de asistencia', 'barras', 'dashboard.asistencia', $u->puedeVerDashboardAsistencia(), 'asistencia graficos promedio tendencia'),
                 // Reportes: tesoreria entra al indice (o al Centro de Reportes cuando exista); quien solo maneja asistencia va directo a su reporte.
                 $centroReportes && $p['recuento']
                     ? self::it('reportes.index', 'Reportes', 'reporte', 'reportes.*|ingresos-asistencia.index|ingresos-asistencia.ingresos|ingresos-asistencia.asistencia|ingresos-asistencia.promesas*|ingresos-asistencia.pdf-*|ingresos-asistencia.excel-*', true, 'reportes informes pdf excel estado de cuenta centro de reportes', ['tipo' => 'reporte'])
