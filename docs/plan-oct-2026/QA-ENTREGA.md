@@ -557,3 +557,20 @@ Resultado:
   - QA-034: acciones masivas.
   - QA-036: promesas recreadas y mes en inglés.
   - QA-043: dashboard a mitad de mes.
+
+## 11. Estado tras las correcciones (05/11/2026, lider)
+
+Corregido en `integracion/oct-2026` antes del deploy:
+
+- **QE-001:** `pdfs/recuento-individual.blade.php` rehecho sin flexbox (cabecera y tarjetas en tablas), anchos fijos por columna segun la cantidad de categorias y las notas debajo del nombre. 47 sobres salen en 2 paginas (antes 7) con la columna Total completa (texto entre 34 y 808 pt en una hoja de 842).
+- **QE-002:** `PromesasExport` eliminado. `/ingresos-asistencia/excel-promesas` redirige al Excel de Cumplimiento (motor unico) con corte al ultimo dia del anio o mes pedido, nunca despues de hoy (`PeriodoReporte::alFinDe`), grupo "con promesa". El correo mensual adjunta ese mismo Excel (corte al fin del mes reportado). Servidores lee `monto_prometido_crc` / `monto_dado_crc` cobrando solo meses completos.
+- **QE-003 y QE-007 (equipo 4, `c3196a4` y `208abed`):** centro de reportes en `/ingresos-asistencia` con tarjetas por rol; buscador con Cumplimiento, Estados de cuenta, Reporte General y Accesos; manual de Recuento y Reportes al dia y pagina nueva de Accesos. Pendiente menor: cumplimiento y estados de cuenta abren `/manual/reportes` sin ancla propia.
+- **QE-004:** rutas, controlador, vista y test de registro eliminados; `/register` da 404.
+- **QE-005:** el ZIP con un filtro sin personas vuelve a la pantalla con aviso.
+- **QE-006:** `SincronizadorCompromisos::sincronizarMesDeCulto()` corre al cerrar un culto, al borrar un culto cerrado (observer `deleted`) y al corregir sobres de un culto cerrado (`RecuentoController::despuesDeCambiar`).
+- **QE-010:** `manifest.json` con nombre, colores e iconos de IBBLA (icono maskable nuevo); icono de ANGEDA eliminado tambien del apple-touch-icon; login con siglas y nombre de la iglesia; asunto del correo y respaldos "IBBSC" pasan a "IBBLA"; "Sistema de Administración" con tilde en los PDF y respaldos.
+- **QE-017 (parcial):** `deploy/hostinger.sh` respalda la BD con `mysqldump` comprimido en `~/respaldos-ibbla/` antes de migrar (conserva 10; `--sin-respaldo` para omitirlo). El limite de 15 s de `ibbla:verificar` y la revision de cola/cron quedan pendientes.
+
+Tests: `tests/Feature/CorreccionesQaEntregaTest.php` (7 tests nuevos) y los 145 existentes alrededor del codigo tocado, en verde.
+
+Quedan para despues del deploy: QE-008, QE-009, QE-011 a QE-016, QE-018 a QE-020 y los 5 del QA inicial que siguen igual (QA-018, 021, 034, 036, 043).

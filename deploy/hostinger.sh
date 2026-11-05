@@ -14,6 +14,7 @@
 #   --maintenance    Pone la app en mantenimiento (artisan down) mientras despliega.
 #   --url <url>      URL base del chequeo final (por defecto APP_URL del .env, o https://ibbla.eu).
 #   --skip-check     No hacer el chequeo final con curl.
+#   --sin-respaldo   No respaldar la BD antes de migrar (solo con un respaldo hecho a mano).
 #   --allow-path     Permitir correr fuera de .../domains/ibbla.eu/public_html (no recomendado).
 #   -h, --help       Esta ayuda.
 #
@@ -39,8 +40,9 @@ MANTENIMIENTO=0
 URL_BASE=""
 SALTAR_CHEQUEO=0
 PERMITIR_RUTA=0
+SIN_RESPALDO=0
 
-uso() { sed -n '2,22p' "$0" | sed 's/^# \{0,1\}//'; }
+uso() { sed -n '2,23p' "$0" | sed 's/^# \{0,1\}//'; }
 
 while [ $# -gt 0 ]; do
     case "$1" in
@@ -50,6 +52,7 @@ while [ $# -gt 0 ]; do
         --maintenance) MANTENIMIENTO=1; shift ;;
         --url) URL_BASE="${2:-}"; shift 2 ;;
         --skip-check) SALTAR_CHEQUEO=1; shift ;;
+        --sin-respaldo) SIN_RESPALDO=1; shift ;;
         --allow-path) PERMITIR_RUTA=1; shift ;;
         -h|--help) uso; exit 0 ;;
         *) echo "Opcion desconocida: $1"; uso; exit 2 ;;
@@ -156,6 +159,42 @@ else
 fi
 if [ "$CAMBIO_LOCK" -eq 1 ]; then
     ejecutar "$COMPOSER_BIN" install --no-dev --optimize-autoloader --no-interaction || { falla "composer install fallo."; exit 1; }
+fi
+
+# --- Respaldo de la BD antes de migrar (QE-017): mysqldump comprimido en ~/respaldos-ibbla ---
+paso "Respaldo de la base de datos"
+if [ "$SIN_RESPALDO" -eq 1 ]; then
+    info "Omitido (--sin-respaldo)."
+else
+    leer_env() { grep -E "^$1=" .env | head -1 | cut -d= -f2- | sed -e 's/^"//' -e 's/"$//' -e "s/^'//" -e "s/'$//" | tr -d '\r'; }
+    DB_HOST_ENV="$(leer_env DB_HOST)"; DB_PORT_ENV="$(leer_env DB_PORT)"; DB_NAME_ENV="$(leer_env DB_DATABASE)"
+    DB_USER_ENV="$(leer_env DB_USERNAME)"; DB_PASS_ENV="$(leer_env DB_PASSWORD)"
+    DIR_RESPALDOS="$HOME/respaldos-ibbla"
+    ARCHIVO_RESPALDO="$DIR_RESPALDOS/${DB_NAME_ENV:-ibbla}_$(date +%Y%m%d_%H%M%S)_antes_de_${TAG:-$RAMA}.sql.gz"
+    if [ -z "$DB_NAME_ENV" ] || [ -z "$DB_USER_ENV" ]; then
+        falla "No se pudo leer DB_DATABASE / DB_USERNAME del .env, asi que no se puede respaldar. Use --sin-respaldo solo si ya tiene un respaldo a mano."
+        exit 1
+    fi
+    OPCIONES_DUMP="--single-transaction --quick --no-tablespaces --routines --triggers"
+    if mysqldump --help 2>/dev/null | grep -q -- '--column-statistics'; then OPCIONES_DUMP="$OPCIONES_DUMP --column-statistics=0"; fi
+    if [ "$DRY_RUN" -eq 1 ]; then
+        info "[dry-run] mysqldump $DB_NAME_ENV -> $ARCHIVO_RESPALDO"
+    else
+        mkdir -p "$DIR_RESPALDOS" && chmod 700 "$DIR_RESPALDOS"
+        info "mysqldump $DB_NAME_ENV -> $ARCHIVO_RESPALDO"
+        # La contrasena viaja por MYSQL_PWD (no queda en la linea de comandos ni en el historial).
+        # shellcheck disable=SC2086
+        if MYSQL_PWD="$DB_PASS_ENV" mysqldump $OPCIONES_DUMP -h "${DB_HOST_ENV:-127.0.0.1}" -P "${DB_PORT_ENV:-3306}" -u "$DB_USER_ENV" "$DB_NAME_ENV" | gzip > "$ARCHIVO_RESPALDO" && [ -s "$ARCHIVO_RESPALDO" ]; then
+            info "Respaldo listo: $ARCHIVO_RESPALDO ($(du -h "$ARCHIVO_RESPALDO" | cut -f1))."
+            info "Para restaurar: gunzip -c $ARCHIVO_RESPALDO | mysql -h ${DB_HOST_ENV:-127.0.0.1} -u $DB_USER_ENV -p $DB_NAME_ENV"
+            # Se conservan los 10 respaldos mas recientes.
+            ls -1t "$DIR_RESPALDOS"/*.sql.gz 2>/dev/null | tail -n +11 | xargs -r rm -f
+        else
+            rm -f "$ARCHIVO_RESPALDO"
+            falla "El respaldo fallo, asi que NO se migra. Revise mysqldump (permisos, host) o use --sin-respaldo solo con un respaldo hecho a mano."
+            exit 1
+        fi
+    fi
 fi
 
 # --- 3. Migraciones ---

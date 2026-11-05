@@ -29,7 +29,7 @@ class ReporteMensualMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: "IBBSC — Reportes de {$this->nombreMes} {$this->año}",
+            subject: (tenant()?->siglas ?? 'IBBLA')." — Reportes de {$this->nombreMes} {$this->año}",
         );
     }
 

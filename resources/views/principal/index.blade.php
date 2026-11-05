@@ -1,7 +1,7 @@
 @php
     $t = tenant();
     $tColors = $t ? $t->colors : \App\Models\Tenant::COLOR_THEMES['blue'];
-    $tName = $t ? $t->nombre : 'Sistema de Administracion';
+    $tName = $t ? $t->nombre : 'Sistema de Administración';
     $tSiglas = $t ? $t->siglas : 'Admin';
     $tLogo = $t ? $t->logo_url : asset('images/Logo.png');
     $tSocial = $t && $t->redes_sociales ? $t->redes_sociales : [];

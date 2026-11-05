@@ -661,7 +661,7 @@
 
     <div class="footer">
         <p>🕐 Generado el {{ \Carbon\Carbon::now()->locale('es')->translatedFormat('d \d\e F \d\e Y \a \l\a\s h:i A') }}</p>
-        <p>Sistema de Administracion - {{ $tenantSiglas }} - {{ $tenantNombre }}</p>
+        <p>Sistema de Administración - {{ $tenantSiglas }} - {{ $tenantNombre }}</p>
     </div>
     </div>
 </body>

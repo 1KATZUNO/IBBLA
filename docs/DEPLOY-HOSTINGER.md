@@ -145,3 +145,11 @@ Verificar que apunte a `domains/ibbla.eu/public_html` y no a `~/public_html`.
 | El script dice "ruta no termina en ..." | estas en `~/public_html` (otra app) | `cd ~/domains/ibbla.eu/public_html` |
 | `git pull` rechazado | alguien edito archivos en el servidor | `git status`; no se despliega encima de cambios locales |
 | Reporte General vuelve a dar 504 | datos mucho mayores o limite de PHP/nginx | `ibbla:verificar` (mide el tiempo real) |
+
+## Respaldo automático de la base de datos (desde v2026.11.05-e1)
+
+Antes de correr las migraciones, `deploy/hostinger.sh` hace un `mysqldump` comprimido de la base del
+`.env` en `~/respaldos-ibbla/<bd>_<fecha>_antes_de_<tag>.sql.gz` (conserva los 10 más recientes; la
+contraseña viaja por `MYSQL_PWD`, nunca en la línea de comandos). Si el respaldo falla, el deploy se
+detiene sin migrar. Para restaurar: `gunzip -c <archivo> | mysql -h <host> -u <usuario> -p <bd>`.
+`--sin-respaldo` lo omite y solo tiene sentido con un respaldo hecho a mano en hPanel.

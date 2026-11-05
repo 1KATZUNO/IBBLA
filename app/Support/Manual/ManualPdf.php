@@ -51,7 +51,7 @@ class ManualPdf
         $dompdf = $pdf->getDomPDF();
         $fuente = $dompdf->getFontMetrics()->getFont('DejaVu Sans', 'normal');
         $lienzo = $dompdf->getCanvas();
-        $nombre = tenant()?->nombre ?? 'Sistema de Administracion';
+        $nombre = tenant()?->nombre ?? 'Sistema de Administración';
         $lienzo->page_text(42, 815, 'Manual de usuario - '.$nombre, $fuente, 7.5, [0.55, 0.55, 0.55]);
         $lienzo->page_text(486, 815, 'Página {PAGE_NUM} de {PAGE_COUNT}', $fuente, 7.5, [0.55, 0.55, 0.55]);
 

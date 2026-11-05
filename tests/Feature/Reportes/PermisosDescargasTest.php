@@ -37,7 +37,6 @@ class PermisosDescargasTest extends TestCase
     {
         return [
             'Excel de ingresos' => ['ingresos-asistencia.excel-ingresos', ['fecha_inicio' => '2026-01-01', 'fecha_fin' => '2026-03-31']],
-            'Excel de promesas' => ['ingresos-asistencia.excel-promesas', ['año' => 2026]],
             'Reporte General' => ['personas.reporte-general', ['accion' => 'ver']],
             'Reporte de contribuciones' => ['personas.reporte-pdf', ['accion' => 'ver']],
             'Cumplimiento' => ['reportes.cumplimiento', []],

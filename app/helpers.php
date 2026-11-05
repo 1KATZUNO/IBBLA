@@ -22,11 +22,11 @@ if (! function_exists('tenant_title')) {
     /**
      * Construye el título de página con las siglas del tenant actual.
      * Usado en @section('title', tenant_title('Asistencia')) en blades.
-     * Fallback 'IBBSC' si no hay tenant (rutas públicas / login).
+     * Fallback 'IBBLA' si no hay tenant (rutas públicas / login).
      */
     function tenant_title(string $suffix = ''): string
     {
-        $siglas = tenant()?->siglas ?? 'IBBSC';
+        $siglas = tenant()?->siglas ?? 'IBBLA';
 
         return $suffix === '' ? $siglas : $siglas.' - '.$suffix;
     }
@@ -39,7 +39,7 @@ if (! function_exists('tenant_pdf_data')) {
     function tenant_pdf_data(): array
     {
         $t = tenant();
-        $tenantNombre = $t ? $t->nombre : 'Sistema de Administracion';
+        $tenantNombre = $t ? $t->nombre : 'Sistema de Administración';
         $tenantSiglas = $t ? $t->siglas : 'Admin';
         $tenantColor = $t ? ($t->colors['600'] ?? '#3b82f6') : '#3b82f6';
 

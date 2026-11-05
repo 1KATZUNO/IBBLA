@@ -16,7 +16,7 @@
         data-clase-slug="{{ $clase->slug }}"
         data-clase-nombre="{{ $clase->nombre }}"
         data-clase-color="{{ $clase->color }}"
-        data-tenant-siglas="{{ tenant()?->siglas ?? 'IBBSC' }}"
+        data-tenant-siglas="{{ tenant()?->siglas ?? 'IBBLA' }}"
         data-tenant-nombre="{{ tenant()?->nombre ?? '' }}"
         data-user-id="{{ auth()->id() }}"
         data-user-name="{{ auth()->user()->name }}"

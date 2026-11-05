@@ -12,7 +12,7 @@
 
     <link rel="manifest" href="{{ asset('manifest.json') }}">
     <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('images/Logo.png') }}">
-    <link rel="apple-touch-icon" href="{{ asset('images/angeda_deep_ocean.png') }}">
+    <link rel="apple-touch-icon" href="{{ asset('images/Logo.png') }}">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

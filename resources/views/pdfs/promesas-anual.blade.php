@@ -268,7 +268,7 @@
 
     <div class="footer">
         <p><strong>{{ $tenantSiglas }} - {{ $tenantNombre }}</strong></p>
-        <p>Sistema de Administracion - {{ $tenantSiglas }}</p>
+        <p>Sistema de Administración - {{ $tenantSiglas }}</p>
     </div>
 </body>
 </html>

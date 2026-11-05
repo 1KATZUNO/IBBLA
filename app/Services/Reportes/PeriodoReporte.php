@@ -89,6 +89,21 @@ final class PeriodoReporte
         return new self($desde === null ? $corte->startOfYear() : self::fecha($desde), $corte, $corte);
     }
 
+    /**
+     * Al ultimo dia del anio o del mes pedido, nunca despues de hoy: el Excel de promesas y el correo
+     * mensual cobran asi solo meses completos (regla 2.2) con el mismo motor que el cumplimiento.
+     * Sin anio se toma el actual; un mes fuera de 1..12 se ignora (anio completo).
+     */
+    public static function alFinDe(?int $anio, ?int $mes = null): self
+    {
+        $hoy = CarbonImmutable::today();
+        $anio = $anio && $anio >= 2000 && $anio <= 2100 ? $anio : $hoy->year;
+        $mes = $mes !== null && $mes >= 1 && $mes <= 12 ? $mes : 12;
+        $fin = CarbonImmutable::create($anio, $mes, 1)->endOfMonth()->startOfDay();
+
+        return self::alCorte($fin->min($hoy));
+    }
+
     /** El mismo periodo recortado a una fecha de corte (si el corte es posterior al fin, queda el fin). */
     public function conCorte(DateTimeInterface|string $corte): self
     {

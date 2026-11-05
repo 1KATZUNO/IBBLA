@@ -4,8 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Exports\AsistenciaExport;
 use App\Exports\IngresosExport;
-use App\Exports\PromesasExport;
 use App\Models\Culto;
+use App\Services\Reportes\FiltroPersonas;
+use App\Services\Reportes\PeriodoReporte;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -389,15 +390,21 @@ class IngresosAsistenciaController extends Controller
     }
 
     /**
-     * Excel de promesas con cumplimiento (Fase 2).
+     * Excel de promesas: desde la E1 sale del motor unico (QE-002). Es el Excel de Cumplimiento de
+     * promesas con corte al ultimo dia del anio o del mes pedido (nunca despues de hoy), asi que dice
+     * lo mismo que el estado de cuenta, Compromisos y el Reporte General.
      */
     public function excelPromesas(Request $request)
     {
-        $año = $request->filled('año') ? (int) $request->get('año') : (int) now()->year;
-        $mes = $request->filled('mes') ? (int) $request->get('mes') : null;
-        $nombre = 'promesas_'.$año.($mes ? '_'.str_pad((string) $mes, 2, '0', STR_PAD_LEFT) : '').'.xlsx';
+        $periodo = PeriodoReporte::alFinDe(
+            $request->filled('año') ? (int) $request->get('año') : null,
+            $request->filled('mes') ? (int) $request->get('mes') : null,
+        );
 
-        return Excel::download(new PromesasExport($año, $mes), $nombre);
+        return redirect()->route('reportes.cumplimiento.excel', [
+            'corte' => $periodo->corte->toDateString(),
+            'grupo' => FiltroPersonas::CON_PROMESA,
+        ]);
     }
 
     public function pdfIngresosTransferencias(Request $request)

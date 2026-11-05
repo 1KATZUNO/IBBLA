@@ -362,7 +362,7 @@ class ReporteGeneralPdf
         $this->rect(self::X0, $y, self::X1 - self::X0, self::BORDE, '#e5e7eb');
         $generado = 'Generado el '.$generadoEn->copy()->locale('es')->translatedFormat('d \d\e F \d\e Y \a \l\a\s h:i A');
         $this->textoCentrado($generado, self::CENTRO_X, $y + 13.2, $this->regular, self::T_CELDA, '#9ca3af');
-        $sistema = 'Sistema de Administracion - '.$tenant['tenantSiglas'].' - '.$tenant['tenantNombre'];
+        $sistema = 'Sistema de Administración - '.$tenant['tenantSiglas'].' - '.$tenant['tenantNombre'];
         $this->textoCentrado($sistema, self::CENTRO_X, $y + 13.2 + self::PASO_LINEA, $this->regular, self::T_CELDA, '#9ca3af');
     }
 

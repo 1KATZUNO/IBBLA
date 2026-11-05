@@ -179,7 +179,7 @@
     @endif
 
     <div class="footer">
-        <p>Sistema de Administracion - {{ $tenantSiglas }} - {{ $tenantNombre }}</p>
+        <p>Sistema de Administración - {{ $tenantSiglas }} - {{ $tenantNombre }}</p>
     </div>
 </body>
 </html>

@@ -46,7 +46,7 @@
     <link rel="icon" type="image/png" sizes="32x32" href="{{ $tenantLogo }}">
     <link rel="icon" type="image/png" sizes="16x16" href="{{ $tenantLogo }}">
     <link rel="shortcut icon" href="{{ $tenantLogo }}">
-    <link rel="apple-touch-icon" href="{{ asset('images/angeda_deep_ocean.png') }}">
+    <link rel="apple-touch-icon" href="{{ asset('images/Logo.png') }}">
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">

@@ -23,7 +23,7 @@ class MensajesWhatsApp
     {
         $iglesia ??= tenant();
 
-        return $iglesia?->nombre ?? 'Sistema de Administracion';
+        return $iglesia?->nombre ?? 'Sistema de Administración';
     }
 
     /** «18 de octubre de 2026». */

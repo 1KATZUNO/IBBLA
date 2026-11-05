@@ -608,6 +608,11 @@ class RecuentoController extends Controller
     {
         $this->calculoService->recalcular($culto);
         $this->permisosEdicion->registrarCambioEnCerrado($request, $culto, $accion, $detalles);
+
+        // Un culto cerrado ya se sincronizo al cerrarse: si se corrige, su mes se vuelve a sincronizar (QE-006).
+        if ($culto->cerrado) {
+            app(\App\Services\Reportes\SincronizadorCompromisos::class)->sincronizarMesDeCulto($culto);
+        }
     }
 
     /**

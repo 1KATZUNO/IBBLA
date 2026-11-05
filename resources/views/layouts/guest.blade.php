@@ -5,11 +5,11 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="csrf-token" content="{{ csrf_token() }}">
 
-        <meta name="theme-color" content="#0e7490">
+        <meta name="theme-color" content="#1e40af">
         <meta name="apple-mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
-        <title>Iniciar sesión - Sistema de Administración</title>
+        <title>Iniciar sesión · IBBLA</title>
 
         <!-- PWA Manifest -->
         <link rel="manifest" href="{{ asset('manifest.json') }}">
@@ -36,8 +36,8 @@
                     <span class="flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-800 shadow-card">
                         <img src="{{ asset('images/Logo.png') }}" alt="" class="h-11 w-11 object-contain">
                     </span>
-                    <h1 class="mt-4 text-2xl font-semibold tracking-tight text-gray-900">Administración de la iglesia</h1>
-                    <p class="mt-1 text-sm text-gray-500">Sobres, personas, asistencia y reportes en un solo lugar</p>
+                    <h1 class="mt-4 text-2xl font-semibold tracking-tight text-gray-900">{{ tenant()?->siglas ?? 'IBBLA' }}</h1>
+                    <p class="mt-1 text-sm text-gray-500">{{ tenant()?->nombre ?? 'Iglesia Bíblica Bautista en La Aurora' }} · Administración</p>
                 </div>
 
                 <!-- Tarjeta -->
@@ -45,7 +45,7 @@
                     {{ $slot }}
                 </div>
 
-                <p class="mt-6 text-center text-xs text-gray-400">&copy; {{ date('Y') }} Sistema de Administración</p>
+                <p class="mt-6 text-center text-xs text-gray-400">&copy; {{ date('Y') }} {{ tenant()?->siglas ?? 'IBBLA' }} · {{ tenant()?->nombre ?? 'Iglesia Bíblica Bautista en La Aurora' }}</p>
             </div>
         </div>
     <script>

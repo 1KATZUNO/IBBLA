@@ -78,6 +78,9 @@ class EstadosCuentaController extends Controller
         }
 
         $lote = $this->servicio->generar($entrada->periodo, $filtro);
+        if ($lote->cantidad() === 0) {
+            return $this->volver($request, 'No hay personas en ese filtro, así que no hay nada que exportar. Cambie el grupo o la selección.');
+        }
         if ($lote->cantidad() > EstadoCuentaPdf::MAX_ZIP) {
             return $this->volver($request, 'El ZIP admite hasta '.EstadoCuentaPdf::MAX_ZIP.' personas y el filtro tiene '.$lote->cantidad().'. Use el PDF en un solo archivo o elija menos personas.');
         }

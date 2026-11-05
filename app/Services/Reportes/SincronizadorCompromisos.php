@@ -2,10 +2,13 @@
 
 namespace App\Services\Reportes;
 
+use App\Models\Culto;
 use App\Models\Tenant;
 use App\Support\Moneda\ConversorUsd;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 
 /**
  * Guarda en la tabla `compromisos` (una fila por persona, categoria prometida y mes) lo que calcula
@@ -54,6 +57,28 @@ final class SincronizadorCompromisos
             } else {
                 app()->forgetInstance('current_tenant');
             }
+        }
+    }
+
+    /**
+     * El mes de un culto cerrado cambio (se cerro, se borro, o se corrigio un sobre con acceso de
+     * edicion o como admin): se vuelve a sincronizar solo ese mes (QE-006). Nunca interrumpe la
+     * accion del usuario: si falla queda en el log y se arregla con el comando o el boton Recalcular.
+     */
+    public function sincronizarMesDeCulto(Culto $culto): void
+    {
+        if (! $culto->fecha) {
+            return;
+        }
+
+        try {
+            $tenant = Tenant::find($culto->tenant_id);
+            if ($tenant) {
+                $fecha = CarbonImmutable::parse($culto->fecha);
+                $this->sincronizar($tenant, (int) $fecha->format('Y'), (int) $fecha->format('n'));
+            }
+        } catch (Throwable $e) {
+            Log::warning('No se pudieron sincronizar los compromisos del culto '.$culto->id.': '.$e->getMessage());
         }
     }
 
