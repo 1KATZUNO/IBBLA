@@ -5,63 +5,36 @@
 
 @section('content')
 <div class="space-y-6">
-    <!-- Botones Principales: cada reporte aparece solo si el rol lo puede abrir (antes el de asistencia daba 403 a tesoreria) -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-        @if(Auth::user()->canAccessAsistencia())
-        <!-- Botón Asistencia -->
-        <a href="{{ route('ingresos-asistencia.asistencia') }}" class="block">
-            <div class="h-full bg-brand-600 rounded-xl shadow-lg hover:shadow-2xl transition-shadow duration-300 p-6 xl:p-8 text-white cursor-pointer">
-                <div class="flex items-center justify-between mb-4">
-                    <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                    </svg>
+    {{-- Centro de reportes: una tarjeta por reporte, solo los que el rol puede abrir (misma regla que la ruta) --}}
+    @php
+        $verDinero = Auth::user()->canAccessRecuento();
+        $verAsistencia = Auth::user()->canAccessAsistencia();
+        $tarjetas = array_values(array_filter([
+            ['ruta' => 'reportes.cumplimiento', 'visible' => $verDinero, 'icono' => 'check', 'titulo' => 'Cumplimiento de promesas', 'texto' => 'Quién está al día y quién debe, con fecha de corte.', 'formatos' => 'Pantalla, PDF y Excel'],
+            ['ruta' => 'reportes.estados-cuenta', 'visible' => $verDinero, 'icono' => 'documento', 'titulo' => 'Estados de cuenta en lote', 'texto' => 'El estado de cuenta de muchas personas a la vez.', 'formatos' => 'PDF, ZIP y Excel'],
+            ['ruta' => 'personas.reporte-general', 'params' => ['accion' => 'ver'], 'visible' => $verDinero, 'icono' => 'barras', 'titulo' => 'Reporte General', 'texto' => 'Lo dado contra lo esperado de todas las personas activas.', 'formatos' => 'PDF'],
+            ['ruta' => 'personas.reporte-pdf', 'params' => ['accion' => 'ver'], 'visible' => $verDinero, 'icono' => 'reporte', 'titulo' => 'Reporte de contribuciones', 'texto' => 'Contribuciones de todas las personas, de enero al mes actual.', 'formatos' => 'PDF'],
+            ['ruta' => 'ingresos-asistencia.ingresos', 'visible' => $verDinero, 'icono' => 'reporte', 'titulo' => 'Ingresos', 'texto' => 'Lo recibido por culto, semana o mes.', 'formatos' => 'Pantalla, PDF y Excel'],
+            ['ruta' => 'ingresos-asistencia.promesas', 'visible' => $verDinero, 'icono' => 'documento', 'titulo' => 'Promesas', 'texto' => 'Promesas y compromisos por persona.', 'formatos' => 'Pantalla, PDF y Excel'],
+            ['ruta' => 'ingresos-asistencia.asistencia', 'visible' => $verAsistencia, 'icono' => 'grupo', 'titulo' => 'Asistencia', 'texto' => 'Asistencia por culto y resumen por mes.', 'formatos' => 'Pantalla, PDF y Excel'],
+            ['ruta' => 'ingresos-asistencia.asistencia-clases', 'visible' => $verAsistencia, 'icono' => 'calendario', 'titulo' => 'Asistencia por clase', 'texto' => 'Niños, niñas, maestros y promedio en un rango de fechas.', 'formatos' => 'Pantalla, PDF, CSV y Excel'],
+        ], fn ($t) => $t['visible'] && \Illuminate\Support\Facades\Route::has($t['ruta'])));
+    @endphp
+    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4" data-testid="centro-reportes">
+        @foreach($tarjetas as $t)
+        <a href="{{ route($t['ruta'], $t['params'] ?? []) }}" @if(isset($t['params'])) target="_blank" rel="noopener" @endif class="block h-full bg-white rounded-xl border border-gray-200 shadow-card hover:shadow-card-hover transition-shadow p-4 sm:p-6">
+            <div class="flex items-start gap-3">
+                <span class="shrink-0 inline-flex items-center justify-center w-11 h-11 rounded-lg bg-brand-50 text-brand-700">
+                    <x-icono :nombre="$t['icono']" class="w-6 h-6" />
+                </span>
+                <div class="min-w-0">
+                    <h2 class="text-base font-semibold text-gray-900">{{ $t['titulo'] }}</h2>
+                    <p class="text-sm text-gray-600 mt-1">{{ $t['texto'] }}</p>
+                    <p class="text-xs font-medium text-brand-700 mt-2">{{ $t['formatos'] }}</p>
                 </div>
-                <h2 class="text-2xl xl:text-3xl font-bold mb-2">Asistencia</h2>
-                <p class="text-brand-100 text-lg">Ver y descargar registros de asistencia</p>
             </div>
         </a>
-
-        @if(Route::has('ingresos-asistencia.asistencia-clases'))
-        <!-- Asistencia por clase en un rango de fechas (pantalla nueva de la rama de asistencia por rango) -->
-        <a href="{{ route('ingresos-asistencia.asistencia-clases') }}" class="block">
-            <div class="h-full bg-brand-800 rounded-xl shadow-lg hover:shadow-2xl transition-shadow duration-300 p-6 xl:p-8 text-white cursor-pointer">
-                <div class="flex items-center justify-between mb-4">
-                    <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                    </svg>
-                </div>
-                <h2 class="text-2xl xl:text-3xl font-bold mb-2">Asistencia por clase</h2>
-                <p class="text-brand-100 text-lg">Ninos, ninas, maestros y promedio en un rango de fechas</p>
-            </div>
-        </a>
-        @endif
-        @endif
-
-        <!-- Botón Ingresos -->
-        <a href="{{ route('ingresos-asistencia.ingresos') }}" class="block">
-            <div class="h-full bg-green-600 rounded-xl shadow-lg hover:shadow-2xl transition-shadow duration-300 p-6 xl:p-8 text-white cursor-pointer">
-                <div class="flex items-center justify-between mb-4">
-                    <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                </div>
-                <h2 class="text-2xl xl:text-3xl font-bold mb-2">Ingresos</h2>
-                <p class="text-green-100 text-lg">Ver y descargar reportes de ingresos</p>
-            </div>
-        </a>
-
-        <!-- Botón Promesas -->
-        <a href="{{ route('ingresos-asistencia.promesas') }}" class="block">
-            <div class="h-full bg-gray-700 rounded-xl shadow-lg hover:shadow-2xl transition-shadow duration-300 p-6 xl:p-8 text-white cursor-pointer">
-                <div class="flex items-center justify-between mb-4">
-                    <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
-                    </svg>
-                </div>
-                <h2 class="text-2xl xl:text-3xl font-bold mb-2">Promesas</h2>
-                <p class="text-gray-100 text-lg">Ver reporte de promesas y compromisos</p>
-            </div>
-        </a>
+        @endforeach
     </div>
 
     <!-- Resumen Rápido -->

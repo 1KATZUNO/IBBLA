@@ -73,7 +73,7 @@ class Menu
             $porRuta[$it['ruta']] = [
                 'titulo' => $it['etiqueta'],
                 'ruta' => $it['ruta'],
-                'url' => route($it['ruta']),
+                'url' => route($it['ruta'], $it['params'] ?? []),
                 'icono' => $it['icono'],
                 'grupo' => $it['grupo'] ?? 'General',
                 'tipo' => $it['tipo'] ?? 'pantalla',
@@ -148,7 +148,7 @@ class Menu
                 self::it('personas.index', 'Gestionar Personas', 'personas', 'personas.*|compromisos.*', $p['admin'], 'personas miembros hermanos pin telefono promesas compromisos estado de cuenta ficha'),
                 self::it('admin.ministerios.index', 'Ministerios', 'estrella', 'admin.ministerios.*', $p['admin'], 'ministerios areas de servicio lideres'),
                 self::it('usuarios.index', 'Gestionar Usuarios', 'personas', 'usuarios.*', $p['admin'], 'usuarios roles permisos contrasena acceso cuentas'),
-                self::it($rutaAccesos, 'Accesos', 'candado', 'admin.accesos.*|accesos.*', $p['admin'], 'accesos permisos de edicion culto tesorero conceder revocar'),
+                self::it($rutaAccesos, 'Accesos', 'candado', 'admin.accesos.*|accesos.*', $p['admin'], 'accesos permisos de edicion culto tesorero conceder revocar vencimiento corregir culto cerrado'),
                 self::it('admin.servidores.index', 'Servidores', 'grupo', 'admin.servidores.*', $p['admin'], 'servidores qr asistencia de servidores reporte de servidores'),
                 self::it('asistencia.importar.index', 'Cargar Histórico', 'subir', 'asistencia.importar.*', $p['admin'], 'importar historico excel asistencias antiguas plantilla'),
                 self::it('admin.auditoria.index', 'Auditoría', 'lupa', 'admin.auditoria.index', $p['admin'], 'auditoria historial de cambios quien modifico bitacora'),
@@ -178,6 +178,9 @@ class Menu
             self::extra('ingresos-asistencia.asistencia', 'Reporte de asistencia', 'reporte', $p['asistencia'], 'reporte asistencia por culto mes pdf excel', 'Reportes', 'reporte'),
             self::extra('ingresos-asistencia.promesas', 'Reporte de promesas', 'reporte', $p['recuento'], 'reporte promesas cumplimiento pdf excel anual', 'Reportes', 'reporte'),
             self::extra('ingresos-asistencia.promesas-por-clase', 'Promesas por clase', 'reporte', $p['recuento'], 'reporte promesas por clase grupo', 'Reportes', 'reporte'),
+            self::extra('reportes.cumplimiento', 'Cumplimiento de promesas', 'check', $p['recuento'], 'cumplimiento al dia pendientes quien debe corte fecha de corte promesas pdf excel', 'Reportes', 'reporte'),
+            self::extra('reportes.estados-cuenta', 'Estados de cuenta en lote', 'documento', $p['recuento'], 'estados de cuenta lote varias personas corte pdf zip excel', 'Reportes', 'reporte'),
+            self::extra('personas.reporte-general', 'Reporte General', 'barras', $p['recuento'], 'reporte general dado contra esperado dado vs esperado todas las personas pdf', 'Reportes', 'reporte', ['accion' => 'ver']),
             self::extra('admin.servidores.reporte', 'Reporte de servidores', 'reporte', $p['admin'], 'reporte servidores asistencia de servidores pdf', 'Reportes', 'reporte'),
             self::extra('profile.edit', 'Mi cuenta', 'usuario', true, 'mi cuenta perfil nombre correo contrasena clave cambiar whatsapp avisos', 'General'),
         ];
@@ -197,7 +200,7 @@ class Menu
     }
 
     /** @return array<string, mixed> */
-    private static function extra(string $ruta, string $etiqueta, string $icono, bool $visible, string $claves, string $grupo, string $tipo = 'pantalla'): array
+    private static function extra(string $ruta, string $etiqueta, string $icono, bool $visible, string $claves, string $grupo, string $tipo = 'pantalla', array $params = []): array
     {
         return [
             'ruta' => $ruta,
@@ -207,6 +210,7 @@ class Menu
             'claves' => $claves,
             'grupo' => $grupo,
             'tipo' => $tipo,
+            'params' => $params,
         ];
     }
 }
