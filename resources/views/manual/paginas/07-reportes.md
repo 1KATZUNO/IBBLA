@@ -4,8 +4,8 @@ orden: 70
 icono: reporte
 resumen: Sacar reportes de ingresos, asistencia (por culto y por clase) y estados de cuenta, en pantalla, PDF o Excel.
 roles: admin, tesorero, asistente
-rutas: ingresos-asistencia.*
-palabras: reportes, informes, ingresos, asistencia por clase, promedio, estado de cuenta, pdf, excel, csv, transferencias, descargar, rango de fechas, reporte general, dado contra esperado
+rutas: ingresos-asistencia.*, reportes.*
+palabras: cumplimiento de promesas, al día, corte, estados de cuenta en lote, lote, zip, reportes, informes, ingresos, asistencia por clase, promedio, estado de cuenta, pdf, excel, csv, transferencias, descargar, rango de fechas, reporte general, dado contra esperado
 ---
 
 ## Para qué sirve
@@ -18,14 +18,14 @@ Los **reportes** convierten lo registrado (sobres, asistencia, promesas) en cuad
 |---|---|
 | **Ingresos** y **Promesas** | Administrador, Tesorero |
 | **Asistencia** y **Asistencia por clase** | Administrador, Asistente |
-| **Reporte de contribuciones**, **Reporte General** y **Estado de cuenta** de una persona | Administrador |
+| **Cumplimiento de promesas**, **Estados de cuenta en lote**, **Reporte de contribuciones**, **Reporte General** y **Estado de cuenta** de una persona | Administrador, Tesorero |
 | **Reporte de Servidores** | Administrador |
 
-El menú lateral solo muestra los que tu rol puede abrir. El Tesorero ve en **Reportes** dos tarjetas (Ingresos y Promesas) y el Asistente entra directo al reporte de asistencia.
+El menú lateral solo muestra los que tu rol puede abrir. El Tesorero ve en **Reportes** las tarjetas de dinero (cumplimiento, estados de cuenta, Reporte General, contribuciones, Ingresos y Promesas); no necesita el módulo *Personas*. El Asistente entra directo al reporte de asistencia.
 
 ## Cómo llegar
 
-Menú lateral → **Consultas** → **Reportes**. Allí aparece una tarjeta por cada reporte que puedes abrir.
+Menú lateral → **Consultas** → **Reportes**. Es el **centro de reportes**: una tarjeta por cada reporte que puedes abrir, con una línea de qué contiene y en qué formatos sale (pantalla, PDF, Excel). Desde cualquier pantalla llegas a cualquier reporte en dos clics.
 
 ![Pantalla de reportes](img:reportes-indice.jpg "Cada tarjeta abre un reporte; abajo hay un resumen de la semana")
 
@@ -63,14 +63,47 @@ Elige un rango de fechas (**Desde** y **Hasta**) y, si quieres, una **Clase**. E
 
 Ver la página *Promesas*.
 
-## Reportes de personas (solo Administrador)
+## Cumplimiento de promesas (con corte)
 
-En **Gestionar Personas** hay tres salidas relacionadas con los reportes:
+Dice, a una **fecha de corte**, quién va **al día** con sus promesas y quién tiene pendiente. Sale en pantalla, en **PDF** y en **Excel**. Lo ven el Administrador y el Tesorero.
 
-- **Reporte PDF:** el reporte de contribuciones de todas las personas, de enero al mes actual.
-- **Reporte General:** el «dado contra esperado» de todas las personas activas.
-- **Estado de cuenta de una persona:** el icono del documento en su renglón (o **Estado de cuenta** en su ficha) abre su PDF; **Descargar** lo guarda.
+1. Elige **Personas** (ver «El selector de personas» más abajo) y la **Fecha de corte** (por defecto, hoy).
+2. Toca **Consultar**. Para volver al corte de hoy con todas las personas activas, **Limpiar**.
+3. Baja el **PDF** o el **Excel** con los mismos filtros.
 
+**Cómo se calcula:**
+
+- **Le corresponde** = los **meses completos** anteriores al corte. El mes en curso **no se cobra todavía**, pero lo que la persona ya dio en ese mes **sí cuenta** como dado.
+- La persona está **AL DÍA** si lo **dado ≥ le corresponde**; si no, muestra lo que le **falta**.
+- Solo cuentan las **categorías con promesa**. El **diezmo** se muestra pero **no cuenta** para el cumplimiento.
+- Lo dado en dólares se **convierte** a colones con el tipo de cambio del recuento.
+
+## Estados de cuenta en lote
+
+Genera el estado de cuenta de **muchas personas a la vez**, con la misma fecha de corte. Lo ven el Administrador y el Tesorero.
+
+- **PDF:** un solo archivo con portada e índice y una persona por sección.
+- **ZIP:** un PDF por persona, hasta **40 personas** por descarga (si eliges más, el sistema te pide acotar la lista).
+- **Excel:** las personas del grupo en una hoja de cálculo.
+
+### El selector de personas
+
+Sirve igual en Cumplimiento y en Estados de cuenta:
+
+| Opción | Qué incluye |
+|---|---|
+| **Todas las activas** | Todas las personas activas. |
+| **Con promesa** | Solo quienes tienen alguna promesa. |
+| **Por ministerio** | Los miembros de un ministerio, o «Cualquier ministerio (servidores)». |
+| **Elegir personas** | Las que busques y marques; aparecen como etiquetas que puedes quitar. |
+
+## Reportes de dinero por persona
+
+Estos tres también salen del centro de reportes, para Administrador y Tesorero:
+
+- **Reporte General:** el «dado contra esperado» de todas las personas activas, de enero al mes actual (PDF).
+- **Reporte de contribuciones:** las contribuciones de todas las personas, de enero al mes actual (PDF).
+- **Estado de cuenta de una persona:** el icono del documento en su renglón de **Gestionar Personas** (o **Estado de cuenta** en su ficha) abre su PDF; **Descargar** lo guarda.
 ## Preguntas frecuentes
 
 **El PDF no se abre.** Revisa que tu navegador no esté bloqueando ventanas emergentes: los PDF se abren en otra pestaña.
