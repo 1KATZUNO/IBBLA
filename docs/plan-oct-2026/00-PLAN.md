@@ -205,3 +205,10 @@ Del lider del proyecto (David):
   nuevo (tools/manual/capturar.mjs), pendientes de menu de ROLES.md, QA de entrega (opus), tag y deploy
   con deploy/hostinger.sh (hay migraciones: migrate --force), correr ibbla:verificar en el servidor y
   cambiar las contrasenas del seeder si siguen en produccion. Servidor local de integracion: 8100.
+- 2026-11-05: integracion/oct-2026 en 6633d70. Suite completa: 829 tests, solo los 15 de Breeze (correr
+  con -d memory_limit=1G). Menu segun ROLES.md aplicado, ruta de cumpleaneros cerrada al miembro, seeder
+  local = IBBLA, 34 capturas del manual regeneradas con el logo nuevo. QA DE ENTREGA (opus) lanzado sobre
+  la integracion (informe en docs/plan-oct-2026/QA-ENTREGA.md de la rama qa/revision-inicial).
+  Al GO: merge a main + tag v2026.11.05-e1 + push; en Hostinger `bash deploy/hostinger.sh --tag v2026.11.05-e1`
+  (hay migraciones: permisos_edicion, whatsapp, audit_logs.tenant_id...), luego `php artisan
+  compromisos:sincronizar`, `php artisan ibbla:verificar` y cambiar las contrasenas del seeder si siguen.
