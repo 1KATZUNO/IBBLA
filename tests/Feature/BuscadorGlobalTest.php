@@ -271,4 +271,45 @@ class BuscadorGlobalTest extends TestCase
             $this->assertSame('manual', $grupo['clave']);
         }
     }
+
+    public function test_los_reportes_nuevos_se_encuentran_por_sus_sinonimos_y_segun_el_rol(): void
+    {
+        $casos = [
+            ['Cumplimiento de promesas', 'al día'],
+            ['Cumplimiento de promesas', 'cumplimiento corte'],
+            ['Estados de cuenta en lote', 'estados de cuenta'],
+            ['Estados de cuenta en lote', 'lote'],
+            ['Reporte General', 'reporte general'],
+        ];
+
+        foreach ([$this->admin, $this->tesorero] as $usuario) {
+            foreach ($casos as [$titulo, $consulta]) {
+                $this->assertContains($titulo, $this->titulos($this->buscar($usuario, $consulta), 'reportes'), "{$usuario->rol}: {$consulta}");
+            }
+        }
+
+        foreach ([$this->asistente, $this->miembro] as $usuario) {
+            foreach ($casos as [$titulo, $consulta]) {
+                $this->assertNotContains($titulo, $this->titulos($this->buscar($usuario, $consulta), 'reportes'), "{$usuario->rol}: {$consulta}");
+            }
+        }
+    }
+
+    public function test_el_reporte_general_del_buscador_abre_directo_el_pdf(): void
+    {
+        $r = $this->buscar($this->tesorero, 'reporte general');
+        $url = collect($r['grupos'])->firstWhere('clave', 'reportes')['items'][0]['url'];
+
+        $this->assertStringContainsString('accion=ver', $url);
+    }
+
+    public function test_accesos_se_encuentra_por_sus_sinonimos_solo_para_el_admin(): void
+    {
+        foreach (['accesos', 'permisos de edicion'] as $consulta) {
+            $this->assertContains('Accesos', $this->titulos($this->buscar($this->admin, $consulta), 'pantallas'), $consulta);
+            foreach ([$this->tesorero, $this->asistente, $this->miembro] as $usuario) {
+                $this->assertNotContains('Accesos', $this->titulos($this->buscar($usuario, $consulta), 'pantallas'), "{$usuario->rol}: {$consulta}");
+            }
+        }
+    }
 }

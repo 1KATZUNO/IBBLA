@@ -44,23 +44,25 @@ Cada sobre de la lista tiene sus propias acciones: **Editar** y **Eliminar** (el
 
 1. Elige el culto en **Seleccionar Culto**.
 2. Toca **+ Agregar Sobre**.
-3. En **Persona**, escribe el nombre o el PIN y elígela de la lista. Si el sobre no trae nombre, déjalo en **Anónimo**. Si la persona no existe, toca **+ Agregar Persona Rápida**, escribe su nombre completo y se crea como persona activa sin salir de la pantalla.
+3. En **Persona**, escribe el nombre o el PIN y elígela de la lista: su nombre aparece **en grande junto al botón Guardar**, para que confirmes que es la persona correcta. Si el sobre no trae nombre, marca la casilla **Sobre anónimo** (o confirma que es anónimo cuando el sistema te lo pregunte): ya **no existe** el truco de dejar el campo vacío. Si escribes un nombre que no existe, el sistema ofrece **crearla** con el alta rápida sin salir de la pantalla.
 4. Elige el **Método de pago**: **Efectivo** o **Transferencia**. Con transferencia aparece el campo **N° Comprobante**.
 5. Si el sobre viene en dólares, cambia la **Moneda** a **$ Dólares**: el sistema usa el tipo de cambio del día.
 6. Escribe el monto de cada categoría (diezmo, misiones, construcción…). Las que no lleven dinero se quedan en cero. El **Total** abajo se va sumando.
 7. Si hace falta, escribe una nota.
-8. Toca **Guardar Sobre**. El botón **Guardar** y el total siempre están a la vista, aunque la pantalla sea larga.
+8. Toca **Guardar Sobre**. El botón **Guardar** y el total siempre están a la vista, aunque la pantalla sea larga. Con **Guardar y siguiente** el sobre se guarda y se abre uno nuevo **en el mismo culto**: no hace falta volver a elegirlo.
 
 ![Formulario de un sobre nuevo](img:recuento-nuevo-sobre.jpg "Persona (1), método de pago (2), montos por categoría (3) y la barra con el total y Guardar Sobre (4)")
 
 | Botón o control | Qué hace | Quién puede usarlo | Qué pasa después |
 |---|---|---|---|
-| **1. Persona** | Busca por nombre o PIN. Vacía = sobre anónimo. | Administrador, Tesorero | El sobre queda ligado a la persona y cuenta para su estado de cuenta. |
+| **1. Persona** | Busca por nombre o PIN. Para un sobre sin nombre marca **Sobre anónimo**; si el nombre no existe, ofrece crearla con el alta rápida. | Administrador, Tesorero | El sobre queda ligado a la persona (y cuenta para su estado de cuenta) o queda como anónimo. |
 | **2. Método de pago** | Efectivo o transferencia. | Administrador, Tesorero | Con transferencia puedes anotar el comprobante. |
 | **3. Detalles del sobre** | Un monto por categoría. | Administrador, Tesorero | El total del sobre se calcula solo. |
 | **4. Guardar Sobre** | Guarda el sobre. | Administrador, Tesorero | Vuelves al recuento del culto con el mensaje «Sobre registrado correctamente». |
 
-> **Cuidado:** si registras dos sobres de la misma persona en el mismo culto con menos de unos 30 segundos de diferencia, el sistema no guarda el segundo y te avisa: «Ya se registró un sobre para esta persona en este culto hace unos segundos». Lo mismo pasa con dos sobres **anónimos** seguidos. Revisa que no sea un duplicado; si de verdad son dos sobres, espera unos segundos y vuelve a guardarlo (el formulario no conserva lo que escribiste).
+> **Cuidado:** si registras dos sobres de la misma persona en el mismo culto con menos de unos 30 segundos de diferencia, el sistema no guarda el segundo y te avisa: «Ya se registró un sobre para esta persona en este culto hace unos segundos». Revisa que no sea un duplicado; si de verdad son dos sobres, espera unos segundos y vuelve a guardarlo.
+>
+> Los sobres **anónimos** no se rechazan como duplicados: puedes registrar varios seguidos.
 
 ## Paso a paso: cerrar un culto
 
@@ -70,25 +72,32 @@ Cada sobre de la lista tiene sus propias acciones: **Editar** y **Eliminar** (el
 
 Al cerrar:
 
-- **No se puede** agregar sobres, dinero suelto ni egresos, ni editar o eliminar los que ya están. El **Administrador** sí puede corregir un sobre de un culto cerrado.
+- **No se puede** agregar sobres, dinero suelto ni egresos, ni editar o eliminar los que ya están. El **Administrador**, o quien tenga un **acceso de edición**, sí puede corregirlo.
 - Se guarda el **tipo de cambio** del día para los sobres en dólares.
 - Las **firmas** siguen pudiéndose corregir.
-- El culto sale de la lista de abiertos y pasa a **Cultos Cerrados (Archivo)**, al final de la pantalla, donde puedes verlo (**Ver**) y bajar su PDF.
+- El culto sale de la lista de cultos abiertos y pasa a la **lista por líneas** de cultos. Ábrelo desde ahí: ya no hay una sección «Cultos Cerrados (Archivo)».
 
-> **Cuidado:** en cada tarjeta del archivo, el icono del **basurero** elimina el culto **con todos sus sobres**. Solo el Administrador puede hacerlo; al Tesorero el sistema le responde que no tiene permiso.
+> **Cuidado:** eliminar un culto cerrado borra el culto **con todos sus sobres**. Solo el Administrador puede hacerlo, escribiendo un motivo, y queda en la auditoría.
 
 > **Importante:** cerrar es el paso que deja listos los totales para los reportes. Cierra el culto cuando el recuento esté completo y firmado.
 
+## Un culto cerrado
+
+Un culto cerrado se abre desde la **lista por líneas** de cultos. El **Tesorero** lo ve todo en **solo lectura**, con el aviso «Cerrado el dd/mm por X» (fecha y quién lo cerró). El **Administrador**, o quien tenga un **acceso de edición** sobre ese culto (módulo *Accesos*, ver su página), puede **corregir** sobres, dinero suelto y egresos. Las **firmas** se pueden corregir aun después de firmadas y el cambio queda auditado.
+
+## Sobres anónimos
+
+En la lista de sobres del culto, el filtro **Solo anónimos** muestra únicamente los sobres sin persona. Cuando después sepas de quién era uno, usa la acción **Asignar persona** en su renglón: el sobre pasa a contar en el estado de cuenta de esa persona.
 ## Preguntas frecuentes
 
-**Me equivoqué en un sobre.** Toca **Editar** en su renglón, corrige y guarda. Si el culto ya está cerrado, solo el Administrador puede corregirlo.
+**Me equivoqué en un sobre.** Toca **Editar** en su renglón, corrige y guarda. Si el culto ya está cerrado, solo el Administrador (o quien tenga un acceso de edición) puede corregirlo.
 
 **El culto de hoy no es el primero de la lista.** La lista va de la fecha más lejana a la más antigua, así que el culto de hoy puede quedar más abajo. Escribe su fecha en el buscador de la barra superior para llegar directo.
 
-**El culto que busco no está en la lista.** La lista solo trae cultos abiertos. Si ya lo cerraron, está en **Cultos Cerrados (Archivo)**. Si todavía no existe, pídele al administrador que lo cree en **Gestionar Cultos**.
+**El culto que busco no está en la lista.** Si ya lo cerraron, ábrelo desde la lista por líneas de cultos. Si todavía no existe, pídele al administrador que lo cree en **Gestionar Cultos**.
 
 **¿Puedo eliminar un sobre?** Sí, mientras el culto esté abierto, con el icono del basurero y confirmando. En un culto cerrado no se puede eliminar.
 
-**¿Puedo eliminar un culto ya cerrado?** Solo el **Administrador**, desde **Cultos Cerrados (Archivo)** con **Eliminar culto**. El sistema pide confirmar y escribir un **motivo** (obligatorio), y queda en la auditoría qué culto era, su fecha, su total y cuántos sobres tenía. El Tesorero no ve ese botón.
+**¿Puedo eliminar un culto ya cerrado?** Solo el **Administrador**, desde la lista de cultos, con **Eliminar culto**. El sistema pide confirmar y escribir un **motivo** (obligatorio), y queda en la auditoría qué culto era, su fecha, su total y cuántos sobres tenía. El Tesorero no ve ese botón.
 
 **El sobre es de una persona que no está en la lista.** Usa **+ Agregar Persona Rápida** en el formulario del sobre para crearla con su nombre; después el administrador puede completar sus datos en **Personas**.
