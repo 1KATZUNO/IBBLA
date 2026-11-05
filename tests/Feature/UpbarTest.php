@@ -59,8 +59,10 @@ class UpbarTest extends TestCase
     {
         $miembro = $this->crearUsuario($this->iglesia, 'miembro');
         $admin = $this->crearUsuario($this->iglesia, 'admin');
+        // "Yo" (Mi perfil) solo se ofrece a quien tiene una persona vinculada (docs/ROLES.md).
+        \App\Models\Persona::withoutGlobalScopes()->create(['nombre' => 'Miembro Prueba', 'activo' => true, 'tenant_id' => $this->iglesia->id, 'user_id' => $miembro->id]);
 
-        $this->actingAs($miembro)->get('/principal')
+        $this->actingAs($miembro->fresh())->get('/principal')
             ->assertSee('href="'.route('profile.edit').'"', false)
             ->assertSee('href="'.route('mi-perfil.index').'"', false);
 
