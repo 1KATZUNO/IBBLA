@@ -157,7 +157,7 @@ Correr PHPUnit directo contra tu base `_test` de MySQL (PHPUnit no pisa variable
 
 ```bash
 # Git Bash
-DB_CONNECTION=mysql DB_DATABASE=ibbla_x_test php vendor/bin/phpunit --filter NombreDelTest
+DB_CONNECTION=mysql DB_DATABASE=ibbla_x_test php -d memory_limit=1G -d max_execution_time=0 vendor/bin/phpunit --filter NombreDelTest
 ```
 
 ```powershell

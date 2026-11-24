@@ -118,7 +118,7 @@ Para quedar otra vez en `main` despues de un rollback: `git checkout main && git
 | Cuentas de `AdminUserSeeder` (`admin@ibbsc.com`, `super@admin.com`, `tesorero@ibbsc.com`) con la contrasena publica del repo | **FALLA** | AVISO |
 | Escritura en `storage/*` y `bootstrap/cache` | FALLA | FALLA |
 | `public/storage` (enlace) | AVISO | AVISO |
-| Reporte General y estado de cuenta (la persona con mas sobres) | FALLA si tarda 15 s o mas, AVISO desde 7,5 s | igual |
+| Reporte General y estado de cuenta (la persona con mas sobres) | FALLA si tarda 10 s o mas, AVISO desde 5 s | igual |
 
 Opciones: `--tenant=ID`, `--sin-reportes`, `--umbral=SEGUNDOS`. Codigo de salida 1 si hay alguna FALLA.
 El 504 del Reporte General se producia a los 60 s; con el fix tarda unos 3 s con 140 personas y 2.600 sobres.
@@ -146,7 +146,7 @@ Verificar que apunte a `domains/ibbla.eu/public_html` y no a `~/public_html`.
 | `git pull` rechazado | alguien edito archivos en el servidor | `git status`; no se despliega encima de cambios locales |
 | Reporte General vuelve a dar 504 | datos mucho mayores o limite de PHP/nginx | `ibbla:verificar` (mide el tiempo real) |
 
-## Respaldo automático de la base de datos (desde v2026.11.05-e1)
+## Respaldo automático de la base de datos (desde v2026.11.24-e1)
 
 Antes de correr las migraciones, `deploy/hostinger.sh` hace un `mysqldump` comprimido de la base del
 `.env` en `~/respaldos-ibbla/<bd>_<fecha>_antes_de_<tag>.sql.gz` (conserva los 10 más recientes; la

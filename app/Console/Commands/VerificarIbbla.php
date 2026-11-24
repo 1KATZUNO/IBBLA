@@ -32,7 +32,7 @@ class VerificarIbbla extends Command
     protected $signature = 'ibbla:verificar
         {--tenant= : Id de la iglesia para medir los reportes (por defecto, la que tiene mas personas activas)}
         {--sin-reportes : No generar los reportes pesados}
-        {--umbral=15 : Segundos a partir de los cuales un reporte cuenta como FALLA (la mitad es AVISO)}';
+        {--umbral=10 : Segundos a partir de los cuales un reporte cuenta como FALLA (la mitad es AVISO)}';
 
     protected $description = 'Verifica entorno, base de datos, migraciones, permisos y tiempos de los reportes pesados.';
 
