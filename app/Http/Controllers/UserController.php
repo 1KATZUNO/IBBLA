@@ -25,6 +25,14 @@ class UserController extends Controller
     }
 
     /**
+     * QE-020: no hay pantalla de detalle de un usuario; /usuarios/{id} lleva a la lista (antes 405).
+     */
+    public function show(string $usuario)
+    {
+        return redirect()->route('usuarios.index');
+    }
+
+    /**
      * Show the form for creating a new resource.
      */
     public function create()
