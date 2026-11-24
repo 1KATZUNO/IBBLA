@@ -222,3 +222,20 @@ Del lider del proyecto (David):
   E2-E4 arrancan de inmediato con los briefs de 05-BRIEFS-E2.md (equipos R reportes 3b, F pendientes de QA,
   G guia y ambiente QA; luego Q QA integral) en worktrees reportes-3b (8121, ibbla_r3b), qa-pendientes
   (8122, ibbla_fix) y guia-ambiente-qa (8123, ibbla_gqa), ya armados con VolumenDevSeeder.
+- 2026-11-24 (17:30 CR): E2-E4 LANZADA en una sola tanda por pedido de David ("terminemos todo hoy", sin tope
+  de uso por hoy). Push de E1 pendiente: dio 403 con la cuenta DavidConsiti; lo corre David con la cuenta
+  duena del repo (remoto ya apunta a 1KATZUNO@github.com). Cinco equipos en paralelo, cada uno con archivos
+  propios para fusionar sin choques (los equipos R y F de 05-BRIEFS-E2.md se partieron en dos):
+  * R1 opus  feat/reportes-3b              IBBLA-wt/reportes-3b      ibbla_r3b :8121  selector completo (HU-R2),
+    vista previa (HU-R4), QE-008, QE-011, PDF de promesas a la plantilla unica.
+  * R2 opus  feat/reportes-cultos-ingresos IBBLA-wt/reportes-nuevos  ibbla_rn  :8124  reporte de cultos (HU-R10),
+    de ingresos (HU-R11), asistencia en el centro (HU-R12), plantilla unica en lo viejo (HU-R14), tarjetas y buscador.
+  * F1 opus  fix/qa-pendientes             IBBLA-wt/qa-pendientes    ibbla_fix :8122  QE-009, QE-013, QE-017 resto,
+    QE-020, QA-018, QA-034, QA-036.
+  * F2 opus  fix/qa-pendientes-ui          IBBLA-wt/qa-pendientes-ui ibbla_fui :8125  QE-012 (manda la decision 5:
+    el tesorero SI ve reportes de asistencia; se corrige ROLES.md), QE-014, QE-015/QA-021, QE-016, QE-018, QE-019, QA-043.
+  * G sonnet feat/guia-ambiente-qa         IBBLA-wt/guia-ambiente-qa ibbla_gqa :8123  ambiente QA (deploy --qa, aviso,
+    noindex, AMBIENTE-QA.md) y manual final (fase 1); fase 2 = documentar lo nuevo tras integrar.
+  Reglas comunes de la tanda y propiedad de archivos: se entregaron a cada equipo (hora limite 19:30 CR).
+  Luego: integrar R1 -> R2 -> F1 -> F2 -> G, suite + build, QA integral (Q, opus) + G fase 2, corregir lo que
+  frene, tag final, push y deploy de David. WA-2 (bot de Meta) sigue descartado por la decision del 13/10.
