@@ -154,6 +154,9 @@ class DashboardRangoFechasTest extends TestCase
 
     public function test_para_dos_meses_completos_se_compara_con_los_dos_meses_anteriores(): void
     {
+        // El rango ya terminó: se compara completo (con el período en curso, ver DashboardMesEnCursoTest)
+        $this->travelTo('2026-11-15 09:00:00');
+
         $respuesta = $this->dashboard(['fecha_inicio' => '2026-09-01', 'fecha_fin' => '2026-10-31']);
 
         $comparativo = $respuesta->viewData('comparativo');
@@ -179,6 +182,9 @@ class DashboardRangoFechasTest extends TestCase
 
     public function test_para_un_rango_libre_se_compara_con_los_mismos_dias_justo_antes(): void
     {
+        // El rango ya terminó: se compara completo (con el período en curso, ver DashboardMesEnCursoTest)
+        $this->travelTo('2026-11-15 09:00:00');
+
         // 15/09 - 20/10 son 36 días: el anterior es 10/08 - 14/09 (incluye 30/08 y 06/09).
         $respuesta = $this->dashboard(['fecha_inicio' => '2026-09-15', 'fecha_fin' => '2026-10-20']);
 
@@ -190,6 +196,9 @@ class DashboardRangoFechasTest extends TestCase
 
     public function test_las_alertas_hablan_del_periodo_y_no_del_mes_cuando_el_rango_es_libre(): void
     {
+        // El rango ya terminó: se compara completo (con el período en curso, ver DashboardMesEnCursoTest)
+        $this->travelTo('2026-11-15 09:00:00');
+
         $respuesta = $this->dashboard(['fecha_inicio' => '2026-09-01', 'fecha_fin' => '2026-10-31']);
 
         $mensajes = $respuesta->viewData('alertas')->pluck('mensaje')->implode(' | ');
@@ -259,9 +268,9 @@ class DashboardRangoFechasTest extends TestCase
         $this->assertCount(22, $tendencia->where('enRango', true));
     }
 
-    // ================================================================ promesas (meses completos)
+    // ================================================================ promesas (motor de reportes, último mes completo)
 
-    public function test_las_promesas_se_evaluan_por_meses_completos_multiplicando_el_monto_por_los_meses(): void
+    public function test_las_promesas_salen_del_reporte_de_cumplimiento_al_ultimo_mes_completo(): void
     {
         $septiembre = $this->culto($this->iglesia, '2026-09-27', ['misiones' => 1]);
         $octubre = $this->culto($this->iglesia, '2026-10-11', ['misiones' => 1]);
@@ -269,34 +278,36 @@ class DashboardRangoFechasTest extends TestCase
         $ana = $this->personaConPromesa($this->iglesia, 'Ana', 'misiones', 1000);
         $this->sobre($septiembre, $ana, 'misiones', 1000);
         $this->sobre($octubre, $ana, 'misiones', 500);
+        $luis = $this->personaConPromesa($this->iglesia, 'Luis', 'misiones', 1000);
+        $this->sobre($septiembre, $luis, 'misiones', 400);
 
-        $estado = fn (array $query) => $this->dashboard($query)->viewData('promesasStatus');
+        $estado = function (array $query) {
+            $status = $this->dashboard($query)->viewData('promesasStatus');
 
-        // Septiembre solo: 1000 >= 1000
-        $this->assertSame(['cumplidas' => 1, 'pendientes' => 0], $estado(['mes' => 9, 'año' => 2026]));
-        // Octubre solo: 500 < 1000
-        $this->assertSame(['cumplidas' => 0, 'pendientes' => 1], $estado(['mes' => 10, 'año' => 2026]));
-        // Septiembre + octubre: 1500 < 2 x 1000
-        $this->assertSame(['cumplidas' => 0, 'pendientes' => 1], $estado(['fecha_inicio' => '2026-09-01', 'fecha_fin' => '2026-10-31']));
-        // A mitad de mes se amplía a los meses completos: da lo mismo que septiembre + octubre
-        $this->assertSame(['cumplidas' => 0, 'pendientes' => 1], $estado(['fecha_inicio' => '2026-09-28', 'fecha_fin' => '2026-10-02']));
+            return [$status['cumplidas'], $status['pendientes'], $status['corte']->toDateString()];
+        };
+
+        // Septiembre (ya terminó): Ana al día, Luis pendiente
+        $this->assertSame([1, 1, '2026-09-30'], $estado(['mes' => 9, 'año' => 2026]));
+        // Octubre está en curso (hoy 15/10) y no se cobra: se evalúa al 30/09, el último mes completo
+        $this->assertSame([1, 1, '2026-09-30'], $estado(['mes' => 10, 'año' => 2026]));
+        $this->assertSame([1, 1, '2026-09-30'], $estado(['fecha_inicio' => '2026-09-01', 'fecha_fin' => '2026-10-31']));
+        $this->assertSame([1, 1, '2026-09-30'], $estado(['fecha_inicio' => '2026-09-28', 'fecha_fin' => '2026-10-02']));
     }
 
     public function test_las_categorias_excluidas_de_promesas_y_las_personas_de_otra_iglesia_no_cuentan(): void
     {
-        $culto = $this->culto($this->iglesia, '2026-10-11', ['misiones' => 1]);
+        $culto = $this->culto($this->iglesia, '2026-09-13', ['misiones' => 1]);
         $otra = $this->crearIglesia('otra', 'OTRA');
-        $cultoAjeno = $this->culto($otra, '2026-10-11', ['misiones' => 1]);
+        $cultoAjeno = $this->culto($otra, '2026-09-13', ['misiones' => 1]);
 
         // diezmo está marcado excluir_de_promesas en las categorías por defecto
         $this->sobre($culto, $this->personaConPromesa($this->iglesia, 'Diezmista', 'diezmo', 100), 'diezmo', 100);
         $this->sobre($cultoAjeno, $this->personaConPromesa($otra, 'De otra iglesia', 'misiones', 100), 'misiones', 100);
         $this->sobre($culto, $this->personaConPromesa($this->iglesia, 'Cumplidora', 'misiones', 100), 'misiones', 100);
 
-        $this->assertSame(
-            ['cumplidas' => 1, 'pendientes' => 0],
-            $this->dashboard(['mes' => 10, 'año' => 2026])->viewData('promesasStatus')
-        );
+        $status = $this->dashboard(['mes' => 9, 'año' => 2026])->viewData('promesasStatus');
+        $this->assertSame([1, 0], [$status['cumplidas'], $status['pendientes']]);
     }
 
     // ================================================================ validación y URL compartible
