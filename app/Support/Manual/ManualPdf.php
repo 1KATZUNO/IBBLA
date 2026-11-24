@@ -39,14 +39,7 @@ class ManualPdf
             mkdir(dirname($ruta), 0775, true);
         }
 
-        $paginasHtml = array_map(fn (Pagina $p) => ['pagina' => $p] + Manual::render($p, true), $paginas);
-
-        $pdf = Pdf::loadView('manual.pdf', array_merge(tenant_pdf_data(), [
-            'paginasHtml' => $paginasHtml,
-            'completo' => $completo,
-            'indice' => Manual::paginas(),
-            'generado' => now(),
-        ]))->setPaper('a4', 'portrait');
+        $pdf = Pdf::loadHTML(self::vista($paginas, $completo)->render())->setPaper('a4', 'portrait');
 
         // Pie de pagina con el numero (se dibuja despues de maquetar, cuando ya se sabe el total)
         $pdf->render();
@@ -67,6 +60,23 @@ class ManualPdf
         }
 
         return $ruta;
+    }
+
+    /**
+     * La vista que se convierte a PDF: portada, indice (solo en el completo) y cada pagina con sus capturas.
+     *
+     * @param  list<Pagina>  $paginas
+     */
+    public static function vista(array $paginas, bool $completo): \Illuminate\Contracts\View\View
+    {
+        $paginasHtml = array_map(fn (Pagina $p) => ['pagina' => $p] + Manual::render($p, true), $paginas);
+
+        return view('manual.pdf', array_merge(tenant_pdf_data(), [
+            'paginasHtml' => $paginasHtml,
+            'completo' => $completo,
+            'indice' => Manual::paginas(),
+            'generado' => now(),
+        ]));
     }
 
     /** Cambia cuando cambia el contenido, una captura o la plantilla del PDF. */
