@@ -8,6 +8,7 @@ use App\Models\Culto;
 use App\Models\Persona;
 use App\Models\VisitacionPastoral;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
@@ -26,8 +27,8 @@ use Illuminate\View\View;
  */
 class ClaseAppController extends Controller
 {
-    /** Selector de clases: maestra ve solo SU clase, admin ve todas. */
-    public function index(): View
+    /** Selector de clases: maestra ve solo SU clase, admin ve todas. Con una sola clase entra directo. */
+    public function index(): View|RedirectResponse
     {
         $user = auth()->user();
         $clasesQuery = ClaseAsistencia::where('tenant_id', $user->tenant_id)->activas()->ordenadas();

@@ -2,38 +2,41 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Asistencia;
 use App\Models\ClaseAsistencia;
 use App\Models\Culto;
-use Carbon\Carbon;
+use App\Support\RangoFechas;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 /**
  * Dashboard específico de Asistencia — por clase (Fase 4).
- * Visible solo para admin y tesorero. Muestra:
- *  - KPIs: total asistencia del año, promedio por culto, niños, capilla, transmisión.
- *  - Gráfico de línea: tendencia mensual del total de asistencia.
+ * Visible solo para admin y tesorero. Muestra, para el rango de fechas elegido:
+ *  - KPIs: total de asistencia, promedio por culto, niños, capilla, transmisión, visitas...
+ *  - Gráfico de línea: tendencia de la asistencia (mensual; por culto si el rango es corto).
  *  - Gráfico de barras: asistencia agregada por clase.
  *  - Tabla por clase con totales.
+ *
+ * El rango sale de la URL (App\Support\RangoFechas): año + mes (acceso rápido; por defecto el
+ * año en curso, que es lo que este dashboard siempre mostró) o fecha_inicio / fecha_fin.
  */
 class DashboardAsistenciaController extends Controller
 {
     public function index(Request $request): View
     {
-        $año = (int) $request->input('año', Carbon::now()->year);
+        $rango = RangoFechas::desdeRequest($request, RangoFechas::MODO_ANIO);
 
         $cultos = Culto::with(['asistencia.detallesClases.claseAsistencia', 'asistencia.registrosExtra.tipo'])
-            ->whereYear('fecha', $año)
+            ->whereBetween('fecha', [$rango->inicio->toDateString(), $rango->fin->toDateString()])
             ->orderBy('fecha', 'asc')
+            ->orderBy('id', 'asc')
             ->get();
 
         $cultosConAsistencia = $cultos->filter(fn ($c) => $c->asistencia);
 
         // KPIs
-        $totalAño = $cultosConAsistencia->sum(fn ($c) => $c->asistencia->total_asistencia);
+        $totalPeriodo = $cultosConAsistencia->sum(fn ($c) => $c->asistencia->total_asistencia);
         $promedio = $cultosConAsistencia->isNotEmpty()
-            ? round($totalAño / $cultosConAsistencia->count(), 1)
+            ? round($totalPeriodo / $cultosConAsistencia->count(), 1)
             : 0;
         $capilla = $cultosConAsistencia->sum(fn ($c) => $c->asistencia->getTotalCapilla());
         $ninos = $cultosConAsistencia->sum(fn ($c) => $c->asistencia->getTotalNinos());
@@ -42,17 +45,34 @@ class DashboardAsistenciaController extends Controller
         $salvos = $cultosConAsistencia->sum(fn ($c) => $c->asistencia->getTotalSalvos());
         $bautismos = $cultosConAsistencia->sum(fn ($c) => $c->asistencia->getTotalBautismos());
 
-        // Tendencia mensual
-        $serieMensual = collect(range(1, 12))->map(function ($mes) use ($cultosConAsistencia, $año) {
-            $cultosMes = $cultosConAsistencia->filter(fn ($c) => $c->fecha->month === $mes);
-            $total = $cultosMes->sum(fn ($c) => $c->asistencia->total_asistencia);
-
-            return [
-                'mes' => Carbon::createFromDate($año, $mes, 1)->locale('es')->translatedFormat('M'),
-                'total' => $total,
-                'cultos' => $cultosMes->count(),
+        // Tendencia: una gráfica mensual de uno o dos puntos no dice nada, así que un rango
+        // de hasta dos meses se muestra culto por culto.
+        if ($rango->cantidadMeses() <= 2) {
+            $serie = [
+                'modo' => 'culto',
+                'titulo' => 'Asistencia por culto',
+                'filas' => $cultosConAsistencia->map(fn ($c) => [
+                    'etiqueta' => $c->fecha->format('d/m'),
+                    'total' => $c->asistencia->total_asistencia,
+                    'cultos' => 1,
+                ])->values()->all(),
             ];
-        });
+        } else {
+            $formatoMes = $rango->inicio->year === $rango->fin->year ? 'M' : 'M y';
+            $serie = [
+                'modo' => 'mes',
+                'titulo' => 'Tendencia de asistencia mensual',
+                'filas' => $rango->mesesTocados()->map(function ($mes) use ($cultosConAsistencia, $formatoMes) {
+                    $cultosMes = $cultosConAsistencia->filter(fn ($c) => $c->fecha->format('Y-m') === $mes->format('Y-m'));
+
+                    return [
+                        'etiqueta' => $mes->locale('es')->translatedFormat($formatoMes),
+                        'total' => $cultosMes->sum(fn ($c) => $c->asistencia->total_asistencia),
+                        'cultos' => $cultosMes->count(),
+                    ];
+                })->values()->all(),
+            ];
+        }
 
         // Asistencia por clase
         $clases = ClaseAsistencia::activas()->ordenadas()->get();
@@ -72,12 +92,15 @@ class DashboardAsistenciaController extends Controller
         })->filter(fn ($c) => $c['total'] > 0)->values();
 
         // Años disponibles
-        $añosDisponibles = Culto::selectRaw('YEAR(fecha) as año')->groupBy('año')->orderByDesc('año')->pluck('año');
+        $añosDisponibles = $rango->aniosParaSelector(
+            Culto::selectRaw('YEAR(fecha) as año')->distinct()->pluck('año')
+        );
 
         return view('dashboards.asistencia', [
-            'año' => $año,
+            'rango' => $rango,
+            'cultosEnRango' => $cultosConAsistencia->count(),
             'añosDisponibles' => $añosDisponibles,
-            'totalAño' => $totalAño,
+            'totalPeriodo' => $totalPeriodo,
             'promedio' => $promedio,
             'capilla' => $capilla,
             'ninos' => $ninos,
@@ -85,8 +108,12 @@ class DashboardAsistenciaController extends Controller
             'visitas' => $visitas,
             'salvos' => $salvos,
             'bautismos' => $bautismos,
-            'serieMensual' => $serieMensual,
+            'serie' => $serie,
             'porClase' => $porClase,
+            'entrada' => RangoFechas::entrada($request),
+            // El Excel de asistencia ya acepta cualquier rango (fecha_inicio / fecha_fin).
+            'excelUrl' => route('ingresos-asistencia.excel-asistencia', $rango->parametros()),
+            'excelNota' => null,
         ]);
     }
 }

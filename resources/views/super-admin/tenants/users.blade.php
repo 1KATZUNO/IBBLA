@@ -45,9 +45,9 @@
                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
                                 @switch($user->rol)
                                     @case('admin') bg-red-100 text-red-700 @break
-                                    @case('tesorero') bg-blue-100 text-blue-700 @break
+                                    @case('tesorero') bg-brand-100 text-brand-700 @break
                                     @case('asistente') bg-green-100 text-green-700 @break
-                                    @case('miembro') bg-purple-100 text-purple-700 @break
+                                    @case('miembro') bg-gray-100 text-gray-700 @break
                                     @default bg-gray-100 text-gray-700
                                 @endswitch
                             ">

@@ -14,8 +14,11 @@ use App\Http\Controllers\SuperAdmin\TenantController as SATenantController;
 use App\Services\BccrExchangeRateService;
 use Illuminate\Support\Facades\Route;
 
+// Con sesion, cada rol a su inicio (QA-011: la app instalada abre "/" y antes daba 403)
 Route::get('/', function () {
-    return redirect()->route('login');
+    return auth()->check()
+        ? redirect()->route(auth()->user()->rutaDeInicio())
+        : redirect()->route('login');
 });
 
 // Informe individual de una persona por enlace firmado: se comparte por WhatsApp, no requiere
@@ -48,7 +51,8 @@ Route::middleware(['auth'])->get('/api/tipo-cambio', function (BccrExchangeRateS
 // Principal - Para todos los usuarios autenticados
 Route::middleware(['auth'])->group(function () {
     Route::get('/principal', [PrincipalController::class, 'index'])->name('principal');
-    Route::get('/cumpleaneros', [\App\Http\Controllers\CumpleanerosController::class, 'index'])->name('cumpleaneros.index');
+    // Cumpleaneros: admin, tesorero y asistente (decision 2.7); el miembro no lo ve ni lo abre.
+    Route::get('/cumpleaneros', [\App\Http\Controllers\CumpleanerosController::class, 'index'])->middleware('role:admin,tesorero,asistente')->name('cumpleaneros.index');
 });
 
 // Dashboard - Solo para Admin y Tesorero
@@ -57,6 +61,10 @@ Route::middleware(['auth', 'role:admin,tesorero', 'audit'])->group(function () {
 
     // Dashboards específicos (Fase 4) — además del general, no en su lugar
     Route::get('/dashboard/promesas', [App\Http\Controllers\DashboardPromesasController::class, 'index'])->name('dashboard.promesas');
+});
+
+// Dashboard de asistencia: admin, tesorero y asistente (decision 2.7, QA-015)
+Route::middleware(['auth', 'role:admin,tesorero,asistente', 'audit'])->group(function () {
     Route::get('/dashboard/asistencia', [App\Http\Controllers\DashboardAsistenciaController::class, 'index'])->name('dashboard.asistencia');
 });
 
@@ -66,10 +74,30 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-// Ruta Mi Perfil - accesible para miembros, servidores, tesorero y asistente
-Route::middleware(['auth', 'role:miembro,servidor,tesorero,asistente'])->group(function () {
+// Mi Perfil: cualquier rol con persona vinculada, tambien el admin (QA-014)
+Route::middleware(['auth', 'role:miembro,servidor,tesorero,asistente,admin'])->group(function () {
     Route::get('/mi-perfil', [App\Http\Controllers\MiPerfilController::class, 'index'])->name('mi-perfil.index');
     Route::get('/mi-perfil/informe', [App\Http\Controllers\MiPerfilController::class, 'informe'])->name('mi-perfil.informe');
+
+    // Avisos por WhatsApp (CallMeBot): la persona pega el enlace que le responde el bot, hace la prueba o lo desactiva.
+    // Solo existen con WHATSAPP_DRIVER=callmebot (con otro driver responden 404).
+    Route::post('/mi-perfil/whatsapp', [App\Http\Controllers\ActivacionWhatsAppController::class, 'guardar'])
+        ->defaults('tipo', 'persona')->name('mi-perfil.whatsapp.guardar');
+    Route::post('/mi-perfil/whatsapp/probar', [App\Http\Controllers\ActivacionWhatsAppController::class, 'probar'])
+        ->defaults('tipo', 'persona')->middleware('throttle:6,1')->name('mi-perfil.whatsapp.probar');
+    Route::delete('/mi-perfil/whatsapp', [App\Http\Controllers\ActivacionWhatsAppController::class, 'desactivar'])
+        ->defaults('tipo', 'persona')->name('mi-perfil.whatsapp.desactivar');
+});
+
+// Lo mismo para los usuarios del sistema (admin, tesorero, asistente), desde su perfil de usuario: es el
+// teléfono que recibe los avisos de rol (culto creado, sobres alcanzados).
+Route::middleware(['auth', 'role:admin,tesorero,asistente'])->group(function () {
+    Route::post('/profile/whatsapp', [App\Http\Controllers\ActivacionWhatsAppController::class, 'guardar'])
+        ->defaults('tipo', 'usuario')->name('profile.whatsapp.guardar');
+    Route::post('/profile/whatsapp/probar', [App\Http\Controllers\ActivacionWhatsAppController::class, 'probar'])
+        ->defaults('tipo', 'usuario')->middleware('throttle:6,1')->name('profile.whatsapp.probar');
+    Route::delete('/profile/whatsapp', [App\Http\Controllers\ActivacionWhatsAppController::class, 'desactivar'])
+        ->defaults('tipo', 'usuario')->name('profile.whatsapp.desactivar');
 });
 
 // Ruta para servidores - Marcar Asistencia
@@ -80,8 +108,21 @@ Route::middleware(['auth', 'role:servidor'])->group(function () {
 
 // Rutas para Admin y Tesorero - Recuento e Ingresos
 Route::middleware(['auth', 'role:admin,tesorero'])->group(function () {
-    // Crear persona rapida (desde recuento)
+    // Alta rapida de personas (desde el sobre o desde su pantalla): el tesorero no entra a Personas
+    Route::get('personas/alta-rapida', [PersonaController::class, 'altaRapida'])->name('personas.alta-rapida');
     Route::post('personas/quick-store', [PersonaController::class, 'quickStore'])->name('personas.quick-store');
+
+    // Enviar el informe de una persona por WhatsApp (abre wa.me con el enlace firmado al PDF)
+    Route::get('personas/{persona}/whatsapp', App\Http\Controllers\PersonaWhatsAppController::class)->name('personas.whatsapp');
+    // Con WHATSAPP_DRIVER=callmebot y una persona que activó WhatsApp en su perfil, el informe se manda solo (POST)
+    Route::post('personas/{persona}/whatsapp', [App\Http\Controllers\PersonaWhatsAppController::class, 'enviarAutomatico'])
+        ->middleware('throttle:20,1')->name('personas.whatsapp.enviar');
+
+    // Avisos de WhatsApp a los líderes (culto creado, sobres alcanzados): panel con pendientes e historial
+    Route::get('avisos', [App\Http\Controllers\AvisoWhatsAppController::class, 'index'])->name('avisos.index');
+    Route::post('avisos/{aviso}/enviado', [App\Http\Controllers\AvisoWhatsAppController::class, 'marcarEnviado'])->name('avisos.enviado');
+    Route::post('avisos/{aviso}/enviar', [App\Http\Controllers\AvisoWhatsAppController::class, 'enviarAhora'])->middleware('throttle:20,1')->name('avisos.enviar-ahora');
+    Route::post('avisos/{aviso}/descartar', [App\Http\Controllers\AvisoWhatsAppController::class, 'descartar'])->name('avisos.descartar');
 
     // Recuento (Sobres)
     Route::prefix('recuento')->name('recuento.')->group(function () {
@@ -98,47 +139,15 @@ Route::middleware(['auth', 'role:admin,tesorero'])->group(function () {
         Route::put('/egreso/{egreso}', [RecuentoController::class, 'updateEgreso'])->name('update-egreso');
         Route::delete('/egreso/{egreso}', [RecuentoController::class, 'destroyEgreso'])->name('destroy-egreso');
         Route::post('/{culto}/cerrar', [RecuentoController::class, 'cerrarCulto'])->name('cerrar-culto');
+        // Pantalla de un culto (abierto o cerrado). La vieja ruta del modal de cerrados redirige aqui.
+        Route::get('/culto/{culto}', [RecuentoController::class, 'culto'])->name('culto');
         Route::get('/culto-cerrado/{culto}', [RecuentoController::class, 'verCultoCerrado'])->name('ver-culto-cerrado');
         Route::get('/{sobre}/edit', [RecuentoController::class, 'edit'])->name('edit');
         Route::put('/{sobre}', [RecuentoController::class, 'update'])->name('update');
         Route::delete('/{sobre}', [RecuentoController::class, 'destroy'])->name('destroy');
+        Route::patch('/{sobre}/persona', [RecuentoController::class, 'asignarPersona'])->name('asignar-persona');
         // Firmas del recuento
-        Route::post('/firmas/{culto}', function (\Illuminate\Http\Request $request, \App\Models\Culto $culto) {
-            $data = $request->validate([
-                'firma_pastor' => 'nullable|string|max:255',
-                'firma_pastor_imagen' => 'nullable|string',
-                'firmas_tesoreros' => 'nullable|array',
-                'firmas_tesoreros.*.nombre' => 'nullable|string|max:255',
-                'firmas_tesoreros.*.imagen' => 'nullable|string',
-            ]);
-
-            // Procesar tesoreros (filtrar vacíos)
-            $tesoreros = [];
-            $tesorerosImagenes = [];
-            if (! empty($data['firmas_tesoreros'])) {
-                foreach ($data['firmas_tesoreros'] as $t) {
-                    $nombre = $t['nombre'] ?? '';
-                    $imagen = $t['imagen'] ?? '';
-                    if (! empty($nombre) || ! empty($imagen)) {
-                        $tesoreros[] = $nombre;
-                        $tesorerosImagenes[] = [
-                            'nombre' => $nombre,
-                            'imagen' => $imagen,
-                        ];
-                    }
-                }
-            }
-
-            $culto->update([
-                'firma_pastor' => $data['firma_pastor'] ?? null,
-                'firma_pastor_imagen' => $data['firma_pastor_imagen'] ?? null,
-                'firmas_tesoreros' => $tesoreros,
-                'firmas_tesoreros_imagenes' => $tesorerosImagenes,
-            ]);
-
-            return redirect()->route('recuento.index', ['culto_id' => $culto->id])
-                ->with('success', 'Firmas de recuento actualizadas.');
-        })->name('firmas.update');
+        Route::post('/firmas/{culto}', [RecuentoController::class, 'actualizarFirmas'])->name('firmas.update');
     });
 
     // Reportes de ingresos
@@ -156,29 +165,73 @@ Route::middleware(['auth', 'role:admin,tesorero'])->group(function () {
     Route::get('/ingresos-asistencia/promesas-por-clase', [App\Http\Controllers\PromesasReporteController::class, 'porClase'])->name('ingresos-asistencia.promesas-por-clase');
 });
 
-// Rutas para Admin y Asistente - Asistencia
-Route::middleware(['auth', 'role:admin,asistente', 'audit'])->group(function () {
-    // Asistencia
-    Route::post('asistencia/{asistencium}/cerrar', [AsistenciaController::class, 'cerrarAsistencia'])->name('asistencia.cerrar');
-    Route::resource('asistencia', AsistenciaController::class);
+// Descargas financieras (regla 2.5 de 04-DECISIONES.md, QA-010): admin y tesorero. Reporte General,
+// contribuciones y estado de cuenta de cualquier persona; Excel de ingresos y de promesas.
+Route::middleware(['auth', 'role:admin,tesorero', 'audit'])->group(function () {
+    Route::get('/ingresos-asistencia/excel-ingresos', [IngresosAsistenciaController::class, 'excelIngresos'])->name('ingresos-asistencia.excel-ingresos');
+    Route::get('/ingresos-asistencia/excel-promesas', [IngresosAsistenciaController::class, 'excelPromesas'])->name('ingresos-asistencia.excel-promesas');
+    Route::get('personas/reporte-pdf', [PersonaController::class, 'reportePdf'])->name('personas.reporte-pdf');
+    Route::get('personas/reporte-general', [PersonaController::class, 'reporteGeneral'])->name('personas.reporte-general');
+    // Estado de cuenta de la persona en PDF (el mismo informe que se manda por WhatsApp), ?accion=ver|descargar
+    Route::get('personas/{persona}/informe', [App\Http\Controllers\InformePersonaController::class, 'show'])->name('personas.informe');
+});
 
+// Reportes de asistencia (regla 2.5): admin, tesorero y asistente. Registrar asistencia sigue en el grupo de abajo.
+Route::middleware(['auth', 'role:admin,tesorero,asistente', 'audit'])->group(function () {
     // Reportes de asistencia
     Route::get('/ingresos-asistencia/asistencia', [IngresosAsistenciaController::class, 'asistencia'])->name('ingresos-asistencia.asistencia');
     Route::get('/ingresos-asistencia/pdf-asistencia', [IngresosAsistenciaController::class, 'pdfAsistencia'])->name('ingresos-asistencia.pdf-asistencia');
     Route::get('/ingresos-asistencia/pdf-asistencia-culto/{culto}', [IngresosAsistenciaController::class, 'pdfAsistenciaCulto'])->name('ingresos-asistencia.pdf-asistencia-culto');
     Route::get('/ingresos-asistencia/pdf-asistencia-mes', [IngresosAsistenciaController::class, 'pdfAsistenciaMes'])->name('ingresos-asistencia.pdf-asistencia-mes');
 
+    // Asistencia por clase en un rango de fechas, con promedio (pantalla, PDF, CSV y Excel)
+    Route::get('/ingresos-asistencia/asistencia-clases', [App\Http\Controllers\AsistenciaClasesReporteController::class, 'index'])->name('ingresos-asistencia.asistencia-clases');
+    Route::get('/ingresos-asistencia/asistencia-clases/pdf', [App\Http\Controllers\AsistenciaClasesReporteController::class, 'pdf'])->name('ingresos-asistencia.asistencia-clases.pdf');
+    Route::get('/ingresos-asistencia/asistencia-clases/csv', [App\Http\Controllers\AsistenciaClasesReporteController::class, 'csv'])->name('ingresos-asistencia.asistencia-clases.csv');
+    Route::get('/ingresos-asistencia/asistencia-clases/excel', [App\Http\Controllers\AsistenciaClasesReporteController::class, 'excel'])->name('ingresos-asistencia.asistencia-clases.excel');
+
     // Excel exports (Fase 2): paralelos a los PDFs
     Route::get('/ingresos-asistencia/excel-asistencia', [IngresosAsistenciaController::class, 'excelAsistencia'])->name('ingresos-asistencia.excel-asistencia');
     Route::get('/ingresos-asistencia/excel-asistencia-mes', [IngresosAsistenciaController::class, 'excelAsistenciaMes'])->name('ingresos-asistencia.excel-asistencia-mes');
-    Route::get('/ingresos-asistencia/excel-ingresos', [IngresosAsistenciaController::class, 'excelIngresos'])->name('ingresos-asistencia.excel-ingresos');
-    Route::get('/ingresos-asistencia/excel-promesas', [IngresosAsistenciaController::class, 'excelPromesas'])->name('ingresos-asistencia.excel-promesas');
+});
+
+// Reportes de dinero por persona con el motor unico (equipo 3a): admin y tesorero.
+Route::middleware(['auth', 'role:admin,tesorero'])->prefix('reportes')->name('reportes.')->group(function () {
+    // Cumplimiento de promesas con corte a la fecha (HU-R13): pantalla, PDF (?accion=ver|descargar) y Excel
+    Route::get('/cumplimiento', [App\Http\Controllers\Reportes\CumplimientoController::class, 'index'])->name('cumplimiento');
+    Route::get('/cumplimiento/pdf', [App\Http\Controllers\Reportes\CumplimientoController::class, 'pdf'])->name('cumplimiento.pdf');
+    Route::get('/cumplimiento/excel', [App\Http\Controllers\Reportes\CumplimientoController::class, 'excel'])->name('cumplimiento.excel');
+
+    // Estados de cuenta de un grupo (HU-R5): pantalla, PDF con portada e indice, ZIP con un PDF por persona y Excel
+    Route::get('/estados-de-cuenta', [App\Http\Controllers\Reportes\EstadosCuentaController::class, 'index'])->name('estados-cuenta');
+    Route::get('/estados-de-cuenta/pdf', [App\Http\Controllers\Reportes\EstadosCuentaController::class, 'pdf'])->name('estados-cuenta.pdf');
+    Route::get('/estados-de-cuenta/zip', [App\Http\Controllers\Reportes\EstadosCuentaController::class, 'zip'])->name('estados-cuenta.zip');
+    Route::get('/estados-de-cuenta/excel', [App\Http\Controllers\Reportes\EstadosCuentaController::class, 'excel'])->name('estados-cuenta.excel');
+});
+
+// Rutas para Admin y Asistente - Asistencia
+Route::middleware(['auth', 'role:admin,asistente', 'audit'])->group(function () {
+    // Asistencia
+    Route::post('asistencia/{asistencium}/cerrar', [AsistenciaController::class, 'cerrarAsistencia'])->name('asistencia.cerrar');
+    Route::resource('asistencia', AsistenciaController::class);
+});
+
+// Crear cultos: el administrador y quien tenga un acceso de edicion vigente (CultoPolicy::create).
+// Va antes del grupo de admin para que 'cultos/create' no lo tome la ruta cultos/{culto}.
+Route::middleware(['auth', 'can:create,App\Models\Culto', 'audit'])->group(function () {
+    Route::get('cultos/create', [CultoController::class, 'create'])->name('cultos.create');
+    Route::post('cultos', [CultoController::class, 'store'])->name('cultos.store');
 });
 
 // Solo admin
 Route::middleware(['auth', 'role:admin', 'audit'])->group(function () {
-    // Cultos
-    Route::resource('cultos', CultoController::class);
+    // Cultos (crear esta arriba, con su propia regla)
+    Route::resource('cultos', CultoController::class)->except(['create', 'store']);
+
+    // Accesos de edicion: quien puede corregir cultos cerrados, hasta cuando, y lo que cambio con ellos
+    Route::get('/admin/accesos', [App\Http\Controllers\AccesoEdicionController::class, 'index'])->name('admin.accesos.index');
+    Route::post('/admin/accesos', [App\Http\Controllers\AccesoEdicionController::class, 'store'])->name('admin.accesos.store');
+    Route::delete('/admin/accesos/{permiso}', [App\Http\Controllers\AccesoEdicionController::class, 'destroy'])->name('admin.accesos.destroy');
 
     // Administración de Ministerios / Áreas de Servicio
     Route::prefix('admin/ministerios')->name('admin.ministerios.')->group(function () {
@@ -187,6 +240,7 @@ Route::middleware(['auth', 'role:admin', 'audit'])->group(function () {
         Route::post('/', [App\Http\Controllers\MinisterioController::class, 'store'])->name('store');
         Route::get('/{ministerio}/edit', [App\Http\Controllers\MinisterioController::class, 'edit'])->name('edit');
         Route::put('/{ministerio}', [App\Http\Controllers\MinisterioController::class, 'update'])->name('update');
+        Route::patch('/{ministerio}/toggle', [App\Http\Controllers\MinisterioController::class, 'toggle'])->name('toggle');
         Route::delete('/{ministerio}', [App\Http\Controllers\MinisterioController::class, 'destroy'])->name('destroy');
     });
 
@@ -203,15 +257,11 @@ Route::middleware(['auth', 'role:admin', 'audit'])->group(function () {
     // Personas y Promesas
     Route::post('personas/{persona}/reiniciar-compromisos', [PersonaController::class, 'reiniciarCompromisos'])->name('personas.reiniciar-compromisos');
     Route::post('personas/{persona}/limpiar-todo', [PersonaController::class, 'limpiarTodo'])->name('personas.limpiar-todo');
-    Route::get('personas/reporte-pdf', [PersonaController::class, 'reportePdf'])->name('personas.reporte-pdf');
-    Route::get('personas/reporte-general', [PersonaController::class, 'reporteGeneral'])->name('personas.reporte-general');
     Route::resource('personas', PersonaController::class);
     Route::resource('promesas', PromesaController::class);
 
     // Compromisos
     Route::get('personas/{persona}/compromisos', [App\Http\Controllers\CompromisoController::class, 'show'])->name('compromisos.show');
-    // Estado de cuenta de la persona en PDF (el mismo informe que se manda por WhatsApp), ?accion=ver|descargar
-    Route::get('personas/{persona}/informe', [App\Http\Controllers\InformePersonaController::class, 'show'])->name('personas.informe');
     Route::post('compromisos/recalcular', [App\Http\Controllers\CompromisoController::class, 'recalcular'])->name('compromisos.recalcular');
 
     // Limpieza de personas inactivas (temporal)
@@ -219,7 +269,8 @@ Route::middleware(['auth', 'role:admin', 'audit'])->group(function () {
     Route::post('personas/resetear-promesas', [PersonaController::class, 'resetearPromesas'])->name('personas.resetear-promesas');
 
     // Gestión de Usuarios
-    Route::resource('usuarios', App\Http\Controllers\UserController::class);
+    // Sin "show": no hay pantalla de detalle (antes daba 500, QA-012)
+    Route::resource('usuarios', App\Http\Controllers\UserController::class)->except(['show']);
 
     // Carga retroactiva de asistencias (import Excel)
     Route::get('/admin/asistencia/importar', [App\Http\Controllers\AsistenciaImportController::class, 'index'])->name('asistencia.importar.index');
@@ -235,6 +286,10 @@ Route::middleware(['auth', 'role:admin', 'audit'])->group(function () {
 
     // Auditoría
     Route::get('/admin/auditoria', [App\Http\Controllers\AuditLogController::class, 'index'])->name('admin.auditoria.index');
+
+    // Historial de ingresos a la plataforma: quién entró, cuándo y a qué hora (+ CSV)
+    Route::get('/admin/auditoria/ingresos', [App\Http\Controllers\HistorialIngresosController::class, 'index'])->name('admin.auditoria.ingresos');
+    Route::get('/admin/auditoria/ingresos/exportar', [App\Http\Controllers\HistorialIngresosController::class, 'exportar'])->name('admin.auditoria.ingresos.exportar');
 });
 
 // Super Admin Panel
@@ -274,7 +329,8 @@ Route::middleware(['auth'])->group(function () {
 // Asistencia App (React SPA)
 Route::get('/app/asistencia', fn () => view('asistencia-app.shell'));
 
-Route::post('/asistencia-app/login', [App\Http\Controllers\AsistenciaAppController::class, 'login']);
+// Mismo limite de intentos que el login web (QA-013)
+Route::post('/asistencia-app/login', [App\Http\Controllers\AsistenciaAppController::class, 'login'])->middleware('throttle:5,1');
 
 Route::middleware(['auth'])->prefix('asistencia-app')->group(function () {
     Route::get('/user', [App\Http\Controllers\AsistenciaAppController::class, 'user']);
@@ -286,5 +342,8 @@ Route::middleware(['auth'])->prefix('asistencia-app')->group(function () {
     Route::post('/asistencia/capilla', [App\Http\Controllers\AsistenciaAppController::class, 'guardarAsistenciaCapilla']);
     Route::post('/personas/quick-add', [App\Http\Controllers\AsistenciaAppController::class, 'quickAddPersona']);
 });
+
+// Barra superior: buscador global y manual de usuario
+require __DIR__.'/ui.php';
 
 require __DIR__.'/auth.php';

@@ -197,7 +197,7 @@
                 <div class="summary-amount">{{ number_format($grandTotal['faltante'], 0, ',', '.') }}</div>
             </div>
             <div class="summary-card profit">
-                <div class="summary-label">Total Profit</div>
+                <div class="summary-label">Total excedente</div>
                 <div class="summary-amount 
                     @if($grandTotal['profit'] > 0) positive
                     @elseif($grandTotal['profit'] < 0) negative
@@ -218,7 +218,7 @@
                 <th class="number">Prometido</th>
                 <th class="number">Dado</th>
                 <th class="number">Faltante</th>
-                <th class="number">Profit</th>
+                <th class="number">Excedente</th>
             </tr>
         </thead>
         <tbody>
@@ -268,7 +268,7 @@
 
     <div class="footer">
         <p><strong>{{ $tenantSiglas }} - {{ $tenantNombre }}</strong></p>
-        <p>Sistema de Administracion - {{ $tenantSiglas }}</p>
+        <p>Sistema de Administración - {{ $tenantSiglas }}</p>
     </div>
 </body>
 </html>

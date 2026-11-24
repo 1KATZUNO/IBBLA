@@ -1,7 +1,7 @@
 @php
     $t = tenant();
     $tColors = $t ? $t->colors : \App\Models\Tenant::COLOR_THEMES['blue'];
-    $tName = $t ? $t->nombre : 'Sistema de Administracion';
+    $tName = $t ? $t->nombre : 'Sistema de Administración';
     $tSiglas = $t ? $t->siglas : 'Admin';
     $tLogo = $t ? $t->logo_url : asset('images/Logo.png');
     $tSocial = $t && $t->redes_sociales ? $t->redes_sociales : [];
@@ -18,45 +18,79 @@
 @extends('layouts.admin')
 
 @section('title', $tSiglas . ' - Principal')
-@section('page-title', $tName)
+@section('page-title', 'Principal')
 
 @section('content')
 <div class="space-y-6">
     <!-- Hero Section -->
-    <div class="rounded-lg shadow-xl overflow-hidden" style="background: linear-gradient(to right, {{ $tColors['600'] }}, {{ $tColors['800'] }});">
-        <div class="px-8 py-12 text-center text-white">
-            <h1 class="text-4xl font-bold mb-4">Bienvenido a {{ $tName }}</h1>
-            <p class="text-xl max-w-2xl mx-auto" style="color: {{ $tColors['100'] }};">
+    <div class="rounded-xl shadow-card overflow-hidden" style="background: linear-gradient(to right, {{ $tColors['600'] }}, {{ $tColors['800'] }});">
+        <div class="px-6 py-8 xl:px-8 xl:py-10 text-center text-white">
+            <h1 class="text-3xl xl:text-4xl font-bold mb-3">Bienvenido a {{ $tName }}</h1>
+            <p class="text-lg xl:text-xl max-w-2xl mx-auto" style="color: {{ $tColors['100'] }};">
                 Una comunidad de fe comprometida con el amor de Cristo y el servicio a Dios
             </p>
         </div>
     </div>
 
+    <!-- Accesos rapidos: las tareas de cada rol a un toque desde la pantalla de inicio -->
+    @php
+        $usuario = Auth::user();
+        $accesos = array_values(array_filter([
+            $usuario->canAccessRecuento() ? ['recuento.index', 'Registrar sobres', 'Recuento del culto abierto', 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z', 'bg-blue-50 text-blue-700'] : null,
+            $usuario->canAccessAsistencia() ? ['asistencia.index', 'Registrar asistencia', 'Capilla, clases, salvos y visitas', 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z', 'bg-green-50 text-green-700'] : null,
+            $usuario->hasPermission('marcar_asistencia') ? ['marcar-asistencia.index', 'Marcar mi asistencia', 'Escanear el QR del culto', 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4', 'bg-green-50 text-green-700'] : null,
+            $usuario->canAccessRecuento() ? ['dashboard', 'Dashboard', 'Resumen del mes', 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z', 'bg-indigo-50 text-indigo-700'] : null,
+            ($usuario->canAccessRecuento() || $usuario->canAccessAsistencia()) ? [$usuario->canAccessRecuento() ? 'ingresos-asistencia.index' : 'ingresos-asistencia.asistencia', 'Reportes', 'PDF y Excel', 'M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z', 'bg-purple-50 text-purple-700'] : null,
+            $usuario->canAccessAdmin() ? ['personas.index', 'Personas', 'Buscar, agregar y editar', 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z', 'bg-amber-50 text-amber-700'] : null,
+            $usuario->canAccessAdmin() ? ['cultos.index', 'Cultos', 'Crear el culto de hoy', 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z', 'bg-sky-50 text-sky-700'] : null,
+            ($usuario->puedeAltaRapidaPersonas() && ! $usuario->canAccessAdmin()) ? ['personas.alta-rapida', 'Agregar persona', 'Alta rápida: nombre y teléfono', 'M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z', 'bg-green-50 text-green-700'] : null,
+            $usuario->tieneMiPerfil() ? ['mi-perfil.index', 'Mi perfil', 'Mis promesas y compromisos', 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z', 'bg-gray-100 text-gray-700'] : null,
+        ]));
+    @endphp
+    @if(count($accesos))
+    <div>
+        <h2 class="section-title mb-3">¿Qué quieres hacer?</h2>
+        <div class="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
+            @foreach($accesos as [$rutaAcceso, $tituloAcceso, $detalleAcceso, $iconoAcceso, $colorAcceso])
+            <a href="{{ route($rutaAcceso) }}" class="card flex items-center gap-3 min-h-[72px] p-4 transition hover:border-brand-300 hover:shadow-card-hover">
+                <span class="flex-shrink-0 w-11 h-11 rounded-lg flex items-center justify-center {{ $colorAcceso }}">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="{{ $iconoAcceso }}"></path></svg>
+                </span>
+                <span class="min-w-0">
+                    <span class="block font-semibold text-gray-900">{{ $tituloAcceso }}</span>
+                    <span class="block text-sm text-gray-500 truncate">{{ $detalleAcceso }}</span>
+                </span>
+            </a>
+            @endforeach
+        </div>
+    </div>
+    @endif
+
     <!-- Informacion Principal -->
     <div class="grid md:grid-cols-2 gap-6">
         <!-- Nuestra Mision -->
-        <div class="bg-white rounded-lg shadow-md p-6">
+        <div class="card p-6">
             <div class="flex items-center mb-4">
                 <div class="w-12 h-12 rounded-lg flex items-center justify-center mr-4" style="background-color: {{ $tColors['100'] }};">
                     <svg class="w-6 h-6" style="color: {{ $tColors['600'] }};" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
                     </svg>
                 </div>
-                <h2 class="text-2xl font-bold text-gray-800">Nuestra Mision</h2>
+                <h2 class="text-xl font-semibold text-gray-900">Nuestra Misión</h2>
             </div>
             <p class="text-gray-600 leading-relaxed">{{ $tMision }}</p>
         </div>
 
         <!-- Nuestra Vision -->
-        <div class="bg-white rounded-lg shadow-md p-6">
+        <div class="card p-6">
             <div class="flex items-center mb-4">
-                <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mr-4">
-                    <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div class="w-12 h-12 rounded-lg flex items-center justify-center mr-4" style="background-color: {{ $tColors['100'] }};">
+                    <svg class="w-6 h-6" style="color: {{ $tColors['600'] }};" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
                     </svg>
                 </div>
-                <h2 class="text-2xl font-bold text-gray-800">Nuestra Vision</h2>
+                <h2 class="text-xl font-semibold text-gray-900">Nuestra Visión</h2>
             </div>
             <p class="text-gray-600 leading-relaxed">{{ $tVision }}</p>
         </div>
@@ -67,15 +101,17 @@
         // Iconos SVG por nombre de valor. Si no hay match, se usa el corazon como fallback.
         $iconosValores = [
             'amor' => ['bg' => 'bg-green-100', 'color' => 'text-green-600', 'path' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>'],
-            'integridad' => ['bg' => 'bg-blue-100', 'color' => 'text-blue-600', 'path' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>'],
+            'integridad' => ['bg' => 'bg-brand-100', 'color' => 'text-brand-600', 'path' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>'],
             'compañerismo' => ['bg' => 'bg-yellow-100', 'color' => 'text-yellow-600', 'path' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>'],
             'comunidad' => ['bg' => 'bg-yellow-100', 'color' => 'text-yellow-600', 'path' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>'],
         ];
-        $iconoDefault = ['bg' => 'bg-purple-100', 'color' => 'text-purple-600', 'path' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.196-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path>'];
+        $iconoDefault = ['bg' => 'bg-gray-100', 'color' => 'text-gray-600', 'path' => '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.196-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z"></path>'];
     @endphp
-    <div class="bg-white rounded-lg shadow-md p-6">
-        <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Nuestros Valores</h2>
-        <div class="grid md:grid-cols-{{ min(count($tValores), 4) }} gap-6">
+    <div class="card p-6">
+        <h2 class="text-xl font-semibold text-gray-900 mb-6 text-center">Nuestros Valores</h2>
+        {{-- Clases completas para que Tailwind las genere (con "md:grid-cols-{{ n }}" no aparecian en el CSS) --}}
+        @php $columnasValores = [1 => 'md:grid-cols-1', 2 => 'md:grid-cols-2', 3 => 'md:grid-cols-3', 4 => 'md:grid-cols-4'][min(max(count($tValores), 1), 4)]; @endphp
+        <div class="grid {{ $columnasValores }} gap-6">
             @foreach($tValores as $v)
                 @php
                     $nombre = is_array($v) ? ($v['nombre'] ?? '') : $v;
@@ -97,8 +133,8 @@
 
     <!-- Redes Sociales -->
     @if(!empty($tSocial))
-    <div class="rounded-lg shadow-md p-6 text-white" style="background: linear-gradient(to right, {{ $tColors['700'] }}, {{ $tColors['900'] }});">
-        <h2 class="text-2xl font-bold mb-4 text-center">Siguenos en Redes Sociales</h2>
+    <div class="rounded-xl shadow-card p-6 text-white" style="background: linear-gradient(to right, {{ $tColors['700'] }}, {{ $tColors['900'] }});">
+        <h2 class="text-xl font-semibold mb-4 text-center">Síguenos en redes sociales</h2>
         <p class="text-center mb-6">Mantente conectado con nuestra comunidad y conoce nuestras actividades</p>
         <div class="flex justify-center gap-6 flex-wrap">
             @if(!empty($tSocial['instagram']))

@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <circle cx="512" cy="512" r="480" fill="#1e40af"/>
+  <line x1="334.5" y1="445.5" x2="252.2" y2="398.0" stroke="#f59e0b" stroke-width="26" stroke-linecap="round"/><line x1="409.5" y1="370.5" x2="362.0" y2="288.2" stroke="#f59e0b" stroke-width="26" stroke-linecap="round"/><line x1="512.0" y1="343.0" x2="512.0" y2="248.0" stroke="#f59e0b" stroke-width="26" stroke-linecap="round"/><line x1="614.5" y1="370.5" x2="662.0" y2="288.2" stroke="#f59e0b" stroke-width="26" stroke-linecap="round"/><line x1="689.5" y1="445.5" x2="771.8" y2="398.0" stroke="#f59e0b" stroke-width="26" stroke-linecap="round"/>
+  <path d="M 347 548 A 165 165 0 0 1 677 548 Z" fill="#fbbf24"/>
+  <polygon points="202,740 822,740 792,790 232,790" fill="#172554"/>
+  <polygon points="498.0,556.0 222.0,536.0 222.0,722.0 249.6,727.3 277.2,732.1 304.8,736.3 332.4,739.9 360.0,743.0 387.6,745.5 415.2,747.5 442.8,748.9 470.4,749.7 498.0,750.0" fill="#ffffff"/>
+  <polygon points="526.0,556.0 802.0,536.0 802.0,722.0 774.4,727.3 746.8,732.1 719.2,736.3 691.6,739.9 664.0,743.0 636.4,745.5 608.8,747.5 581.2,748.9 553.6,749.7 526.0,750.0" fill="#ffffff"/>
+  <line x1="462" y1="600" x2="262" y2="594" stroke="#1e40af" stroke-width="10" stroke-linecap="round"/><line x1="462" y1="640" x2="272" y2="634" stroke="#1e40af" stroke-width="10" stroke-linecap="round"/><line x1="462" y1="680" x2="282" y2="674" stroke="#1e40af" stroke-width="10" stroke-linecap="round"/><line x1="562" y1="600" x2="762" y2="594" stroke="#1e40af" stroke-width="10" stroke-linecap="round"/><line x1="562" y1="640" x2="752" y2="634" stroke="#1e40af" stroke-width="10" stroke-linecap="round"/><line x1="562" y1="680" x2="742" y2="674" stroke="#1e40af" stroke-width="10" stroke-linecap="round"/>
+  <rect x="502" y="540" width="20" height="212" fill="#172554"/>
+</svg>

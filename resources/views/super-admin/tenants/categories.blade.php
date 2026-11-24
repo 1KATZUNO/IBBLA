@@ -101,7 +101,7 @@
                         <td class="px-4 py-3 text-sm font-medium text-gray-900 view-mode">{{ $category->nombre }}</td>
                         <td class="px-4 py-3 text-sm text-gray-500 font-mono view-mode">{{ $category->slug }}</td>
                         <td class="px-4 py-3 text-sm text-gray-700 view-mode">
-                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {{ $category->tipo === 'ambos' ? 'bg-blue-100 text-blue-700' : ($category->tipo === 'ingreso' ? 'bg-green-100 text-green-700' : 'bg-purple-100 text-purple-700') }}">
+                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium {{ $category->tipo === 'ambos' ? 'bg-brand-100 text-brand-700' : ($category->tipo === 'ingreso' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700') }}">
                                 {{ ucfirst($category->tipo) }}
                             </span>
                         </td>

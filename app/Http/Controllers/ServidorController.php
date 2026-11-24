@@ -154,17 +154,9 @@ class ServidorController extends Controller
 
         $cumplimiento = [];
         foreach ($promesas as $promesa) {
-            $comps = $compromisos->where('categoria', $promesa->categoria);
-            $prometido = (float) $comps->sum('monto_prometido');
-            $dado = (float) $comps->sum('monto_dado');
-            $cumplimiento[] = [
-                'categoria' => $promesa->categoria,
-                'moneda' => $promesa->moneda ?? 'CRC',
-                'prometido' => $prometido,
-                'dado' => $dado,
-                'saldo' => $dado - $prometido,
-                'pct' => $prometido > 0 ? round(($dado / $prometido) * 100, 1) : 0,
-            ];
+            // Todo en colones (la promesa en USD ya viene convertida en las columnas _crc)
+            $cumplimiento[] = ['categoria' => $promesa->categoria, 'moneda' => 'CRC']
+                + $this->cumplimientoDesdeCompromisos($compromisos->where('categoria', $promesa->categoria));
         }
 
         $totalAsistencias = $asistenciaSerie->sum('asistencias');
@@ -184,6 +176,29 @@ class ServidorController extends Controller
         $nombre = preg_replace('/[^a-z0-9]+/i', '_', strtolower($servidor->name));
 
         return $pdf->download("servidor_{$nombre}_{$ano}.pdf");
+    }
+
+    /**
+     * Cumplimiento del anio a partir de la tabla compromisos (la llena el sincronizador con el motor
+     * unico): en colones y con las reglas 2.1 y 2.2 de 04-DECISIONES.md: lo prometido se cobra solo
+     * por meses completos (el mes en curso no), lo dado cuenta todo (QE-002).
+     *
+     * @param  \Illuminate\Support\Collection<int, Compromiso>  $compromisos
+     * @return array{prometido: float, dado: float, saldo: float, pct: float}
+     */
+    private function cumplimientoDesdeCompromisos($compromisos): array
+    {
+        $hoy = now();
+        $cobrables = $compromisos->filter(fn ($c) => (int) $c->año < $hoy->year || (int) $c->mes < $hoy->month);
+        $prometido = (float) $cobrables->sum('monto_prometido_crc');
+        $dado = (float) $compromisos->sum('monto_dado_crc');
+
+        return [
+            'prometido' => $prometido,
+            'dado' => $dado,
+            'saldo' => $dado - $prometido,
+            'pct' => $prometido > 0 ? round(($dado / $prometido) * 100, 1) : 0,
+        ];
     }
 
     protected function cargarDataReporte(int $mes, int $ano, ?int $ministerioId = null): array
@@ -234,14 +249,7 @@ class ServidorController extends Controller
             $compromisos = Compromiso::where('persona_id', $servidor->persona->id)
                 ->where('año', $ano)
                 ->get();
-            $prometido = (float) $compromisos->sum('monto_prometido');
-            $dado = (float) $compromisos->sum('monto_dado');
-            $cumplimientoPorServidor[$servidor->id] = [
-                'prometido' => $prometido,
-                'dado' => $dado,
-                'saldo' => $dado - $prometido,
-                'pct' => $prometido > 0 ? round(($dado / $prometido) * 100, 1) : 0,
-            ];
+            $cumplimientoPorServidor[$servidor->id] = $this->cumplimientoDesdeCompromisos($compromisos);
         }
 
         $meses = [

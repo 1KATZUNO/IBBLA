@@ -49,7 +49,7 @@
     </div>
 
     <div class="footer">
-        <p>Sistema de Administracion - {{ $tenantSiglas }} - {{ $tenantNombre }}</p>
+        <p>Sistema de Administración - {{ $tenantSiglas }} - {{ $tenantNombre }}</p>
         <p>Generado: {{ now()->format('d/m/Y H:i') }}</p>
     </div>
 </body>

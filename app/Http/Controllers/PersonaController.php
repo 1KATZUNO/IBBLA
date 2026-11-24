@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AuditLog;
 use App\Models\Persona;
 use App\Models\Promesa;
 use App\Models\Compromiso;
@@ -10,6 +11,9 @@ use App\Models\Ministerio;
 use App\Models\User;
 use App\Services\ReporteGeneralPdf;
 use App\Services\ReporteGeneralService;
+use App\Services\Reportes\Dinero;
+use App\Services\Reportes\MotorReportes;
+use App\Services\Reportes\PeriodoReporte;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Hash;
@@ -17,20 +21,38 @@ use Symfony\Component\HttpFoundation\HeaderUtils;
 
 class PersonaController extends Controller
 {
+    /**
+     * Regla "el ministerio existe", limitada a la iglesia del usuario: con un simple
+     * exists:ministerios,id se podría asignar un ministerio de otra iglesia con solo
+     * conocer su id. El super admin (sin iglesia) no tiene ese límite.
+     */
+    private function reglaMinisterioExiste(): \Illuminate\Validation\Rules\Exists
+    {
+        $regla = \Illuminate\Validation\Rule::exists('ministerios', 'id');
+
+        if ($tenantId = auth()->user()->tenant_id) {
+            $regla->where('tenant_id', $tenantId);
+        }
+
+        return $regla;
+    }
+
     public function index(Request $request)
     {
         $query = Persona::withCount(['sobres', 'promesas']);
         
-        // Búsqueda por nombre o pin
+        // Búsqueda por nombre, pin o teléfono
         if ($request->filled('buscar')) {
             $buscar = $request->buscar;
             $query->where(function ($q) use ($buscar) {
                 $q->where('nombre', 'like', '%' . $buscar . '%')
-                  ->orWhere('pin', $buscar);
+                  ->orWhere('pin', $buscar)
+                  ->orWhere('telefono', 'like', '%' . $buscar . '%');
             });
         }
-        
-        $personas = $query->paginate(20);
+
+        // Activas primero y por orden alfabético (antes salían por orden de alta, con las inactivas arriba)
+        $personas = $query->orderByDesc('activo')->orderBy('nombre')->paginate(20);
         $personasInactivas = Persona::where('activo', false)->count();
         return view('personas.index', compact('personas', 'personasInactivas'));
     }
@@ -57,7 +79,7 @@ class PersonaController extends Controller
             'clases.*.clase_id' => 'required|exists:clases_asistencia,id',
             'clases.*.es_maestro' => 'boolean',
             'ministerios' => 'nullable|array',
-            'ministerios.*.ministerio_id' => 'required|exists:ministerios,id',
+            'ministerios.*.ministerio_id' => ['required', $this->reglaMinisterioExiste()],
             'ministerios.*.es_lider' => 'boolean',
             'password' => 'required_with:correo|nullable|string|min:8',
             'activo' => 'boolean',
@@ -177,32 +199,12 @@ class PersonaController extends Controller
             ->orderBy('año', 'desc')
             ->pluck('año');
         
-        // Calcular cumplimiento de promesas
-        $promesasConEstatus = $persona->promesas->map(function ($promesa) use ($persona) {
-            $montoPagado = $persona->sobres()
-                ->whereHas('detalles', function ($query) use ($promesa) {
-                    $query->where('categoria', $promesa->categoria);
-                })
-                ->whereHas('culto', function ($query) {
-                    $query->whereMonth('fecha', Carbon::now()->month)
-                          ->whereYear('fecha', Carbon::now()->year);
-                })
-                ->get()
-                ->sum(function ($sobre) use ($promesa) {
-                    return $sobre->detalles()
-                        ->where('categoria', $promesa->categoria)
-                        ->sum('monto');
-                });
+        // Lo dado en el año y el estado de compromisos: las mismas cifras del estado de cuenta (motor
+        // único, corte hoy, dólares convertidos). Antes la ficha sumaba total_declarado de todos los
+        // años sin convertir dólares (QA-033).
+        $estadoCuenta = app(\App\Services\InformePersonaService::class)->datos($persona);
 
-            return [
-                'promesa' => $promesa,
-                'pagado' => $montoPagado,
-                'faltante' => max(0, $promesa->monto - $montoPagado),
-                'cumplido' => $montoPagado >= $promesa->monto,
-            ];
-        });
-
-        return view('personas.show', compact('persona', 'promesasConEstatus', 'añosDisponibles'));
+        return view('personas.show', compact('persona', 'estadoCuenta', 'añosDisponibles'));
     }
 
     public function edit(Persona $persona)
@@ -213,7 +215,17 @@ class PersonaController extends Controller
         $clasesAsignadas = $persona->clasesAsistencia->map(function ($clase) {
             return ['clase_id' => $clase->id, 'es_maestro' => $clase->pivot->es_maestro];
         })->values()->toArray();
-        $ministerios = Ministerio::activos()->ordenados()->get();
+        // Un ministerio desactivado deja de ofrecerse, salvo a quienes ya están en él: si no
+        // apareciera en su selector, el <select> quedaría vacío, fallaría "ministerio_id
+        // required" y no se podría guardar la ficha de esa persona.
+        $ministerios = Ministerio::where(function ($q) use ($persona) {
+            $q->where('activo', true)->orWhereIn('id', $persona->ministerios->pluck('id'));
+        })->ordenados()->get();
+        $ministerios->each(function ($m) {
+            if (! $m->activo) {
+                $m->nombre .= ' (inactivo)'; // solo para mostrar: no se guarda
+            }
+        });
         $ministeriosAsignados = $persona->ministerios->map(function ($m) {
             return ['ministerio_id' => $m->id, 'es_lider' => (bool) $m->pivot->es_lider];
         })->values()->toArray();
@@ -232,7 +244,7 @@ class PersonaController extends Controller
             'clases.*.clase_id' => 'required|exists:clases_asistencia,id',
             'clases.*.es_maestro' => 'boolean',
             'ministerios' => 'nullable|array',
-            'ministerios.*.ministerio_id' => 'required|exists:ministerios,id',
+            'ministerios.*.ministerio_id' => ['required', $this->reglaMinisterioExiste()],
             'ministerios.*.es_lider' => 'boolean',
             'password' => $persona->user_id ? 'nullable|string|min:8' : 'required_with:correo|nullable|string|min:8',
             'activo' => 'boolean',
@@ -373,20 +385,39 @@ class PersonaController extends Controller
             ->with('success', 'Persona y sus promesas eliminadas correctamente. Los sobres quedan registrados.');
     }
 
+    /**
+     * Pantalla de alta rapida (nombre, telefono y correo opcionales) para quien registra sobres: el
+     * tesorero agrega personas sin ver la lista ni las fichas (decision del cliente 13/10).
+     */
+    public function altaRapida()
+    {
+        return view('personas.alta-rapida');
+    }
+
     public function quickStore(Request $request)
     {
         $validated = $request->validate([
-            'nombre' => 'required|string|max:255'
+            'nombre' => 'required|string|max:255',
+            'telefono' => 'nullable|string|max:30',
+            'correo' => 'nullable|email|max:255',
         ]);
 
         $persona = Persona::create([
-            'nombre' => $validated['nombre'],
-            'activo' => true
+            'nombre' => trim($validated['nombre']),
+            'telefono' => $validated['telefono'] ?? null,
+            'correo' => $validated['correo'] ?? null,
+            'activo' => true,
         ]);
+
+        AuditLog::registrar('Alta rápida de persona', ['persona_id' => $persona->id, 'nombre' => $persona->nombre]);
+
+        if (! $request->expectsJson()) {
+            return back()->with('success', "Persona agregada: {$persona->nombre}.");
+        }
 
         return response()->json([
             'success' => true,
-            'persona' => $persona
+            'persona' => $persona->only(['id', 'nombre', 'pin', 'telefono']),
         ]);
     }
 
@@ -490,86 +521,36 @@ class PersonaController extends Controller
     }
 
     /**
-     * Genera un reporte PDF de contribuciones acumuladas desde enero hasta el mes actual
+     * Genera un reporte PDF de contribuciones acumuladas desde enero hasta el mes actual: una fila
+     * por persona activa que dio algo, una columna por categoria de la iglesia.
+     *
+     * Las cifras salen del motor unico (Reportes\MotorReportes): antes este reporte sumaba los
+     * montos de los sobres en dolares como si fueran colones; ahora van convertidos con el tipo de
+     * cambio del sobre, igual que en el estado de cuenta y el Reporte General.
      */
-    public function reportePdf(Request $request)
+    public function reportePdf(Request $request, MotorReportes $motor, \App\Services\Reportes\Exportaciones\ContribucionesPdf $pdf)
     {
         $validated = $request->validate([
             'accion' => 'required|in:ver,descargar',
         ]);
 
-        // Calcular desde enero del anio actual hasta el mes actual
-        $anioActual = date('Y');
-        $mesActual = date('n'); // Mes sin cero inicial (1-12)
-
-        $fechaInicio = Carbon::create($anioActual, 1, 1)->startOfMonth();
-        $fechaFin = Carbon::now()->endOfMonth();
-
-        // Titulo del periodo
-        $meses = ['', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-                  'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
-        $tituloPeriodo = "Enero - {$meses[$mesActual]} {$anioActual}";
-
-        // Categorías dinámicas del tenant
-        $categorias = tenant_categories()->pluck('slug')->toArray();
-
-        // Obtener personas activas con sus sobres del período
+        // Desde enero del anio actual hasta hoy (el motor no cuenta nada posterior a hoy)
+        $anioActual = now()->year;
+        $mesActual = now()->month;
         $personas = Persona::where('activo', true)
-            ->with(['sobres' => function($query) use ($fechaInicio, $fechaFin) {
-                $query->whereHas('culto', function($q) use ($fechaInicio, $fechaFin) {
-                    $q->whereBetween('fecha', [$fechaInicio, $fechaFin]);
-                })->with('detalles');
-            }])
             ->orderBy('nombre')
-            ->get();
+            ->get(['id', 'nombre', 'activo']);
+        $resultado = $motor->calcular(PeriodoReporte::deMeses($anioActual, 1, $mesActual), $personas);
 
-        // Calcular totales por categoría
-        $totalesPorCategoria = array_fill_keys($categorias, 0);
-        $totalGeneral = 0;
-
-        foreach ($personas as $persona) {
-            // Inicializar contribuciones por categoría
-            $contribuciones = array_fill_keys($categorias, 0);
-            $totalPersona = 0;
-
-            foreach ($persona->sobres as $sobre) {
-                foreach ($sobre->detalles as $detalle) {
-                    $cat = $detalle->categoria;
-                    if (isset($contribuciones[$cat])) {
-                        $contribuciones[$cat] += $detalle->monto;
-                        $totalesPorCategoria[$cat] += $detalle->monto;
-                        $totalPersona += $detalle->monto;
-                        $totalGeneral += $detalle->monto;
-                    }
-                }
-            }
-
-            $persona->contribuciones = $contribuciones;
-            $persona->total_dado = $totalPersona;
-        }
-
-        // Filtrar solo personas que han dado algo
-        $personas = $personas->filter(function($persona) {
-            return $persona->total_dado > 0;
-        });
-
-        $pdf = \PDF::loadView('pdfs.reporte-contribuciones', [
-            'personas' => $personas,
-            'tituloPeriodo' => $tituloPeriodo,
-            'categorias' => $categorias,
-            'totalesPorCategoria' => $totalesPorCategoria,
-            'totalGeneral' => $totalGeneral,
-        ]);
-
-        $pdf->setPaper('letter', 'landscape');
-
+        $contenido = $pdf->generar($resultado, $personas);
         $nombreArchivo = 'reporte-contribuciones-' . $anioActual . '-' . str_pad($mesActual, 2, '0', STR_PAD_LEFT) . '.pdf';
+        $disposicion = $validated['accion'] === 'descargar' ? 'attachment' : 'inline';
 
-        if ($validated['accion'] === 'descargar') {
-            return $pdf->download($nombreArchivo);
-        } else {
-            return $pdf->stream($nombreArchivo);
-        }
+        return response($contenido, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => HeaderUtils::makeDisposition($disposicion, $nombreArchivo),
+            'Content-Length' => strlen($contenido),
+        ]);
     }
 
     /**

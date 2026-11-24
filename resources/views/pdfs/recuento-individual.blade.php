@@ -2,283 +2,248 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Recuento Individual - {{ $culto->fecha->format('d/m/Y') }}</title>
+    <title>Recuento - {{ $culto->fecha->format('d/m/Y') }}</title>
+    @php
+        // DomPDF no entiende flexbox: la cabecera y las tarjetas van en tablas. La tabla de sobres
+        // lleva anchos fijos (en % de la hoja) para que la columna Total nunca se salga del borde
+        // (QE-001). Las notas del sobre van debajo del nombre, no en una columna aparte.
+        $transferenciasOnly = isset($transferenciasOnly) && $transferenciasOnly === true;
+        $nCat = max(count($categories), 1);
+        $wNum = $transferenciasOnly ? 0 : 4;
+        $wPersona = $transferenciasOnly ? 23 : 20;
+        $wMetodo = 7;
+        $wComprobante = 9;
+        $wTotal = 11;
+        $wCat = round((100 - $wNum - $wPersona - $wMetodo - $wComprobante - $wTotal) / $nCat, 2);
+        $fuente = $nCat > 6 ? '7.5px' : ($nCat > 4 ? '8px' : '9px');
+        $fuenteEncabezado = $nCat > 6 ? '6.5px' : '7.5px';
+    @endphp
     <style>
-        @page { size: landscape; margin: 15mm; }
-        body { font-family: 'DejaVu Sans', sans-serif; font-size: 10px; margin: 0; padding: 0; }
-        .header { display: flex; align-items: center; margin-bottom: 15px; border-bottom: 3px solid #3b82f6; padding-bottom: 10px; }
-        .header img { width: 60px; height: 60px; margin-right: 15px; }
-        .header-text { flex: 1; }
-        .header-text h1 { margin: 0; color: #1f2937; font-size: 18px; }
-        .header-text h2 { margin: 5px 0 0 0; color: #3b82f6; font-size: 12px; font-weight: normal; }
-        .info-box { background-color: #f3f4f6; padding: 8px; border-radius: 5px; margin-bottom: 12px; font-size: 9px; }
-        .info-box p { margin: 3px 0; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th, td { border: 1px solid #ddd; padding: 6px; text-align: left; }
-        th { background-color: #3b82f6; color: white; font-size: 9px; text-transform: uppercase; }
-        .text-right { text-align: right; }
-        .text-center { text-align: center; }
-        .sobre-row { background-color: #ffffff; }
-        .sobre-row:hover { background-color: #f9fafb; }
-        .suelto-row { background-color: #dcfce7; }
-        .egreso-row { background-color: #fee2e2; }
-        .total-row { font-weight: bold; background-color: #dbeafe; font-size: 11px; }
+        @page { size: A4 landscape; margin: 12mm 12mm 14mm 12mm; }
+        body { font-family: 'DejaVu Sans', sans-serif; font-size: 9px; color: #111827; margin: 0; padding: 0; }
+        table { border-collapse: collapse; width: 100%; }
+        .cabecera { border-bottom: 3px solid #1e40af; margin-bottom: 8px; }
+        .cabecera td { vertical-align: middle; padding: 0 0 6px 0; }
+        .cabecera h1 { margin: 0; font-size: 16px; color: #1f2937; }
+        .cabecera h2 { margin: 3px 0 0 0; font-size: 11px; font-weight: normal; color: #1e40af; }
+        .cabecera .meta { text-align: right; font-size: 8px; color: #6b7280; }
+        .tarjetas { table-layout: fixed; margin-bottom: 6px; }
+        .tarjetas td { border: 1px solid #e5e7eb; padding: 5px 4px; text-align: center; }
+        .tarjetas .etq { font-size: 7.5px; color: #6b7280; text-transform: uppercase; }
+        .tarjetas .val { font-size: 12px; font-weight: bold; color: #1f2937; margin-top: 2px; }
+        .tarjetas .usd { font-size: 7px; color: #6b7280; }
+        h3 { margin: 8px 0 4px 0; font-size: 10px; color: #1f2937; }
+        .sobres { table-layout: fixed; font-size: {{ $fuente }}; }
+        .sobres th, .sobres td { border: 1px solid #d1d5db; padding: 2px 3px; overflow: hidden; word-wrap: break-word; vertical-align: top; }
+        .sobres th { background-color: #1e40af; color: #ffffff; font-size: {{ $fuenteEncabezado }}; text-align: left; }
+        .sobres th.num, .sobres td.num { text-align: right; }
+        .sobres td.centro { text-align: center; }
+        .sobres tr { page-break-inside: avoid; }
+        .sobres .nota { font-size: 6.5px; color: #6b7280; }
+        .sobres .usd { font-size: 6.5px; color: #92400e; }
+        .suelto { background-color: #dcfce7; }
+        .egreso { background-color: #fee2e2; }
+        .totales td { font-weight: bold; background-color: #dbeafe; }
         .subtotal { font-weight: bold; color: #1e40af; }
-        .badge { display: inline-block; padding: 2px 6px; border-radius: 3px; font-size: 8px; }
-        .badge-efectivo { background-color: #d1fae5; color: #065f46; }
-        .badge-transferencia { background-color: #dbeafe; color: #1e40af; }
-        .badge-usd { background-color: #fef3c7; color: #92400e; font-size: 7px; padding: 1px 4px; border-radius: 3px; display: inline-block; }
-        
-        /* Resumen por categorías */
-        .resumen-box { margin-top: 20px; padding: 10px; background-color: #fef3c7; border-radius: 5px; }
-        .resumen-box h3 { margin: 0 0 10px 0; font-size: 11px; color: #92400e; }
-        .categoria-item { display: inline-block; margin: 5px 10px 5px 0; font-size: 9px; }
-        .categoria-label { font-weight: bold; }
-        
-        /* Summary cards */
-        .summary-grid { display: flex; justify-content: space-between; margin-bottom: 15px; }
-        .summary-card { flex: 1; margin: 0 5px; padding: 10px; border: 1px solid #e5e7eb; border-radius: 5px; text-align: center; }
-        .summary-card .label { font-size: 9px; color: #6b7280; text-transform: uppercase; }
-        .summary-card .value { font-size: 14px; font-weight: bold; color: #1f2937; margin-top: 5px; }
-        .footer { margin-top: 20px; text-align: center; font-size: 8px; color: #9ca3af; border-top: 1px solid #e5e7eb; padding-top: 10px; }
+        .transferencia { color: #1e40af; }
+        .resumen { margin-top: 8px; padding: 6px 8px; background-color: #fef3c7; border-radius: 4px; }
+        .resumen b { color: #92400e; }
+        .resumen span { display: inline-block; margin: 2px 12px 2px 0; }
+        .nota-usd { background-color: #fef3c7; padding: 6px; border-left: 4px solid #f59e0b; margin-top: 8px; font-size: 7.5px; }
+        .firmas { margin-top: 18px; page-break-inside: avoid; }
+        .firmas h3 { text-align: center; color: #374151; margin-bottom: 10px; }
+        .firmas td { text-align: center; vertical-align: bottom; padding: 6px 10px; }
+        .firmas .linea { border-top: 1px solid #000; padding-top: 5px; margin-top: 4px; }
+        .firmas .nombre { font-size: 9px; font-weight: bold; }
+        .firmas .cargo { font-size: 7.5px; color: #6b7280; }
+        .pie { margin-top: 12px; text-align: center; font-size: 7.5px; color: #9ca3af; border-top: 1px solid #e5e7eb; padding-top: 6px; }
     </style>
 </head>
 <body>
-    @php extract(tenant_pdf_data()); @endphp
-    <div class="header">
-        <div style="background-color: {{ $tenantColor }}; border-radius: 50%; width: 70px; height: 70px; text-align: center; padding-left: 3px; margin-right: 15px;">
-            <img src="data:image/png;base64,{{ $tenantLogoBase64 }}" style="width: 50px; height: 50px; margin-top: 10px;" alt="Logo">
-        </div>
-        <div class="header-text">
-            <h1>{{ $tenantSiglas }} - {{ $tenantNombre }}</h1>
-            <h2>Recuento de Sobres - {{ $culto->fecha->format('d/m/Y') }} - {{ ucfirst($culto->tipo_culto) }}</h2>
-        </div>
-    </div>
-    
-    <div class="info-box">
-        <p><strong>Generado:</strong> {{ now()->format('d/m/Y H:i') }}</p>
-        @if($culto->cerrado)
-        <p><strong>Estado:</strong> Cerrado el {{ $culto->cerrado_at->format('d/m/Y H:i') }}</p>
-        @endif
-    </div>
+    @php
+        extract(tenant_pdf_data());
+        // Todos los numeros salen de App\Support\ResumenCulto (los mismos de la pantalla del culto):
+        // colones convertidos, USD aparte entre parentesis y un solo total (QA-026).
+        $usdTotal = $resumen->totalUsdSobres();
+        $crc = fn (float $v) => number_format($v, 2);
+        $enColones = fn ($item) => $item->moneda === 'USD'
+            ? (float) $item->monto * ((float) $item->tipo_cambio_venta ?: $resumen->tipoCambioRespaldo ?: 1)
+            : (float) $item->monto;
+    @endphp
 
-    @php $transferenciasOnly = isset($transferenciasOnly) && $transferenciasOnly === true; @endphp
-    @if($culto->totales)
-        @if(!$transferenciasOnly)
-        <div class="summary-grid">
-            <div class="summary-card">
-                <div class="label">Total General</div>
-                <div class="value">{{ number_format($culto->totales->total_general, 2) }}</div>
-            </div>
-            <div class="summary-card">
-                <div class="label">Cantidad Sobres</div>
-                <div class="value">{{ $culto->totales->cantidad_sobres }}</div>
-            </div>
-            @foreach($categories->where('es_ofrenda_suelta', false)->take(2) as $cat)
-            <div class="summary-card">
-                <div class="label">{{ $cat->nombre }}</div>
-                <div class="value">{{ number_format($culto->totales->getCategoryTotal($cat->slug), 2) }}</div>
-            </div>
+    <table class="cabecera">
+        <tr>
+            <td style="width: 60px;">
+                <div style="background-color: {{ $tenantColor }}; border-radius: 50%; width: 52px; height: 52px; text-align: center;">
+                    <img src="data:image/png;base64,{{ $tenantLogoBase64 }}" style="width: 38px; height: 38px; margin-top: 7px;" alt="">
+                </div>
+            </td>
+            <td>
+                <h1>{{ $tenantSiglas }} - {{ $tenantNombre }}</h1>
+                <h2>Recuento de sobres{{ $transferenciasOnly ? ' (solo transferencias)' : '' }} - {{ $culto->fecha->format('d/m/Y') }} - {{ ucfirst($culto->tipo_culto) }}</h2>
+            </td>
+            <td class="meta" style="width: 190px;">
+                Generado: {{ now()->format('d/m/Y H:i') }}<br>
+                @if($culto->cerrado)
+                    Cerrado el {{ $culto->cerrado_at?->format('d/m/Y H:i') }}{{ $culto->cerradoPor ? ' por '.$culto->cerradoPor->name : '' }}
+                @else
+                    Culto abierto (recuento en curso)
+                @endif
+            </td>
+        </tr>
+    </table>
+
+    @if(!$transferenciasOnly)
+    <table class="tarjetas">
+        <tr>
+            <td>
+                <div class="etq">Total general (₡)</div>
+                <div class="val">{{ $crc($resumen->total()) }}</div>
+                @if($usdTotal > 0)<div class="usd">incluye USD ${{ number_format($usdTotal, 2) }}</div>@endif
+            </td>
+            <td><div class="etq">Sobres</div><div class="val">{{ $resumen->cantidadSobres }}</div></td>
+            <td><div class="etq">Efectivo (sobres + suelto − egresos)</div><div class="val">{{ $crc($resumen->efectivo()) }}</div></td>
+            <td><div class="etq">Transferencias ({{ $resumen->cantidadTransferencias }})</div><div class="val">{{ $crc($resumen->transferencias()) }}</div></td>
+            @foreach($categories->take(2) as $cat)
+            <td><div class="etq">{{ $cat->nombre }}</div><div class="val">{{ $crc($resumen->porCategoria[$cat->slug] ?? 0) }}</div></td>
             @endforeach
-            <div class="summary-card">
-                <div class="label">Transferencias</div>
-                <div class="value">{{ $culto->totales->cantidad_transferencias }}</div>
-            </div>
-        </div>
-        @else
-        <div class="summary-grid">
-            <div class="summary-card">
-                <div class="label">Total Transferencias</div>
-                <div class="value">{{ number_format($culto->totales->total_transferencias ?? ($culto->sobres->where('metodo_pago','transferencia')->sum('total_declarado')), 2) }}</div>
-            </div>
-        </div>
-        @endif
+        </tr>
+    </table>
+    @else
+    <table class="tarjetas">
+        <tr>
+            <td>
+                <div class="etq">Total transferencias (₡)</div>
+                <div class="val">{{ $crc($resumen->transferencias()) }}</div>
+                @if($usdTotal > 0)<div class="usd">incluye USD ${{ number_format($usdTotal, 2) }}</div>@endif
+            </td>
+            <td><div class="etq">Transferencias</div><div class="val">{{ $resumen->cantidadTransferencias }}</div></td>
+        </tr>
+    </table>
     @endif
 
-    <!-- Tabla de Sobres -->
-    <h3 style="margin-top: 20px; margin-bottom: 10px; font-size: 11px;">Detalle de Sobres{{ $transferenciasOnly ? ' (solo transferencias)' : ' y Dinero Suelto' }}</h3>
-    <table>
+    <h3>Detalle de sobres{{ $transferenciasOnly ? ' (solo transferencias)' : ' y dinero suelto' }} (₡)</h3>
+    <table class="sobres">
         <thead>
             <tr>
-                @if(!$transferenciasOnly)
-                <th>N° Sobre</th>
-                @endif
-                <th>Persona</th>
-                <th>Método</th>
-                <th>Comprobante</th>
-                <th>Notas</th>
+                @if(!$transferenciasOnly)<th class="centro" style="width: {{ $wNum }}%;">N°</th>@endif
+                <th style="width: {{ $wPersona }}%;">Persona</th>
+                <th style="width: {{ $wMetodo }}%;">Método</th>
+                <th style="width: {{ $wComprobante }}%;">Comprobante</th>
                 @foreach($categories as $cat)
-                <th class="text-right">{{ $cat->nombre }}</th>
+                <th class="num" style="width: {{ $wCat }}%;">{{ $cat->nombre }}</th>
                 @endforeach
-                <th class="text-right">Total</th>
+                <th class="num" style="width: {{ $wTotal }}%;">Total</th>
             </tr>
         </thead>
         <tbody>
-            @php
-                $totalGeneral = 0;
-                $totalEfectivo = 0;
-                $totalTransferencias = 0;
-            @endphp
-            
-            @foreach($culto->sobres->filter(fn($s) => !$transferenciasOnly || $s->metodo_pago === 'transferencia') as $sobre)
-            @php
-                $detallesPorCategoria = $sobre->detalles->keyBy('categoria');
-                $totalGeneral += $sobre->total_declarado;
-                if ($sobre->metodo_pago === 'transferencia') { $totalTransferencias += $sobre->total_declarado; } else { $totalEfectivo += $sobre->total_declarado; }
-            @endphp
-            <tr class="sobre-row">
-                @if(!$transferenciasOnly)
-                <td class="text-center"><strong>#{{ $sobre->numero_sobre }}</strong></td>
-                @endif
-                <td>{{ $sobre->persona ? $sobre->persona->nombre : 'Anónimo' }}</td>
+            @foreach($resumen->filas as $fila)
+            @php $sobre = $fila['sobre']; $esUsd = $fila['subtotal_usd'] > 0; @endphp
+            <tr>
+                @if(!$transferenciasOnly)<td class="centro"><b>#{{ $sobre->numero_sobre }}</b></td>@endif
                 <td>
-                    <span class="badge {{ $sobre->metodo_pago == 'transferencia' ? 'badge-transferencia' : 'badge-efectivo' }}">
-                        {{ ucfirst($sobre->metodo_pago) }}
-                    </span>
+                    {{ $sobre->persona ? $sobre->persona->nombre : 'Anónimo' }}
+                    @if($sobre->notas)<br><span class="nota">{{ $sobre->notas }}</span>@endif
                 </td>
+                <td class="{{ $sobre->metodo_pago === 'transferencia' ? 'transferencia' : '' }}">{{ $sobre->metodo_pago === 'transferencia' ? 'Transf.' : ucfirst($sobre->metodo_pago) }}</td>
                 <td>{{ $sobre->metodo_pago === 'transferencia' ? ($sobre->comprobante_numero ?? '-') : '-' }}</td>
-                <td>{{ $sobre->notas ? $sobre->notas : '-' }}</td>
                 @foreach($categories as $cat)
-                <td class="text-right">{{ number_format($detallesPorCategoria->get($cat->slug)->monto ?? 0, 2) }}</td>
+                <td class="num">
+                    {{ $crc($fila['crc'][$cat->slug] ?? 0) }}
+                    @if($esUsd && ($fila['usd'][$cat->slug] ?? 0) > 0)<br><span class="usd">(${{ number_format($fila['usd'][$cat->slug], 2) }})</span>@endif
+                </td>
                 @endforeach
-                <td class="text-right subtotal">
-                    {{ number_format($sobre->total_declarado, 2) }}
-                    @if(($sobre->moneda ?? 'CRC') === 'USD')
-                        <br><span class="badge-usd">USD ${{ number_format($sobre->monto_original_usd ?? $sobre->total_declarado, 2) }}</span>
-                    @endif
+                <td class="num subtotal">
+                    {{ $crc($fila['subtotal_crc']) }}
+                    @if($esUsd)<br><span class="usd">(USD ${{ number_format($fila['subtotal_usd'], 2) }} × {{ number_format($fila['tipo_cambio'], 2) }})</span>@endif
                 </td>
             </tr>
             @endforeach
 
             @if(!$transferenciasOnly)
                 @foreach($culto->ofrendasSueltas as $ofrenda)
-                @php $totalGeneral += $ofrenda->monto; @endphp
-                <tr class="suelto-row">
-                    <td class="text-center">-</td>
-                    <td>
-                        <strong>Dinero Suelto</strong>
-                        @if($ofrenda->descripcion)
-                        <br><small style="font-size: 8px; color: #6b7280;">{{ $ofrenda->descripcion }}</small>
-                        @endif
+                <tr class="suelto">
+                    <td class="centro">-</td>
+                    <td><b>Dinero suelto</b>@if($ofrenda->descripcion)<br><span class="nota">{{ $ofrenda->descripcion }}</span>@endif</td>
+                    <td colspan="{{ 2 + $nCat }}">Efectivo</td>
+                    <td class="num subtotal">
+                        {{ $crc($enColones($ofrenda)) }}
+                        @if($ofrenda->moneda === 'USD')<br><span class="usd">(USD ${{ number_format((float) $ofrenda->monto, 2) }})</span>@endif
                     </td>
-                    <td>Efectivo</td>
-                    <td class="text-right">-</td>
-                    <td class="text-right">-</td>
-                    @foreach($categories as $cat)
-                    <td class="text-right">-</td>
-                    @endforeach
-                    <td class="text-right subtotal">{{ number_format($ofrenda->monto, 2) }}</td>
                 </tr>
                 @endforeach
                 @foreach($culto->egresos as $egreso)
-                @php $totalGeneral -= $egreso->monto; @endphp
-                <tr class="egreso-row">
-                    <td class="text-center">-</td>
-                    <td>
-                        <strong>Egreso</strong>
-                        @if($egreso->descripcion)
-                        <br><small style="font-size: 8px; color: #6b7280;">{{ $egreso->descripcion }}</small>
-                        @endif
+                <tr class="egreso">
+                    <td class="centro">-</td>
+                    <td><b>Egreso</b>@if($egreso->descripcion)<br><span class="nota">{{ $egreso->descripcion }}</span>@endif</td>
+                    <td colspan="{{ 2 + $nCat }}">Efectivo</td>
+                    <td class="num subtotal">
+                        -{{ $crc($enColones($egreso)) }}
+                        @if($egreso->moneda === 'USD')<br><span class="usd">(USD ${{ number_format((float) $egreso->monto, 2) }})</span>@endif
                     </td>
-                    <td>Efectivo</td>
-                    <td class="text-right">-</td>
-                    <td class="text-right">-</td>
-                    @foreach($categories as $cat)
-                    <td class="text-right">-</td>
-                    @endforeach
-                    <td class="text-right subtotal">-{{ number_format($egreso->monto, 2) }}</td>
                 </tr>
                 @endforeach
             @endif
 
-            <!-- Totales -->
-            <tr class="total-row">
-                <td colspan="{{ $transferenciasOnly ? 4 : 5 }}" class="text-right">TOTALES</td>
+            {{-- Totales: el mismo Total General de la cabecera --}}
+            <tr class="totales">
+                <td colspan="{{ $transferenciasOnly ? 3 : 4 }}" class="num">TOTALES (₡)</td>
                 @foreach($categories as $cat)
-                <td class="text-right">{{ number_format($totalesPorCategoria[$cat->slug] ?? 0, 2) }}</td>
+                <td class="num">{{ $crc($resumen->porCategoria[$cat->slug] ?? 0) }}</td>
                 @endforeach
-                <td class="text-right">{{ number_format($totalGeneral, 2) }}</td>
+                <td class="num">{{ $crc($transferenciasOnly ? $resumen->transferencias() : $resumen->total()) }}</td>
             </tr>
         </tbody>
     </table>
 
-    @if(!$transferenciasOnly)
-    <div class="summary-grid" style="margin-top: 10px;">
-        <div class="summary-card">
-            <div class="label">Total Efectivo</div>
-            <div class="value">{{ number_format($totalEfectivo, 2) }}</div>
-        </div>
-        <div class="summary-card">
-            <div class="label">Total Transferencias</div>
-            <div class="value">{{ number_format($totalTransferencias, 2) }}</div>
-        </div>
+    <div class="resumen">
+        <b>Resumen por categorías (₡):</b>
+        @foreach($categories as $cat)
+        <span><b>{{ $cat->nombre }}:</b> {{ $crc($resumen->porCategoria[$cat->slug] ?? 0) }}</span>
+        @endforeach
+    </div>
+
+    @if($resumen->tieneUsd)
+    <div class="nota-usd">
+        <b>Nota:</b> todos los montos están en colones. Los sobres en dólares se convirtieron con el tipo de cambio guardado en cada sobre (se indica en la fila);
+        si un sobre no lo tenía, con el de venta de la fecha del culto (₡{{ number_format($resumen->tipoCambioRespaldo, 2) }}). El monto en USD va entre paréntesis, solo como referencia.
     </div>
     @endif
 
-    <!-- Resumen por Categorías -->
-    <div class="resumen-box">
-        <h3>Resumen por Categorías</h3>
-        <div>
-            @foreach($categories as $cat)
-            <span class="categoria-item">
-                <span class="categoria-label">{{ $cat->nombre }}:</span> {{ number_format($totalesPorCategoria[$cat->slug] ?? 0, 2) }}
-            </span>
-            @endforeach
-        </div>
-    </div>
-
-    <!-- Firmas -->
     @php
         $pastor = $culto->firma_pastor ?? '';
         $pastorImagen = $culto->firma_pastor_imagen ?? '';
         $tesorerosImagenes = $culto->firmas_tesoreros_imagenes ?? [];
-        // Fallback a nombres antiguos si no hay imágenes
+        // Respaldo con los nombres antiguos si no hay imagenes
         if (empty($tesorerosImagenes)) {
-            $tes = $culto->firmas_tesoreros ?? [];
-            $tesorerosImagenes = array_map(fn($n) => ['nombre' => $n, 'imagen' => ''], $tes);
+            $tesorerosImagenes = array_map(fn ($n) => ['nombre' => $n, 'imagen' => ''], $culto->firmas_tesoreros ?? []);
         }
+        $anchoFirma = round(100 / (count($tesorerosImagenes) + 1), 2);
     @endphp
-    <div style="margin-top:30px; page-break-inside: avoid;">
-        <h3 style="text-align:center; font-size:11px; margin-bottom:15px; color:#374151;">FIRMAS DE AUTORIZACIÓN</h3>
-        <table style="width:100%; border-collapse:collapse;">
+    <div class="firmas">
+        <h3>FIRMAS DE AUTORIZACIÓN</h3>
+        <table>
             <tr>
                 @foreach($tesorerosImagenes as $t)
-                <td style="width:{{ 100 / (count($tesorerosImagenes) + 1) }}%; text-align:center; vertical-align:bottom; padding:10px;">
-                    <div style="min-height:60px; display:flex; align-items:flex-end; justify-content:center;">
-                        @if(!empty($t['imagen']))
-                            <img src="{{ $t['imagen'] }}" style="max-height:50px; max-width:120px;">
-                        @endif
-                    </div>
-                    <div style="border-top:1px solid #000; padding-top:8px; margin-top:5px;">
-                        <div style="font-size:10px; font-weight:bold;">{{ $t['nombre'] ?? 'Tesorero' }}</div>
-                        <div style="font-size:8px; color:#6b7280;">Tesorero</div>
+                <td style="width: {{ $anchoFirma }}%;">
+                    @if(!empty($t['imagen']))<img src="{{ $t['imagen'] }}" style="max-height: 45px; max-width: 120px;" alt="">@endif
+                    <div class="linea">
+                        <div class="nombre">{{ $t['nombre'] ?? 'Tesorero' }}</div>
+                        <div class="cargo">Tesorero</div>
                     </div>
                 </td>
                 @endforeach
-                <td style="width:{{ 100 / (count($tesorerosImagenes) + 1) }}%; text-align:center; vertical-align:bottom; padding:10px;">
-                    <div style="min-height:60px; display:flex; align-items:flex-end; justify-content:center;">
-                        @if(!empty($pastorImagen))
-                            <img src="{{ $pastorImagen }}" style="max-height:50px; max-width:120px;">
-                        @endif
-                    </div>
-                    <div style="border-top:1px solid #000; padding-top:8px; margin-top:5px;">
-                        <div style="font-size:10px; font-weight:bold;">{{ $pastor ?: 'Pastor' }}</div>
-                        <div style="font-size:8px; color:#6b7280;">Pastor</div>
+                <td style="width: {{ $anchoFirma }}%;">
+                    @if(!empty($pastorImagen))<img src="{{ $pastorImagen }}" style="max-height: 45px; max-width: 120px;" alt="">@endif
+                    <div class="linea">
+                        <div class="nombre">{{ $pastor ?: 'Pastor' }}</div>
+                        <div class="cargo">Pastor</div>
                     </div>
                 </td>
             </tr>
         </table>
     </div>
 
-    @php $tipoCambio = \App\Models\TipoCambio::hoy(); @endphp
-    @if($tipoCambio && $culto->sobres->where('moneda', 'USD')->count() > 0)
-    <div style="background-color: #fef3c7; padding: 8px; border-radius: 5px; margin-top: 10px; font-size: 8px; border-left: 4px solid #f59e0b;">
-        <strong>Nota:</strong> Los sobres en USD fueron convertidos a ₡ colones usando tipo de cambio ₡{{ number_format($tipoCambio->venta, 2) }} ({{ $tipoCambio->fecha->format('d/m/Y') }}).
-    </div>
-    @endif
-
-    <div class="footer">
-        <p>Sistema de Administracion - {{ $tenantSiglas }} - {{ $tenantNombre }}</p>
-    </div>
+    <div class="pie">Sistema de Administración - {{ $tenantSiglas }} - {{ $tenantNombre }}</div>
 </body>
 </html>

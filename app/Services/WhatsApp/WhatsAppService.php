@@ -2,14 +2,20 @@
 
 namespace App\Services\WhatsApp;
 
+use App\Models\Persona;
+use App\Models\User;
 use InvalidArgumentException;
 
 /**
  * Punto único para hablar con WhatsApp: normaliza teléfonos, arma mensajes desde las
- * plantillas de config/whatsapp.php y delega en el driver elegido (link o meta).
+ * plantillas de config/whatsapp.php y delega en el driver elegido (link, callmebot o meta).
  *
  * El resto del sistema no sabe qué driver hay detrás: pide un enlace (siempre disponible,
  * sirve de respaldo manual) o, si puedeEnviar(), pide el envío automático.
+ *
+ * Con el driver callmebot la clave es de cada receptor y no de la iglesia, así que la pregunta
+ * correcta no es «¿se puede enviar?» sino «¿se le puede enviar a ESTA persona?»: ver
+ * puedeEnviarA() y enviarA(). Quien no tiene clave sigue con el enlace wa.me de siempre.
  */
 class WhatsAppService
 {
@@ -29,6 +35,7 @@ class WhatsAppService
     {
         return match (strtolower(trim((string) config('whatsapp.driver', 'link')))) {
             'meta' => new MetaCloudDriver((array) config('whatsapp.meta', [])),
+            'callmebot' => new CallMeBotDriver((array) config('whatsapp.callmebot', [])),
             default => new LinkDriver(),
         };
     }
@@ -41,6 +48,94 @@ class WhatsAppService
     public function puedeEnviar(): bool
     {
         return $this->driver->puedeEnviar();
+    }
+
+    /**
+     * true si el driver trabaja con la clave personal de cada receptor (callmebot). Con él puedeEnviar()
+     * es siempre false: lo que importa es puedeEnviarA($receptor).
+     */
+    public function usaClavePorReceptor(): bool
+    {
+        return $this->driver instanceof WhatsAppDriverConClave;
+    }
+
+    /**
+     * El destinatario de un mensaje: su nombre, su teléfono normalizado y, con un driver de clave por
+     * receptor, su activación SOLO si se puede usar hoy (activa, legible y del mismo número que tiene
+     * registrado ahora). Una persona que cambió de teléfono después de activar no recibe nada en el
+     * número nuevo con la clave del viejo: vuelve al enlace manual hasta que active de nuevo.
+     */
+    public function destinatario(Persona|User $receptor): DestinatarioWhatsApp
+    {
+        $telefono = self::normalizarTelefono($receptor->telefono);
+        $nombre = $receptor instanceof Persona ? (string) $receptor->nombre : (string) $receptor->name;
+        $activacion = null;
+
+        if ($this->usaClavePorReceptor()) {
+            $candidata = $receptor->activacionWhatsApp;
+
+            if ($candidata !== null && $candidata->utilizablePara($telefono)) {
+                $activacion = $candidata;
+            }
+        }
+
+        return new DestinatarioWhatsApp($nombre, $telefono, $activacion);
+    }
+
+    /**
+     * ¿Se le puede enviar el mensaje sin que nadie toque «enviar»? Con un driver de clave por receptor
+     * depende de que ese receptor tenga una activación utilizable; con los demás, del driver (meta con
+     * credenciales sí; link no). Siempre hace falta un teléfono que sirva.
+     */
+    public function puedeEnviarA(Persona|User|DestinatarioWhatsApp $receptor): bool
+    {
+        $destinatario = $receptor instanceof DestinatarioWhatsApp ? $receptor : $this->destinatario($receptor);
+
+        if ($destinatario->telefono === null) {
+            return false;
+        }
+
+        return $this->usaClavePorReceptor() ? $destinatario->tieneClave() : $this->driver->puedeEnviar();
+    }
+
+    /**
+     * Envío automático a un receptor. Con callmebot sale con SU clave y al número con el que la activó;
+     * el resultado (cuándo, o por qué falló) queda en su activación. Con los demás drivers es lo mismo
+     * que enviar() al teléfono del receptor.
+     *
+     * @throws InvalidArgumentException si el teléfono no es válido
+     * @throws WhatsAppNoConfiguradoException si no se puede enviar a este receptor (sin clave, sin credenciales)
+     * @throws WhatsAppEnvioException si el proveedor no entregó el mensaje
+     */
+    public function enviarA(Persona|User|DestinatarioWhatsApp $receptor, string $mensaje, bool $esPrueba = false): void
+    {
+        $destinatario = $receptor instanceof DestinatarioWhatsApp ? $receptor : $this->destinatario($receptor);
+
+        if ($destinatario->telefono === null) {
+            throw new InvalidArgumentException('El teléfono no es válido para WhatsApp.');
+        }
+
+        if (! $this->driver instanceof WhatsAppDriverConClave) {
+            $this->driver->enviar($destinatario->telefono, $mensaje);
+
+            return;
+        }
+
+        $activacion = $destinatario->activacion;
+
+        if ($activacion === null) {
+            throw WhatsAppNoConfiguradoException::receptorSinClave($destinatario->nombre);
+        }
+
+        try {
+            $this->driver->enviarConClave($activacion->telefono, $mensaje, (string) $activacion->clave());
+        } catch (WhatsAppEnvioException $e) {
+            $activacion->registrarEnvio($e->getMessage());
+
+            throw $e;
+        }
+
+        $activacion->registrarEnvio(null, $esPrueba);
     }
 
     /** Enlace wa.me con el mensaje escrito, o null si el teléfono no sirve. */

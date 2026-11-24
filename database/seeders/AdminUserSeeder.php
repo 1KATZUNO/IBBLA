@@ -15,20 +15,18 @@ class AdminUserSeeder extends Seeder
 {
     public function run(): void
     {
-        // Create default tenant (IBBSC)
+        // Iglesia por defecto del entorno local (IBBLA). El slug y el dominio de correo se conservan
+        // porque los usuarios de prueba, los tests y la documentacion usan @ibbsc.com.
         $tenant = Tenant::create([
-            'nombre' => 'Iglesia Biblica Bautista Santa Cruz',
-            'siglas' => 'IBBSC',
+            'nombre' => 'Iglesia Bíblica Bautista en La Aurora',
+            'siglas' => 'IBBLA',
             'slug' => 'ibbsc',
             'color_theme' => 'blue',
             'timezone' => 'America/Costa_Rica',
             'locale' => 'es',
             'moneda_codigo' => 'CRC',
             'moneda_simbolo' => '₡',
-            'redes_sociales' => [
-                'instagram' => 'https://www.instagram.com/ibb_santacruz',
-                'facebook' => 'https://www.facebook.com/iglesia.biblica.bautista.santa.cruz',
-            ],
+            'redes_sociales' => [],
             'activo' => true,
         ]);
 

@@ -11,6 +11,15 @@ class Asistencia extends Model
 {
     use BelongsToTenant;
 
+    /**
+     * Tope de personas por casilla de asistencia (capilla, clases, salvos,
+     * bautismos, visitas y registros extra). Lo usan los formularios y las
+     * reglas de validación; las columnas son INT, así que no es un límite de BD.
+     * Hasta octubre 2026 el tope real era 100: los formularios solo ofrecían
+     * las opciones 0..100 en un desplegable.
+     */
+    public const MAX_CANTIDAD = 999;
+
     protected $table = 'asistencia';
 
     protected $fillable = [

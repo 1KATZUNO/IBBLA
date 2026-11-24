@@ -1,0 +1,13 @@
+{
+  "name": "ibbla-manual-capturas",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Capturas con numeros para el manual de usuario de IBBLA (se usa con node capturar.mjs)",
+  "type": "module",
+  "scripts": {
+    "capturas": "node capturar.mjs"
+  },
+  "dependencies": {
+    "puppeteer-core": "^25.0.0"
+  }
+}

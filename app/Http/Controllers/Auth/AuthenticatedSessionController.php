@@ -58,33 +58,8 @@ class AuthenticatedSessionController extends Controller
             }
         }
 
-        // Redirect miembro to their profile (not servidor)
-        if ($user->rol === 'miembro') {
-            return redirect()->intended(route('mi-perfil.index', absolute: false));
-        }
-
-        return redirect()->intended(route('principal', absolute: false));
-    }
-
-    /**
-     * Login as guest without credentials.
-     */
-    public function guestLogin(Request $request): RedirectResponse
-    {
-        $guest = User::firstOrCreate(
-            ['email' => 'invitado@ibbsc.local'],
-            [
-                'name' => 'Invitado',
-                'password' => bcrypt(str()->random(32)),
-                'rol' => 'invitado',
-            ]
-        );
-
-        Auth::login($guest);
-
-        $request->session()->regenerate();
-
-        return redirect()->route('principal');
+        // Cada rol a su inicio (miembro: Mi perfil; los demas: Principal)
+        return redirect()->intended(route($user->rutaDeInicio(), absolute: false));
     }
 
     /**

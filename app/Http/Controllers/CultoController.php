@@ -2,9 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\CultoCreado;
+use App\Models\AuditLog;
 use App\Models\Culto;
 use App\Models\TenantServiceType;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 
 class CultoController extends Controller
 {
@@ -17,11 +21,12 @@ class CultoController extends Controller
         return view('cultos.index', compact('cultos'));
     }
 
-    public function create()
+    public function create(Request $request)
     {
         $serviceTypes = $this->getServiceTypes();
+        $desdeRecuento = $this->vieneDeRecuento($request);
 
-        return view('cultos.create', compact('serviceTypes'));
+        return view('cultos.create', compact('serviceTypes', 'desdeRecuento'));
     }
 
     public function store(Request $request)
@@ -46,24 +51,26 @@ class CultoController extends Controller
             $data['tenant_id'] = auth()->user()->tenant_id;
         }
 
-        Culto::create($data);
+        $culto = Culto::create($data);
+
+        // Avisa por WhatsApp a los líderes (un fallo al preparar los avisos no impide crear el culto).
+        CultoCreado::dispatch($culto);
+
+        // Desde Recuento (o quien no administra cultos, p. ej. un tesorero con acceso de edicion)
+        // se sigue directo a registrar los sobres del culto nuevo.
+        if ($this->vieneDeRecuento($request)) {
+            return redirect()->route('recuento.culto', $culto)
+                ->with('success', 'Culto creado. Ya puedes registrar sus sobres.');
+        }
 
         return redirect()->route('cultos.index')
             ->with('success', 'Culto registrado correctamente.');
     }
 
+    /** El detalle de un culto es su pantalla de Recuento (sobres, totales y firmas). */
     public function show(Culto $culto)
     {
-        $sobres = $culto->sobres()->with(['persona', 'detalles'])->get();
-        $ofrendasSueltas = $culto->ofrendasSueltas;
-
-        return view('recuento.index', [
-            'sobres' => $sobres,
-            'cultos' => Culto::where('cerrado', false)->orderBy('fecha', 'desc')->get(),
-            'cultoSeleccionado' => $culto,
-            'ofrendasSueltas' => $ofrendasSueltas,
-            'cultosCerrados' => Culto::where('cerrado', true)->with('totales')->orderBy('cerrado_at', 'desc')->get(),
-        ]);
+        return redirect()->route('recuento.culto', $culto);
     }
 
     public function edit(Culto $culto)
@@ -96,36 +103,68 @@ class CultoController extends Controller
             ->with('success', 'Culto actualizado correctamente.');
     }
 
-    public function destroy(Culto $culto)
+    /**
+     * Eliminar un culto (QA-003 y decision del cliente 13/10): solo el administrador. Un culto
+     * cerrado o con sobres, dinero suelto o egresos exige confirmar y escribir el motivo, y en la
+     * auditoria queda lo que se borro (culto, fecha, total, cuantos sobres y cuales).
+     */
+    public function destroy(Request $request, Culto $culto)
     {
-        $culto->delete();
+        Gate::authorize('delete', $culto);
+
+        $culto->load(['totales', 'cerradoPor:id,name', 'sobres.persona:id,nombre']);
+        $cantidadSobres = $culto->sobres->count();
+        $conDatos = $culto->cerrado || $cantidadSobres > 0 || $culto->ofrendasSueltas()->exists() || $culto->egresos()->exists();
+
+        if ($conDatos) {
+            $request->validate([
+                'motivo' => 'required|string|min:10|max:500',
+                'confirmo' => 'accepted',
+            ], [
+                'motivo.required' => 'Escribe por qué se elimina este culto (queda en la auditoría).',
+                'motivo.min' => 'El motivo tiene que explicar un poco más (al menos 10 letras).',
+                'confirmo.accepted' => 'Marca que entiendes que se borran el culto y todo su recuento.',
+            ]);
+        }
+
+        $detalles = [
+            'culto_id' => $culto->id,
+            'fecha' => $culto->fecha->toDateString(),
+            'tipo' => $culto->tipo_nombre,
+            'cerrado' => (bool) $culto->cerrado,
+            'cerrado_por' => $culto->cerradoPor?->name,
+            'total_general' => (float) ($culto->totales->total_general ?? 0),
+            'cantidad_sobres' => $cantidadSobres,
+            'cantidad_ofrendas_sueltas' => $culto->ofrendasSueltas()->count(),
+            'cantidad_egresos' => $culto->egresos()->count(),
+            'motivo' => $conDatos ? trim((string) $request->input('motivo')) : null,
+            // Lo minimo para reconstruir que se perdio
+            'sobres' => $culto->sobres->map(fn ($s) => [
+                'numero' => $s->numero_sobre,
+                'persona' => $s->persona?->nombre ?? 'Anónimo',
+                'total' => (float) $s->total_declarado,
+                'moneda' => $s->moneda ?? 'CRC',
+                'metodo' => $s->metodo_pago,
+            ])->values()->all(),
+        ];
+
+        DB::transaction(function () use ($culto, $detalles) {
+            AuditLog::registrar('Eliminar culto', $detalles, 'cultos.destroy');
+            $culto->delete();
+        });
 
         return redirect()->route('cultos.index')
-            ->with('success', 'Culto eliminado correctamente.');
+            ->with('success', 'Culto del '.$culto->fecha->format('d/m/Y').' eliminado'.($cantidadSobres ? " con sus {$cantidadSobres} sobres" : '').'. Quedó registrado en la auditoría.');
+    }
+
+    /** El formulario se abrio desde Recuento, o quien lo usa no gestiona cultos (no entra a la lista de admin). */
+    private function vieneDeRecuento(Request $request): bool
+    {
+        return $request->input('desde') === 'recuento' || ! $request->user()->canAccessAdmin();
     }
 
     private function getServiceTypes()
     {
-        $user = auth()->user();
-
-        if ($user && $user->tenant_id) {
-            $types = TenantServiceType::where('tenant_id', $user->tenant_id)
-                ->where('activo', true)
-                ->orderBy('orden')
-                ->get();
-
-            if ($types->isNotEmpty()) {
-                return $types;
-            }
-        }
-
-        // Fallback: tipos por defecto para compatibilidad
-        return collect([
-            (object) ['id' => null, 'slug' => 'domingo', 'nombre' => 'Domingo AM', 'tenant_id' => $user->tenant_id ?? null],
-            (object) ['id' => null, 'slug' => 'domingo_pm', 'nombre' => 'Domingo PM', 'tenant_id' => $user->tenant_id ?? null],
-            (object) ['id' => null, 'slug' => 'miercoles', 'nombre' => 'Miercoles', 'tenant_id' => $user->tenant_id ?? null],
-            (object) ['id' => null, 'slug' => 'sabado', 'nombre' => 'Sabado', 'tenant_id' => $user->tenant_id ?? null],
-            (object) ['id' => null, 'slug' => 'especial', 'nombre' => 'Especial', 'tenant_id' => $user->tenant_id ?? null],
-        ]);
+        return TenantServiceType::disponiblesPara(auth()->user());
     }
 }

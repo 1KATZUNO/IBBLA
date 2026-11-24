@@ -53,37 +53,35 @@ class ReporteGeneralTest extends TestCase
 
         $this->assertSame(['misiones', 'seminario', 'construccion', 'campa', 'prestamo', 'micro'], $reporte['categoriasConPromesa']);
 
-        // Solo activas con algo dado o esperado, por nombre. Fuera: Carla (inactiva),
-        // Diego (sin nada) y la persona del otro tenant.
-        $this->assertSame(['Ana Mora', 'Beto Rojas', 'Elena Vargas'], array_column($reporte['reporteData'], 'nombre'));
-        [$ana, $beto, $elena] = $reporte['reporteData'];
+        // Solo activas con algo dado o esperado en categorias con promesa, por nombre. Fuera: Carla
+        // (inactiva), Diego (sin nada), Beto (sin promesa: lo que dio no cuenta para el cumplimiento)
+        // y la persona del otro tenant.
+        $this->assertSame(['Ana Mora', 'Elena Vargas'], array_column($reporte['reporteData'], 'nombre'));
+        [$ana, $elena] = $reporte['reporteData'];
 
         // Ana: misiones semanal 1.000 (x domingos), construccion mensual 5.000 y campa
-        // mensual (dos promesas: vale la ultima, 3.000). El diezmo no entra al reporte.
-        $this->assertMes($ana['meses'][0], 'Enero', ['misiones' => 1500, 'construccion' => 5000], ['misiones' => 4000, 'construccion' => 5000, 'campa' => 3000]);
-        $this->assertMes($ana['meses'][1], 'Febrero', ['misiones' => 4000], ['misiones' => 4000, 'construccion' => 5000, 'campa' => 3000]);
-        $this->assertMes($ana['meses'][2], 'Marzo', ['construccion' => 2500.5, 'campa' => 3000], ['misiones' => 5000, 'construccion' => 5000, 'campa' => 3000]);
-        $this->assertEquals(['dado' => 16000.5, 'esperado' => 37000, 'diferencia' => -20999.5], $ana['totales']);
-
-        // Beto: sin promesa; su sobre del anio anterior no cuenta.
-        $this->assertEquals(['dado' => 2000, 'esperado' => 0, 'diferencia' => 2000], $beto['totales']);
-        $this->assertEquals(2000, $beto['meses'][1]['categorias']['seminario']['dado']);
+        // mensual (dos promesas: se suman, 2.000 + 3.000). El diezmo no entra al reporte.
+        $this->assertMes($ana['meses'][0], 'Enero', ['misiones' => 1500, 'construccion' => 5000], ['misiones' => 4000, 'construccion' => 5000, 'campa' => 5000]);
+        $this->assertMes($ana['meses'][1], 'Febrero', ['misiones' => 4000], ['misiones' => 4000, 'construccion' => 5000, 'campa' => 5000]);
+        // Marzo esta en curso (hoy 20/03): no se cobra, pero lo dado si cuenta.
+        $this->assertMes($ana['meses'][2], 'Marzo', ['construccion' => 2500.5, 'campa' => 3000], []);
+        $this->assertEquals(['dado' => 16000.5, 'esperado' => 28000, 'diferencia' => -11999.5], $ana['totales']);
 
         // Elena: promesa quincenal (x2 por mes) y nada dado.
-        $this->assertEquals(['dado' => 0, 'esperado' => 6000, 'diferencia' => -6000], $elena['totales']);
+        $this->assertEquals(['dado' => 0, 'esperado' => 4000, 'diferencia' => -4000], $elena['totales']);
         $this->assertEquals(2000, $elena['meses'][0]['categorias']['seminario']['esperado']);
 
         // Totales generales (el sobre anonimo no se atribuye a nadie).
         $totales = $reporte['totalesGenerales'];
-        $this->assertEquals(18000.5, $totales['total_dado']);
-        $this->assertEquals(43000, $totales['total_esperado']);
-        $this->assertEquals(-24999.5, $totales['total_diferencia']);
+        $this->assertEquals(16000.5, $totales['total_dado']);
+        $this->assertEquals(32000, $totales['total_esperado']);
+        $this->assertEquals(-15999.5, $totales['total_diferencia']);
         $this->assertEquals(6500, $totales['meses'][1]['total_dado']);
-        $this->assertEquals(14000, $totales['meses'][1]['total_esperado']);
-        $this->assertEquals(6000, $totales['meses'][2]['total_dado']);
+        $this->assertEquals(16000, $totales['meses'][1]['total_esperado']);
+        $this->assertEquals(4000, $totales['meses'][2]['total_dado']);
         $this->assertEquals(5500.5, $totales['meses'][3]['total_dado']);
-        $this->assertEquals(15000, $totales['meses'][3]['total_esperado']);
-        $this->assertEquals(2000, $totales['meses'][2]['categorias']['seminario']['dado']);
+        $this->assertEquals(0, $totales['meses'][3]['total_esperado']);
+        $this->assertEquals(0, $totales['meses'][2]['categorias']['seminario']['dado']);
     }
 
     public function test_el_endpoint_descarga_el_pdf_con_los_totales(): void
@@ -106,11 +104,11 @@ class ReporteGeneralTest extends TestCase
         $this->assertStringContainsString('TOTAL ANA MORA', $texto);
         // number_format(x, 0) como la vista anterior: .5 se redondea alejandose de cero.
         $this->assertStringContainsString('16,001', $texto);       // total dado de Ana (16.000,5)
-        $this->assertStringContainsString('-21,000', $texto);      // su diferencia (-20.999,5)
-        $this->assertStringContainsString('+2,000', $texto);       // diferencia de Beto
-        $this->assertStringContainsString('-25,000', $texto);      // diferencia del gran total (-24.999,5)
+        $this->assertStringContainsString('-12,000', $texto);      // su diferencia (-11.999,5)
+        $this->assertStringContainsString('-16,000', $texto);      // diferencia del gran total (-15.999,5)
         $this->assertStringContainsString('TOTALES GENERALES - TODAS LAS PERSONAS', $texto);
         $this->assertStringNotContainsString('Carla', $texto);
+        $this->assertStringNotContainsString('BETO', $texto);
     }
 
     public function test_ver_muestra_el_pdf_en_linea(): void

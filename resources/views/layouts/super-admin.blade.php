@@ -12,7 +12,7 @@
 
     <link rel="manifest" href="{{ asset('manifest.json') }}">
     <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('images/Logo.png') }}">
-    <link rel="apple-touch-icon" href="{{ asset('images/angeda_deep_ocean.png') }}">
+    <link rel="apple-touch-icon" href="{{ asset('images/Logo.png') }}">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -23,7 +23,7 @@
     @stack('styles')
 </head>
 <body class="font-sans antialiased bg-gray-50 overflow-hidden">
-    <div class="flex h-screen overflow-hidden relative z-10">
+    <div class="flex h-screen h-dvh overflow-hidden relative z-10">
         <!-- Sidebar - Slate color scheme -->
         <aside id="sidebar" class="fixed inset-y-0 left-0 z-50 w-72 bg-slate-800 text-white transform transition-transform duration-300 ease-out -translate-x-full lg:translate-x-0 lg:static lg:inset-0 flex flex-col shadow-xl">
             <div class="flex items-center justify-between h-20 px-6 border-b border-slate-700 flex-shrink-0">
@@ -35,10 +35,10 @@
                     </div>
                     <div>
                         <h1 class="text-lg font-bold tracking-tight">Super Admin</h1>
-                        <p class="text-xs text-slate-400">Panel de Control</p>
+                        <p class="text-xs text-slate-400">Panel de control</p>
                     </div>
                 </div>
-                <button id="closeSidebar" class="lg:hidden text-white hover:text-slate-200 transition-colors p-2">
+                <button id="closeSidebar" type="button" class="lg:hidden inline-flex items-center justify-center w-11 h-11 rounded-lg text-white hover:text-slate-200 hover:bg-white/10 transition-colors" aria-label="Cerrar menú">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                     </svg>
@@ -102,7 +102,7 @@
                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
                             </svg>
-                            Cerrar Sesion
+                            Cerrar Sesión
                         </span>
                     </button>
                 </form>
@@ -117,7 +117,7 @@
             <!-- Top Bar -->
             <header class="bg-white border-b border-gray-200 shadow-sm z-10">
                 <div class="flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8">
-                    <button id="openSidebar" class="lg:hidden p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors">
+                    <button id="openSidebar" type="button" class="lg:hidden inline-flex items-center justify-center w-11 h-11 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors" aria-label="Abrir menú">
                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
                         </svg>

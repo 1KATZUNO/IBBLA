@@ -12,3 +12,8 @@ Thumbs.db
 .env
 
 .env.local
+
+# Dependencias (se instalan con composer / npm; en el servidor, composer install --no-dev)
+/vendor/
+/node_modules/
+/public/hot

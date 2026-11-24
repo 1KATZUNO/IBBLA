@@ -4,8 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Exports\AsistenciaExport;
 use App\Exports\IngresosExport;
-use App\Exports\PromesasExport;
 use App\Models\Culto;
+use App\Services\Reportes\FiltroPersonas;
+use App\Services\Reportes\PeriodoReporte;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -389,15 +390,21 @@ class IngresosAsistenciaController extends Controller
     }
 
     /**
-     * Excel de promesas con cumplimiento (Fase 2).
+     * Excel de promesas: desde la E1 sale del motor unico (QE-002). Es el Excel de Cumplimiento de
+     * promesas con corte al ultimo dia del anio o del mes pedido (nunca despues de hoy), asi que dice
+     * lo mismo que el estado de cuenta, Compromisos y el Reporte General.
      */
     public function excelPromesas(Request $request)
     {
-        $año = $request->filled('año') ? (int) $request->get('año') : (int) now()->year;
-        $mes = $request->filled('mes') ? (int) $request->get('mes') : null;
-        $nombre = 'promesas_'.$año.($mes ? '_'.str_pad((string) $mes, 2, '0', STR_PAD_LEFT) : '').'.xlsx';
+        $periodo = PeriodoReporte::alFinDe(
+            $request->filled('año') ? (int) $request->get('año') : null,
+            $request->filled('mes') ? (int) $request->get('mes') : null,
+        );
 
-        return Excel::download(new PromesasExport($año, $mes), $nombre);
+        return redirect()->route('reportes.cumplimiento.excel', [
+            'corte' => $periodo->corte->toDateString(),
+            'grupo' => FiltroPersonas::CON_PROMESA,
+        ]);
     }
 
     public function pdfIngresosTransferencias(Request $request)
@@ -480,52 +487,47 @@ class IngresosAsistenciaController extends Controller
         return $pdf->download('ingresos_transferencias_'.$tipoReporte.'_'.now()->format('Y-m-d').'.pdf');
     }
 
+    /**
+     * PDF de recuento de un culto (el que firman los tesoreros). Usa los mismos numeros que la
+     * pantalla del culto (App\Support\ResumenCulto): todo en colones convertidos, USD aparte entre
+     * parentesis y un solo total en cabecera, tabla y resumen (QA-026).
+     */
     public function pdfRecuentoIndividual(Culto $culto)
     {
-        $culto->load(['sobres.persona', 'sobres.detalles', 'ofrendasSueltas', 'totales']);
-        $categories = tenant_categories();
-
-        // Build totalesPorCategoria dynamically
-        $totalesPorCategoria = [];
-        foreach ($categories as $cat) {
-            $totalesPorCategoria[$cat->slug] = 0;
-        }
-        foreach ($culto->sobres as $sobre) {
-            foreach ($sobre->detalles as $detalle) {
-                $slug = strtolower($detalle->categoria);
-                if (isset($totalesPorCategoria[$slug])) {
-                    $totalesPorCategoria[$slug] += $detalle->monto;
-                }
-            }
-        }
-
-        $pdf = Pdf::loadView('pdfs.recuento-individual', compact('culto', 'totalesPorCategoria', 'categories'));
-
-        return $pdf->download('recuento_'.$culto->fecha->format('Y-m-d').'_'.$culto->tipo_culto.'.pdf');
+        return $this->pdfRecuento($culto, false)
+            ->download('recuento_'.$culto->fecha->format('Y-m-d').'_'.$culto->tipo_culto.'.pdf');
     }
 
     public function pdfRecuentoTransferencias(Culto $culto)
     {
-        $culto->load(['sobres' => function ($q) {
-            $q->where('metodo_pago', 'transferencia');
-        }, 'sobres.persona', 'sobres.detalles', 'totales']);
+        return $this->pdfRecuento($culto, true)
+            ->download('recuento_transferencias_'.$culto->fecha->format('Y-m-d').'_'.$culto->tipo_culto.'.pdf');
+    }
+
+    private function pdfRecuento(Culto $culto, bool $transferenciasOnly)
+    {
+        $culto->load(['sobres.persona', 'sobres.detalles', 'ofrendasSueltas', 'egresos', 'totales', 'cerradoPor:id,name']);
         $categories = tenant_categories();
+        $categoriasSobre = $categories->where('es_ofrenda_suelta', false)->values();
 
-        $totalesPorCategoria = [];
-        foreach ($categories as $cat) {
-            $totalesPorCategoria[$cat->slug] = 0;
-        }
-        foreach ($culto->sobres as $sobre) {
-            foreach ($sobre->detalles as $detalle) {
-                $slug = strtolower($detalle->categoria);
-                if (isset($totalesPorCategoria[$slug])) {
-                    $totalesPorCategoria[$slug] += $detalle->monto;
-                }
-            }
+        $sobres = $culto->sobres->sortBy('numero_sobre')->values();
+        if ($transferenciasOnly) {
+            $sobres = $sobres->where('metodo_pago', 'transferencia')->values();
         }
 
-        $pdf = Pdf::loadView('pdfs.recuento-individual', ['culto' => $culto, 'totalesPorCategoria' => $totalesPorCategoria, 'transferenciasOnly' => true, 'categories' => $categories]);
+        $resumen = \App\Support\ResumenCulto::calcular(
+            $sobres,
+            $transferenciasOnly ? collect() : $culto->ofrendasSueltas,
+            $transferenciasOnly ? collect() : $culto->egresos,
+            $categoriasSobre,
+            \App\Support\ResumenCulto::tipoCambioDelCulto($culto),
+        );
 
-        return $pdf->download('recuento_transferencias_'.$culto->fecha->format('Y-m-d').'_'.$culto->tipo_culto.'.pdf');
+        return Pdf::loadView('pdfs.recuento-individual', [
+            'culto' => $culto,
+            'categories' => $categoriasSobre,
+            'resumen' => $resumen,
+            'transferenciasOnly' => $transferenciasOnly,
+        ]);
     }
 }

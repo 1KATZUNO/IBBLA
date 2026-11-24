@@ -1,0 +1,779 @@
+{
+  "base": "http://127.0.0.1:8114",
+  "salida": "../../public/images/manual",
+  "calidad": 72,
+  "usuarios": {
+    "admin": {
+      "email": "admin@ibbsc.com",
+      "clave": "admin123"
+    },
+    "tesorero": {
+      "email": "tesorero@ibbsc.com",
+      "clave": "tesorero123"
+    },
+    "asistente": {
+      "email": "asistente@ibbsc.com",
+      "clave": "asistente123"
+    },
+    "servidor": {
+      "email": "servidor@ibbsc.com",
+      "clave": "servidor123"
+    },
+    "miembro": {
+      "email": "miembro@ibbsc.com",
+      "clave": "miembro123"
+    }
+  },
+  "capturas": [
+    {
+      "archivo": "primeros-barra-superior.jpg",
+      "rol": "admin",
+      "ruta": "/principal",
+      "alto": 200,
+      "marcas": [
+        {
+          "n": 1,
+          "selector": "#toggleSidebar",
+          "lado": "abajo"
+        },
+        {
+          "n": 2,
+          "selector": "#upbar a[href$='/principal']",
+          "lado": "abajo"
+        },
+        {
+          "n": 3,
+          "selector": "#busqueda-q",
+          "lado": "abajo"
+        },
+        {
+          "n": 4,
+          "texto": "Manual",
+          "en": "#upbar a",
+          "lado": "abajo"
+        },
+        {
+          "n": 5,
+          "texto": "Administrador",
+          "en": "#upbar button",
+          "lado": "abajo"
+        },
+        {
+          "n": 6,
+          "texto": "Salir",
+          "en": "#upbar button",
+          "lado": "abajo"
+        }
+      ]
+    },
+    {
+      "archivo": "primeros-menu-tesorero.jpg",
+      "rol": "tesorero",
+      "ruta": "/principal",
+      "recorte": "#sidebar"
+    },
+    {
+      "archivo": "primeros-buscador.jpg",
+      "rol": "admin",
+      "ruta": "/principal",
+      "alto": 520,
+      "pasos": [
+        {
+          "clic": "#busqueda-q"
+        },
+        {
+          "escribe": [
+            "#busqueda-q",
+            "paula"
+          ]
+        },
+        {
+          "espera": 1500
+        }
+      ],
+      "marcas": [
+        {
+          "n": 1,
+          "selector": "#busqueda-panel [role=listbox]",
+          "lado": "der"
+        },
+        {
+          "n": 2,
+          "texto": "Ver todos los resultados",
+          "en": "#busqueda-panel a",
+          "lado": "der"
+        }
+      ]
+    },
+    {
+      "archivo": "primeros-ayuda.jpg",
+      "rol": "admin",
+      "ruta": "/cultos",
+      "alto": 300,
+      "marcas": [
+        {
+          "n": 1,
+          "selector": ".help-btn",
+          "lado": "abajo"
+        },
+        {
+          "n": 2,
+          "texto": "Manual",
+          "en": "#upbar a",
+          "lado": "abajo"
+        }
+      ]
+    },
+    {
+      "archivo": "principal-inicio.jpg",
+      "rol": "admin",
+      "ruta": "/principal"
+    },
+    {
+      "archivo": "principal-cumpleaneros.jpg",
+      "rol": "admin",
+      "ruta": "/cumpleaneros",
+      "alto": 640,
+      "marcas": [
+        {
+          "n": 1,
+          "selector": "#mes",
+          "lado": "der"
+        }
+      ]
+    },
+    {
+      "archivo": "recuento-culto.jpg",
+      "rol": "tesorero",
+      "ruta": "/recuento?culto_id=74",
+      "alto": 700,
+      "marcas": [
+        {
+          "n": 1,
+          "selector": "#culto_id",
+          "lado": "abajo"
+        },
+        {
+          "n": 2,
+          "texto": "+ Agregar Sobre",
+          "en": "main a,main button"
+        },
+        {
+          "n": 3,
+          "texto": "+ Dinero Suelto",
+          "en": "main button"
+        },
+        {
+          "n": 4,
+          "texto": "- Egresos",
+          "en": "main button"
+        },
+        {
+          "n": 5,
+          "texto": "Descargar PDF",
+          "en": "main a"
+        },
+        {
+          "n": 6,
+          "texto": "PDF Transferencias",
+          "en": "main a"
+        },
+        {
+          "n": 7,
+          "texto": "Cerrar Culto",
+          "en": "main button"
+        }
+      ]
+    },
+    {
+      "archivo": "recuento-nuevo-sobre.jpg",
+      "rol": "tesorero",
+      "ruta": "/recuento/create?culto_id=74",
+      "alto": 900,
+      "marcas": [
+        {
+          "n": 1,
+          "selector": "#persona_id"
+        },
+        {
+          "n": 2,
+          "selector": "#metodo_pago"
+        },
+        {
+          "n": 3,
+          "selector": "#diezmo",
+          "lado": "izq"
+        },
+        {
+          "n": 4,
+          "selector": "#btnGuardarSobre"
+        }
+      ]
+    },
+    {
+      "archivo": "cultos-lista.jpg",
+      "rol": "admin",
+      "ruta": "/cultos",
+      "alto": 560,
+      "marcas": [
+        {
+          "n": 1,
+          "texto": "+ Nuevo Culto",
+          "en": "main a"
+        },
+        {
+          "n": 2,
+          "selector": "main a[href$='/cultos/74']"
+        },
+        {
+          "n": 3,
+          "selector": "main a[href$='/cultos/74/edit']"
+        },
+        {
+          "n": 4,
+          "texto": "Eliminar",
+          "en": "main button"
+        }
+      ]
+    },
+    {
+      "archivo": "cultos-nuevo.jpg",
+      "rol": "admin",
+      "ruta": "/cultos/create",
+      "alto": 640,
+      "marcas": [
+        {
+          "n": 1,
+          "selector": "#fecha"
+        },
+        {
+          "n": 2,
+          "selector": "#hora"
+        },
+        {
+          "n": 3,
+          "selector": "#tipo_culto"
+        },
+        {
+          "n": 4,
+          "selector": "#notas"
+        },
+        {
+          "n": 5,
+          "texto": "Guardar Culto",
+          "en": "main button"
+        }
+      ]
+    },
+    {
+      "archivo": "personas-lista.jpg",
+      "rol": "admin",
+      "ruta": "/personas",
+      "alto": 600,
+      "marcas": [
+        {
+          "n": 1,
+          "selector": "main input[name=buscar]"
+        },
+        {
+          "n": 2,
+          "texto": "+ Nueva Persona",
+          "en": "main a"
+        },
+        {
+          "n": 3,
+          "texto": "Reporte PDF",
+          "en": "main button"
+        },
+        {
+          "n": 4,
+          "texto": "Reporte General",
+          "en": "main button"
+        },
+        {
+          "n": 5,
+          "selector": "main a[aria-label^='Ver ']",
+          "lado": "abajo"
+        },
+        {
+          "n": 6,
+          "selector": "main a[aria-label^='Compromisos de']",
+          "lado": "abajo"
+        },
+        {
+          "n": 7,
+          "selector": "main a[aria-label^='Enviar por WhatsApp']",
+          "lado": "abajo"
+        },
+        {
+          "n": 8,
+          "selector": "main a[aria-label^='Estado de cuenta en PDF']",
+          "lado": "abajo"
+        },
+        {
+          "n": 9,
+          "selector": "main a[href$='/edit']",
+          "lado": "abajo"
+        },
+        {
+          "n": 10,
+          "selector": "main button[aria-label^='Eliminar ']",
+          "lado": "abajo"
+        }
+      ]
+    },
+    {
+      "archivo": "personas-ficha.jpg",
+      "rol": "admin",
+      "ruta": "/personas/1",
+      "alto": 640,
+      "marcas": [
+        {
+          "n": 1,
+          "texto": "Estado de cuenta (PDF)",
+          "en": "main a"
+        },
+        {
+          "n": 2,
+          "texto": "Descargar",
+          "en": "main a"
+        },
+        {
+          "n": 3,
+          "texto": "Compromisos",
+          "en": "main a"
+        },
+        {
+          "n": 4,
+          "texto": "Editar",
+          "en": "main a"
+        }
+      ]
+    },
+    {
+      "archivo": "personas-formulario.jpg",
+      "rol": "admin",
+      "ruta": "/personas/1/edit",
+      "completa": true,
+      "marcas": [
+        {
+          "n": 1,
+          "selector": "#nombre"
+        },
+        {
+          "n": 2,
+          "texto": "Agregar clase",
+          "en": "main button"
+        },
+        {
+          "n": 3,
+          "selector": "main select[name='promesas[0][frecuencia]']",
+          "lado": "der"
+        },
+        {
+          "n": 4,
+          "texto": "Actualizar Persona",
+          "en": "main button"
+        }
+      ]
+    },
+    {
+      "archivo": "personas-compromisos.jpg",
+      "rol": "admin",
+      "ruta": "/personas/1/compromisos",
+      "alto": 760,
+      "marcas": [
+        {
+          "n": 1,
+          "selector": "main select[name=año]"
+        }
+      ]
+    },
+    {
+      "archivo": "promesas-formulario.jpg",
+      "rol": "admin",
+      "ruta": "/personas/1/edit",
+      "alto": 640,
+      "pasos": [
+        {
+          "desplaza": "main input[name='promesas[2][monto]']"
+        }
+      ],
+      "marcas": [
+        {
+          "n": 1,
+          "selector": "main input[name='promesas[2][monto]']"
+        },
+        {
+          "n": 2,
+          "selector": "main select[name='promesas[2][moneda]']"
+        },
+        {
+          "n": 3,
+          "selector": "main select[name='promesas[2][frecuencia]']"
+        }
+      ]
+    },
+    {
+      "archivo": "promesas-reporte.jpg",
+      "rol": "admin",
+      "ruta": "/ingresos-asistencia/promesas",
+      "alto": 640,
+      "marcas": [
+        {
+          "n": 1,
+          "selector": "#año"
+        },
+        {
+          "n": 2,
+          "texto": "Promesas por Clase",
+          "en": "main a"
+        }
+      ]
+    },
+    {
+      "archivo": "asistencia-lista.jpg",
+      "rol": "admin",
+      "ruta": "/asistencia",
+      "alto": 600,
+      "marcas": [
+        {
+          "n": 1,
+          "texto": "+ Nueva Asistencia",
+          "en": "main a"
+        },
+        {
+          "n": 2,
+          "selector": "#mes"
+        }
+      ]
+    },
+    {
+      "archivo": "asistencia-formulario.jpg",
+      "rol": "admin",
+      "ruta": "/asistencia/create",
+      "completa": true,
+      "marcas": [
+        {
+          "n": 1,
+          "selector": "#culto_id"
+        },
+        {
+          "n": 2,
+          "texto": "Capilla",
+          "en": "main button"
+        },
+        {
+          "n": 3,
+          "selector": "#total_asistencia"
+        },
+        {
+          "n": 4,
+          "texto": "Guardar Asistencia",
+          "en": "main button"
+        }
+      ]
+    },
+    {
+      "archivo": "asistencia-clases.jpg",
+      "rol": "admin",
+      "ruta": "/admin/clases",
+      "alto": 600,
+      "marcas": [
+        {
+          "n": 1,
+          "texto": "+ Nueva Clase",
+          "en": "main a"
+        },
+        {
+          "n": 2,
+          "selector": "main a[href*='/clases/'][href$='/edit']"
+        }
+      ]
+    },
+    {
+      "archivo": "reportes-indice.jpg",
+      "rol": "admin",
+      "ruta": "/ingresos-asistencia"
+    },
+    {
+      "archivo": "reportes-ingresos.jpg",
+      "rol": "admin",
+      "ruta": "/ingresos-asistencia/ingresos",
+      "alto": 700,
+      "marcas": [
+        {
+          "n": 1,
+          "selector": "#tipo_reporte"
+        },
+        {
+          "n": 2,
+          "texto": "PDF Completo",
+          "en": "main a"
+        },
+        {
+          "n": 3,
+          "texto": "Transferencias",
+          "en": "main a"
+        }
+      ]
+    },
+    {
+      "archivo": "reportes-asistencia-clases.jpg",
+      "rol": "admin",
+      "ruta": "/ingresos-asistencia/asistencia-clases",
+      "alto": 700,
+      "marcas": [
+        {
+          "n": 1,
+          "selector": "#desde"
+        },
+        {
+          "n": 2,
+          "texto": "PDF",
+          "en": "main a"
+        }
+      ]
+    },
+    {
+      "archivo": "dashboards-general.jpg",
+      "rol": "admin",
+      "ruta": "/dashboard",
+      "alto": 640,
+      "marcas": [
+        {
+          "n": 1,
+          "texto": "General",
+          "en": "main a"
+        },
+        {
+          "n": 2,
+          "selector": "#mes"
+        },
+        {
+          "n": 3,
+          "selector": "#fecha_inicio"
+        },
+        {
+          "n": 4,
+          "texto": "Este mes",
+          "en": "main a"
+        }
+      ]
+    },
+    {
+      "archivo": "ministerios-lista.jpg",
+      "rol": "admin",
+      "ruta": "/admin/ministerios",
+      "alto": 600,
+      "marcas": [
+        {
+          "n": 1,
+          "texto": "+ Nuevo ministerio",
+          "en": "main a"
+        },
+        {
+          "n": 2,
+          "selector": "main a[href$='/ministerios/1/edit']"
+        },
+        {
+          "n": 3,
+          "texto": "Desactivar",
+          "en": "main button"
+        },
+        {
+          "n": 4,
+          "texto": "Eliminar",
+          "en": "main button"
+        }
+      ]
+    },
+    {
+      "archivo": "ministerios-formulario.jpg",
+      "rol": "admin",
+      "ruta": "/admin/ministerios/create",
+      "alto": 640,
+      "marcas": [
+        {
+          "n": 1,
+          "selector": "#nombre"
+        },
+        {
+          "n": 2,
+          "selector": "#color"
+        },
+        {
+          "n": 3,
+          "selector": "#orden"
+        },
+        {
+          "n": 4,
+          "selector": "#descripcion"
+        },
+        {
+          "n": 5,
+          "selector": "#activo",
+          "lado": "izq"
+        },
+        {
+          "n": 6,
+          "texto": "Crear ministerio",
+          "en": "main button"
+        }
+      ]
+    },
+    {
+      "archivo": "ministerios-servidores.jpg",
+      "rol": "admin",
+      "ruta": "/admin/servidores",
+      "alto": 640,
+      "marcas": [
+        {
+          "n": 1,
+          "texto": "Reporte de Servidores",
+          "en": "main a"
+        },
+        {
+          "n": 2,
+          "texto": "Generar QR",
+          "en": "main button"
+        }
+      ]
+    },
+    {
+      "archivo": "usuarios-lista.jpg",
+      "rol": "admin",
+      "ruta": "/usuarios",
+      "alto": 600,
+      "marcas": [
+        {
+          "n": 1,
+          "texto": "+ Nuevo Usuario",
+          "en": "main a"
+        },
+        {
+          "n": 3,
+          "selector": "main a[href$='/usuarios/6/edit']"
+        },
+        {
+          "n": 4,
+          "texto": "Eliminar",
+          "en": "main button"
+        }
+      ]
+    },
+    {
+      "archivo": "usuarios-formulario.jpg",
+      "rol": "admin",
+      "ruta": "/usuarios/create",
+      "alto": 700,
+      "marcas": [
+        {
+          "n": 1,
+          "selector": "#name"
+        },
+        {
+          "n": 2,
+          "selector": "#rol"
+        },
+        {
+          "n": 3,
+          "selector": "#telefono"
+        },
+        {
+          "n": 4,
+          "selector": "#password"
+        },
+        {
+          "n": 5,
+          "texto": "Crear Usuario",
+          "en": "main button"
+        }
+      ]
+    },
+    {
+      "archivo": "auditoria-ingresos.jpg",
+      "rol": "admin",
+      "ruta": "/admin/auditoria/ingresos",
+      "alto": 640,
+      "marcas": [
+        {
+          "n": 1,
+          "selector": "#usuario"
+        },
+        {
+          "n": 2,
+          "texto": "Descargar CSV",
+          "en": "main a"
+        }
+      ]
+    },
+    {
+      "archivo": "auditoria-lista.jpg",
+      "rol": "admin",
+      "ruta": "/admin/auditoria",
+      "alto": 640,
+      "marcas": [
+        {
+          "n": 1,
+          "selector": "#f-user"
+        }
+      ]
+    },
+    {
+      "archivo": "whatsapp-boton.jpg",
+      "rol": "admin",
+      "ruta": "/personas",
+      "alto": 520,
+      "marcas": [
+        {
+          "n": 1,
+          "selector": "main a[aria-label^='Enviar por WhatsApp']",
+          "lado": "abajo"
+        }
+      ]
+    },
+    {
+      "archivo": "whatsapp-avisos.jpg",
+      "rol": "admin",
+      "ruta": "/avisos",
+      "alto": 520,
+      "marcas": [
+        {
+          "n": 1,
+          "texto": "Pendientes",
+          "en": "main a"
+        }
+      ]
+    },
+    {
+      "archivo": "mi-perfil.jpg",
+      "rol": "miembro",
+      "ruta": "/mi-perfil",
+      "alto": 760,
+      "marcas": [
+        {
+          "n": 1,
+          "texto": "Mi estado de cuenta",
+          "en": "main a"
+        }
+      ]
+    },
+    {
+      "archivo": "mi-cuenta.jpg",
+      "rol": "admin",
+      "ruta": "/profile",
+      "alto": 760,
+      "marcas": [
+        {
+          "n": 1,
+          "selector": "#name"
+        },
+        {
+          "n": 2,
+          "selector": "#update_password_current_password"
+        }
+      ]
+    }
+  ]
+}

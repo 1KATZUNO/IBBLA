@@ -1,7 +1,7 @@
 @php
     $t = function_exists('tenant') ? tenant() : null;
     $tNombre = $t?->nombre ?? 'Sistema de Administración';
-    $tSiglas = $t?->siglas ?? 'IBBSC';
+    $tSiglas = $t?->siglas ?? 'IBBLA';
     $tColor = $t && $t->colors ? ($t->colors['600'] ?? '#3b82f6') : '#3b82f6';
 @endphp
 <!DOCTYPE html>

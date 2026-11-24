@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Persona extends Model
 {
@@ -55,6 +56,12 @@ class Persona extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /** Activación de WhatsApp (CallMeBot): su número, su clave personal y su consentimiento. */
+    public function activacionWhatsApp(): HasOne
+    {
+        return $this->hasOne(ActivacionWhatsApp::class);
     }
 
     public function ministerios(): BelongsToMany

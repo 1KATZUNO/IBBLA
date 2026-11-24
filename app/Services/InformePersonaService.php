@@ -3,26 +3,28 @@
 namespace App\Services;
 
 use App\Models\Persona;
-use App\Models\Promesa;
-use App\Models\TipoCambio;
+use App\Services\Reportes\CuentaPersona;
+use App\Services\Reportes\Dinero;
+use App\Services\Reportes\EstadoCuenta;
+use App\Services\Reportes\MotorReportes;
+use App\Services\Reportes\PeriodoReporte;
+use App\Services\Reportes\ResultadoMotor;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Barryvdh\DomPDF\PDF as DompdfPdf;
 use DateTimeInterface;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Str;
 
 /**
- * Informe individual de una persona (contribuciones y compromisos del año en curso) y su
- * enlace firmado, que es lo que se comparte por WhatsApp.
+ * Informe individual de una persona (estado de cuenta: contribuciones y compromisos del año en
+ * curso) y su enlace firmado, que es lo que se comparte por WhatsApp.
  *
- * Hasta ahora no existía un PDF por persona: «Reporte PDF» y «Reporte General» de Gestión de
- * Personas son colectivos. Este informe sigue la misma lógica de esos reportes (de enero al mes
- * en curso, promesas semanales por domingos del mes, quincenales x2, mensuales x1) y la misma
- * regla de la pantalla de Compromisos (se compara en colones, los dólares se convierten con el
- * tipo de cambio del sobre). Es de solo lectura: no escribe nada, porque lo abre cualquiera que
- * tenga el enlace.
+ * Las cifras salen del motor único (Reportes\MotorReportes), el mismo del Reporte General, el
+ * estado de cuenta en lote, el reporte de cumplimiento, Compromisos y Mi perfil: de enero a hoy
+ * (corte), se cobran los meses completos antes del corte, lo dado cuenta hasta el corte y solo en
+ * las categorías con promesa (docs/plan-oct-2026/REGLAS-CALCULO.md). Es de solo lectura: no
+ * escribe nada, porque lo abre cualquiera que tenga el enlace.
  *
  * Usa nombre, logo y categorías de la iglesia actual (tenant()); el controlador público fija la
  * de la persona porque ahí no hay sesión.
@@ -31,8 +33,9 @@ class InformePersonaService
 {
     public const RUTA = 'informe.persona';
 
-    public const MESES = ['', 'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-        'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+    public const MESES = PeriodoReporte::NOMBRES_MESES;
+
+    public function __construct(private readonly MotorReportes $motor) {}
 
     /** Fecha en que vence un enlace generado ahora (config whatsapp.informe.vigencia_dias, 7 por defecto). */
     public function vence(): Carbon
@@ -64,6 +67,14 @@ class InformePersonaService
         return $pdf;
     }
 
+    /** El periodo del informe: de enero al mes de $hasta (hoy por defecto); el motor lo recorta a hoy (corte). */
+    public function periodo(?DateTimeInterface $hasta = null): PeriodoReporte
+    {
+        $hasta = $hasta ? Carbon::instance($hasta) : now();
+
+        return PeriodoReporte::deMeses($hasta->year, 1, $hasta->month);
+    }
+
     /**
      * Cifras del informe, de enero al mes de $hasta (hoy por defecto), todo en colones.
      *
@@ -71,175 +82,125 @@ class InformePersonaService
      */
     public function datos(Persona $persona, ?DateTimeInterface $hasta = null): array
     {
-        $hasta = $hasta ? Carbon::instance($hasta) : now();
-        $anio = $hasta->year;
-        $mesActual = $hasta->month;
-        $tcHoy = (float) (TipoCambio::hoy()?->venta ?? 0);
+        $resultado = $this->motor->calcular($this->periodo($hasta), [$persona]);
 
-        [$dadoPorMes, $hayUsd] = $this->dadoPorMes($persona, $anio, $hasta, $tcHoy);
-        $promesas = $persona->promesas()->orderBy('id')->get();
+        return $this->datosDeCuenta($resultado->cuenta($persona->id), $resultado, $persona);
+    }
+
+    /**
+     * Las cifras del informe a partir de una cuenta ya calculada por el motor: así el estado de
+     * cuenta en lote calcula a todas las personas en una sola pasada y cada sección dice lo mismo
+     * que el informe individual.
+     *
+     * @return array<string, mixed>
+     */
+    public function datosDeCuenta(CuentaPersona $cuenta, ResultadoMotor $resultado, ?Persona $persona = null): array
+    {
+        $periodo = $resultado->periodo;
+        $variosAnios = $periodo->abarcaVariosAnios();
+        $promesas = $cuenta->promesas();
+        $dadoPorCategoria = $cuenta->dadoPorCategoria();
 
         // Columnas: categorías de la iglesia que la persona usó o prometió, en el orden de la iglesia;
         // las que ya no existen en la configuración van al final para que los totales cuadren.
-        $nombresIglesia = tenant_categories()->pluck('nombre', 'slug')->all();
         $usadas = [];
-        foreach ($dadoPorMes as $categorias) {
-            foreach ($categorias as $slug => $monto) {
-                if ($monto > 0) {
-                    $usadas[$slug] = true;
-                }
+        foreach ($dadoPorCategoria as $slug => $monto) {
+            if ($monto > 0) {
+                $usadas[$slug] = true;
             }
         }
-        foreach ($promesas as $promesa) {
-            $usadas[$promesa->categoria] = true;
+        foreach ($promesas as $slug => $promesa) {
+            $usadas[$slug] = true;
         }
 
         $categorias = [];
-        foreach ($nombresIglesia as $slug => $nombre) {
+        foreach ($resultado->categorias as $slug => $nombre) {
             if (isset($usadas[$slug])) {
                 $categorias[$slug] = $nombre;
             }
         }
         foreach (array_keys($usadas) as $slug) {
-            $categorias[$slug] ??= Str::headline((string) $slug);
+            $categorias[$slug] ??= $resultado->nombreCategoria((string) $slug);
         }
 
         // Tabla mensual de lo dado.
         $meses = [];
-        $totalesCategoria = array_fill_keys(array_keys($categorias), 0.0);
-        $totalDado = 0.0;
-        for ($mes = 1; $mes <= $mesActual; $mes++) {
-            $fila = ['numero' => $mes, 'nombre' => self::MESES[$mes], 'por_categoria' => [], 'total' => 0.0];
+        $totalesCategoria = array_fill_keys(array_keys($categorias), 0);
+        $totalDado = 0;
+        foreach ($periodo->meses() as $mes) {
+            $fila = ['numero' => $mes->mes, 'nombre' => $mes->etiqueta($variosAnios), 'clave' => $mes->clave, 'por_categoria' => [], 'total' => 0.0];
+            $totalMes = 0;
             foreach (array_keys($categorias) as $slug) {
-                $monto = round($dadoPorMes[$mes][$slug] ?? 0, 2);
-                $fila['por_categoria'][$slug] = $monto;
-                $fila['total'] += $monto;
+                $monto = $cuenta->dadoCentimos($mes->clave, [$slug]);
+                $fila['por_categoria'][$slug] = Dinero::colones($monto);
+                $totalMes += $monto;
                 $totalesCategoria[$slug] += $monto;
             }
-            $totalDado += $fila['total'];
+            $fila['total'] = Dinero::colones($totalMes);
+            $totalDado += $totalMes;
             $meses[] = $fila;
         }
 
-        // Compromisos: una fila por categoría prometida, de enero al mes en curso.
+        // Compromisos: una fila por categoría prometida, con lo esperado de los meses que se cobran
+        // (completos antes del corte) y todo lo dado en esa categoría hasta el corte. El diezmo y las
+        // categorías sin promesa salen en la tabla mensual pero no cuentan para el estado.
         $compromisos = [];
-        foreach ($promesas->groupBy('categoria') as $slug => $delaCategoria) {
-            $esperado = 0.0;
-            foreach ($delaCategoria as $promesa) {
-                for ($mes = 1; $mes <= $mesActual; $mes++) {
-                    $esperado += $this->aColones($this->esperadoMes($promesa, $anio, $mes), $promesa->moneda, null, $tcHoy);
-                }
-            }
-            $dado = $totalesCategoria[$slug] ?? 0.0;
+        foreach ($promesas as $slug => $promesa) {
+            $esperado = $cuenta->esperadoCentimos(categoria: $slug);
+            $dado = $cuenta->dadoCentimos(null, [$slug]);
             $compromisos[] = [
                 'categoria' => $slug,
-                'nombre' => $categorias[$slug] ?? Str::headline((string) $slug),
-                'detalle' => $delaCategoria->map(fn (Promesa $p) => $this->describirPromesa($p))->implode(' + '),
-                'esperado' => round($esperado, 2),
-                'dado' => round($dado, 2),
-                'diferencia' => round($dado - $esperado, 2),
-                'al_dia' => $dado + 0.005 >= $esperado,
+                'nombre' => $categorias[$slug] ?? $resultado->nombreCategoria($slug),
+                'detalle' => $promesa->descripcion(),
+                'esperado' => Dinero::colones($esperado),
+                'dado' => Dinero::colones($dado),
+                'diferencia' => Dinero::colones($dado - $esperado),
+                'al_dia' => $dado + EstadoCuenta::TOLERANCIA_CENTIMOS >= $esperado,
             ];
         }
 
-        $totalEsperado = array_sum(array_column($compromisos, 'esperado'));
-        $dadoEnCompromisos = array_sum(array_column($compromisos, 'dado'));
-
-        return [
-            'persona' => $persona,
-            'anio' => $anio,
-            'mes_actual' => $mesActual,
-            'periodo' => 'Enero - '.self::MESES[$mesActual].' '.$anio,
-            'categorias' => $categorias,
-            'meses' => $meses,
-            'totales_categoria' => array_map(fn ($m) => round($m, 2), $totalesCategoria),
-            'total_dado' => round($totalDado, 2),
-            'compromisos' => $compromisos,
-            'tiene_compromisos' => $compromisos !== [],
-            'total_esperado' => round($totalEsperado, 2),
-            'dado_en_compromisos' => round($dadoEnCompromisos, 2),
-            'diferencia' => round($dadoEnCompromisos - $totalEsperado, 2),
-            'hay_datos' => $totalDado > 0 || $compromisos !== [],
-            'hay_usd' => $hayUsd,
-        ];
-    }
-
-    /**
-     * Lo dado por mes y categoría, en colones, de los sobres de la persona en cultos del año
-     * hasta el mes de $hasta. Se lee con joins y no con relaciones de Eloquent para no depender
-     * de los scopes por iglesia (aquí puede no haber sesión) y hacerlo en una sola consulta.
-     *
-     * @return array{0: array<int, array<string, float>>, 1: bool}
-     */
-    private function dadoPorMes(Persona $persona, int $anio, Carbon $hasta, float $tcHoy): array
-    {
-        $filas = DB::table('sobre_detalles as d')
-            ->join('sobres as s', 's.id', '=', 'd.sobre_id')
-            ->join('cultos as c', 'c.id', '=', 's.culto_id')
-            ->where('s.persona_id', $persona->id)
-            ->whereBetween('c.fecha', [$anio.'-01-01', $hasta->copy()->endOfMonth()->toDateString()])
-            ->get(['c.fecha', 'd.categoria', 'd.monto', 's.moneda', 's.tipo_cambio_venta']);
-
-        $dado = [];
-        $hayUsd = false;
-
-        foreach ($filas as $fila) {
-            $mes = Carbon::parse($fila->fecha)->month;
-            $hayUsd = $hayUsd || $fila->moneda === 'USD';
-            $dado[$mes][$fila->categoria] = ($dado[$mes][$fila->categoria] ?? 0)
-                + $this->aColones((float) $fila->monto, $fila->moneda, $fila->tipo_cambio_venta, $tcHoy);
-        }
-
-        return [$dado, $hayUsd];
-    }
-
-    /** Dólares a colones con el tipo de cambio del sobre (o el de hoy si no lo guardó); sin tipo de cambio, el monto tal cual. */
-    private function aColones(float $monto, ?string $moneda, mixed $tipoCambioSobre, float $tcHoy): float
-    {
-        if ($moneda !== 'USD') {
-            return $monto;
-        }
-
-        $tc = (float) $tipoCambioSobre > 0 ? (float) $tipoCambioSobre : $tcHoy;
-
-        return $tc > 0 ? round($monto * $tc, 2) : $monto;
-    }
-
-    /** Monto que corresponde a un mes completo según la frecuencia (misma regla que Reporte General y Compromisos). */
-    private function esperadoMes(Promesa $promesa, int $anio, int $mes): float
-    {
-        $monto = (float) $promesa->monto;
-
-        return match ($promesa->frecuencia) {
-            'semanal' => $monto * $this->domingosEnMes($anio, $mes),
-            'quincenal' => $monto * 2,
-            default => $monto,
-        };
-    }
-
-    private function domingosEnMes(int $anio, int $mes): int
-    {
-        $dia = Carbon::create($anio, $mes, 1)->startOfDay();
-        $fin = $dia->copy()->endOfMonth();
-        $domingos = 0;
-
-        for (; $dia->lte($fin); $dia->addDay()) {
-            if ($dia->isSunday()) {
-                $domingos++;
+        // Mes a mes de cada compromiso, solo informativo (el estado nunca se decide mes a mes): lo
+        // que corresponde al mes según la promesa, si ese mes se cobra, y lo dado en la categoría.
+        $detalleMensual = [];
+        if ($compromisos !== []) {
+            foreach ($periodo->meses() as $mes) {
+                $fila = ['clave' => $mes->clave, 'nombre' => $mes->etiqueta($variosAnios), 'cobrable' => $mes->cobrable, 'categorias' => []];
+                foreach (array_keys($promesas) as $slug) {
+                    $fila['categorias'][$slug] = [
+                        'del_mes' => $cuenta->esperadoDelMes($mes->clave, $slug),
+                        'dado' => $cuenta->dado($mes->clave, [$slug]),
+                    ];
+                }
+                $detalleMensual[] = $fila;
             }
         }
 
-        return $domingos;
-    }
+        $estado = $cuenta->estado();
+        $mesActual = $periodo->hasta->month;
+        $tienePromesa = $cuenta->tienePromesa() && $compromisos !== [];
 
-    private function describirPromesa(Promesa $promesa): string
-    {
-        $simbolo = $promesa->moneda === 'USD' ? '$' : '₡';
-        $frecuencia = match ($promesa->frecuencia) {
-            'semanal' => 'cada domingo',
-            'quincenal' => 'cada quincena',
-            default => 'mensual',
-        };
-
-        return $simbolo.number_format((float) $promesa->monto, 2).' '.$frecuencia;
+        return [
+            'persona' => $persona ?? (object) ['id' => $cuenta->id, 'nombre' => $cuenta->nombre],
+            'anio' => $periodo->hasta->year,
+            'mes_actual' => $mesActual,
+            'periodo' => $periodo->etiqueta(),
+            'categorias' => $categorias,
+            'meses' => $meses,
+            'totales_categoria' => array_map(fn (int $c) => Dinero::colones($c), $totalesCategoria),
+            'total_dado' => Dinero::colones($totalDado),
+            'compromisos' => $compromisos,
+            'tiene_compromisos' => $compromisos !== [],
+            'total_esperado' => $tienePromesa ? $estado->leCorresponde() : 0.0,
+            'dado_en_compromisos' => $tienePromesa ? $estado->haDado() : 0.0,
+            'diferencia' => $tienePromesa ? $estado->diferencia() : 0.0,
+            'al_dia' => $estado->alDia(),
+            'estado' => $estado->etiqueta(),
+            'corte' => $periodo->hasta->format('d/m/Y'),
+            'meses_cobrados' => $periodo->textoMesesCobrables(),
+            'mes_en_curso' => $periodo->mesEnCurso()?->nombre,
+            'detalle_mensual' => $detalleMensual,
+            'hay_datos' => $totalDado > 0 || $compromisos !== [],
+            'hay_usd' => $cuenta->hayUsd,
+        ];
     }
 }

@@ -4,11 +4,14 @@ namespace App\Console\Commands;
 
 use App\Exports\AsistenciaExport;
 use App\Exports\IngresosExport;
-use App\Exports\PromesasExport;
 use App\Mail\ReporteMensualMail;
 use App\Models\Culto;
 use App\Models\RegistroExtraTipo;
 use App\Models\Tenant;
+use App\Services\Reportes\CumplimientoPromesasService;
+use App\Services\Reportes\Exportaciones\CumplimientoExcel;
+use App\Services\Reportes\FiltroPersonas;
+use App\Services\Reportes\PeriodoReporte;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
@@ -138,11 +141,14 @@ class EnviarReporteMensual extends Command
             $this->error('Excel ingresos falló: '.$e->getMessage());
         }
 
-        // Excel promesas (año en curso)
+        // Excel de promesas: el mismo Excel de Cumplimiento de promesas, con corte al ultimo dia del mes reportado (QE-002)
         try {
             $path = "{$dir}/promesas_{$slug}.xlsx";
-            $raw = Excel::raw(new PromesasExport($año, $mes), ExcelFormat::XLSX);
-            file_put_contents($path, $raw);
+            $reporte = app(CumplimientoPromesasService::class)->generar(
+                PeriodoReporte::alFinDe($año, $mes),
+                FiltroPersonas::desde(['grupo' => FiltroPersonas::CON_PROMESA]),
+            );
+            file_put_contents($path, app(CumplimientoExcel::class)->generar($reporte)->contenido());
             $adjuntos[] = ['path' => $path, 'filename' => "promesas_{$slug}.xlsx"];
         } catch (\Throwable $e) {
             $this->error('Excel promesas falló: '.$e->getMessage());

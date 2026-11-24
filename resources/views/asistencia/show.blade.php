@@ -20,12 +20,12 @@
                     </span>
                 @endif
             </div>
-            <div class="flex gap-2">
-                <a href="{{ route('asistencia.index') }}" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+            <div class="flex flex-wrap gap-2">
+                <a href="{{ route('asistencia.index') }}" class="btn-secondary">
                     Volver
                 </a>
                 @if(!$asistencia->cerrado)
-                <a href="{{ route('asistencia.edit', $asistencia) }}" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                <a href="{{ route('asistencia.edit', $asistencia) }}" class="btn-primary">
                     Editar
                 </a>
                 @endif
@@ -33,9 +33,9 @@
         </div>
 
         <!-- Tabla de Detalles -->
-        <div class="overflow-x-auto">
+        <div class="table-scroll">
             <table class="min-w-full divide-y divide-gray-200 border">
-                <thead class="bg-blue-50">
+                <thead class="bg-brand-50">
                     <tr>
                         <th class="px-4 py-3 text-left text-xs font-medium text-gray-700 uppercase">Categoria</th>
                         <th class="px-4 py-3 text-center text-xs font-medium text-gray-700 uppercase">Hombres</th>
@@ -45,7 +45,7 @@
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
                     <!-- CAPILLA -->
-                    <tr class="bg-blue-50 font-semibold">
+                    <tr class="bg-brand-50 font-semibold">
                         <td class="px-4 py-2 text-sm" colspan="4">CAPILLA</td>
                     </tr>
                     <tr>
@@ -104,7 +104,7 @@
                     </tr>
 
                     <!-- BAUTISMOS -->
-                    <tr class="bg-blue-100 font-semibold">
+                    <tr class="bg-brand-100 font-semibold">
                         <td class="px-4 py-2 text-sm" colspan="4">BAUTISMOS</td>
                     </tr>
                     <tr>
@@ -127,7 +127,7 @@
                     </tr>
 
                     <!-- VISITAS -->
-                    <tr class="bg-purple-100 font-semibold">
+                    <tr class="bg-gray-100 font-semibold">
                         <td class="px-4 py-2 text-sm" colspan="4">VISITAS</td>
                     </tr>
                     <tr>
@@ -153,10 +153,10 @@
         </div>
 
         <!-- Totales Finales -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4 mt-6">
-            <div class="bg-blue-50 rounded-lg p-4 border-2 border-blue-200">
+        <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4 mt-6">
+            <div class="bg-brand-50 rounded-lg p-4 border-2 border-brand-200">
                 <div class="text-sm text-gray-600 mb-1">Total Capilla</div>
-                <div class="text-3xl font-bold text-blue-600">{{ $asistencia->getTotalCapilla() }}</div>
+                <div class="text-3xl font-bold text-brand-600">{{ $asistencia->getTotalCapilla() }}</div>
                 <div class="text-xs text-gray-500 mt-1">Adultos + Jóvenes</div>
             </div>
 
@@ -172,9 +172,9 @@
                 <div class="text-xs text-gray-500 mt-1">Decisiones registradas</div>
             </div>
 
-            <div class="bg-purple-50 rounded-lg p-4 border-2 border-purple-200">
+            <div class="bg-gray-50 rounded-lg p-4 border-2 border-gray-200">
                 <div class="text-sm text-gray-600 mb-1">Total Bautismos</div>
-                <div class="text-3xl font-bold text-purple-600">{{ $asistencia->getTotalBautismos() }}</div>
+                <div class="text-3xl font-bold text-gray-600">{{ $asistencia->getTotalBautismos() }}</div>
                 <div class="text-xs text-gray-500 mt-1">Bautizados en el culto</div>
             </div>
 
@@ -192,7 +192,7 @@
         </div>
 
         <!-- Total General -->
-        <div class="bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg p-6 mt-6 text-white">
+        <div class="bg-brand-600 rounded-lg p-6 mt-6 text-white">
             <div class="flex flex-col sm:flex-row justify-between items-center">
                 <div>
                     <div class="text-sm opacity-90 mb-1">TOTAL ASISTENCIA GENERAL</div>

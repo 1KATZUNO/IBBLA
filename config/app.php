@@ -78,7 +78,10 @@ return [
     |
     */
 
-    'locale' => env('APP_LOCALE', 'es'),
+    // La app se usa en español: el idioma queda fijo aqui y NO depende de APP_LOCALE del .env
+    // (el .env de produccion de IBBSC y el .env.example traen APP_LOCALE=en, que dejaba el login
+    // y las validaciones en ingles). Los textos viven en lang/es y lang/es.json.
+    'locale' => 'es',
 
     'fallback_locale' => env('APP_FALLBACK_LOCALE', 'en'),
 

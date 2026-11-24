@@ -13,7 +13,7 @@
                 <div>
                     <label for="nombre" class="block text-sm font-medium text-gray-700 mb-2">Nombre de la Clase *</label>
                     <input type="text" name="nombre" id="nombre" value="{{ old('nombre') }}" 
-                           class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" 
+                           class="w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500" 
                            placeholder="Ej: Clase 12-15 Años" required>
                     @error('nombre')
                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
@@ -37,27 +37,27 @@
                 <div>
                     <label for="orden" class="block text-sm font-medium text-gray-700 mb-2">Orden de Visualización *</label>
                     <input type="number" name="orden" id="orden" min="0" value="{{ old('orden', 0) }}" 
-                           class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
+                           class="w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500" required>
                     @error('orden')
                         <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                     @enderror
                     <p class="mt-1 text-sm text-gray-500">Número menor aparece primero (después de Capilla)</p>
                 </div>
 
-                <div class="flex items-center">
+                <div class="flex items-center min-h-[44px]">
                     <input type="checkbox" name="tiene_maestros" id="tiene_maestros" value="1" {{ old('tiene_maestros') ? 'checked' : '' }}
-                           class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                    <label for="tiene_maestros" class="ml-2 text-sm text-gray-700">
+                           class="rounded border-gray-300 text-brand-600 shadow-sm focus:border-brand-500 focus:ring-brand-500">
+                    <label for="tiene_maestros" class="ml-2 py-3 flex-1 text-sm text-gray-700 cursor-pointer">
                         Incluir campos para Maestros (H) y Maestras (M)
                     </label>
                 </div>
             </div>
 
             <div class="mt-6 flex justify-end gap-3">
-                <a href="{{ route('admin.clases.index') }}" class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+                <a href="{{ route('admin.clases.index') }}" class="btn-secondary">
                     Cancelar
                 </a>
-                <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                <button type="submit" class="btn-primary">
                     Crear Clase
                 </button>
             </div>

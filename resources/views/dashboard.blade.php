@@ -5,35 +5,13 @@
 
 @section('content')
 <div class="space-y-8 animate-fade-in">
-    <!-- Selector de Mes -->
-    <div class="glass-card p-6">
-        <form method="GET" action="{{ route('dashboard') }}" class="flex flex-wrap items-end gap-4">
-            <div class="flex-1 min-w-[200px]">
-                <label for="mes" class="block text-sm font-semibold text-gray-700 mb-2">Mes</label>
-                <select name="mes" id="mes" class="input-primary">
-                    @foreach(['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'] as $index => $nombreMes)
-                        <option value="{{ $index + 1 }}" {{ ($index + 1) == $mes ? 'selected' : '' }}>{{ $nombreMes }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <div class="flex-1 min-w-[150px]">
-                <label for="año" class="block text-sm font-semibold text-gray-700 mb-2">Año</label>
-                <select name="año" id="año" class="input-primary">
-                    @for($y = now()->year - 2; $y <= now()->year + 1; $y++)
-                        <option value="{{ $y }}" {{ $y == $año ? 'selected' : '' }}>{{ $y }}</option>
-                    @endfor
-                </select>
-            </div>
-            <div>
-                <button type="submit" class="btn-primary flex items-center gap-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-                    </svg>
-                    Actualizar
-                </button>
-            </div>
-        </form>
-    </div>
+    <!-- Filtro de período: mes + año (acceso rápido) o rango de fechas -->
+    @include('dashboards._filtro-rango', [
+        'ruta' => 'dashboard',
+        'avisoMeses' => $rango->esMesesCompletos()
+            ? null
+            : 'Las promesas se evalúan por meses completos: '.$rango->ampliadoAMeses()->etiqueta().'.',
+    ])
 
     <!-- Alertas Inteligentes -->
     @if($alertas->count() > 0)
@@ -42,7 +20,7 @@
         <div class="flex items-center gap-3 px-4 py-3 rounded-lg border
             {{ $alerta['tipo'] === 'danger' ? 'bg-red-50 border-red-200 text-red-800' : '' }}
             {{ $alerta['tipo'] === 'warning' ? 'bg-amber-50 border-amber-200 text-amber-800' : '' }}
-            {{ $alerta['tipo'] === 'info' ? 'bg-blue-50 border-blue-200 text-blue-800' : '' }}
+            {{ $alerta['tipo'] === 'info' ? 'bg-brand-50 border-brand-200 text-brand-800' : '' }}
             {{ $alerta['tipo'] === 'success' ? 'bg-green-50 border-green-200 text-green-800' : '' }}
         ">
             @if($alerta['icono'] === 'trending-down')
@@ -65,10 +43,11 @@
         <div class="glass-card p-5">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-sm text-gray-500">Ingresos este mes</p>
-                    <p class="text-2xl font-bold text-gray-900">₡{{ number_format($totalesMes['total_general'], 0) }}</p>
+                    <p class="text-sm text-gray-500">Ingresos del período</p>
+                    <p class="text-2xl font-bold text-gray-900">₡{{ number_format($totalesPeriodo['total_general'], 0) }}</p>
                 </div>
                 <div class="text-right">
+                    @if($comparativo['periodo_anterior_total'] > 0)
                     <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-sm font-semibold
                         {{ $comparativo['diferencia'] >= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700' }}">
                         @if($comparativo['diferencia'] >= 0)
@@ -78,7 +57,10 @@
                         @endif
                         {{ $comparativo['porcentaje'] >= 0 ? '+' : '' }}{{ $comparativo['porcentaje'] }}%
                     </span>
-                    <p class="text-xs text-gray-400 mt-1">vs {{ $comparativo['mes_anterior_nombre'] }}</p>
+                    @else
+                    <span class="badge-neutral">Sin datos anteriores</span>
+                    @endif
+                    <p class="text-xs text-gray-400 mt-1">vs {{ $comparativo['periodo_anterior_nombre'] }}</p>
                 </div>
             </div>
         </div>
@@ -89,11 +71,15 @@
                     <p class="text-2xl font-bold text-gray-900">{{ $comparativo['asistencia_actual'] }}</p>
                 </div>
                 <div class="text-right">
+                    @if($comparativo['asistencia_anterior'] > 0)
                     <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-sm font-semibold
                         {{ $comparativo['asistencia_diff'] >= 0 ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700' }}">
                         {{ $comparativo['asistencia_diff'] >= 0 ? '+' : '' }}{{ $comparativo['asistencia_diff'] }}%
                     </span>
-                    <p class="text-xs text-gray-400 mt-1">vs {{ $comparativo['mes_anterior_nombre'] }}</p>
+                    @else
+                    <span class="badge-neutral">Sin datos anteriores</span>
+                    @endif
+                    <p class="text-xs text-gray-400 mt-1">vs {{ $comparativo['periodo_anterior_nombre'] }}</p>
                 </div>
             </div>
         </div>
@@ -117,19 +103,19 @@
 
     <!-- Estadísticas Rápidas -->
     <div>
-        <h3 class="text-lg font-display font-bold text-gray-900 mb-4">Estadísticas del Mes</h3>
+        <h3 class="text-lg font-display font-bold text-gray-900 mb-4">Estadísticas del Período</h3>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
             <!-- Total Mensual -->
             <div class="stat-card">
                 <div class="flex flex-col h-full">
-                    <div class="bg-blue-600 rounded-lg p-2.5 w-fit mb-3">
+                    <div class="bg-brand-600 rounded-lg p-2.5 w-fit mb-3">
                         <svg class="h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                         </svg>
                     </div>
                     <dl class="flex-1">
                         <dt class="text-sm font-medium text-gray-500 mb-1">Total Mensual</dt>
-                        <dd class="text-lg font-display font-bold text-blue-700">₡{{ number_format($totalesMes['total_general'], 2) }}</dd>
+                        <dd class="text-lg font-display font-bold text-brand-700">₡{{ number_format($totalesPeriodo['total_general'], 2) }}</dd>
                     </dl>
                 </div>
             </div>
@@ -144,7 +130,7 @@
                     </div>
                     <dl class="flex-1">
                         <dt class="text-sm font-medium text-gray-500 mb-1">{{ $cat->nombre }}</dt>
-                        <dd class="text-lg font-display font-bold" style="color: {{ $cat->color ?? '#6366f1' }}">₡{{ number_format($totalesMes[$cat->slug] ?? 0, 2) }}</dd>
+                        <dd class="text-lg font-display font-bold" style="color: {{ $cat->color ?? '#6366f1' }}">₡{{ number_format($totalesPeriodo[$cat->slug] ?? 0, 2) }}</dd>
                     </dl>
                 </div>
             </div>
@@ -153,14 +139,14 @@
             <!-- Suelto -->
             <div class="stat-card">
                 <div class="flex flex-col h-full">
-                    <div class="bg-indigo-500 rounded-lg p-2.5 w-fit mb-3">
+                    <div class="bg-brand-500 rounded-lg p-2.5 w-fit mb-3">
                         <svg class="h-5 w-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path>
                         </svg>
                     </div>
                     <dl class="flex-1">
                         <dt class="text-sm font-medium text-gray-500 mb-1">Suelto</dt>
-                        <dd class="text-lg font-display font-bold text-indigo-600">₡{{ number_format($totalesMes['total_suelto'], 2) }}</dd>
+                        <dd class="text-lg font-display font-bold text-brand-600">₡{{ number_format($totalesPeriodo['total_suelto'], 2) }}</dd>
                     </dl>
                 </div>
             </div>
@@ -173,7 +159,7 @@
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <!-- Gráfico de Barras - Ingresos por Culto -->
             <div class="glass-card p-6">
-                <h3 class="text-base font-display font-semibold text-gray-900 mb-4">Ingresos por Culto (Últimos 10)</h3>
+                <h3 class="text-base font-display font-semibold text-gray-900 mb-4">Ingresos por Culto</h3>
                 <div style="height: 300px; position: relative;">
                     <canvas id="ingresosChart"></canvas>
                 </div>
@@ -181,7 +167,7 @@
 
             <!-- Gráfico Circular - Distribución por Categorías -->
             <div class="glass-card p-6">
-                <h3 class="text-base font-display font-semibold text-gray-900 mb-4">Distribución por Categorías (Mes Actual)</h3>
+                <h3 class="text-base font-display font-semibold text-gray-900 mb-4">Distribución por Categorías (Período)</h3>
                 <div style="height: 300px; position: relative;">
                     <canvas id="distribucionChart"></canvas>
                 </div>
@@ -189,9 +175,10 @@
         </div>
     </div>
 
-    <!-- Tendencia 12 Meses -->
+    <!-- Tendencia mensual: al menos 12 meses, incluye siempre el rango elegido -->
     <div>
-        <h3 class="text-lg font-display font-bold text-gray-900 mb-4">Tendencia 12 Meses</h3>
+        <h3 class="text-lg font-display font-bold text-gray-900 mb-1">Tendencia Mensual</h3>
+        <p class="text-xs text-gray-500 mb-4">Los puntos grandes son los meses del período elegido; los demás dan contexto.</p>
         <div class="glass-card p-6">
             <div style="height: 350px; position: relative;">
                 <canvas id="tendencia12Chart"></canvas>
@@ -213,7 +200,7 @@
 
             <!-- Promesas Cumplidas vs Pendientes -->
             <div class="glass-card p-6">
-                <h3 class="text-base font-display font-semibold text-gray-900 mb-4">Estado de Promesas (Mes Actual)</h3>
+                <h3 class="text-base font-display font-semibold text-gray-900 mb-4">Estado de Promesas (Período)</h3>
                 <div style="height: 300px; position: relative;">
                     <canvas id="promesasChart"></canvas>
                 </div>
@@ -247,10 +234,10 @@
     new Chart(ingresosCtx, {
         type: 'bar',
         data: {
-            labels: @json($cultosRecientes->map(fn($c) => $c->fecha->format('d/m'))),
+            labels: @json($graficoCultos['labels']),
             datasets: [{
                 label: 'Ingresos Totales',
-                data: @json($cultosRecientes->map(fn($c) => $c->totales ? $c->totales->total_general : 0)),
+                data: @json($graficoCultos['ingresos']),
                 backgroundColor: colors.gradient(ingresosCtx),
                 borderColor: colors.primaryBorder,
                 borderWidth: 2,
@@ -333,10 +320,10 @@
     new Chart(asistenciaCtx, {
         type: 'line',
         data: {
-            labels: @json($asistencias->pluck('fecha')),
+            labels: @json($graficoCultos['labels']),
             datasets: [{
                 label: 'Asistencia Total',
-                data: @json($asistencias->pluck('total')),
+                data: @json($graficoCultos['asistencia']),
                 borderColor: 'rgba(34, 197, 94, 1)',
                 backgroundColor: asistenciaGradient,
                 borderWidth: 3,
@@ -373,7 +360,12 @@
         }
     });
 
-    // Gráfico Tendencia 12 Meses
+    // Gráfico Tendencia Mensual
+    @php
+        // (@json no admite comas dentro de la expresión: se arman aquí)
+        $coloresPuntos = $tendencia->map(fn($m) => $m['enRango'] ? 'rgba(37, 99, 235, 1)' : 'rgba(147, 197, 253, 1)');
+        $radiosPuntos = $tendencia->map(fn($m) => $m['enRango'] ? 6 : 3);
+    @endphp
     const tendencia12Ctx = document.getElementById('tendencia12Chart').getContext('2d');
     const ingresosGradient12 = tendencia12Ctx.createLinearGradient(0, 0, 0, 350);
     ingresosGradient12.addColorStop(0, 'rgba(37, 99, 235, 0.2)');
@@ -381,23 +373,24 @@
     new Chart(tendencia12Ctx, {
         type: 'line',
         data: {
-            labels: @json($tendencia12->pluck('label')),
+            labels: @json($tendencia->pluck('label')),
             datasets: [{
                 label: 'Ingresos',
-                data: @json($tendencia12->pluck('ingresos')),
+                data: @json($tendencia->pluck('ingresos')),
                 borderColor: 'rgba(37, 99, 235, 1)',
                 backgroundColor: ingresosGradient12,
                 borderWidth: 3,
                 tension: 0.4,
                 fill: true,
                 yAxisID: 'y',
-                pointBackgroundColor: 'rgba(37, 99, 235, 1)',
+                // Los meses que caen dentro del rango se resaltan; el resto es contexto.
+                pointBackgroundColor: @json($coloresPuntos),
                 pointBorderColor: '#fff',
                 pointBorderWidth: 2,
-                pointRadius: 4,
+                pointRadius: @json($radiosPuntos),
             }, {
                 label: 'Asistencia Promedio',
-                data: @json($tendencia12->pluck('asistencia')->map(fn($v) => round($v))),
+                data: @json($tendencia->pluck('asistencia')->map(fn($v) => round($v))),
                 borderColor: 'rgba(34, 197, 94, 1)',
                 backgroundColor: 'transparent',
                 borderWidth: 3,

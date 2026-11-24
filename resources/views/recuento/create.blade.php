@@ -1,437 +1,66 @@
 @extends('layouts.admin')
 
-@section('title', tenant_title('Agregar Sobre'))
-@section('page-title', 'Registrar Nuevo Sobre')
+@section('title', tenant_title('Registrar sobres'))
+@section('page-title', 'Registrar sobres')
 
 @section('content')
-<div class="max-w-4xl mx-auto">
-    <div class="bg-white rounded-lg shadow p-6">
-        <form action="{{ route('recuento.store') }}" method="POST" id="sobreForm">
-            @csrf
-
-            <input type="hidden" name="culto_id" value="{{ $culto ? $culto->id : request('culto_id') }}">
-
-            @if($culto)
-            <div class="mb-6 p-4 bg-blue-50 rounded-lg">
-                <p class="text-sm text-gray-600">Culto seleccionado:</p>
-                <p class="text-lg font-semibold text-blue-900">
-                    {{ $culto->fecha->format('d/m/Y') }} - {{ ucfirst($culto->tipo_culto) }}
-                </p>
-            </div>
+@php
+    $diaCulto = ucfirst($culto->fecha->locale('es')->isoFormat('dddd'));
+@endphp
+<div class="max-w-5xl mx-auto space-y-4">
+    {{-- Solo este culto: cual es y como va --}}
+    <section class="bg-white rounded-lg shadow px-4 sm:px-6 py-4 flex flex-wrap items-start justify-between gap-4" aria-label="Culto">
+        <div class="min-w-0">
+            <a href="{{ route('recuento.culto', $culto) }}" class="inline-flex items-center gap-1 min-h-[44px] -mt-3 text-sm font-medium text-blue-700 hover:text-blue-900 hover:underline">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                Volver al culto
+            </a>
+            <h2 class="text-xl font-bold text-gray-900">{{ $diaCulto }} {{ $culto->fecha->format('d/m/Y') }} · {{ $culto->tipo_nombre }}</h2>
+            @if($culto->cerrado)
+                <p class="mt-1 text-sm text-amber-800">Este culto está cerrado: estás agregando el sobre como corrección.</p>
             @endif
-
-            <div class="space-y-4">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label for="persona_id" class="block text-sm font-medium text-gray-700 mb-2">
-                            Persona (Opcional)
-                        </label>
-                        <div class="space-y-2">
-                            <div class="relative">
-                                <input type="text" id="buscarPersona" placeholder="Buscar por nombre o PIN..."
-                                       class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                <div id="resultadosBusqueda" class="hidden absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-y-auto">
-                                </div>
-                            </div>
-                            <select name="persona_id" id="persona_id" 
-                                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                <option value="">Anónimo</option>
-                                @foreach($personas as $persona)
-                                    <option value="{{ $persona->id }}" data-pin="{{ $persona->pin ?? '' }}" {{ old('persona_id') == $persona->id ? 'selected' : '' }}>
-                                        {{ $persona->nombre }}{{ $persona->pin ? ' (PIN: '.$persona->pin.')' : '' }}
-                                    </option>
-                                @endforeach
-                            </select>
-                            <button type="button" id="btnAgregarRapida" class="w-full px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors text-sm">
-                                + Agregar Persona Rápida
-                            </button>
-                        </div>
-                        @error('persona_id')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
-                    </div>
-
-                    <div>
-                        <label for="metodo_pago" class="block text-sm font-medium text-gray-700 mb-2">
-                            Método de Pago *
-                        </label>
-                        <select name="metodo_pago" id="metodo_pago" 
-                                class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
-                            <option value="efectivo" {{ old('metodo_pago') == 'efectivo' ? 'selected' : '' }}>Efectivo</option>
-                            <option value="transferencia" {{ old('metodo_pago') == 'transferencia' ? 'selected' : '' }}>Transferencia</option>
-                        </select>
-                        @error('metodo_pago')
-                            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                        @enderror
-                        <div id="comprobanteWrapper" class="mt-3 hidden">
-                            <label for="comprobante_numero" class="block text-sm font-medium text-gray-700 mb-2">N° Comprobante (Transferencia)</label>
-                            <input type="text" name="comprobante_numero" id="comprobante_numero" value="{{ old('comprobante_numero') }}" 
-                                   class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="Ej: 1234567890">
-                            @error('comprobante_numero')
-                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                            @enderror
-                        </div>
-                    </div>
-                </div>
-
-                {{-- Selector de Moneda --}}
-                <div class="border-t pt-6">
-                    <div class="flex items-center gap-4 mb-4">
-                        <h3 class="text-lg font-semibold">Detalles del Sobre</h3>
-                        <div class="flex items-center gap-2 ml-auto">
-                            <label class="text-sm font-medium text-gray-700">Moneda:</label>
-                            <select name="moneda" id="moneda" class="rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm">
-                                <option value="CRC">₡ Colones</option>
-                                <option value="USD">$ Dólares</option>
-                            </select>
-                            <span id="tipoCambioBadge" class="hidden text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full font-medium">
-                                T/C: <span id="tipoCambioValor">--</span>
-                            </span>
-                        </div>
-                    </div>
-
-                    <div class="space-y-3" id="detallesContainer">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            @foreach($categorias as $index => $cat)
-                            <div>
-                                <label for="{{ $cat->slug }}" class="block text-sm font-medium text-gray-700 mb-2">{{ $cat->nombre }}</label>
-                                <div class="relative">
-                                    <span class="absolute inset-y-0 left-0 pl-3 flex items-center text-gray-500 simbolo-moneda">₡</span>
-                                    <input type="number" name="detalles[{{ $index }}][monto]" id="{{ $cat->slug }}" step="0.01" min="0" value="0"
-                                           class="w-full pl-7 rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 detalle-monto">
-                                    <input type="hidden" name="detalles[{{ $index }}][categoria]" value="{{ $cat->slug }}">
-                                </div>
-                            </div>
-                            @endforeach
-                        </div>
-                    </div>
-
-                    <div class="mt-6 p-4 bg-gray-50 rounded-lg">
-                        <div class="flex justify-between items-center">
-                            <span class="text-lg font-medium text-gray-700">Total Declarado:</span>
-                            <span class="text-2xl font-bold text-blue-600" id="totalDeclarado">₡0.00</span>
-                        </div>
-                        <div id="totalConvertido" class="hidden mt-2 flex justify-between items-center text-sm text-gray-500">
-                            <span>Equivalente en colones:</span>
-                            <span class="font-semibold text-green-700" id="totalConvertidoValor">₡0.00</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div>
-                    <label for="notas" class="block text-sm font-medium text-gray-700 mb-2">Notas (Opcional)</label>
-                    <textarea name="notas" id="notas" rows="3" 
-                              class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">{{ old('notas') }}</textarea>
-                    @error('notas')
-                        <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                    @enderror
-                </div>
+        </div>
+        <dl class="flex gap-8">
+            <div>
+                <dt class="text-xs font-medium uppercase tracking-wide text-gray-500">Sobres</dt>
+                <dd class="text-lg font-semibold tabular-nums text-gray-900">{{ $resumen->cantidadSobres }}</dd>
             </div>
-
-            <div class="mt-6 flex justify-end gap-3 sticky bottom-0 bg-white pb-[env(safe-area-inset-bottom,16px)] pt-4 border-t border-gray-200 -mx-6 px-6 z-10" style="padding-bottom: max(1rem, env(safe-area-inset-bottom));">
-                <a href="{{ route('recuento.index', ['culto_id' => $culto ? $culto->id : '']) }}"
-                   class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
-                    Cancelar
-                </a>
-                <button type="submit" id="btnGuardarSobre" class="px-5 py-2.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 font-medium min-w-[140px]">
-                    Guardar Sobre
-                </button>
+            <div>
+                <dt class="text-xs font-medium uppercase tracking-wide text-gray-500">Total del culto</dt>
+                <dd class="text-lg font-semibold tabular-nums text-blue-700">₡{{ number_format($resumen->total(), 2) }}</dd>
             </div>
-            <div class="h-2"></div>
+        </dl>
+    </section>
+
+    @if($ultimoSobre)
+        <div class="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm">
+            <span class="text-gray-500">Último guardado:</span>
+            <span class="font-semibold text-gray-900">#{{ $ultimoSobre->numero_sobre }}</span>
+            <span class="text-gray-800">{{ $ultimoSobre->persona?->nombre ?? 'Anónimo' }}</span>
+            <span class="tabular-nums text-gray-800">{{ $ultimoSobre->simbolo_moneda }}{{ number_format((float) $ultimoSobre->total_declarado, 2) }}</span>
+            <a href="{{ route('recuento.edit', $ultimoSobre) }}" class="ml-auto inline-flex items-center min-h-[44px] font-medium text-blue-700 hover:underline">Editar ese sobre</a>
+        </div>
+    @endif
+
+    <div class="bg-white rounded-lg shadow p-4 sm:p-6">
+        <form action="{{ route('recuento.store') }}" method="POST" id="sobreForm" class="space-y-5">
+            @csrf
+            <input type="hidden" name="culto_id" value="{{ $culto->id }}">
+            <input type="hidden" name="envio" value="{{ $envio }}">
+
+            @include('recuento.partials.form-sobre', ['sobre' => null])
+
+            {{-- Barra fija: total y guardar siempre a la vista. Enter en un monto = Guardar y siguiente. --}}
+            <div class="action-bar">
+                @include('recuento.partials.barra-persona', ['sobre' => null])
+                <div class="text-sm text-gray-600">
+                    Total: <span class="text-lg font-bold text-blue-700 tabular-nums" id="totalBarra">₡0.00</span>
+                    <span class="hidden ml-1 text-xs text-gray-500" id="totalConvertido"></span>
+                </div>
+                <button type="submit" name="siguiente" value="0" class="btn-secondary" data-boton-guardar>Guardar y terminar</button>
+                <button type="submit" name="siguiente" value="1" class="btn-primary min-w-[12rem]" id="btnPrincipalSobre" data-boton-guardar>Guardar y siguiente</button>
+            </div>
         </form>
     </div>
 </div>
-
-@push('scripts')
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Prevenir doble envío del formulario
-        const sobreForm = document.getElementById('sobreForm');
-        let isSubmitting = false;
-        sobreForm.addEventListener('submit', function(e) {
-            if (isSubmitting) {
-                e.preventDefault();
-                return false;
-            }
-            isSubmitting = true;
-            const btn = document.getElementById('btnGuardarSobre');
-            btn.disabled = true;
-            btn.innerHTML = '<svg class="animate-spin h-5 w-5 inline mr-2" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Guardando...';
-        });
-
-        const inputs = document.querySelectorAll('.detalle-monto');
-        const totalElement = document.getElementById('totalDeclarado');
-        const buscarInput = document.getElementById('buscarPersona');
-        const resultadosDiv = document.getElementById('resultadosBusqueda');
-        const personaSelect = document.getElementById('persona_id');
-        const btnAgregarRapida = document.getElementById('btnAgregarRapida');
-        const metodoPagoSelect = document.getElementById('metodo_pago');
-        const comprobanteWrapper = document.getElementById('comprobanteWrapper');
-        const comprobanteInput = document.getElementById('comprobante_numero');
-        const monedaSelect = document.getElementById('moneda');
-        const simbolos = document.querySelectorAll('.simbolo-moneda');
-        const tipoCambioBadge = document.getElementById('tipoCambioBadge');
-        const tipoCambioValor = document.getElementById('tipoCambioValor');
-        const totalConvertido = document.getElementById('totalConvertido');
-        const totalConvertidoValor = document.getElementById('totalConvertidoValor');
-
-        let tipoCambioVenta = 0;
-
-        // Obtener tipo de cambio al cargar
-        fetch('{{ route("api.tipo-cambio") }}')
-            .then(r => r.json())
-            .then(data => {
-                if (data.disponible) {
-                    tipoCambioVenta = data.venta;
-                    tipoCambioValor.textContent = '₡' + data.venta.toFixed(2);
-                }
-            })
-            .catch(() => {});
-
-        function getSimboloMoneda() {
-            return monedaSelect.value === 'USD' ? '$' : '₡';
-        }
-
-        function calcularTotal() {
-            let total = 0;
-            inputs.forEach(input => {
-                const valor = parseFloat(input.value) || 0;
-                total += valor;
-            });
-            const simbolo = getSimboloMoneda();
-            totalElement.textContent = simbolo + total.toFixed(2);
-
-            // Mostrar equivalente en CRC si es USD
-            if (monedaSelect.value === 'USD' && tipoCambioVenta > 0) {
-                totalConvertido.classList.remove('hidden');
-                totalConvertidoValor.textContent = '₡' + (total * tipoCambioVenta).toFixed(2);
-            } else {
-                totalConvertido.classList.add('hidden');
-            }
-        }
-
-        // Cambio de moneda
-        monedaSelect.addEventListener('change', function() {
-            const simbolo = getSimboloMoneda();
-            simbolos.forEach(s => s.textContent = simbolo);
-
-            if (this.value === 'USD') {
-                tipoCambioBadge.classList.remove('hidden');
-            } else {
-                tipoCambioBadge.classList.add('hidden');
-            }
-            calcularTotal();
-        });
-
-        inputs.forEach(input => {
-            input.addEventListener('input', calcularTotal);
-
-            // Seleccionar todo al hacer focus (para borrar el 0 fácilmente)
-            input.addEventListener('focus', function() {
-                this.select();
-            });
-        });
-
-        calcularTotal();
-
-        function toggleComprobante() {
-            if (metodoPagoSelect.value === 'transferencia') {
-                comprobanteWrapper.classList.remove('hidden');
-                comprobanteInput.required = true;
-            } else {
-                comprobanteWrapper.classList.add('hidden');
-                comprobanteInput.required = false;
-                comprobanteInput.value = '';
-            }
-        }
-        metodoPagoSelect.addEventListener('change', toggleComprobante);
-        // Initialize on load
-        toggleComprobante();
-
-        // Búsqueda de personas por nombre o PIN
-        buscarInput.addEventListener('input', function() {
-            const busqueda = this.value.toLowerCase().trim();
-            if (busqueda.length < 1) {
-                resultadosDiv.classList.add('hidden');
-                return;
-            }
-
-            const opciones = Array.from(personaSelect.options).slice(1);
-            const resultados = opciones.filter(option => {
-                const pin = (option.dataset.pin || '').toLowerCase();
-                const nombre = option.text.toLowerCase();
-                return nombre.includes(busqueda) || (pin && pin === busqueda);
-            });
-
-            if (resultados.length > 0) {
-                resultadosDiv.innerHTML = resultados.map(option => `
-                    <div class="px-4 py-2 hover:bg-blue-50 cursor-pointer resultado-item" data-id="${option.value}">
-                        ${option.text}
-                    </div>
-                `).join('');
-                resultadosDiv.classList.remove('hidden');
-
-                document.querySelectorAll('.resultado-item').forEach(item => {
-                    item.addEventListener('click', function() {
-                        personaSelect.value = this.dataset.id;
-                        buscarInput.value = this.textContent.trim();
-                        resultadosDiv.classList.add('hidden');
-                    });
-                });
-            } else {
-                resultadosDiv.innerHTML = '<div class="px-4 py-2 text-gray-500">No se encontraron resultados</div>';
-                resultadosDiv.classList.remove('hidden');
-            }
-        });
-
-        document.addEventListener('click', function(e) {
-            if (!buscarInput.contains(e.target) && !resultadosDiv.contains(e.target)) {
-                resultadosDiv.classList.add('hidden');
-            }
-        });
-
-        // Agregar persona rápida
-        btnAgregarRapida.addEventListener('click', function() {
-            // Crear modal personalizado
-            const modalHTML = `
-                <div id="quickAddModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 animate-fadeIn">
-                    <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full transform transition-all animate-slideIn">
-                        <div class="bg-gradient-to-r from-green-600 to-green-700 rounded-t-2xl px-6 py-4">
-                            <h3 class="text-xl font-bold text-white flex items-center gap-2">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"></path>
-                                </svg>
-                                Agregar Persona Rápida
-                            </h3>
-                        </div>
-                        <div class="p-6">
-                            <label class="block text-sm font-medium text-gray-700 mb-2">
-                                Nombre completo de la persona
-                            </label>
-                            <input type="text" id="quickAddInput" 
-                                   class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-all"
-                                   placeholder="Ej: Juan Pérez Gómez"
-                                   autofocus>
-                            <p class="mt-2 text-xs text-gray-500">
-                                Se creará como persona activa sin usuario asociado
-                            </p>
-                        </div>
-                        <div class="bg-gray-50 px-6 py-4 rounded-b-2xl flex gap-3 justify-end">
-                            <button onclick="document.getElementById('quickAddModal').remove()" 
-                                    class="px-5 py-2.5 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-medium">
-                                Cancelar
-                            </button>
-                            <button id="confirmAddBtn" 
-                                    class="px-5 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium flex items-center gap-2">
-                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-                                </svg>
-                                Agregar
-                            </button>
-                        </div>
-                    </div>
-                </div>
-                <style>
-                    @keyframes fadeIn {
-                        from { opacity: 0; }
-                        to { opacity: 1; }
-                    }
-                    @keyframes slideIn {
-                        from { transform: translateY(-20px) scale(0.95); opacity: 0; }
-                        to { transform: translateY(0) scale(1); opacity: 1; }
-                    }
-                    .animate-fadeIn { animation: fadeIn 0.2s ease-out; }
-                    .animate-slideIn { animation: slideIn 0.3s ease-out; }
-                </style>
-            `;
-            
-            document.body.insertAdjacentHTML('beforeend', modalHTML);
-            
-            const input = document.getElementById('quickAddInput');
-            const confirmBtn = document.getElementById('confirmAddBtn');
-            const modal = document.getElementById('quickAddModal');
-            
-            // Focus en el input
-            setTimeout(() => input.focus(), 100);
-            
-            // Cerrar con ESC
-            const handleEscape = (e) => {
-                if (e.key === 'Escape') {
-                    modal.remove();
-                    document.removeEventListener('keydown', handleEscape);
-                }
-            };
-            document.addEventListener('keydown', handleEscape);
-            
-            // Confirmar con Enter
-            input.addEventListener('keypress', function(e) {
-                if (e.key === 'Enter' && input.value.trim()) {
-                    confirmBtn.click();
-                }
-            });
-            
-            // Acción de confirmar
-            confirmBtn.addEventListener('click', function() {
-                const nombre = input.value.trim();
-                if (!nombre) {
-                    input.classList.add('border-red-500');
-                    input.focus();
-                    return;
-                }
-                
-                // Deshabilitar botón mientras procesa
-                confirmBtn.disabled = true;
-                confirmBtn.innerHTML = `
-                    <svg class="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
-                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Agregando...
-                `;
-                
-                fetch('{{ route("personas.quick-store") }}', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                    },
-                    body: JSON.stringify({ nombre: nombre })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        const option = new Option(data.persona.nombre, data.persona.id, true, true);
-                        personaSelect.add(option);
-                        personaSelect.value = data.persona.id;
-                        buscarInput.value = data.persona.nombre;
-                        
-                        // Mostrar mensaje de éxito
-                        modal.remove();
-                        const successMsg = document.createElement('div');
-                        successMsg.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 flex items-center gap-2 animate-slideIn';
-                        successMsg.innerHTML = `
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                            </svg>
-                            <span>¡Persona agregada exitosamente!</span>
-                        `;
-                        document.body.appendChild(successMsg);
-                        setTimeout(() => successMsg.remove(), 3000);
-                    } else {
-                        alert('Error al agregar persona');
-                        confirmBtn.disabled = false;
-                        confirmBtn.innerHTML = 'Agregar';
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('Error al agregar persona');
-                    confirmBtn.disabled = false;
-                    confirmBtn.innerHTML = 'Agregar';
-                });
-            });
-        });
-    });
-</script>
-@endpush
 @endsection

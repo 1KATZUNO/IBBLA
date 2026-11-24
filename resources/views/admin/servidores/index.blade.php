@@ -2,39 +2,36 @@
 
 @section('title', 'Servidores')
 @section('page-title', 'Servidores')
+@section('page-subtitle', 'Quiénes marcaron asistencia en cada culto, el reporte mensual y el código QR del culto.')
 
 @section('content')
 <div class="space-y-6">
     <!-- Cards de acceso rapido -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div class="grid grid-cols-1 gap-4 md:grid-cols-2">
         <!-- Card Reporte -->
         <a href="{{ route('admin.servidores.reporte') }}"
-           class="block bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl shadow-lg p-6 text-white hover:from-blue-600 hover:to-blue-800 transition-all transform hover:scale-[1.02]">
-            <div class="flex items-center justify-between">
-                <div>
-                    <h3 class="text-xl font-bold mb-1">Reporte de Servidores</h3>
-                    <p class="text-blue-100 text-sm">Compromisos y asistencia mensual</p>
-                </div>
-                <svg class="w-12 h-12 text-blue-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                </svg>
-            </div>
+           class="card flex items-center gap-4 p-5 transition hover:border-brand-300 hover:shadow-card-hover">
+            <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-700">
+                <x-icono nombre="reporte" class="h-6 w-6" />
+            </span>
+            <span>
+                <span class="block text-base font-semibold text-gray-900">Reporte de Servidores</span>
+                <span class="block text-sm text-gray-500">Compromisos y asistencia mensual</span>
+            </span>
         </a>
 
         <!-- Card QR -->
         <div x-data="{ open: false }">
-            <div class="block bg-gradient-to-br from-green-500 to-green-700 rounded-xl shadow-lg p-6 text-white cursor-pointer hover:from-green-600 hover:to-green-800 transition-all transform hover:scale-[1.02]"
-                 @click="open = true">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <h3 class="text-xl font-bold mb-1">Generar QR</h3>
-                        <p class="text-green-100 text-sm">Codigo QR para marcar asistencia</p>
-                    </div>
-                    <svg class="w-12 h-12 text-green-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path>
-                    </svg>
-                </div>
-            </div>
+            <button type="button" @click="open = true"
+                    class="card flex w-full items-center gap-4 p-5 text-left transition hover:border-brand-300 hover:shadow-card-hover">
+                <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand-700">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
+                </span>
+                <span>
+                    <span class="block text-base font-semibold text-gray-900">Generar QR</span>
+                    <span class="block text-sm text-gray-500">Código QR para marcar asistencia</span>
+                </span>
+            </button>
 
             <!-- Modal QR -->
             <div x-show="open" x-cloak
@@ -62,8 +59,7 @@
                         </select>
                     </div>
 
-                    <button onclick="abrirQR()"
-                            class="w-full px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-semibold flex items-center justify-center gap-2">
+                    <button onclick="abrirQR()" class="btn-success w-full">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
@@ -80,7 +76,7 @@
         <form method="GET" action="{{ route('admin.servidores.index') }}" class="flex items-end gap-4">
             <div class="flex-1">
                 <label for="culto_id" class="block text-sm font-medium text-gray-700 mb-2">Culto</label>
-                <select name="culto_id" id="culto_id" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                <select name="culto_id" id="culto_id" class="w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
                     @foreach($cultos as $culto)
                         <option value="{{ $culto->id }}" {{ $cultoSeleccionado && $culto->id == $cultoSeleccionado->id ? 'selected' : '' }}>
                             {{ $culto->fecha->format('d/m/Y') }} - {{ $culto->tipo_nombre }}
@@ -88,7 +84,7 @@
                     @endforeach
                 </select>
             </div>
-            <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+            <button type="submit" class="btn-primary">
                 Ver Asistencia
             </button>
         </form>
@@ -104,7 +100,7 @@
                 @endif
             </h3>
         </div>
-        <div class="overflow-x-auto">
+        <div class="table-scroll">
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>
@@ -119,8 +115,8 @@
                     <tr class="hover:bg-gray-50">
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="flex items-center">
-                                <div class="flex-shrink-0 h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
-                                    <span class="text-blue-600 font-semibold text-sm">{{ strtoupper(substr($servidor->name, 0, 1)) }}</span>
+                                <div class="flex-shrink-0 h-8 w-8 rounded-full bg-brand-100 flex items-center justify-center">
+                                    <span class="text-brand-600 font-semibold text-sm">{{ strtoupper(substr($servidor->name, 0, 1)) }}</span>
                                 </div>
                                 <div class="ml-3">
                                     <div class="text-sm font-medium text-gray-900">{{ $servidor->name }}</div>

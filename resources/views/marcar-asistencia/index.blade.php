@@ -8,7 +8,7 @@
     <!-- Boton principal -->
     <div class="flex justify-center">
         <button @click="abrirScanner()"
-                class="px-8 py-6 bg-gradient-to-br from-green-500 to-green-700 text-white rounded-2xl shadow-lg hover:from-green-600 hover:to-green-800 transition-all transform hover:scale-[1.02] flex flex-col items-center gap-3">
+                class="px-8 py-6 bg-green-600 text-white rounded-2xl shadow-lg hover:from-green-600 hover:to-green-800 transition-all transform hover:scale-[1.02] flex flex-col items-center gap-3">
             <svg class="w-16 h-16" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path>
             </svg>
@@ -17,15 +17,26 @@
         </button>
     </div>
 
+    <!-- Si la camara falla antes de abrir el lector, el error se mostraba dentro del modal cerrado y no se veia nada -->
+    <div x-show="resultado === 'error' && !showScanner" x-cloak class="max-w-lg mx-auto alert-error flex items-start gap-3" role="alert">
+        <svg class="w-6 h-6 text-red-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
+        </svg>
+        <div>
+            <p class="font-semibold">No se pudo abrir la camara</p>
+            <p class="text-sm" x-text="mensaje"></p>
+        </div>
+    </div>
+
     <!-- Modal Scanner QR -->
     <div x-show="showScanner" x-cloak
          class="fixed inset-0 z-50 flex items-center justify-center bg-black/60"
          x-transition>
         <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full mx-4 overflow-hidden">
             <!-- Header -->
-            <div class="bg-gradient-to-r from-green-500 to-green-700 px-6 py-4 flex items-center justify-between">
+            <div class="bg-green-600 px-6 py-4 flex items-center justify-between">
                 <h3 class="text-lg font-bold text-white">Escanear QR</h3>
-                <button @click="cerrarScanner()" class="text-white/80 hover:text-white">
+                <button type="button" @click="cerrarScanner()" class="btn-icon text-white/80 hover:text-white hover:bg-white/10" aria-label="Cerrar lector">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                     </svg>
@@ -90,7 +101,7 @@
                     @forelse($historial as $registro)
                     <tr class="hover:bg-gray-50">
                         <td class="px-6 py-4 whitespace-nowrap text-sm">
-                            <span class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                            <span class="px-2 py-1 text-xs font-semibold rounded-full bg-brand-100 text-brand-800">
                                 {{ $registro->culto ? $registro->culto->tipo_nombre : 'N/A' }}
                             </span>
                         </td>

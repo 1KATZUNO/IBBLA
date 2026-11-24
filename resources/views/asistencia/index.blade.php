@@ -3,20 +3,15 @@
 @section('title', tenant_title('Asistencia'))
 @section('page-title', 'Registro de Asistencia')
 
+@section('page-subtitle', 'Registra la asistencia de cada culto y ciérrala cuando esté completa.')
+
+@section('page-actions')
+    <a href="{{ route('asistencia.create') }}" class="btn-primary">+ Nueva Asistencia</a>
+@endsection
+
 @section('content')
 <div class="space-y-6">
-    <!-- Mensajes de éxito/error -->
-    @if(session('success'))
-    <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative" role="alert">
-        <span class="block sm:inline">{{ session('success') }}</span>
-    </div>
-    @endif
-    
-    @if(session('error'))
-    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
-        <span class="block sm:inline">{{ session('error') }}</span>
-    </div>
-    @endif
+    {{-- Los mensajes de exito/error los muestra el layout (antes salian dos veces) --}}
 
     <!-- Filtros -->
     <div class="bg-white rounded-lg shadow p-6">
@@ -24,7 +19,7 @@
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                     <label for="mes" class="block text-sm font-medium text-gray-700 mb-2">Mes</label>
-                    <select name="mes" id="mes" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    <select name="mes" id="mes" class="w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
                         <option value="todos" {{ request('mes', 'todos') == 'todos' ? 'selected' : '' }}>Todos los meses</option>
                         <option value="1" {{ request('mes') == '1' ? 'selected' : '' }}>Enero</option>
                         <option value="2" {{ request('mes') == '2' ? 'selected' : '' }}>Febrero</option>
@@ -42,7 +37,7 @@
                 </div>
                 <div>
                     <label for="año" class="block text-sm font-medium text-gray-700 mb-2">Año</label>
-                    <select name="año" id="año" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    <select name="año" id="año" class="w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
                         <option value="todos" {{ request('año', 'todos') == 'todos' ? 'selected' : '' }}>Todos los años</option>
                         @for($i = date('Y'); $i >= 2020; $i--)
                             <option value="{{ $i }}" {{ request('año') == $i ? 'selected' : '' }}>{{ $i }}</option>
@@ -50,10 +45,10 @@
                     </select>
                 </div>
                 <div class="flex items-end gap-2">
-                    <button type="submit" class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+                    <button type="submit" class="btn-primary flex-1">
                         Filtrar
                     </button>
-                    <a href="{{ route('asistencia.index') }}" class="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors">
+                    <a href="{{ route('asistencia.index') }}" class="btn-secondary">
                         Limpiar
                     </a>
                 </div>
@@ -61,88 +56,85 @@
         </form>
     </div>
 
-    <div class="flex justify-end">
-        <a href="{{ route('asistencia.create') }}" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
-            + Nueva Asistencia
-        </a>
-    </div>
-
     <div class="bg-white rounded-lg shadow overflow-hidden">
-        <div class="overflow-x-auto">
+        <div class="table-scroll">
         <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-gray-50">
                 <tr>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tipo Culto</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total Asistencia</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase hidden sm:table-cell">Capilla</th>
-                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase hidden sm:table-cell">Clases</th>
-                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Acciones</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tipo Culto</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total Asistencia</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase hidden xl:table-cell">Capilla</th>
+                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase hidden xl:table-cell">Clases</th>
+                    <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Acciones</th>
                 </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
                 @forelse($cultos as $culto)
                 <tr class="hover:bg-gray-50">
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    <td class="px-4 py-3 whitespace-nowrap text-sm font-medium text-gray-900">
                         {{ $culto->fecha->format('d/m/Y') }}
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm">
-                        <span class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                    <td class="px-4 py-3 whitespace-nowrap text-sm">
+                        <span class="px-2 py-1 text-xs font-semibold rounded-full bg-brand-100 text-brand-800">
                             {{ ucfirst($culto->tipo_culto) }}
                         </span>
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm">
+                    <td class="px-4 py-3 whitespace-nowrap text-sm">
                         @if($culto->asistencia)
                             <span class="text-lg font-bold text-green-600">{{ $culto->asistencia->total_asistencia }}</span>
                         @else
                             <span class="text-sm text-gray-400">Sin registro</span>
                         @endif
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm hidden sm:table-cell text-gray-500">
+                    <td class="px-4 py-3 whitespace-nowrap text-sm hidden xl:table-cell text-gray-500">
                         @if($culto->asistencia)
                             {{ $culto->asistencia->getTotalCapilla() }}
                         @else
                             -
                         @endif
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm hidden sm:table-cell text-gray-500">
+                    <td class="px-4 py-3 whitespace-nowrap text-sm hidden xl:table-cell text-gray-500">
                         @if($culto->asistencia)
                             {{ $culto->asistencia->getTotalClases() }}
                         @else
                             -
                         @endif
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <td class="px-4 py-2 whitespace-nowrap text-right text-sm font-medium">
                         @if($culto->asistencia)
                             @if(!$culto->asistencia->cerrado)
                             <!-- Desktop actions -->
-                            <div class="hidden sm:flex sm:items-center sm:justify-end sm:gap-3">
-                                <a href="{{ route('asistencia.edit', $culto->asistencia) }}" class="text-blue-600 hover:text-blue-900">Editar</a>
-                                <button type="button" onclick="mostrarModalCerrarAsistencia({{ $culto->asistencia->id }})" class="text-orange-600 hover:text-orange-900 flex items-center gap-1">
-                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <div class="hidden sm:flex sm:items-center sm:justify-end sm:gap-1">
+                                <a href="{{ route('asistencia.edit', $culto->asistencia) }}" class="btn-row text-brand-700 hover:bg-brand-50">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
+                                    Editar
+                                </a>
+                                <button type="button" onclick="mostrarModalCerrarAsistencia({{ $culto->asistencia->id }})" class="btn-row text-orange-700 hover:bg-orange-50">
+                                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                                         <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"></path>
                                     </svg>
                                     Cerrar
                                 </button>
                                 @if(in_array(auth()->user()->rol, ['admin', 'asistente']))
-                                <button type="button" onclick="mostrarModalEliminar({{ $culto->asistencia->id }}, '{{ $culto->fecha }}')" class="text-red-600 hover:text-red-900">
-                                    Eliminar
+                                <button type="button" onclick="mostrarModalEliminar({{ $culto->asistencia->id }}, @js($culto->fecha->format('d/m/Y')))" class="btn-icon text-red-600 hover:bg-red-50 hover:text-red-700" aria-label="Eliminar asistencia del {{ $culto->fecha->format('d/m/Y') }}" title="Eliminar">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                                 </button>
                                 @endif
                             </div>
                             
                             <!-- Mobile dropdown -->
                             <div class="relative sm:hidden">
-                                <button type="button" onclick="toggleDropdown({{ $culto->asistencia->id }})" class="p-2 hover:bg-gray-100 rounded-full">
+                                <button type="button" onclick="toggleDropdown({{ $culto->asistencia->id }})" class="btn-icon rounded-full" aria-label="Acciones de la asistencia">
                                     <svg class="w-5 h-5 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
                                         <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"></path>
                                     </svg>
                                 </button>
                                 <div id="dropdown-{{ $culto->asistencia->id }}" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 border border-gray-200">
                                     <div class="py-1">
-                                        <a href="{{ route('asistencia.edit', $culto->asistencia) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50">
+                                        <a href="{{ route('asistencia.edit', $culto->asistencia) }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-brand-50">
                                             <span class="flex items-center gap-2">
-                                                <svg class="w-4 h-4 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
+                                                <svg class="w-4 h-4 text-brand-600" fill="currentColor" viewBox="0 0 20 20">
                                                     <path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z"></path>
                                                     <path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd"></path>
                                                 </svg>
@@ -158,7 +150,7 @@
                                             </span>
                                         </button>
                                         @if(in_array(auth()->user()->rol, ['admin', 'asistente']))
-                                        <button type="button" onclick="mostrarModalEliminar({{ $culto->asistencia->id }}, '{{ $culto->fecha }}'); toggleDropdown({{ $culto->asistencia->id }})" class="w-full text-left block px-4 py-2 text-sm text-gray-700 hover:bg-red-50">
+                                        <button type="button" onclick="mostrarModalEliminar({{ $culto->asistencia->id }}, @js($culto->fecha->format('d/m/Y'))); toggleDropdown({{ $culto->asistencia->id }})" class="w-full text-left block px-4 py-3 text-sm text-gray-700 hover:bg-red-50">
                                             <span class="flex items-center gap-2">
                                                 <svg class="w-4 h-4 text-red-600" fill="currentColor" viewBox="0 0 20 20">
                                                     <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clip-rule="evenodd"></path>
@@ -178,22 +170,23 @@
                             </form>
                             @endif
                             @else
-                            <span class="text-gray-400 text-xs flex items-center justify-end gap-1">
-                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                            <span class="text-gray-500 text-sm flex items-center justify-end gap-1">
+                                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
                                     <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"></path>
                                 </svg>
                                 Cerrado
                             </span>
                             @endif
                         @else
-                            <a href="{{ route('asistencia.create', ['culto_id' => $culto->id]) }}" class="text-green-600 hover:text-green-900">Registrar</a>
+                            <a href="{{ route('asistencia.create', ['culto_id' => $culto->id]) }}" class="btn-row text-green-800 bg-green-50 hover:bg-green-100">+ Registrar</a>
                         @endif
                     </td>
                 </tr>
                 @empty
                 <tr>
                     <td colspan="6" class="px-6 py-12 text-center text-gray-500">
-                        No hay cultos disponibles
+                        <p>No hay cultos en este periodo.</p>
+                        <p class="text-sm mt-1">Cambia el mes o el año del filtro, o pide al administrador que cree el culto.</p>
                     </td>
                 </tr>
                 @endforelse
@@ -203,7 +196,8 @@
     </div>
 
     <div class="mt-4">
-        {{ $cultos->links() }}
+        {{-- withQueryString: al cambiar de pagina se mantiene el filtro de mes/anio --}}
+        {{ $cultos->withQueryString()->links() }}
     </div>
 
     <!-- Lista de Asistencias Cerradas (Archivo) -->
@@ -218,7 +212,7 @@
             <span class="px-3 py-1 bg-gray-200 text-gray-700 rounded-full text-sm font-semibold">{{ $asistenciasCerradas->count() }}</span>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
             @foreach($asistenciasCerradas as $asistencia)
             <div class="bg-white rounded-lg shadow hover:shadow-lg transition-shadow border border-gray-200">
                 <div class="p-5">
@@ -238,7 +232,7 @@
                     <div class="bg-gray-50 rounded-lg p-3 mb-3">
                         <div class="flex justify-between items-center mb-2">
                             <span class="text-xs text-gray-600">Total Asistencia</span>
-                            <span class="text-lg font-bold text-blue-600">{{ $asistencia->total_asistencia }}</span>
+                            <span class="text-lg font-bold text-brand-600">{{ $asistencia->total_asistencia }}</span>
                         </div>
                         <div class="grid grid-cols-2 gap-2 text-xs text-gray-600">
                             <div class="flex justify-between">
@@ -260,7 +254,7 @@
                     </div>
 
                     <div class="flex gap-2">
-                        <a href="{{ route('asistencia.show', $asistencia) }}" class="flex-1 text-center px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors">
+                        <a href="{{ route('asistencia.show', $asistencia) }}" class="btn-secondary flex-1">
                             <svg class="w-4 h-4 inline mr-1" fill="currentColor" viewBox="0 0 20 20">
                                 <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"></path>
                                 <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"></path>
@@ -350,11 +344,11 @@ document.addEventListener('click', function(event) {
 
 <!-- Modal: Confirmar Eliminación -->
 <div id="modalEliminar" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+    <div class="relative top-4 sm:top-20 mx-4 sm:mx-auto p-5 border w-auto sm:w-full max-w-md shadow-lg rounded-md bg-white">
         <div class="mt-3">
             <div class="flex items-center justify-between mb-4">
                 <h3 class="text-lg font-semibold text-red-900">⚠️ Eliminar Asistencia</h3>
-                <button onclick="cerrarModalEliminar()" class="text-gray-400 hover:text-gray-600">
+                <button type="button" onclick="cerrarModalEliminar()" class="btn-icon" aria-label="Cerrar">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                     </svg>
@@ -367,15 +361,15 @@ document.addEventListener('click', function(event) {
                 </p>
             </div>
 
-            <div class="flex justify-end gap-3">
+            <div class="flex flex-wrap justify-end gap-3">
                 <button type="button" 
                         onclick="cerrarModalEliminar()"
-                        class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+                        class="btn-secondary">
                     Cancelar
                 </button>
                 <button type="button" 
                         onclick="confirmarEliminacion()"
-                        class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">
+                        class="btn-danger">
                     Sí, Eliminar
                 </button>
             </div>
@@ -385,11 +379,11 @@ document.addEventListener('click', function(event) {
 
 <!-- Modal: Cerrar Asistencia -->
 <div id="modalCerrarAsistencia" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+    <div class="relative top-4 sm:top-20 mx-4 sm:mx-auto p-5 border w-auto sm:w-full max-w-md shadow-lg rounded-md bg-white">
         <div class="mt-3">
             <div class="flex items-center justify-between mb-4">
                 <h3 class="text-lg font-semibold text-orange-900">🔒 Cerrar Asistencia</h3>
-                <button onclick="cerrarModalCerrarAsistencia()" class="text-gray-400 hover:text-gray-600">
+                <button type="button" onclick="cerrarModalCerrarAsistencia()" class="btn-icon" aria-label="Cerrar">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
                     </svg>
@@ -405,15 +399,15 @@ document.addEventListener('click', function(event) {
                 </p>
             </div>
 
-            <div class="flex justify-end gap-3">
+            <div class="flex flex-wrap justify-end gap-3">
                 <button type="button" 
                         onclick="cerrarModalCerrarAsistencia()"
-                        class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+                        class="btn-secondary">
                     Cancelar
                 </button>
                 <button type="button" 
                         onclick="confirmarCerrarAsistencia()"
-                        class="px-4 py-2 bg-orange-600 text-white rounded-md hover:bg-orange-700">
+                        class="btn-warning">
                     Sí, Cerrar
                 </button>
             </div>

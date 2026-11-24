@@ -15,6 +15,7 @@ class OfrendaSuelta extends Model
         'moneda',
         'tipo_cambio_venta',
         'metodo_pago',
+        'descripcion',
     ];
 
     protected $casts = [
