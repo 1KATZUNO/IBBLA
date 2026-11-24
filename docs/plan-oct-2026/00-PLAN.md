@@ -212,3 +212,13 @@ Del lider del proyecto (David):
   Al GO: merge a main + tag v2026.11.05-e1 + push; en Hostinger `bash deploy/hostinger.sh --tag v2026.11.05-e1`
   (hay migraciones: permisos_edicion, whatsapp, audit_logs.tenant_id...), luego `php artisan
   compromisos:sincronizar`, `php artisan ibbla:verificar` y cambiar las contrasenas del seeder si siguen.
+- 2026-11-24: CIERRE DE E1. Suite completa en integracion/oct-2026 (c270e0b): 839 tests, 14 fallos = la linea
+  base de Breeze (Auth/*, ProfileTest, ExampleTest; RegistrationTest ya no existe por QE-004). Correr con
+  `-d memory_limit=1G -d max_execution_time=0` (en Windows el limite de 180 s aborta la suite al 95 %).
+  Merge a main con tag `v2026.11.24-e1` (fecha real del cierre) y push de main, integracion y tags.
+  Deploy por David: `cd ~/domains/ibbla.eu/public_html && git fetch --all --tags && bash deploy/hostinger.sh --tag v2026.11.24-e1 && php artisan compromisos:sincronizar && php artisan ibbla:verificar`
+  (el script respalda la BD antes de migrar); despues cambiar las contrasenas del seeder, confirmar
+  QUEUE_CONNECTION=sync y el cron de schedule:run, y sembrar los 30 ministerios cuando llegue la lista.
+  E2-E4 arrancan de inmediato con los briefs de 05-BRIEFS-E2.md (equipos R reportes 3b, F pendientes de QA,
+  G guia y ambiente QA; luego Q QA integral) en worktrees reportes-3b (8121, ibbla_r3b), qa-pendientes
+  (8122, ibbla_fix) y guia-ambiente-qa (8123, ibbla_gqa), ya armados con VolumenDevSeeder.
