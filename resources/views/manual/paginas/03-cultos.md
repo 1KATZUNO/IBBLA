@@ -31,7 +31,7 @@ La lista muestra los cultos del más reciente al más antiguo, de 20 en 20: fech
 | **1. + Nuevo Culto** | Abre el formulario para crear un culto. | Administrador | Al guardar vuelves a la lista con el mensaje «Culto registrado correctamente». |
 | **2. Ver** | Abre el recuento de ese culto con sus sobres y totales. | Administrador | Ves la misma pantalla de *Recuento y sobres* con ese culto seleccionado. |
 | **3. Editar** | Cambia la fecha, la hora, el tipo o las notas. | Administrador | Al guardar vuelves a la lista con «Culto actualizado correctamente». |
-| **4. Eliminar** | Elimina el culto. | Administrador | Pide confirmación. **Se borran también sus sobres, su dinero suelto, sus egresos, su asistencia y sus totales.** |
+| **4. Eliminar culto** | Elimina el culto. | Administrador | Pide confirmación. Si el culto ya tiene sobres o está cerrado, además exige escribir un **Motivo (obligatorio)**, marcar que entiendes lo que se borra y queda en la auditoría. **Se borran también sus sobres, su dinero suelto, sus egresos, su asistencia y sus totales.** |
 
 > **Cuidado:** eliminar un culto no se puede deshacer y se lleva todo lo registrado en él. Si solo te equivocaste en la fecha, usa **Editar**.
 
