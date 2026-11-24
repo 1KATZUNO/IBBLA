@@ -20,3 +20,9 @@ Schedule::command('exchange:fetch')->dailyAt('18:00')->timezone('America/Costa_R
 Schedule::command('reporte:enviar-mensual')
     ->monthlyOn(1, '08:00')
     ->timezone('America/Costa_Rica');
+
+// QE-009: avisos de WhatsApp automáticos, fuera de cualquier petición. Corre cada minuto; si una corrida
+// se alarga (proveedor lento) la siguiente no se monta encima (el candado vence a los 5 minutos).
+Schedule::command('whatsapp:enviar-pendientes --max-segundos=50')
+    ->everyMinute()
+    ->withoutOverlapping(5);
