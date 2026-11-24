@@ -202,6 +202,17 @@ Route::middleware(['auth', 'role:admin,tesorero'])->prefix('reportes')->name('re
     Route::get('/cumplimiento/pdf', [App\Http\Controllers\Reportes\CumplimientoController::class, 'pdf'])->name('cumplimiento.pdf');
     Route::get('/cumplimiento/excel', [App\Http\Controllers\Reportes\CumplimientoController::class, 'excel'])->name('cumplimiento.excel');
 
+    // Reporte de cultos (HU-R10): por rango o cultos elegidos y tipo; pantalla, PDF (?accion=ver|descargar) y Excel
+    Route::get('/cultos', [App\Http\Controllers\Reportes\CultosController::class, 'index'])->name('cultos');
+    Route::get('/cultos/pdf', [App\Http\Controllers\Reportes\CultosController::class, 'pdf'])->name('cultos.pdf');
+    Route::get('/cultos/excel', [App\Http\Controllers\Reportes\CultosController::class, 'excel'])->name('cultos.excel');
+
+    // Reporte de ingresos (HU-R11): por categoria y metodo contra el periodo anterior. Reemplaza la pantalla,
+    // el PDF y el Excel de ingresos viejos (sus rutas redirigen aqui con las mismas fechas).
+    Route::get('/ingresos', [App\Http\Controllers\Reportes\IngresosController::class, 'index'])->name('ingresos');
+    Route::get('/ingresos/pdf', [App\Http\Controllers\Reportes\IngresosController::class, 'pdf'])->name('ingresos.pdf');
+    Route::get('/ingresos/excel', [App\Http\Controllers\Reportes\IngresosController::class, 'excel'])->name('ingresos.excel');
+
     // Estados de cuenta de un grupo (HU-R5): pantalla, PDF con portada e indice, ZIP con un PDF por persona y Excel
     Route::get('/estados-de-cuenta', [App\Http\Controllers\Reportes\EstadosCuentaController::class, 'index'])->name('estados-cuenta');
     Route::get('/estados-de-cuenta/pdf', [App\Http\Controllers\Reportes\EstadosCuentaController::class, 'pdf'])->name('estados-cuenta.pdf');
