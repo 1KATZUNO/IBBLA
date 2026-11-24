@@ -177,12 +177,15 @@
             : (chkAnonimo.checked
                 ? 'Sin persona: se guarda como <strong class="text-red-700">Anónimo</strong>'
                 : 'Elige a la persona en la lista (o marca «Sobre anónimo»).');
-        // Nombre grande junto a Guardar: ANÓNIMO en rojo si no hay persona
+        // Nombre grande junto a Guardar: "Sin persona" en gris mientras no se elige a nadie;
+        // ANÓNIMO en rojo solo si se marco «Sobre anónimo» (QE-014)
         if (barra) {
-            barra.textContent = persona ? persona.nombre : 'ANÓNIMO';
-            barra.dataset.anonimo = persona ? '0' : '1';
-            barra.classList.toggle('text-red-600', !persona);
-            barra.classList.toggle('text-gray-900', !!persona);
+            const estadoBarra = persona ? 'persona' : (chkAnonimo.checked ? 'anonimo' : 'vacio');
+            barra.textContent = persona ? persona.nombre : (estadoBarra === 'anonimo' ? 'ANÓNIMO' : 'Sin persona');
+            barra.dataset.estado = estadoBarra;
+            barra.classList.toggle('text-gray-900', estadoBarra === 'persona');
+            barra.classList.toggle('text-red-600', estadoBarra === 'anonimo');
+            barra.classList.toggle('text-gray-400', estadoBarra === 'vacio');
         }
     }
     function personaElegida() {
@@ -237,10 +240,11 @@
         if (chkAnonimo.checked) { chkAnonimo.checked = false; pintarEstado(null); }
 
         resultados = personas.filter(p => normalizar(p.nombre).includes(texto) || (p.pin && String(p.pin) === texto)).slice(0, 8);
+        // Nombre, PIN y telefono en cada resultado: hay homonimos (QE-014)
         lista.innerHTML = resultados.map((p, i) =>
             '<li id="opcion-persona-' + i + '" role="option" aria-selected="false" data-indice="' + i + '" class="flex items-center justify-between gap-3 min-h-[44px] px-3 py-2 cursor-pointer hover:bg-blue-50">' +
             '<span class="text-sm text-gray-900">' + escapar(p.nombre) + (p.inactiva ? ' <span class="text-xs text-gray-500">(inactiva)</span>' : '') + '</span>' +
-            (p.pin ? '<span class="text-xs text-gray-500">PIN ' + escapar(p.pin) + '</span>' : '') + '</li>'
+            '<span class="shrink-0 text-right text-xs text-gray-500">' + [p.pin ? 'PIN ' + escapar(p.pin) : '', p.telefono ? 'Tel. ' + escapar(p.telefono) : ''].filter(Boolean).join(' · ') + '</span></li>'
         ).join('') + '<li role="option" aria-selected="false" data-nueva="1" id="opcion-persona-nueva" class="flex items-center min-h-[44px] px-3 py-2 cursor-pointer text-sm font-medium text-green-800 hover:bg-green-50">+ Crear «' + escapar(buscador.value.trim()) + '» como persona nueva</li>';
         lista.classList.remove('hidden');
         buscador.setAttribute('aria-expanded', 'true');
@@ -250,7 +254,10 @@
     buscador.addEventListener('input', buscar);
     buscador.addEventListener('keydown', function (e) {
         const opciones = lista.querySelectorAll('[role="option"]');
-        if (e.key === 'ArrowDown' && !lista.classList.contains('hidden')) { e.preventDefault(); marcar(Math.min(marcado + 1, opciones.length - 1)); }
+        // Con resultados, las flechas recorren solo las personas: "Crear … como persona nueva" se elige
+        // con el raton o con "+ Nueva persona", nunca por una flecha de mas (QE-014, evita duplicados)
+        const ultimo = resultados.length ? resultados.length - 1 : opciones.length - 1;
+        if (e.key === 'ArrowDown' && !lista.classList.contains('hidden')) { e.preventDefault(); marcar(Math.min(marcado + 1, ultimo)); }
         else if (e.key === 'ArrowUp' && !lista.classList.contains('hidden')) { e.preventDefault(); marcar(Math.max(marcado - 1, 0)); }
         // Escape cierra la lista sin borrar lo escrito (en un campo de busqueda el navegador lo borraria)
         else if (e.key === 'Escape') { e.preventDefault(); cerrarLista(); }
