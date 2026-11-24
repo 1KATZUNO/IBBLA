@@ -84,6 +84,8 @@
                     Registros de Asistencia
                 </h3>
                 <p class="text-brand-100 text-sm mt-1">Lista completa de cultos y asistencias registradas</p>
+                <a href="{{ route('ingresos-asistencia.asistencia-clases', array_filter(['fecha_inicio' => request('fecha_inicio'), 'fecha_fin' => request('fecha_fin')])) }}"
+                   class="inline-flex items-center min-h-[44px] text-sm text-white underline">Ver la asistencia por clase de estas fechas</a>
             </div>
             <div class="flex gap-2">
                 <a href="{{ route('ingresos-asistencia.pdf-asistencia', ['fecha_inicio' => request('fecha_inicio'), 'fecha_fin' => request('fecha_fin')]) }}"
@@ -150,7 +152,9 @@
                     <td class="px-6 py-2 whitespace-nowrap text-right text-sm">
                         @if($culto->asistencia)
                             <div class="flex items-center justify-end gap-1">
-                                @if(!$culto->asistencia->cerrado)
+                                @if(! auth()->user()->canAccessAsistencia())
+                                    {{-- El tesorero consulta: editar y eliminar son de quien registra la asistencia --}}
+                                @elseif(!$culto->asistencia->cerrado)
                                     <a href="{{ route('asistencia.edit', $culto->asistencia) }}" class="btn-row text-brand-700 hover:bg-brand-50">Editar</a>
                                     <form action="{{ route('asistencia.destroy', $culto->asistencia) }}" method="POST" class="inline" onsubmit="return confirm('¿Estás seguro de eliminar esta asistencia?')">
                                         @csrf
