@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Exports\AsistenciaExport;
-use App\Exports\IngresosExport;
 use App\Models\Culto;
+use App\Services\Reportes\Exportaciones\AsistenciaExcel;
+use App\Services\Reportes\Exportaciones\AsistenciaPdf;
 use App\Services\Reportes\FiltroPersonas;
 use App\Services\Reportes\PeriodoReporte;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -146,14 +146,24 @@ class IngresosAsistenciaController extends Controller
             $query->where('fecha', '<=', $request->fecha_fin);
         }
 
-        $cultos = $query->get();
+        $cultos = $query->with('serviceType')->get();
         $registroExtraTipos = \App\Models\RegistroExtraTipo::activos()->ordenados()->get();
 
-        $pdf = Pdf::loadView('pdfs.asistencia', compact('cultos', 'registroExtraTipos'));
+        // Plantilla unica (HU-R14): mismas cifras que el PDF anterior, con encabezado, totales y pie
+        $contenido = app(AsistenciaPdf::class)->generar($cultos, $registroExtraTipos, 'Reporte de asistencia', $this->periodoAsistencia($request));
         $fechaInicio = $request->filled('fecha_inicio') ? Carbon::parse($request->fecha_inicio) : ($cultos->first()?->fecha ?? now());
         $nombreArchivo = 'asistencia_'.$fechaInicio->locale('es')->isoFormat('dddd_D-M-Y');
 
-        return $pdf->download($nombreArchivo.'.pdf');
+        return $this->descargaPdf($contenido, $nombreArchivo.'.pdf');
+    }
+
+    private function descargaPdf(string $contenido, string $nombre): \Symfony\Component\HttpFoundation\Response
+    {
+        return response($contenido, 200, [
+            'Content-Type' => 'application/pdf',
+            'Content-Disposition' => \Symfony\Component\HttpFoundation\HeaderUtils::makeDisposition('attachment', $nombre, \Illuminate\Support\Str::ascii($nombre)),
+            'Content-Length' => strlen($contenido),
+        ]);
     }
 
     public function pdfAsistenciaCulto(Culto $culto)
@@ -170,7 +180,7 @@ class IngresosAsistenciaController extends Controller
         $mes = $request->get('mes');
         $año = $request->get('año');
 
-        $cultos = Culto::with(['asistencia.detallesClases.claseAsistencia', 'asistencia.registrosExtra.tipo'])
+        $cultos = Culto::with(['asistencia.detallesClases.claseAsistencia', 'asistencia.registrosExtra.tipo', 'serviceType'])
             ->whereYear('fecha', $año)
             ->whereMonth('fecha', $mes)
             ->orderBy('fecha', 'asc')
@@ -179,9 +189,10 @@ class IngresosAsistenciaController extends Controller
         $nombreMes = Carbon::createFromDate($año, $mes, 1)->locale('es')->translatedFormat('F');
         $registroExtraTipos = \App\Models\RegistroExtraTipo::activos()->ordenados()->get();
 
-        $pdf = Pdf::loadView('pdfs.asistencia-mes', compact('cultos', 'nombreMes', 'año', 'registroExtraTipos'));
+        // Plantilla unica (HU-R14): mismas cifras que el PDF anterior (pdfs/asistencia-mes)
+        $contenido = app(AsistenciaPdf::class)->generar($cultos, $registroExtraTipos, 'Reporte de asistencia - '.ucfirst($nombreMes).' '.$año, ucfirst($nombreMes).' '.$año);
 
-        return $pdf->download('asistencia_'.$nombreMes.'_'.$año.'.pdf');
+        return $this->descargaPdf($contenido, 'asistencia_'.$nombreMes.'_'.$año.'.pdf');
     }
 
     /**
@@ -200,20 +211,31 @@ class IngresosAsistenciaController extends Controller
             $query->where('fecha', '<=', $request->fecha_fin);
         }
 
-        $cultos = $query->get();
+        $cultos = $query->with('serviceType')->get();
         $registroExtraTipos = \App\Models\RegistroExtraTipo::activos()->ordenados()->get();
-        $titulo = 'Asistencias';
         $fechaInicio = $request->filled('fecha_inicio') ? Carbon::parse($request->fecha_inicio) : ($cultos->first()?->fecha ?? now());
         $nombreArchivo = 'asistencia_'.$fechaInicio->locale('es')->isoFormat('YYYY-MM-DD').'.xlsx';
 
-        return Excel::download(new AsistenciaExport($cultos, $registroExtraTipos, $titulo), $nombreArchivo);
+        // Plantilla unica (HU-R14): mismas cifras que el Excel anterior
+        return app(AsistenciaExcel::class)->generar($cultos, $registroExtraTipos, 'Reporte de asistencia', $this->periodoAsistencia($request))->descargar($nombreArchivo);
+    }
+
+    /** "Del 01/08/2026 al 31/08/2026" (o lo que se haya filtrado) para el encabezado de PDF y Excel. */
+    private function periodoAsistencia(Request $request): string
+    {
+        return match (true) {
+            $request->filled('fecha_inicio') && $request->filled('fecha_fin') => 'Del '.Carbon::parse($request->fecha_inicio)->format('d/m/Y').' al '.Carbon::parse($request->fecha_fin)->format('d/m/Y'),
+            $request->filled('fecha_inicio') => 'Desde el '.Carbon::parse($request->fecha_inicio)->format('d/m/Y'),
+            $request->filled('fecha_fin') => 'Hasta el '.Carbon::parse($request->fecha_fin)->format('d/m/Y'),
+            default => 'Todos los cultos',
+        };
     }
 
     public function excelAsistenciaMes(Request $request)
     {
         $mes = (int) $request->get('mes');
         $año = (int) $request->get('año');
-        $cultos = Culto::with(['asistencia.detallesClases.claseAsistencia', 'asistencia.registrosExtra.tipo'])
+        $cultos = Culto::with(['asistencia.detallesClases.claseAsistencia', 'asistencia.registrosExtra.tipo', 'serviceType'])
             ->whereYear('fecha', $año)
             ->whereMonth('fecha', $mes)
             ->orderBy('fecha', 'asc')
@@ -221,10 +243,10 @@ class IngresosAsistenciaController extends Controller
         $nombreMes = Carbon::createFromDate($año, $mes, 1)->locale('es')->translatedFormat('F');
         $registroExtraTipos = \App\Models\RegistroExtraTipo::activos()->ordenados()->get();
 
-        return Excel::download(
-            new AsistenciaExport($cultos, $registroExtraTipos, ucfirst($nombreMes).' '.$año),
-            'asistencia_'.strtolower($nombreMes).'_'.$año.'.xlsx'
-        );
+        // Plantilla unica (HU-R14): mismas cifras que el Excel anterior
+        return app(AsistenciaExcel::class)
+            ->generar($cultos, $registroExtraTipos, 'Reporte de asistencia - '.ucfirst($nombreMes).' '.$año, ucfirst($nombreMes).' '.$año)
+            ->descargar('asistencia_'.strtolower($nombreMes).'_'.$año.'.xlsx');
     }
 
     /** PDF de ingresos viejo: ahora es el PDF del Reporte de ingresos (HU-R11), mismas fechas. */
