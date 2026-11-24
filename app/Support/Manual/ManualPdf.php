@@ -32,6 +32,8 @@ class ManualPdf
         // El manual completo lleva decenas de capturas: DomPDF necesita mas memoria y tiempo que un PDF comun
         @ini_set('memory_limit', '512M');
         @set_time_limit(180);
+        // Si el servidor corta la peticion (Hostinger a los 10 s), el PDF igual se termina de dibujar y queda listo para la siguiente
+        @ignore_user_abort(true);
 
         if (! is_dir(dirname($ruta))) {
             mkdir(dirname($ruta), 0775, true);

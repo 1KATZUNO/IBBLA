@@ -20,6 +20,8 @@
 #                    Sin --branch ni --tag usa la rama integracion/oct-2026. Solo corre en
 #                    .../domains/qa.ibbla.eu/public_html, con APP_ENV=qa y una BD distinta de la de
 #                    produccion; chequea https://qa.ibbla.eu. Sin --qa el script no corre en la ruta de QA.
+#   --manual-pdf     Deja listo el PDF del manual de usuario (php artisan manual:pdf, ~30 s) para que nadie lo
+#                    espere al descargarlo. Con --qa se hace siempre; en produccion solo si se pide.
 #   -h, --help       Esta ayuda.
 #
 # Variables de entorno opcionales: PHP_BIN (php), COMPOSER_BIN (composer).
@@ -45,6 +47,7 @@ URL_BASE=""
 SALTAR_CHEQUEO=0
 PERMITIR_RUTA=0
 SIN_RESPALDO=0
+MANUAL_PDF=0
 
 QA=0
 RAMA_EXPLICITA=0
@@ -52,13 +55,14 @@ RUTA_QA_SUFIJO="domains/qa.ibbla.eu/public_html"
 RAMA_QA="integracion/oct-2026"
 URL_QA="https://qa.ibbla.eu"
 
-uso() { sed -n '2,27p' "$0" | sed 's/^# \{0,1\}//'; }
+uso() { sed -n '2,29p' "$0" | sed 's/^# \{0,1\}//'; }
 
 while [ $# -gt 0 ]; do
     case "$1" in
         --tag) TAG="${2:-}"; shift 2 ;;
         --branch) RAMA="${2:-}"; RAMA_EXPLICITA=1; shift 2 ;;
         --qa) QA=1; shift ;;
+        --manual-pdf) MANUAL_PDF=1; shift ;;
         --dry-run) DRY_RUN=1; shift ;;
         --maintenance) MANTENIMIENTO=1; shift ;;
         --url) URL_BASE="${2:-}"; shift 2 ;;
@@ -279,6 +283,12 @@ if [ -e public/storage ]; then
     info "public/storage ya existe."
 else
     ejecutar "$PHP_BIN" artisan storage:link || info "AVISO: storage:link fallo (revise permisos o crearlo a mano)."
+fi
+
+# --- Manual de usuario en PDF ya generado (siempre en QA; en produccion solo con --manual-pdf) ---
+if [ "$QA" -eq 1 ] || [ "$MANUAL_PDF" -eq 1 ]; then
+    paso "Manual de usuario en PDF"
+    ejecutar "$PHP_BIN" artisan manual:pdf || info "AVISO: manual:pdf fallo; el PDF se generara en la primera descarga (puede tardar)."
 fi
 
 # --- 5. Chequeo final ---
