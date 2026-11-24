@@ -147,8 +147,8 @@ class Tenant extends Model
         return [
             ['nombre' => 'Domingo AM', 'slug' => 'domingo', 'orden' => 1],
             ['nombre' => 'Domingo PM', 'slug' => 'domingo_pm', 'orden' => 2],
-            ['nombre' => 'Miercoles', 'slug' => 'miercoles', 'orden' => 3],
-            ['nombre' => 'Sabado', 'slug' => 'sabado', 'orden' => 4],
+            ['nombre' => 'Miércoles', 'slug' => 'miercoles', 'orden' => 3],
+            ['nombre' => 'Sábado', 'slug' => 'sabado', 'orden' => 4],
             ['nombre' => 'Especial', 'slug' => 'especial', 'orden' => 5],
         ];
     }

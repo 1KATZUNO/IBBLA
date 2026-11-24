@@ -84,7 +84,7 @@
                                 @endforeach
                             </div>
                             @else
-                            <p class="text-sm text-gray-400 italic">No hay maestros asignados a esta clase. Asignalos en Gestionar Personas.</p>
+                            <p class="text-sm text-gray-400 italic">No hay maestros asignados a esta clase. Asígnalos en Gestionar Personas.</p>
                             @endif
                         </div>
                         @endif
@@ -119,11 +119,11 @@
                             <x-asistencia-numero name="salvos_joven_mujer" :value="old('salvos_joven_mujer', 0)" />
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Nino</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Niño</label>
                             <x-asistencia-numero name="salvos_nino" :value="old('salvos_nino', 0)" />
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Nina</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Niña</label>
                             <x-asistencia-numero name="salvos_nina" :value="old('salvos_nina', 0)" />
                         </div>
                         </div>
@@ -157,11 +157,11 @@
                             <x-asistencia-numero name="bautismos_joven_mujer" :value="old('bautismos_joven_mujer', 0)" />
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Nino</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Niño</label>
                             <x-asistencia-numero name="bautismos_nino" :value="old('bautismos_nino', 0)" />
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Nina</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Niña</label>
                             <x-asistencia-numero name="bautismos_nina" :value="old('bautismos_nina', 0)" />
                         </div>
                         </div>
@@ -195,11 +195,11 @@
                             <x-asistencia-numero name="visitas_joven_mujer" :value="old('visitas_joven_mujer', 0)" />
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Nino</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Niño</label>
                             <x-asistencia-numero name="visitas_nino" :value="old('visitas_nino', 0)" />
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Nina</label>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Niña</label>
                             <x-asistencia-numero name="visitas_nina" :value="old('visitas_nina', 0)" />
                         </div>
                         </div>
