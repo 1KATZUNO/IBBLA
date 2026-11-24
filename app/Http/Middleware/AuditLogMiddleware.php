@@ -16,8 +16,13 @@ class AuditLogMiddleware
             $user = $request->user();
             $routeName = optional($request->route())->getName();
 
+            // QE-013: si la acción ya dejó su registro semántico (cerrar culto, firmas, borrados...),
+            // el genérico por ruta sería un duplicado.
+            $yaRegistrada = (bool) $request->attributes->get(AuditLog::ATRIBUTO_SEMANTICO);
+
             // Only log for admin routes or mutations (POST/PUT/PATCH/DELETE)
-            if ($user && in_array($user->rol, ['admin', 'tesorero'])) {
+            if ($user && ! $yaRegistrada && in_array($user->rol, ['admin', 'tesorero'])) {
+                AuditLog::$escribiendoGenerico = true;
                 AuditLog::create([
                     'user_id' => $user->id ?? null,
                     'user_name' => $user->name ?? ($user->nombre ?? null),
@@ -36,6 +41,8 @@ class AuditLogMiddleware
             }
         } catch (\Throwable $e) {
             // Don't block request on audit errors
+        } finally {
+            AuditLog::$escribiendoGenerico = false;
         }
 
         return $response;

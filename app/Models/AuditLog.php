@@ -25,7 +25,35 @@ class AuditLog extends Model
         self::ACCION_LOGIN_FALLIDO,
     ];
 
+    /**
+     * QE-013: atributo de la petición que indica que ya se escribió un registro semántico (con
+     * registrar() o un create propio). El middleware genérico `audit` lo mira y no escribe otro.
+     */
+    public const ATRIBUTO_SEMANTICO = 'auditoria.semantica';
+
+    /** true solo mientras el middleware genérico escribe su fila (esa no cuenta como semántica). */
+    public static bool $escribiendoGenerico = false;
+
     protected $table = 'audit_logs';
+
+    protected static function booted(): void
+    {
+        static::created(function () {
+            if (! static::$escribiendoGenerico && app()->bound('request')) {
+                request()->attributes->set(self::ATRIBUTO_SEMANTICO, true);
+            }
+        });
+    }
+
+    /**
+     * QE-013: lo que se ve por defecto en la pantalla de auditoría: las acciones (sin visitas GET ni
+     * los ingresos/salidas, que tienen su propio historial).
+     */
+    public function scopeSoloAcciones(Builder $query): Builder
+    {
+        return $query->where(fn ($q) => $q->whereNull('method')->orWhere('method', '<>', 'GET'))
+            ->where(fn ($q) => $q->whereNull('action')->orWhereNotIn('action', self::ACCIONES_DE_ACCESO));
+    }
 
     protected $fillable = [
         'tenant_id',

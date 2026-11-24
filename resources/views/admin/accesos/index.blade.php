@@ -244,7 +244,9 @@
                             <td class="px-4 py-3 text-sm text-gray-900">{{ $permiso->user?->name }}</td>
                             <td class="px-4 py-3 text-sm text-gray-700">{{ $permiso->descripcionAlcance($cultosPorId) }}</td>
                             <td class="px-4 py-3 text-sm text-gray-600 whitespace-nowrap">
-                                @if($permiso->revocado_at)
+                                @if($permiso->sin_cultos)
+                                    Sus cultos se eliminaron
+                                @elseif($permiso->revocado_at)
                                     Revocado el {{ $permiso->revocado_at->format('d/m/Y') }}{{ $permiso->revocadoPor ? ' por '.$permiso->revocadoPor->name : '' }}
                                 @else
                                     Venció el {{ $permiso->vence_el?->format('d/m/Y') }}

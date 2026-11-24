@@ -466,7 +466,20 @@ class RecuentoController extends Controller
         ]);
 
         // Recalcular totales finales con tipo de cambio congelado
-        $this->calculoService->recalcular($culto);
+        $totales = $this->calculoService->recalcular($culto);
+
+        // QE-013: el cierre deja su registro semántico (quién, qué culto, con qué totales).
+        AuditLog::registrar('Cerrar culto', [
+            'culto_id' => $culto->id,
+            'fecha_culto' => $culto->fecha->toDateString(),
+            'tipo_culto' => $culto->tipo_culto,
+            'cantidad_sobres' => (int) $totales->cantidad_sobres,
+            'total_general' => (float) $totales->total_general,
+            'total_general_usd' => (float) $totales->total_general_usd,
+            'total_suelto' => (float) $totales->total_suelto,
+            'total_egresos' => (float) $totales->total_egresos,
+            'tipo_cambio_venta' => $tipoCambioVenta !== null ? (float) $tipoCambioVenta : null,
+        ], 'recuento.cerrar-culto');
 
         return $this->alCulto($culto->id, 'success', 'Culto cerrado correctamente. Tipo de cambio congelado: ₡'.($tipoCambioVenta ? number_format((float) $tipoCambioVenta, 2) : 'N/A'));
     }
