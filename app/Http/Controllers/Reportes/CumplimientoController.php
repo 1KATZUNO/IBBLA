@@ -3,14 +3,16 @@
 namespace App\Http\Controllers\Reportes;
 
 use App\Http\Controllers\Controller;
-use App\Models\Ministerio;
-use App\Models\Persona;
 use App\Services\Reportes\AuditoriaReportes;
+use App\Services\Reportes\CandidatasSelector;
 use App\Services\Reportes\CumplimientoPromesasService;
+use App\Services\Reportes\EstadoCuenta;
 use App\Services\Reportes\Exportaciones\CumplimientoExcel;
 use App\Services\Reportes\Exportaciones\CumplimientoPdf;
+use App\Services\Reportes\FilaCumplimiento;
 use App\Services\Reportes\FiltroPersonas;
 use App\Services\Reportes\ReporteCumplimiento;
+use App\Services\Reportes\VistaPrevia;
 use App\Support\Reportes\EntradaPeriodo;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -28,6 +30,9 @@ use Symfony\Component\HttpFoundation\Response;
  */
 class CumplimientoController extends Controller
 {
+    /** Pestañas de la vista previa: ?ver= => estado. */
+    private const VER = ['todos' => null, 'pendiente' => EstadoCuenta::PENDIENTE, 'al-dia' => EstadoCuenta::AL_DIA, 'sin-promesa' => EstadoCuenta::SIN_PROMESA];
+
     public function __construct(
         private readonly CumplimientoPromesasService $servicio,
         private readonly AuditoriaReportes $auditoria,
@@ -37,13 +42,28 @@ class CumplimientoController extends Controller
     {
         [$reporte, $errores] = $this->reporte($request);
 
+        // Vista previa (HU-R4): las mismas filas del PDF y del Excel, filtradas por estado (?ver=),
+        // ordenadas (?orden=&dir=) y paginadas de 100 en 100 (?pagina=).
+        $ver = in_array($request->query('ver'), array_keys(self::VER), true) ? $request->query('ver') : 'todos';
+        $filas = $ver === 'todos' ? $reporte->filas : array_values(array_filter($reporte->filas, fn (FilaCumplimiento $f) => $f->estado === self::VER[$ver]));
+        $ordenEstado = [EstadoCuenta::PENDIENTE => 0, EstadoCuenta::AL_DIA => 1, EstadoCuenta::SIN_PROMESA => 2];
+        $vista = new VistaPrevia($filas, [
+            'persona' => fn (FilaCumplimiento $f) => VistaPrevia::claveNombre($f->nombre),
+            'correspondia' => fn (FilaCumplimiento $f) => $f->tienePromesa() ? $f->leCorrespondeCentimos : null,
+            'dado' => fn (FilaCumplimiento $f) => $f->haDadoCentimos,
+            'diferencia' => fn (FilaCumplimiento $f) => $f->tienePromesa() ? $f->diferenciaCentimos() : null,
+            'estado' => fn (FilaCumplimiento $f) => $ordenEstado[$f->estado],
+            'ultimo' => fn (FilaCumplimiento $f) => $f->ultimoAporte?->format('Y-m-d'),
+        ], $request, 'estado');
+
         return view('reportes.cumplimiento', [
             'reporte' => $reporte,
             'resumen' => $reporte->resumen(),
             'errores' => $errores,
             'parametros' => $this->parametros($reporte),
-            'ministerios' => Ministerio::where('activo', true)->orderBy('orden')->orderBy('nombre')->get(['id', 'nombre']),
-            'personas' => Persona::orderBy('nombre')->get(['id', 'nombre', 'activo']),
+            'selector' => app(CandidatasSelector::class)->datos($reporte->periodo),
+            'vista' => $vista,
+            'ver' => $ver,
         ]);
     }
 

@@ -22,12 +22,8 @@
         'al-dia' => ['Al día', $resumen['al_dia']],
         'sin-promesa' => ['Sin promesa', $resumen['sin_promesa']],
     ];
-    $claveGrupo = fn ($fila) => match ($fila->estado) {
-        \App\Services\Reportes\EstadoCuenta::PENDIENTE => 'pendiente',
-        \App\Services\Reportes\EstadoCuenta::AL_DIA => 'al-dia',
-        default => 'sin-promesa',
-    };
-    $seleccionadas = $filtro->grupo === \App\Services\Reportes\FiltroPersonas::SELECCION ? $filtro->personaIds : [];
+    $configSelector = $selector + ['filtros' => $filtro->filtrosRapidos(), 'elegidas' => $filtro->esSeleccion() ? $filtro->personaIds : []];
+    $rutaPantalla = 'reportes.cumplimiento';
 @endphp
 <div class="space-y-6">
 
@@ -45,7 +41,7 @@
     {{-- Filtros y exportar --}}
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
         <form method="GET" action="{{ route('reportes.cumplimiento') }}"
-              x-data="selectorPersonas(@js($personas->map(fn ($p) => ['id' => $p->id, 'nombre' => $p->nombre, 'activo' => (bool) $p->activo])->values()), @js($seleccionadas), @js($filtro->grupo))">
+              x-data="selectorPersonas(@js($configSelector))">
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div>
                     <label for="corte" class="block text-sm font-medium text-gray-700 mb-1">Fecha de corte</label>
@@ -100,47 +96,46 @@
         <p><span class="font-semibold">Corte al {{ $reporte->corteTexto() }} · {{ $filtro->descripcion() }}.</span> {{ $reporte->explicacion() }}</p>
     </div>
 
-    {{-- Tabla --}}
-    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden" x-data="{ ver: 'todos', nombre: '' }">
+    {{-- Vista previa (HU-R4): mismas filas que el PDF y el Excel, ordenable y paginada --}}
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         <div class="px-4 py-3 border-b border-gray-200 flex flex-wrap items-center gap-2">
-            <div class="flex flex-wrap gap-1" role="tablist" aria-label="Filtrar por estado">
+            <h2 class="text-base font-semibold text-gray-900 mr-2">Vista previa</h2>
+            <nav class="flex flex-wrap gap-1" aria-label="Filtrar por estado">
                 @foreach($grupos as $clave => [$etiqueta, $cuantos])
-                    <button type="button" role="tab" @click="ver = '{{ $clave }}'" :aria-selected="ver === '{{ $clave }}'"
-                            :class="ver === '{{ $clave }}' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'"
-                            class="min-h-[44px] px-4 rounded-lg text-sm font-semibold">
-                        {{ $etiqueta }} <span class="font-normal">({{ $cuantos }})</span>
-                    </button>
+                    @php $consulta = array_merge(request()->except(['pagina', 'ver']), $clave === 'todos' ? [] : ['ver' => $clave]); @endphp
+                    <a href="{{ route($rutaPantalla, $consulta) }}" @if($ver === $clave) aria-current="true" @endif
+                       class="inline-flex items-center min-h-[44px] px-4 rounded-lg text-sm font-semibold {{ $ver === $clave ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200' }}">
+                        {{ $etiqueta }} <span class="font-normal ml-1">({{ $cuantos }})</span>
+                    </a>
                 @endforeach
-            </div>
-            <input type="search" x-model="nombre" placeholder="Buscar por nombre" aria-label="Buscar por nombre"
-                   class="ml-auto w-full sm:max-w-xs min-h-[44px] rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+            </nav>
+            <p class="ml-auto text-xs text-gray-500">Toque un título de columna para ordenar.</p>
         </div>
 
         @if($reporte->filas === [])
             <div class="px-6 py-12 text-center">
                 <p class="text-gray-700 font-medium">No hay personas con promesa ni aportes para este filtro.</p>
-                <p class="text-sm text-gray-500 mt-1">Pruebe con «Todas las personas activas» o con otra fecha de corte.</p>
+                <p class="text-sm text-gray-500 mt-1">Pulse «Seleccionar todos los filtrados» con el estado «Activas», o pruebe otra fecha de corte.</p>
             </div>
         @else
             <div class="table-scroll">
                 <table class="min-w-full divide-y divide-gray-200 text-sm">
                     <thead class="bg-gray-50">
                         <tr>
-                            <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">#</th>
-                            <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nombre</th>
-                            <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase whitespace-nowrap">Le correspondía</th>
-                            <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase whitespace-nowrap">Ha dado</th>
-                            <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase">Diferencia</th>
-                            <th class="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase">Estado</th>
-                            <th class="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase whitespace-nowrap">{{ \App\Services\Reportes\FilaCumplimiento::TITULO_ULTIMO_APORTE }}</th>
-                            <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Observación</th>
+                            <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">#</th>
+                            @include('reportes._th-orden', ['columna' => 'persona', 'titulo' => 'Persona', 'ruta' => $rutaPantalla, 'alinear' => 'left'])
+                            @include('reportes._th-orden', ['columna' => 'correspondia', 'titulo' => 'Le correspondía', 'ruta' => $rutaPantalla, 'alinear' => 'right'])
+                            @include('reportes._th-orden', ['columna' => 'dado', 'titulo' => 'Ha dado', 'ruta' => $rutaPantalla, 'alinear' => 'right'])
+                            @include('reportes._th-orden', ['columna' => 'diferencia', 'titulo' => 'Diferencia', 'ruta' => $rutaPantalla, 'alinear' => 'right'])
+                            @include('reportes._th-orden', ['columna' => 'estado', 'titulo' => 'Estado', 'ruta' => $rutaPantalla, 'alinear' => 'center'])
+                            @include('reportes._th-orden', ['columna' => 'ultimo', 'titulo' => \App\Services\Reportes\FilaCumplimiento::TITULO_ULTIMO_APORTE, 'ruta' => $rutaPantalla, 'alinear' => 'center'])
+                            <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Observación</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-100">
-                        @foreach($reporte->filas as $fila)
-                        <tr class="hover:bg-gray-50"
-                            x-show="(ver === 'todos' || ver === '{{ $claveGrupo($fila) }}') && (nombre === '' || @js(mb_strtolower(\Illuminate\Support\Str::ascii($fila->nombre))).includes(nombre.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '')))">
-                            <td class="px-3 py-2 text-gray-500">{{ $loop->iteration }}</td>
+                        @forelse($vista->filas() as $i => $fila)
+                        <tr class="hover:bg-gray-50" data-persona="{{ $fila->personaId }}">
+                            <td class="px-3 py-2 text-gray-500">{{ $vista->desde() + $i }}</td>
                             <td class="px-3 py-2">
                                 @if($puedeVerPersonas)
                                     <a href="{{ route('compromisos.show', $fila->personaId) }}" class="font-medium text-gray-900 hover:text-blue-700 hover:underline whitespace-nowrap">{{ $fila->nombre }}</a>
@@ -160,22 +155,25 @@
                             <td class="px-3 py-2 text-center whitespace-nowrap text-gray-600">{{ $fila->ultimoAporteTexto() }}</td>
                             <td class="px-3 py-2 text-gray-600">{{ $fila->observacion }}</td>
                         </tr>
-                        @endforeach
+                        @empty
+                        <tr><td colspan="8" class="px-6 py-8 text-center text-gray-600">Nadie en esta pestaña. Toque «Todos» para ver la lista completa.</td></tr>
+                        @endforelse
                     </tbody>
                     @if($conPromesa !== [])
-                    <tfoot class="bg-gray-50 font-semibold" x-show="ver === 'todos' && nombre === ''">
+                    <tfoot class="bg-gray-100 font-semibold sticky bottom-0">
                         <tr>
                             <td class="px-3 py-3"></td>
-                            <td class="px-3 py-3">Total con promesa ({{ count($conPromesa) }})</td>
-                            <td class="px-3 py-3 text-right whitespace-nowrap">{{ $formato($totalCorrespondia) }}</td>
-                            <td class="px-3 py-3 text-right whitespace-nowrap">{{ $formato($totalDado) }}</td>
-                            <td class="px-3 py-3 text-right whitespace-nowrap">{{ $formato($totalDiferencia, true) }}</td>
+                            <td class="px-3 py-3">Total con promesa ({{ count($conPromesa) }} personas, todas las páginas)</td>
+                            <td class="px-3 py-3 text-right whitespace-nowrap" data-total="correspondia">{{ $formato($totalCorrespondia) }}</td>
+                            <td class="px-3 py-3 text-right whitespace-nowrap" data-total="dado">{{ $formato($totalDado) }}</td>
+                            <td class="px-3 py-3 text-right whitespace-nowrap" data-total="diferencia">{{ $formato($totalDiferencia, true) }}</td>
                             <td colspan="3"></td>
                         </tr>
                     </tfoot>
                     @endif
                 </table>
             </div>
+            @include('reportes._paginacion-vista')
         @endif
     </div>
 

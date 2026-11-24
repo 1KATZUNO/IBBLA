@@ -30,7 +30,7 @@ final class CumplimientoPromesasService
 
     public function generar(PeriodoReporte $periodo, FiltroPersonas $filtro): ReporteCumplimiento
     {
-        $resultado = $this->motor->calcular($periodo, $filtro->personas());
+        $resultado = $this->motor->calcular($periodo, $filtro->personas($periodo));
 
         $filas = [];
         $sinMovimiento = 0;
