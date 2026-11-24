@@ -70,6 +70,7 @@
     <a href="#contenido" class="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-[100] focus:rounded-lg focus:bg-white focus:px-4 focus:py-2 focus:text-sm focus:font-semibold focus:text-gray-900 focus:shadow-popover">Saltar al contenido</a>
 
     <div class="flex h-screen h-dvh flex-col overflow-hidden">
+        @include('partials.aviso-ambiente')
         @unless($esAppMovil)
             @include('layouts.partials.upbar')
         @endunless
