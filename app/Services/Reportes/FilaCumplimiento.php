@@ -9,6 +9,9 @@ use Carbon\CarbonImmutable;
  */
 final class FilaCumplimiento
 {
+    /** Rotulo de la columna en pantalla, PDF y Excel (QE-011): misma base que "Ha dado". */
+    public const TITULO_ULTIMO_APORTE = 'Último aporte a sus compromisos';
+
     /**
      * @param  array<string, array{dado: int, esperado: int}>  $meses  clave de mes => centimos (dado en categorias de compromiso, esperado de sus promesas)
      */

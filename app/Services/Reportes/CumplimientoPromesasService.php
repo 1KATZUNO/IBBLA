@@ -18,6 +18,7 @@ use Illuminate\Support\Str;
  *  - Estado por acumulado: AL DÍA si lo dado alcanza lo que correspondia (quien no dio un mes pero
  *    repuso despues esta al dia; tolerancia 1 colon); PENDIENTE si no; SIN PROMESA si no tiene
  *    promesa pero aporto en categorias de compromiso (ese monto se muestra aparte).
+ *  - Ultimo aporte a sus compromisos: misma base que "ha dado" (QE-011).
  *  - Observacion: "sin aportes en Junio", "sin aportes en N meses (Enero a Septiembre)" (3 o mas),
  *    "aporta, pero menos de lo prometido" o "adelantado".
  *  - Orden: pendientes, al dia y sin promesa; dentro de cada grupo por nombre.
@@ -73,7 +74,7 @@ final class CumplimientoPromesasService
             estado: $etiqueta,
             leCorrespondeCentimos: $estado->leCorrespondeCentimos,
             haDadoCentimos: $estado->haDadoCentimos,
-            ultimoAporte: $cuenta->ultimoAporte,
+            ultimoAporte: $cuenta->ultimoAporteACompromisos(),
             observacion: $this->observacion($etiqueta, $estado, $cuenta),
             promesa: implode(' · ', $promesas),
             meses: $meses,

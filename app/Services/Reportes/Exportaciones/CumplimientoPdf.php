@@ -21,8 +21,8 @@ class CumplimientoPdf
         ['titulo' => 'Le correspondía', 'ancho' => 2.7, 'alinear' => 'derecha'],
         ['titulo' => 'Ha dado', 'ancho' => 2.5, 'alinear' => 'derecha'],
         ['titulo' => 'Diferencia', 'ancho' => 2.5, 'alinear' => 'derecha'],
-        ['titulo' => 'Último aporte', 'ancho' => 2.1, 'alinear' => 'centro'],
-        ['titulo' => 'Observación', 'ancho' => 4.2],
+        ['titulo' => FilaCumplimiento::TITULO_ULTIMO_APORTE, 'ancho' => 3.0, 'alinear' => 'centro'],
+        ['titulo' => 'Observación', 'ancho' => 3.6],
     ];
 
     public function generar(ReporteCumplimiento $reporte): string

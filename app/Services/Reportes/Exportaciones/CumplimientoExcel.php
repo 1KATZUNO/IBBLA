@@ -79,7 +79,7 @@ class CumplimientoExcel
                 ['titulo' => 'Ha dado (al corte)', 'ancho' => 18, 'formato' => LibroExcel::MONEDA],
                 ['titulo' => 'Diferencia', 'ancho' => 16, 'formato' => LibroExcel::MONEDA],
                 ['titulo' => 'Estado', 'ancho' => 14, 'colores' => self::COLORES_ESTADO],
-                ['titulo' => 'Último aporte', 'ancho' => 14, 'formato' => LibroExcel::FECHA, 'alinear' => 'centro'],
+                ['titulo' => FilaCumplimiento::TITULO_ULTIMO_APORTE, 'ancho' => 18, 'formato' => LibroExcel::FECHA, 'alinear' => 'centro'],
                 ['titulo' => 'Observación', 'ancho' => 44],
                 ['titulo' => 'Promesa', 'ancho' => 60],
             ], $filas, ['', 'TOTAL', $correspondia, $dado, $diferencia, '', '', '', '']);
@@ -132,7 +132,7 @@ class CumplimientoExcel
         $libro->hoja('Sin promesa')->tabla([
             ['titulo' => 'Nombre', 'ancho' => 34],
             ['titulo' => 'Ha dado (al corte)', 'ancho' => 18, 'formato' => LibroExcel::MONEDA],
-            ['titulo' => 'Último aporte', 'ancho' => 14, 'formato' => LibroExcel::FECHA, 'alinear' => 'centro'],
+            ['titulo' => FilaCumplimiento::TITULO_ULTIMO_APORTE, 'ancho' => 18, 'formato' => LibroExcel::FECHA, 'alinear' => 'centro'],
         ], $filas);
     }
 }

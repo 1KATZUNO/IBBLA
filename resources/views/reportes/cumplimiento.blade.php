@@ -132,7 +132,7 @@
                             <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase whitespace-nowrap">Ha dado</th>
                             <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase">Diferencia</th>
                             <th class="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase">Estado</th>
-                            <th class="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase whitespace-nowrap">Último aporte</th>
+                            <th class="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase whitespace-nowrap">{{ \App\Services\Reportes\FilaCumplimiento::TITULO_ULTIMO_APORTE }}</th>
                             <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Observación</th>
                         </tr>
                     </thead>
