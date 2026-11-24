@@ -6,6 +6,7 @@
 @section('content')
 <div class="max-w-4xl mx-auto">
     <div class="bg-white rounded-lg shadow p-6">
+        @include('asistencia.partials.aviso-cerrada', ['modo' => 'admin'])
         <form action="{{ route('asistencia.update', $asistencia) }}" method="POST" id="asistenciaForm">
             @csrf
             @method('PUT')
@@ -244,7 +245,7 @@
                     Cancelar
                 </a>
                 <button type="submit" class="btn-primary">
-                    Actualizar Asistencia
+                    {{ $asistencia->cerrado ? 'Guardar corrección' : 'Actualizar Asistencia' }}
                 </button>
             </div>
         </form>
