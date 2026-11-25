@@ -8,7 +8,13 @@
     $montos = fn (array $fila) => collect($fila['montos'])->map(fn ($m, $col) => $titulos[$col].' '.PromesaProgramada::formatoMonto($m, $lote['moneda']))->implode(' · ');
     $ficha = fn (int $id) => $analisis['personas'][$id] ?? null;
     $decidir = collect($analisis['filas'])->whereIn('estado', [A::PARECIDO, A::NO_EXISTE]);
-    $resto = collect($analisis['filas'])->whereNotIn('estado', [A::PARECIDO, A::NO_EXISTE]);
+    $conErrores = collect($analisis['filas'])->where('estado', A::FRECUENCIA_INVALIDA);
+    $resto = collect($analisis['filas'])->whereNotIn('estado', [A::PARECIDO, A::NO_EXISTE, A::FRECUENCIA_INVALIDA]);
+    $conFrecuencia = (bool) ($lote['lectura']['con_frecuencia'] ?? false);
+    // Frecuencia de cada fila: la de su columna Frecuencia o, si no trae, la elegida al subir
+    $frecuencia = fn (array $fila) => ! empty($fila['frecuencia'])
+        ? PF::FRECUENCIAS[$fila['frecuencia']]
+        : PF::FRECUENCIAS[$lote['frecuencia']].($conFrecuencia ? ' (vacía: la elegida al subir)' : '');
     $c = $analisis['conteo'];
     $etiquetas = [
         A::CALZA => ['Calza', 'success'],
@@ -20,7 +26,11 @@
 
 @section('title', tenant_title('Revisar importación'))
 @section('page-title', 'Revisar el Excel antes de aplicar')
-@section('page-subtitle', '«'.$lote['archivo'].'» para «'.$corte->nombre.'». Montos '.mb_strtolower(PF::FRECUENCIAS[$lote['frecuencia']]).'es en '.($lote['moneda'] === 'USD' ? 'dólares' : 'colones').'. Todavía no se guardó nada.')
+@section('page-subtitle', '«'.$lote['archivo'].'» para «'.$corte->nombre.'». '
+    .($conFrecuencia
+        ? 'Cada fila con su frecuencia (si viene vacía: '.mb_strtolower(PF::FRECUENCIAS[$lote['frecuencia']]).')'
+        : 'Montos '.mb_strtolower(PF::FRECUENCIAS[$lote['frecuencia']]).'es')
+    .' en '.($lote['moneda'] === 'USD' ? 'dólares' : 'colones').'. Todavía no se guardó nada.')
 
 @section('content')
 <form method="POST" action="{{ route('promesas-futuras.importar.aplicar', $corte) }}" id="form-aplicar" class="space-y-6">
@@ -32,6 +42,9 @@
         <x-ui.resumen etiqueta="Nombre parecido" :valor="$c[A::PARECIDO]" nota="tienes que elegir" />
         <x-ui.resumen etiqueta="No existen" :valor="$c[A::NO_EXISTE]" nota="se crean (o elige)" />
         <x-ui.resumen etiqueta="Se ignoran" :valor="$c[A::SIN_MONTOS] + $c[A::REPETIDA]" nota="sin montos o repetidas" />
+        @if($c[A::FRECUENCIA_INVALIDA] > 0)
+            <x-ui.resumen etiqueta="Frecuencia con error" :valor="$c[A::FRECUENCIA_INVALIDA]" nota="corrige el archivo u omítelas" />
+        @endif
     </div>
 
     {{-- Categorías --}}
@@ -69,6 +82,31 @@
         </div>
     </div>
 
+    {{-- Filas con una frecuencia que no se entiende: no se aplican hasta corregir el archivo u omitirlas --}}
+    @if($conErrores->isNotEmpty())
+        <div class="card p-4 sm:p-6 border border-red-200">
+            <h2 class="section-title text-red-800">Filas con la frecuencia mal escrita ({{ $conErrores->count() }})</h2>
+            <p class="text-sm text-gray-700 mt-1">En la columna Frecuencia solo vale <strong>Semanal</strong>, <strong>Quincenal</strong> o <strong>Mensual</strong> (o vacía). Corrige el archivo y vuelve a subirlo, u omite estas filas.</p>
+            <div class="mt-4 divide-y divide-gray-100">
+                @foreach($conErrores as $f)
+                    @php $n = $f['fila']; @endphp
+                    <fieldset class="py-3" data-grupo="{{ $n }}">
+                        <legend class="font-medium">
+                            Fila {{ $n }}: {{ $f['nombre'] }}
+                            <x-ui.badge tipo="danger">Frecuencia no válida: «{{ $f['frecuencia_invalida'] }}»</x-ui.badge>
+                        </legend>
+                        <p class="text-xs text-gray-500">{{ $montos($f) }}</p>
+                        <label class="flex items-center gap-2 min-h-[44px]">
+                            <input type="radio" name="filas[{{ $n }}]" value="omitir" class="h-5 w-5" @checked(old("filas.$n") === 'omitir')>
+                            <span>Omitir esta fila</span>
+                        </label>
+                        @error("filas.$n")<p class="field-error">{{ $message }}</p>@enderror
+                    </fieldset>
+                @endforeach
+            </div>
+        </div>
+    @endif
+
     {{-- Personas que necesitan decisión --}}
     <div class="card p-4 sm:p-6">
         <h2 class="section-title">Personas que necesitan tu decisión ({{ $decidir->count() }})</h2>
@@ -93,7 +131,7 @@
                                 <x-ui.badge tipo="info">No existe</x-ui.badge>
                             @endif
                         </legend>
-                        <p class="text-xs text-gray-500">{{ $f['clase'] ? 'Clase '.$f['clase'].' · ' : '' }}{{ $montos($f) }}</p>
+                        <p class="text-xs text-gray-500">{{ $f['clase'] ? 'Clase '.$f['clase'].' · ' : '' }}{{ $frecuencia($f) }} · {{ $montos($f) }}</p>
                         @if(! empty($f['sugerida']))
                             <p class="text-sm text-blue-800 mt-1">Ya está en este corte: se deja como está (elegida {{ $ficha($f['sugerida'])['nombre'] }}). Cambia la opción solo si es otra persona.</p>
                         @endif
@@ -140,13 +178,14 @@
         <summary class="cursor-pointer min-h-[44px] flex items-center section-title">Ver las {{ $resto->count() }} filas que no necesitan decisión</summary>
         <div class="table-scroll mt-3">
             <table class="data-table">
-                <thead><tr><th>Fila</th><th>Nombre en el archivo</th><th>Estado</th><th class="hidden md:table-cell">Montos</th></tr></thead>
+                <thead><tr><th>Fila</th><th>Nombre en el archivo</th><th>Estado</th><th>Frecuencia</th><th class="hidden md:table-cell">Montos</th></tr></thead>
                 <tbody>
                     @foreach($resto as $f)
                         <tr>
                             <td class="tabular-nums">{{ $f['fila'] }}</td>
                             <td>{{ $f['nombre'] }}</td>
                             <td><x-ui.badge :tipo="$etiquetas[$f['estado']][1]">{{ $etiquetas[$f['estado']][0] }}</x-ui.badge>@if($f['estado'] === A::REPETIDA) <span class="text-xs text-gray-500">(fila {{ $f['primera'] }})</span>@endif</td>
+                            <td class="text-sm">{{ $frecuencia($f) }}</td>
                             <td class="hidden md:table-cell text-xs text-gray-600">{{ $montos($f) ?: '—' }}</td>
                         </tr>
                     @endforeach
