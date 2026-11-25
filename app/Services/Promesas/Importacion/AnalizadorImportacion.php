@@ -101,6 +101,17 @@ class AnalizadorImportacion
                     $fila['estado'] = $fila['candidatas'] === [] ? self::NO_EXISTE : self::PARECIDO;
                 }
             }
+            // Nombre parecido con una candidata que YA esta en el corte (la mas parecida): queda elegida por
+            // defecto, para que reimportar el mismo archivo no pida decidir otra vez ni duplique a nadie
+            $fila['sugerida'] = null;
+            if ($fila['estado'] === self::PARECIDO) {
+                foreach ($fila['candidatas'] as $id) {
+                    if ($fichas[$id]['en_corte']) {
+                        $fila['sugerida'] = $id;
+                        break;
+                    }
+                }
+            }
             $vistos[$clave] ??= $fila['fila'];
             $conteo[$fila['estado']]++;
             $filas[] = $fila;

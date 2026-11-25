@@ -246,6 +246,35 @@ class ImportacionPromesasFuturasTest extends TestCase
         }
     }
 
+    public function test_reimportar_con_nombre_parecido_ya_emparejado_no_pide_decidir_ni_duplica(): void
+    {
+        $ana = $this->persona('Ana Mora Solís');
+        $ruta = $this->excel([
+            ['Miembro', 'Clase', 'Misiones'],
+            ['Ana Mora', '', 1000],
+        ]);
+
+        // Primera vez: el nombre solo se parece y se empareja a mano
+        $this->subir($ruta);
+        $this->actingAs($this->admin)->get(route('promesas-futuras.importar.revisar', $this->corte))->assertOk()
+            ->assertDontSee('Ya está en este corte: se deja como está (elegida', false);
+        $this->actingAs($this->admin)->post(route('promesas-futuras.importar.aplicar', $this->corte), ['filas' => [2 => 'persona:'.$ana->id]])
+            ->assertSessionHas('success', fn ($m) => str_contains($m, '1 persona agregada'));
+        $antes = PromesaProgramada::orderBy('id')->get()->toArray();
+
+        // Segunda vez, sin tocar nada en la revision: la candidata que ya esta en el corte viene elegida
+        $this->subir($ruta);
+        $this->actingAs($this->admin)->get(route('promesas-futuras.importar.revisar', $this->corte))->assertOk()
+            ->assertSee('Ya está en este corte: se deja como está (elegida Ana Mora Solís)', false)
+            ->assertSee('value="persona:'.$ana->id.'" class="h-5 w-5" checked', false);
+        $this->actingAs($this->admin)->post(route('promesas-futuras.importar.aplicar', $this->corte), [])
+            ->assertSessionHasNoErrors()
+            ->assertSessionHas('success', fn ($m) => str_contains($m, '0 personas agregadas') && str_contains($m, '1 ya estaba y se dejó igual') && ! str_contains($m, 'persona nueva'));
+
+        $this->assertSame($antes, PromesaProgramada::orderBy('id')->get()->toArray());
+        $this->assertSame(1, Persona::count());
+    }
+
     public function test_columna_a_una_categoria_existente_u_omitida_y_buscar_a_alguien(): void
     {
         $beto = $this->persona('Roberto Rojas');

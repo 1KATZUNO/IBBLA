@@ -83,7 +83,7 @@
             </datalist>
             <div class="mt-4 divide-y divide-gray-100">
                 @foreach($decidir as $f)
-                    @php $n = $f['fila']; $actual = old("filas.$n", $f['estado'] === A::NO_EXISTE ? 'nueva' : null); @endphp
+                    @php $n = $f['fila']; $actual = old("filas.$n", $f['estado'] === A::NO_EXISTE ? 'nueva' : (! empty($f['sugerida']) ? 'persona:'.$f['sugerida'] : null)); @endphp
                     <fieldset class="py-4" data-grupo="{{ $n }}">
                         <legend class="font-medium">
                             Fila {{ $n }}: {{ $f['nombre'] }}
@@ -94,6 +94,9 @@
                             @endif
                         </legend>
                         <p class="text-xs text-gray-500">{{ $f['clase'] ? 'Clase '.$f['clase'].' · ' : '' }}{{ $montos($f) }}</p>
+                        @if(! empty($f['sugerida']))
+                            <p class="text-sm text-blue-800 mt-1">Ya está en este corte: se deja como está (elegida {{ $ficha($f['sugerida'])['nombre'] }}). Cambia la opción solo si es otra persona.</p>
+                        @endif
                         <div class="mt-2 grid gap-1">
                             @foreach($f['candidatas'] as $id)
                                 @php $p = $ficha($id); @endphp
