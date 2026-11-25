@@ -305,3 +305,11 @@ Del lider del proyecto (David):
   **Yo Creo 2030** (no se crea categoria ni se renombra); los montos son semanales; los nombres dudosos los marca
   el en `Documents/IBBLA-respaldos/nombres-por-revisar-promesas-2027.xlsx` (69 calzan solos, 44 parecidos, 20
   posibles, 2 sin parecido) y con eso el lider crea el corte de enero 2027 y carga el archivo.
+- 2026-11-25 (09:35 CR): CORTE «PROMESAS 2027» CARGADO EN PRODUCCION (id 2, inicia el 01/01/2027, programado).
+  David devolvio el Excel de nombres con sus decisiones (66 filas: 45 eran una persona existente, 21 personas
+  nuevas, ninguna omitida). Carga asistida por el lider con los mismos servicios del importador: 135 personas,
+  531 promesas programadas semanales en colones, 21 personas creadas, ninguna categoria nueva (la columna
+  Construccion fue a Yo Creo 2030). Suma de montos del Excel = suma cargada (899.265,40 semanales). Antes se
+  ensayo sobre una copia fresca de produccion y en produccion primero en seco; la huella de cifras de hoy quedo
+  identica y las 618 promesas vigentes no cambiaron. Queda en auditoria como importacion asistida por soporte.
+  El 1 de enero el corte se activa solo: las promesas de 2026 pasan al historial y rigen las nuevas.
