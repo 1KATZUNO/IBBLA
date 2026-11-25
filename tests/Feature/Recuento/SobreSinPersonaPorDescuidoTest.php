@@ -122,7 +122,7 @@ class SobreSinPersonaPorDescuidoTest extends TestCase
         $this->assertMatchesRegularExpression('/id="barraPersona"[^>]*>Marta Solano</', $html);
     }
 
-    public function test_la_barra_fija_muestra_anonimo_en_rojo_y_la_casilla_explicita(): void
+    public function test_la_barra_fija_dice_sin_persona_hasta_marcar_anonimo_y_la_casilla_explicita(): void
     {
         $html = $this->actingAs($this->tesorero)
             ->get(route('recuento.create', ['culto_id' => $this->culto->id]))
@@ -132,7 +132,8 @@ class SobreSinPersonaPorDescuidoTest extends TestCase
             ->assertSee('name="persona_nombre"', false)
             ->getContent();
 
-        $this->assertMatchesRegularExpression('/id="barraPersona"[^>]*text-red-600[^>]*>ANÓNIMO</u', $html);
+        // QE-014: "ANÓNIMO" en rojo solo cuando se marca la casilla; antes dice "Sin persona"
+        $this->assertMatchesRegularExpression('/id="barraPersona"[^>]*text-gray-400[^>]*>Sin persona</u', $html);
     }
 
     public function test_editar_un_sobre_anonimo_conserva_la_casilla_marcada(): void

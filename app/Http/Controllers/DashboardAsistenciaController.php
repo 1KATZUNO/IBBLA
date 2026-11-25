@@ -10,7 +10,7 @@ use Illuminate\View\View;
 
 /**
  * Dashboard específico de Asistencia — por clase (Fase 4).
- * Visible solo para admin y tesorero. Muestra, para el rango de fechas elegido:
+ * Visible para admin, tesorero y asistente (decisión 5, QE-012), con su Excel. Muestra, para el rango de fechas elegido:
  *  - KPIs: total de asistencia, promedio por culto, niños, capilla, transmisión, visitas...
  *  - Gráfico de línea: tendencia de la asistencia (mensual; por culto si el rango es corto).
  *  - Gráfico de barras: asistencia agregada por clase.

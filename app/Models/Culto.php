@@ -107,10 +107,10 @@ class Culto extends Model
         $map = [
             'domingo' => 'Domingo AM',
             'domingo_pm' => 'Domingo PM',
-            'miércoles' => 'Miercoles',
-            'miercoles' => 'Miercoles',
-            'sábado' => 'Sabado',
-            'sabado' => 'Sabado',
+            'miércoles' => 'Miércoles',
+            'miercoles' => 'Miércoles',
+            'sábado' => 'Sábado',
+            'sabado' => 'Sábado',
             'especial' => 'Especial',
         ];
 

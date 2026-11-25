@@ -28,9 +28,15 @@
                 <a href="{{ route('asistencia.edit', $asistencia) }}" class="btn-primary">
                     Editar
                 </a>
+                @elseif($puedeCorregir ?? false)
+                <a href="{{ route('asistencia.edit', $asistencia) }}" class="btn-primary">
+                    Corregir
+                </a>
                 @endif
             </div>
         </div>
+
+        @include('asistencia.partials.aviso-cerrada', ['modo' => 'lectura'])
 
         <!-- Tabla de Detalles -->
         <div class="table-scroll">

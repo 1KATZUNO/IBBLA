@@ -635,17 +635,21 @@ class RecuentoController extends Controller
      */
     private function datosFormularioSobre(Culto $culto, ?Sobre $sobre = null): array
     {
-        $personas = Persona::where('activo', true)->orderBy('nombre')->get(['id', 'nombre', 'pin'])
-            ->map(fn (Persona $p) => ['id' => $p->id, 'nombre' => $p->nombre, 'pin' => $p->pin, 'inactiva' => false]);
+        // Nombre, PIN y telefono: con homonimos el PIN y el telefono dicen cual es cual (QE-014)
+        $opcion = fn (Persona $p, bool $inactiva) => [
+            'id' => $p->id, 'nombre' => $p->nombre, 'pin' => $p->pin, 'telefono' => $p->telefono, 'inactiva' => $inactiva,
+        ];
+        $personas = Persona::where('activo', true)->orderBy('nombre')->get(['id', 'nombre', 'pin', 'telefono'])
+            ->map(fn (Persona $p) => $opcion($p, false));
 
         if ($sobre?->persona && ! $sobre->persona->activo) {
-            $personas->prepend(['id' => $sobre->persona->id, 'nombre' => $sobre->persona->nombre, 'pin' => $sobre->persona->pin, 'inactiva' => true]);
+            $personas->prepend($opcion($sobre->persona, true));
         }
 
         return [
             'culto' => $culto,
             'categorias' => tenant_categories(['es_ofrenda_suelta' => false]),
-            // Para el buscador de persona: solo lo necesario (nombre, PIN y si esta inactiva)
+            // Para el buscador de persona: solo lo necesario (nombre, PIN, telefono y si esta inactiva)
             'personas' => $personas->values(),
         ];
     }

@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\Culto;
 use App\Models\Persona;
 use App\Models\Sobre;
-use App\Models\SobreDetalle;
+use App\Services\Reportes\CumplimientoPromesasService;
+use App\Services\Reportes\FiltroPersonas;
+use App\Services\Reportes\PeriodoReporte;
 use App\Support\RangoFechas;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\Request;
@@ -47,17 +49,24 @@ class DashboardController extends Controller
             'asistencia' => $cultos->map(fn ($c) => (int) ($c->asistencia->total_asistencia ?? 0))->values()->all(),
         ];
 
-        // Promesas cumplidas vs pendientes (por meses completos, igual que Compromisos)
-        $promesasStatus = $this->estadoPromesas($rango, $categories);
+        // Personas al dia / pendientes con su promesa, del motor de reportes, al ultimo mes completo
+        $promesasStatus = $this->estadoPromesas($rango);
 
         // === COMPARATIVO: período anterior ===
-        $totalAnterior = round($cultosAnterior->sum(fn ($c) => (float) ($c->totales->total_general ?? 0)), 2);
-        $totalActual = $totalesPeriodo['total_general'];
+        // Con el período en curso (el día 5 de noviembre) se compara contra los mismos días del
+        // período anterior (1 al 5 de octubre), no contra octubre completo (QA-043).
+        $enCurso = $this->enCurso($rango);
+        $anteriorComparable = $enCurso ? $this->anteriorMismosDias($rango, $anterior, $enCurso) : $anterior;
+        $cultosComparables = $enCurso ? $cultos->filter(fn ($c) => $c->fecha->lte($enCurso->fin)) : $cultos;
+        $totalAnterior = round($this->cultosEntre($anteriorComparable)->sum(fn ($c) => (float) ($c->totales->total_general ?? 0)), 2);
+        $totalActual = round($cultosComparables->sum(fn ($c) => (float) ($c->totales->total_general ?? 0)), 2);
         $comparativo = [
             'periodo_anterior_total' => $totalAnterior,
-            'periodo_anterior_nombre' => $anterior->etiqueta(),
+            'periodo_anterior_nombre' => $anteriorComparable->etiqueta(),
             'diferencia' => $totalActual - $totalAnterior,
             'porcentaje' => $totalAnterior > 0 ? round((($totalActual - $totalAnterior) / $totalAnterior) * 100, 1) : 0,
+            // "mes en curso (5 días)": el período todavía no termina
+            'en_curso' => $enCurso ? ($rango->esMesCompleto() ? 'mes' : 'período').' en curso ('.$enCurso->dias().' '.($enCurso->dias() === 1 ? 'día' : 'días').')' : null,
         ];
 
         $promedioAsistActual = $this->promedioAsistencia($cultos);
@@ -72,7 +81,7 @@ class DashboardController extends Controller
         $tendencia = $this->tendenciaMensual($rango);
 
         // === ALERTAS INTELIGENTES ===
-        $alertas = $this->alertas($rango, $anterior, $comparativo, $promesasStatus, $totalAnterior, $promedioAsistAnterior);
+        $alertas = $this->alertas($rango, $anterior, $anteriorComparable, $enCurso, $comparativo, $promesasStatus, $totalAnterior, $promedioAsistAnterior);
 
         $añosDisponibles = $rango->aniosParaSelector(
             Culto::selectRaw('YEAR(fecha) as año')->distinct()->pluck('año')
@@ -177,67 +186,83 @@ class DashboardController extends Controller
     }
 
     /**
-     * Promesas cumplidas / pendientes. Se evalúa por meses completos (las promesas son
-     * mensuales y los Compromisos se calculan por mes): una promesa está cumplida si lo dado en
-     * esos meses en su categoría alcanza el monto de la promesa multiplicado por la cantidad de
-     * meses. Es la misma regla de siempre para un mes (monto >= promesa), extendida a varios.
-     *
-     * @return array{cumplidas: int, pendientes: int}
+     * Si el rango todavia no termina (incluye hoy), el tramo ya transcurrido: del inicio a hoy.
+     * Null si el rango ya termino o todavia no empieza.
      */
-    private function estadoPromesas(RangoFechas $rango, Collection $categories): array
+    private function enCurso(RangoFechas $rango): ?RangoFechas
+    {
+        $hoy = CarbonImmutable::today();
+        if ($rango->fin->lte($hoy) || $rango->inicio->gt($hoy)) {
+            return null;
+        }
+
+        return new RangoFechas($rango->inicio, $hoy, RangoFechas::MODO_PERSONALIZADO);
+    }
+
+    /**
+     * Los mismos dias del periodo anterior: para un mes (o meses) en curso, del 1 al mismo dia del
+     * mes anterior (1 al 5 de octubre contra 1 al 5 de noviembre); para un rango libre, la misma
+     * cantidad de dias justo antes.
+     */
+    private function anteriorMismosDias(RangoFechas $rango, RangoFechas $anterior, RangoFechas $enCurso): RangoFechas
+    {
+        if (! $rango->esMesesCompletos()) {
+            return $enCurso->anterior();
+        }
+
+        $fin = $anterior->inicio->addDays($enCurso->dias() - 1)->min($anterior->fin);
+
+        return new RangoFechas($anterior->inicio, $fin, RangoFechas::MODO_PERSONALIZADO);
+    }
+
+    /**
+     * Personas al dia y pendientes con su promesa, del reporte de cumplimiento (motor unico de
+     * reportes, QA-043). El mes en curso no se cobra, asi que se evalua al ultimo mes completo:
+     * los meses del rango hasta el fin del mes anterior al de hoy. "Al dia" es por acumulado de esos
+     * meses, la misma regla que el reporte de cumplimiento.
+     *
+     * @return array{cumplidas: int, pendientes: int, corte: CarbonImmutable, periodo: string}
+     */
+    private function estadoPromesas(RangoFechas $rango): array
     {
         $meses = $rango->ampliadoAMeses();
-        $categoriasExcluidas = $categories->where('excluir_de_promesas', true)
-            ->pluck('slug')->map(fn ($s) => strtolower($s))->toArray();
+        $ultimoCompleto = CarbonImmutable::today()->startOfMonth()->subDay();
+        $fin = $meses->fin->min($ultimoCompleto);
+        // El motor acepta hasta 24 meses: un rango mas largo se evalua en sus ultimos 24
+        $inicio = $meses->inicio->min($fin->startOfMonth())
+            ->max($fin->startOfMonth()->subMonthsNoOverflow(PeriodoReporte::MAX_MESES - 1));
+        $periodo = PeriodoReporte::deFechas($inicio, $fin);
 
-        $personas = Persona::with('promesas')->whereHas('promesas')->get();
+        $resumen = app(CumplimientoPromesasService::class)
+            ->generar($periodo, FiltroPersonas::todas())
+            ->resumen();
 
-        // Lo dado por persona y categoría, en una sola consulta (antes eran varias por promesa).
-        // Los cultos ya vienen filtrados por iglesia.
-        $cultoIds = Culto::whereBetween('fecha', [$meses->inicio->toDateString(), $meses->fin->toDateString()])->pluck('id');
-        $dado = [];
-        if ($cultoIds->isNotEmpty()) {
-            SobreDetalle::query()
-                ->join('sobres', 'sobres.id', '=', 'sobre_detalles.sobre_id')
-                ->whereIn('sobres.culto_id', $cultoIds)
-                ->whereNotNull('sobres.persona_id')
-                ->groupBy('sobres.persona_id', 'sobre_detalles.categoria')
-                ->selectRaw('sobres.persona_id, sobre_detalles.categoria, SUM(sobre_detalles.monto) as total')
-                ->get()
-                ->each(function ($fila) use (&$dado) {
-                    $dado[$fila->persona_id][strtolower($fila->categoria)] = (float) $fila->total;
-                });
-        }
-
-        $status = ['cumplidas' => 0, 'pendientes' => 0];
-        foreach ($personas as $persona) {
-            foreach ($persona->promesas as $promesa) {
-                $categoria = strtolower($promesa->categoria);
-                if (in_array($categoria, $categoriasExcluidas, true)) {
-                    continue;
-                }
-
-                $pagado = $dado[$persona->id][$categoria] ?? 0.0;
-                $prometido = (float) $promesa->monto * $meses->cantidadMeses();
-
-                $pagado >= $prometido ? $status['cumplidas']++ : $status['pendientes']++;
-            }
-        }
-
-        return $status;
+        return [
+            'cumplidas' => $resumen['al_dia'],
+            'pendientes' => $resumen['pendientes'],
+            'corte' => $fin,
+            'periodo' => $periodo->etiqueta(),
+        ];
     }
 
     /**
      * @return Collection<int, array{tipo: string, icono: string, mensaje: string}>
      */
-    private function alertas(RangoFechas $rango, RangoFechas $anterior, array $comparativo, array $promesasStatus, float $totalAnterior, float $promedioAsistAnterior): Collection
+    private function alertas(RangoFechas $rango, RangoFechas $anterior, RangoFechas $anteriorComparable, ?RangoFechas $enCurso, array $comparativo, array $promesasStatus, float $totalAnterior, float $promedioAsistAnterior): Collection
     {
         $alertas = collect();
 
         $esMes = $rango->esMesCompleto();
-        $respectoA = $anterior->esMesCompleto()
-            ? 'respecto a '.$anterior->etiqueta()
-            : 'respecto al período anterior ('.$anterior->etiqueta().')';
+        if ($enCurso) {
+            // Periodo sin terminar: se compara con los mismos dias del anterior y se dice asi
+            $respectoA = $anterior->esMesCompleto()
+                ? 'respecto a los mismos días de '.$anterior->etiqueta().' ('.$anteriorComparable->etiqueta().'; '.$comparativo['en_curso'].')'
+                : 'respecto a los mismos días del período anterior ('.$anteriorComparable->etiqueta().')';
+        } else {
+            $respectoA = $anterior->esMesCompleto()
+                ? 'respecto a '.$anterior->etiqueta()
+                : 'respecto al período anterior ('.$anterior->etiqueta().')';
+        }
         $vsAnterior = $esMes ? 'mes anterior' : 'período anterior';
 
         if ($comparativo['porcentaje'] < -15 && $totalAnterior > 0) {
@@ -261,7 +286,7 @@ class DashboardController extends Controller
             $alertas->push([
                 'tipo' => 'danger',
                 'icono' => 'alert',
-                'mensaje' => $promesasStatus['pendientes'].' de '.$totalPromesas.' promesas aún pendientes '.($esMes ? 'este mes' : 'en este período'),
+                'mensaje' => $promesasStatus['pendientes'].' de '.$totalPromesas.' personas con promesa están pendientes al '.$promesasStatus['corte']->format('d/m/Y').' (último mes completo)',
             ]);
         }
 

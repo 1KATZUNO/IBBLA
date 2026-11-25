@@ -154,7 +154,11 @@ class CultoController extends Controller
         });
 
         return redirect()->route('cultos.index')
-            ->with('success', 'Culto del '.$culto->fecha->format('d/m/Y').' eliminado'.($cantidadSobres ? " con sus {$cantidadSobres} sobres" : '').'. Quedó registrado en la auditoría.');
+            ->with('success', 'Culto del '.$culto->fecha->format('d/m/Y').' eliminado'.match (true) {
+                $cantidadSobres === 1 => ' con 1 sobre',
+                $cantidadSobres > 1 => " con sus {$cantidadSobres} sobres",
+                default => '',
+            }.'. Quedó registrado en la auditoría.');
     }
 
     /** El formulario se abrio desde Recuento, o quien lo usa no gestiona cultos (no entra a la lista de admin). */
