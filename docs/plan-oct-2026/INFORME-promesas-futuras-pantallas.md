@@ -113,10 +113,10 @@ dan exactamente lo mismo, byte a byte, antes y después de importar**.
 1.000 pruebas, 5.835 aserciones: 14 fallos, todos de Breeze (tests/Feature/Auth/*, ProfileTest, ExampleTest), la línea base. Lint de Blade vacío.
 
 ## Pendientes y riesgos
-- **Reimportar con filas de nombre parecido**: si la primera vez se eligió a una persona existente para un
-  nombre parecido, al reimportar esa fila vuelve a pedir decisión (la candidata sale marcada «ya está en este
-  corte: se deja como está»). Si alguien elige «Crear persona nueva» esa segunda vez, sí se crearía un duplicado.
-  Mitigación posible (no hecha): recordar por corte qué nombre del archivo se asignó a qué persona.
+- **Reimportar con filas de nombre parecido** (resuelto en el ajuste posterior): si una candidata ya está en el
+  corte, queda elegida por defecto (la más parecida) con el aviso «Ya está en este corte: se deja como está», y
+  Aplicar la cuenta como «ya estaba» sin escribir nada. Las parecidas sin candidata en el corte siguen sin opción
+  por defecto.
 - **«Campamento» vs «CAMPA»**: con el Excel real, la columna Campamento NO calza sola con la categoría CAMPA y
   por defecto se propondría crear una categoría nueva. Al cargarlo con David hay que elegir «Usar «CAMPA»» en esa
   columna. (No se agregó un emparejamiento por prefijo para no adivinar.)

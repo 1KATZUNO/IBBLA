@@ -63,7 +63,12 @@ class AplicadorImportacion
 
                 continue;
             }
-            $dec = $decFilas[$n] ?? ($estado === AnalizadorImportacion::NO_EXISTE ? 'nueva' : null);
+            $porDefecto = match (true) {
+                $estado === AnalizadorImportacion::NO_EXISTE => 'nueva',
+                ! empty($fila['sugerida']) => 'persona:'.$fila['sugerida'], // ya esta en el corte: se deja como esta
+                default => null,
+            };
+            $dec = $decFilas[$n] ?? $porDefecto;
             if ($dec === 'omitir') {
                 $plan[$n] = ['omitir'];
             } elseif ($dec === 'nueva') {
