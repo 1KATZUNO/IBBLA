@@ -67,7 +67,7 @@ class PlantillaPromesas
             '   Si la dejas vacía, se usa la frecuencia que elijas al subir el archivo (por defecto, semanal).',
             '   Cualquier otro texto deja la fila marcada con error en la revisión: corrígela o la omites.',
             '   Un archivo sin la columna Frecuencia también sirve: entonces todas las filas llevan la que elijas al subirlo.',
-            '5. De la columna D en adelante: una columna por categoría, con su nombre en la fila 1 (Misiones, Construcción…).',
+            '5. De la columna D en adelante: una columna por categoría, con su nombre en la fila 1 (Misiones, Seminario…).',
             '6. En cada celda va el monto que la persona promete en esa categoría. Vacío o 0 = sin promesa en esa categoría.',
             '   Escribe solo el número (5000 o 2500.50), sin el símbolo de colones. Se guardan con dos decimales.',
             '7. Si pones en la fila 1 una categoría que la iglesia no tiene, el sistema te propone crearla como categoría nueva.',

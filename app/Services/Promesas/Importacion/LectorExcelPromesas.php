@@ -72,7 +72,7 @@ class LectorExcelPromesas
             $categorias[] = ['col' => $letra, 'titulo' => $titulo];
         }
         if ($categorias === [] && $errores === []) {
-            $errores[] = 'No hay columnas de categorías: de la columna '.($conFrecuencia ? 'D' : 'C').' en adelante, pon en la fila 1 el nombre de cada categoría (Misiones, Construcción…).';
+            $errores[] = 'No hay columnas de categorías: de la columna '.($conFrecuencia ? 'D' : 'C').' en adelante, pon en la fila 1 el nombre de cada categoría (Misiones, Seminario…).';
         }
         if ($errores !== []) {
             return $this->fallo(...$errores);
