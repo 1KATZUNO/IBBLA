@@ -265,7 +265,8 @@ Route::middleware(['auth', 'role:admin', 'audit'])->group(function () {
     Route::get('personas/{persona}/compromisos', [App\Http\Controllers\CompromisoController::class, 'show'])->name('compromisos.show');
     Route::post('compromisos/recalcular', [App\Http\Controllers\CompromisoController::class, 'recalcular'])->name('compromisos.recalcular');
 
-    // Limpieza de personas inactivas (temporal)
+    // Mantenimiento de Personas (QA-034): acciones masivas con pantalla de confirmación (escribir CONFIRMAR) y auditoría
+    Route::get('personas/mantenimiento/{accion}', [PersonaController::class, 'confirmarMantenimiento'])->whereIn('accion', ['inactivas', 'promesas'])->name('personas.mantenimiento');
     Route::post('personas/limpiar-inactivas', [PersonaController::class, 'limpiarInactivas'])->name('personas.limpiar-inactivas');
     Route::post('personas/resetear-promesas', [PersonaController::class, 'resetearPromesas'])->name('personas.resetear-promesas');
 
