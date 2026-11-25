@@ -28,6 +28,20 @@ class PromesaProgramada extends Model
         'monto' => 'decimal:2',
     ];
 
+    /** "₡5.000", "₡230,77" o "$25" para las pantallas de Promesas futuras. */
+    public static function formatoMonto(float $monto, string $moneda = 'CRC'): string
+    {
+        $decimales = abs($monto - round($monto)) >= 0.005 ? 2 : 0;
+
+        return ($moneda === 'USD' ? '$' : '₡').number_format($monto, $decimales, ',', '.');
+    }
+
+    /** Frecuencia en corto para las tablas ("sem.", "quinc.", "mens."). */
+    public static function frecuenciaCorta(string $frecuencia): string
+    {
+        return ['semanal' => 'sem.', 'quincenal' => 'quinc.', 'mensual' => 'mens.'][$frecuencia] ?? $frecuencia;
+    }
+
     public function corte(): BelongsTo
     {
         return $this->belongsTo(CortePromesas::class, 'corte_id');

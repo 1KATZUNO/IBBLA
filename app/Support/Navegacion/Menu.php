@@ -146,6 +146,7 @@ class Menu
                 self::it('cultos.index', 'Gestionar Cultos', 'calendario', 'cultos.*', $p['admin'], 'cultos servicios crear culto fecha domingo miercoles editar eliminar'),
                 self::it('admin.clases.index', 'Gestionar Clases', 'ajustes', 'admin.clases.*', $p['admin'], 'clases escuela dominical grupos maestros alumnos'),
                 self::it('personas.index', 'Gestionar Personas', 'personas', 'personas.*|compromisos.*', $p['admin'], 'personas miembros hermanos pin telefono promesas compromisos estado de cuenta ficha'),
+                self::it('promesas-futuras.index', 'Promesas futuras', 'calendario', 'promesas-futuras.*', $p['admin'], 'promesas futuras corte de promesas nuevas promesas proximo ano 2027 importar excel plantilla programadas entran en vigor'),
                 self::it('admin.ministerios.index', 'Ministerios', 'estrella', 'admin.ministerios.*', $p['admin'], 'ministerios areas de servicio lideres'),
                 self::it('usuarios.index', 'Gestionar Usuarios', 'personas', 'usuarios.*', $p['admin'], 'usuarios roles permisos contrasena acceso cuentas'),
                 self::it($rutaAccesos, 'Accesos', 'candado', 'admin.accesos.*|accesos.*', $p['admin'], 'accesos permisos de edicion culto tesorero conceder revocar vencimiento corregir culto cerrado'),
@@ -170,6 +171,8 @@ class Menu
         return [
             self::extra('cultos.create', 'Nuevo culto', 'calendario', $p['admin'], 'crear agregar culto servicio nuevo', 'Administración'),
             self::extra('personas.create', 'Nueva persona', 'personas', $p['admin'], 'crear agregar persona miembro nuevo hermano', 'Administración'),
+            self::extra('promesas-futuras.create', 'Nuevo corte de promesas', 'calendario', $p['admin'], 'crear corte promesas futuras nuevas promesas del proximo ano', 'Administración'),
+            self::extra('promesas-futuras.plantilla', 'Plantilla de promesas futuras (Excel)', 'subir', $p['admin'], 'plantilla excel promesas futuras importar corte', 'Administración'),
             self::extra('usuarios.create', 'Nuevo usuario', 'personas', $p['admin'], 'crear agregar usuario cuenta nueva rol', 'Administración'),
             self::extra('admin.ministerios.create', 'Nuevo ministerio', 'estrella', $p['admin'], 'crear agregar ministerio nuevo area de servicio', 'Administración'),
             self::extra('admin.clases.create', 'Nueva clase', 'ajustes', $p['admin'], 'crear agregar clase nueva grupo', 'Administración'),
