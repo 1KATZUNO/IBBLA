@@ -230,6 +230,42 @@ final class RangoFechas
         return new self($fin->subDays($this->dias() - 1), $fin, self::MODO_PERSONALIZADO);
     }
 
+    /**
+     * Si el rango todavía no termina (incluye hoy), el tramo ya transcurrido: del inicio a hoy.
+     * Null si el rango ya terminó o todavía no empieza.
+     */
+    public function enCurso(): ?self
+    {
+        $hoy = CarbonImmutable::today();
+        if ($this->fin->lte($hoy) || $this->inicio->gt($hoy)) {
+            return null;
+        }
+
+        return new self($this->inicio, $hoy, self::MODO_PERSONALIZADO);
+    }
+
+    /**
+     * El período anterior con el que es justo comparar. Si el rango ya terminó, el anterior completo.
+     * Si está en curso, los mismos días ya transcurridos del período anterior (del 1 al 24 de octubre
+     * contra el 1 al 24 de noviembre), para no presentar como caída un mes que va a medias; con un
+     * rango libre, la misma cantidad de días justo antes.
+     */
+    public function anteriorComparable(): self
+    {
+        $anterior = $this->anterior();
+        $enCurso = $this->enCurso();
+        if (! $enCurso) {
+            return $anterior;
+        }
+        if (! $this->esMesesCompletos()) {
+            return $enCurso->anterior();
+        }
+
+        $fin = $anterior->inicio->addDays($enCurso->dias() - 1)->min($anterior->fin);
+
+        return new self($anterior->inicio, $fin, self::MODO_PERSONALIZADO);
+    }
+
     /** "septiembre 2026", "2026" o "01/09/2026 – 15/10/2026". */
     public function etiqueta(): string
     {

@@ -66,10 +66,13 @@ final class FiltroCultos
         return new self(new RangoFechas($inicio, $fin), $tipos);
     }
 
-    /** El mismo filtro en el periodo anterior de igual duracion (sin cultos elegidos). */
+    /**
+     * El mismo filtro en el periodo anterior con el que es justo comparar (sin cultos elegidos): el
+     * anterior de igual duracion o, si el rango esta en curso, sus mismos dias ya transcurridos.
+     */
     public function anterior(): self
     {
-        return new self($this->rango->anterior(), $this->tipos);
+        return new self($this->rango->anteriorComparable(), $this->tipos);
     }
 
     /** @return array<string, mixed> parametros de URL que reproducen este filtro */

@@ -46,6 +46,23 @@ final class ReporteIngresos
     }
 
     /**
+     * Frase que explica contra que se compara, igual en pantalla, PDF y Excel. Con el periodo en curso
+     * avisa que se comparan solo los dias ya transcurridos.
+     */
+    public function textoComparacion(): string
+    {
+        $enCurso = $this->actual->filtro->rango->enCurso();
+        if ($enCurso === null) {
+            return 'Se compara con el periodo anterior de igual duración, '.$this->etiquetaAnterior();
+        }
+
+        $dias = $enCurso->dias();
+
+        return 'El periodo está en curso (van '.$dias.' '.($dias === 1 ? 'día' : 'días').', hasta el '.$enCurso->fin->format('d/m/Y')
+            .'): se compara con los mismos días del periodo anterior, '.$this->etiquetaAnterior();
+    }
+
+    /**
      * Lineas por categoria con el comparativo.
      *
      * @return list<array{nombre: string, actual: float, anterior: float, diferencia: float, porcentaje: ?float}>

@@ -256,3 +256,12 @@ Del lider del proyecto (David):
   * Queda del cliente: lista de los 30 ministerios (IBBLA tiene 7), definicion de "hermanos servidores", cambiar la
     contrasena de super@admin.com, instalar el ambiente QA con docs/AMBIENTE-QA.md cuando se quiera, y rotar las
     credenciales viejas de IBBSC del historial de git. El bot de Meta (WA-2) sigue descartado.
+- 2026-11-24 (cierre, 19:45 CR): E2 DESPLEGADA EN PRODUCCION (main 12a55f8, tag v2026.11.24-e2) con el orden nuevo
+  (down -> push -> auto-deploy -> script --maintenance --manual-pdf): respaldo, 2 migraciones (72 al dia), caches,
+  PDF del manual de las 4 iglesias, `QUEUE_CONNECTION=sync` (copia previa en .env.backup-2026-11-24) y cron
+  `* * * * * /usr/bin/php .../artisan schedule:run` creado en hPanel. `ibbla:verificar`: todo OK salvo la contrasena
+  de semilla de super@admin.com. Humo en proceso sobre la copia de produccion: 34 pantallas y reportes en 200, el
+  Excel mas pesado (estados de cuenta de las 236 personas) tarda 4,3 s en el servidor. El 503 que David vio en
+  Servidores fue la ventana de mantenimiento del deploy (19:17-19:20), no un defecto.
+  Retoque posterior `v2026.11.24-e2.1`: el Reporte de ingresos compara un periodo en curso con los mismos dias del
+  anterior (con datos reales, noviembre pasa de -22,4 % a +1,9 %), igual que el dashboard.
