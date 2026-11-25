@@ -72,6 +72,7 @@ class VerificarIbbla extends Command
         $this->chequearPlanificador();
         if ($bdOk) {
             $this->chequearAvisos();
+            $this->chequearCortesPromesas();
         }
 
         $this->seccion('Permisos de escritura');
@@ -318,6 +319,43 @@ class VerificarIbbla extends Command
                 .($pendientes > 0 ? " ({$pendientes} trabajo(s) esperando en la tabla jobs)" : '').'; IBBLA no la necesita: dejar sync');
         } else {
             $this->ok('QUEUE_CONNECTION', 'sync (los avisos no dependen de la cola)');
+        }
+    }
+
+    /**
+     * Promesas futuras: un corte programado con la fecha de inicio cumplida y sin activar quiere decir
+     * que ni el cron (promesas:activar-cortes) ni el disparo perezoso lo pusieron en vigor. Un corte
+     * vacio no se activa solo: se avisa aparte para que el administrador le cargue promesas o lo borre.
+     */
+    private function chequearCortesPromesas(): void
+    {
+        try {
+            $atrasados = \App\Models\CortePromesas::withoutGlobalScopes()
+                ->whereNull('activado_at')
+                ->where('inicia_el', '<=', CarbonImmutable::today()->toDateString())
+                ->withCount('programadas')
+                ->orderBy('inicia_el')
+                ->get();
+        } catch (Throwable $e) {
+            $this->aviso('Cortes de promesas', 'no se pudieron revisar: '.$this->primeraLinea($e->getMessage()));
+
+            return;
+        }
+
+        if ($atrasados->isEmpty()) {
+            $this->ok('Cortes de promesas', 'ninguno con la fecha cumplida sin activar');
+
+            return;
+        }
+
+        $describir = fn ($c) => "«{$c->nombre}» (iglesia {$c->tenant_id}, desde ".CarbonImmutable::parse($c->inicia_el)->format('d/m/Y').')';
+        $conPromesas = $atrasados->filter(fn ($c) => $c->programadas_count > 0);
+        $vacios = $atrasados->filter(fn ($c) => $c->programadas_count === 0);
+        if ($conPromesas->isNotEmpty()) {
+            $this->aviso('Cortes de promesas', 'con la fecha cumplida y sin activar: '.$conPromesas->map($describir)->implode(', ').'. Correr php artisan promesas:activar-cortes y revisar el cron.');
+        }
+        if ($vacios->isNotEmpty()) {
+            $this->aviso('Cortes de promesas vacíos', 'con la fecha cumplida pero sin promesas (no se activan solos): '.$vacios->map($describir)->implode(', '));
         }
     }
 
