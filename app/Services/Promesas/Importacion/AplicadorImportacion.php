@@ -58,6 +58,16 @@ class AplicadorImportacion
 
                 continue;
             }
+            if ($estado === AnalizadorImportacion::FRECUENCIA_INVALIDA) {
+                // Solo se puede omitir: para importarla hay que corregir el archivo y volver a subirlo
+                if (($decFilas[$n] ?? null) === 'omitir') {
+                    $plan[$n] = ['omitir'];
+                } else {
+                    $errores["filas.{$n}"] = "Fila {$n} ({$fila['nombre']}): la frecuencia «{$fila['frecuencia_invalida']}» no es Semanal, Quincenal ni Mensual. Corrige el archivo y vuelve a subirlo, u omite la fila.";
+                }
+
+                continue;
+            }
             if (in_array($estado, [AnalizadorImportacion::CALZA, AnalizadorImportacion::EN_CORTE], true)) {
                 $plan[$n] = ['persona', (int) $fila['persona_id']];
 
@@ -153,7 +163,8 @@ class AplicadorImportacion
                         'categoria' => $slug,
                         'monto' => round((float) $monto, 2),
                         'moneda' => $moneda,
-                        'frecuencia' => $frecuencia,
+                        // La de su fila (columna Frecuencia); si no trae, la elegida al subir
+                        'frecuencia' => $fila['frecuencia'] ?? $frecuencia,
                         'created_at' => $ahora,
                         'updated_at' => $ahora,
                     ];

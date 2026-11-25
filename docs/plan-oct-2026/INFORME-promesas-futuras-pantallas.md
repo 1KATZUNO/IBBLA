@@ -112,6 +112,13 @@ dan exactamente lo mismo, byte a byte, antes y después de importar**.
 ## Suite completa
 1.000 pruebas, 5.835 aserciones: 14 fallos, todos de Breeze (tests/Feature/Auth/*, ProfileTest, ExampleTest), la línea base. Lint de Blade vacío.
 
+## Ajuste: columna Frecuencia (25/11)
+- Plantilla: A Miembro, B Clase, **C Frecuencia** (lista Semanal / Quincenal / Mensual en C2:C2001), categorías desde la D; Instrucciones actualizadas.
+- Lector: si C1 dice «Frecuencia» (sin tildes ni mayúsculas) no es categoría y las categorías empiezan en la D. Cada fila: semanal, quincenal o mensual (espacios y mayúsculas tolerados); vacía = la del selector; otro texto = estado **Frecuencia no válida** (muestra el texto), que solo se puede omitir.
+- Sin la columna, el archivo se lee como antes: el Excel real del cliente sigue dando 135 filas y 0 errores.
+- Revisión: frecuencia de cada fila; tarjeta y bloque de filas con error. Aplicador: cada promesa con la frecuencia de su fila.
+- Pruebas: plantilla (títulos y lista), frecuencias mezcladas, vacía toma la del selector, inválida no se aplica hasta omitirla, archivo sin la columna intacto.
+
 ## Pendientes y riesgos
 - **Reimportar con filas de nombre parecido** (resuelto en el ajuste posterior): si una candidata ya está en el
   corte, queda elegida por defecto (la más parecida) con el aviso «Ya está en este corte: se deja como está», y
