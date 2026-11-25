@@ -25,6 +25,14 @@ final class Normalizador
         return trim(preg_replace('/\s+/u', ' ', (string) $texto) ?? '');
     }
 
+    /** «Semanal», « QUINCENAL », «mensual»… → semanal | quincenal | mensual; vacio u otro texto → null. */
+    public static function frecuencia(?string $texto): ?string
+    {
+        $clave = self::clave($texto);
+
+        return in_array($clave, ['semanal', 'quincenal', 'mensual'], true) ? $clave : null;
+    }
+
     /**
      * Monto escrito en una celda: numero, vacio (null) o texto no valido (false).
      * Acepta "₡ 1,500.50", "1.500,50", "1500,5" y 230.769230769231 (se redondea a dos decimales).

@@ -27,7 +27,8 @@
 
     <div class="card p-4 sm:p-6 text-sm text-gray-700 space-y-1">
         <p class="font-semibold text-gray-900">Cómo debe venir el Excel</p>
-        <p>Fila 1 con los títulos. Columna A: <strong>Miembro</strong> (o <strong>Nombre</strong>); columna B: <strong>Clase</strong>; de la C en adelante, una columna por categoría.</p>
+        <p>Fila 1 con los títulos. Columna A: <strong>Miembro</strong> (o <strong>Nombre</strong>); columna B: <strong>Clase</strong>; columna C: <strong>Frecuencia</strong> (Semanal, Quincenal o Mensual); de la D en adelante, una columna por categoría.</p>
+        <p>La frecuencia de cada fila vale para todos sus montos. Si la celda está vacía, o si el archivo no trae la columna Frecuencia (las categorías empiezan entonces en la C), se usa la que elijas abajo.</p>
         <p>Un título que la iglesia no tiene se propone como <strong>categoría nueva</strong>. Si la persona ya está en este corte, <strong>se deja como está</strong>: no se cambia ni se duplica.</p>
     </div>
 
@@ -40,7 +41,7 @@
         </div>
         <div class="grid sm:grid-cols-2 gap-4">
             <div>
-                <label for="frecuencia" class="field-label">Los montos son</label>
+                <label for="frecuencia" class="field-label">Frecuencia si la fila no la trae</label>
                 <select id="frecuencia" name="frecuencia" class="input-primary w-full">
                     @foreach(PF::FRECUENCIAS as $valor => $texto)
                         <option value="{{ $valor }}" @selected(old('frecuencia', 'semanal') === $valor)>{{ $texto }}</option>

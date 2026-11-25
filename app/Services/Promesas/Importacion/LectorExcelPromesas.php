@@ -8,12 +8,16 @@ use Throwable;
 
 /**
  * Lee el Excel de promesas de un corte: primera hoja, fila 1 = titulos; columna A Miembro (o Nombre),
- * columna B Clase y de la C en adelante una columna por categoria. No toca la base de datos: devuelve lo
+ * columna B Clase, columna C Frecuencia (opcional) y de ahi en adelante una columna por categoria.
+ * Si C1 dice «Frecuencia», cada fila trae la suya (semanal, quincenal o mensual; vacia = la elegida al subir);
+ * si no, el archivo se lee como siempre: las categorias empiezan en la C y vale la frecuencia del selector. No toca la base de datos: devuelve lo
  * leido y, si el archivo no sirve, la lista de errores para que la persona lo corrija y lo vuelva a subir.
  *
  * Resultado:
  *   categorias: list<array{col: string, titulo: string}>
- *   filas:      list<array{fila: int, nombre: string, clase: string, montos: array<string, float>}>  (col => monto > 0)
+ *   filas:      list<array{fila: int, nombre: string, clase: string, montos: array<string, float>, frecuencia: ?string, frecuencia_invalida: ?string}>
+ *               (montos: col => monto > 0; frecuencia null = la del selector; frecuencia_invalida = texto que no se entendio)
+ *   con_frecuencia: bool (el archivo trae la columna Frecuencia)
  *   errores:    list<string>
  */
 class LectorExcelPromesas
@@ -46,9 +50,13 @@ class LectorExcelPromesas
             $errores[] = 'La celda B1 debe decir «Clase» (la columna puede ir vacía, pero el título tiene que estar).';
         }
 
+        // Columna C «Frecuencia» (opcional): si esta, las categorias empiezan en la D
+        $conFrecuencia = Normalizador::clave((string) $valor(3, 1)) === 'frecuencia';
+        $primeraCategoria = $conFrecuencia ? 4 : 3;
+
         $categorias = [];
         $vistos = [];
-        for ($c = 3; $c <= $ultimaCol; $c++) {
+        for ($c = $primeraCategoria; $c <= $ultimaCol; $c++) {
             $titulo = Normalizador::limpio((string) $valor($c, 1));
             $letra = Coordinate::stringFromColumnIndex($c);
             if ($titulo === '') {
@@ -64,7 +72,7 @@ class LectorExcelPromesas
             $categorias[] = ['col' => $letra, 'titulo' => $titulo];
         }
         if ($categorias === [] && $errores === []) {
-            $errores[] = 'No hay columnas de categorías: de la columna C en adelante, pon en la fila 1 el nombre de cada categoría (Misiones, Construcción…).';
+            $errores[] = 'No hay columnas de categorías: de la columna '.($conFrecuencia ? 'D' : 'C').' en adelante, pon en la fila 1 el nombre de cada categoría (Misiones, Seminario…).';
         }
         if ($errores !== []) {
             return $this->fallo(...$errores);
@@ -98,7 +106,23 @@ class LectorExcelPromesas
 
                 continue;
             }
-            $filas[] = ['fila' => $f, 'nombre' => $nombre, 'clase' => Normalizador::limpio((string) $valor(2, $f)), 'montos' => $montos];
+            $frecuencia = null;
+            $invalida = null;
+            if ($conFrecuencia) {
+                $texto = Normalizador::limpio((string) $valor(3, $f));
+                $frecuencia = Normalizador::frecuencia($texto);
+                if ($texto !== '' && $frecuencia === null) {
+                    $invalida = mb_substr($texto, 0, 30);
+                }
+            }
+            $filas[] = [
+                'fila' => $f,
+                'nombre' => $nombre,
+                'clase' => Normalizador::limpio((string) $valor(2, $f)),
+                'montos' => $montos,
+                'frecuencia' => $frecuencia,
+                'frecuencia_invalida' => $invalida,
+            ];
         }
 
         if ($malos !== []) {
@@ -113,12 +137,12 @@ class LectorExcelPromesas
             $errores[] = 'El archivo no trae personas: escribe una persona por fila desde la fila 2.';
         }
 
-        return ['categorias' => $categorias, 'filas' => $errores === [] ? $filas : [], 'errores' => $errores];
+        return ['categorias' => $categorias, 'filas' => $errores === [] ? $filas : [], 'errores' => $errores, 'con_frecuencia' => $conFrecuencia];
     }
 
     /** @return array{categorias: list<array{col: string, titulo: string}>, filas: list<array<string, mixed>>, errores: list<string>} */
     private function fallo(string ...$errores): array
     {
-        return ['categorias' => [], 'filas' => [], 'errores' => array_values($errores)];
+        return ['categorias' => [], 'filas' => [], 'errores' => array_values($errores), 'con_frecuencia' => false];
     }
 }
