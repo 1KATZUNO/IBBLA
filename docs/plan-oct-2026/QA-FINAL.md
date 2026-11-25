@@ -292,3 +292,27 @@ y `ProfileTest` (5). No falla ningún otro.
 - Barra y buscador del sobre en el navegador.
 - POST de borrados masivos, vinculación de usuario y guardado de ficha (cubiertos por la suite).
 - MariaDB real, salvo la expresión de QF-009 (la verificó el líder en producción).
+
+## Estado tras las correcciones (24/11/2026, lider)
+
+Corregido en `integracion/oct-2026` antes del tag `v2026.11.24-e2`:
+
+- **QF-001:** la plantilla de importacion de asistencia ya se descarga (el comentario se pide a la hoja, no al estilo).
+- **QF-002:** la columna del Reporte de cultos pasa a «Sobres en efectivo» (pantalla, PDF y Excel) y la nota dice
+  «Total = sobres en efectivo + transferencias + suelto − egresos»: las columnas suman el total y el total de la
+  columna coincide con «Sobres en efectivo» del Reporte de ingresos.
+- **QF-003:** el Dashboard rotula «Neto del período (ingresos − egresos)» y «Neto mensual (ingresos − egresos)».
+- **QF-004:** el enlace viejo del PDF de ingresos conserva `accion=descargar`.
+- **QF-005:** `Tenant::defaultCategories()` con «Construcción» y «Préstamo» (mismos slugs).
+- **QF-006:** el manual ya tiene la seccion del Reporte de cultos y del Reporte de ingresos con su «?» (equipo G, fase 2),
+  con la captura regenerada tras QF-002.
+- **QF-007:** produccion se despliega con `--manual-pdf`.
+- **QF-008:** la App de Clases usa tuteo como el resto de la app.
+- **QF-009:** verificado en MariaDB 11.8.9 de produccion, sin diferencia.
+
+Tests: `tests/Feature/CorreccionesQaFinalTest.php` (4 nuevos) y 161 alrededor de lo tocado en verde; suite completa
+al cierre en la nota del 24/11 de `00-PLAN.md`. Ensayo sobre una copia de la base de produccion: las dos migraciones
+de E2 pasan y las cifras de cumplimiento por persona son identicas antes y despues (y entre MySQL local y MariaDB).
+
+Condiciones del veredicto: `--manual-pdf` en el deploy, `QUEUE_CONNECTION=sync` y el cron de `schedule:run` creado
+en hPanel (no existia ninguno). Se aplican en el deploy de E2.
