@@ -30,7 +30,7 @@ class IngresosExcel
         $fila = fn (array $l) => [$l['nombre'], $l['actual'], $l['anterior'], $l['diferencia'], ReporteIngresos::textoPorcentaje($l['porcentaje'])];
 
         $hoja = $libro->hoja('Resumen')
-            ->encabezado('Se compara con el periodo anterior de igual duración, '.$reporte->etiquetaAnterior().'. Cifras en colones con la misma regla del recuento de cada culto.', 5)
+            ->encabezado($reporte->textoComparacion().'. Cifras en colones con la misma regla del recuento de cada culto.', 5)
             ->tarjetas([
                 ['etiqueta' => 'Cultos', 'valor' => $actual['cultos'], 'formato' => LibroExcel::ENTERO],
                 ['etiqueta' => 'Ingresos', 'valor' => $actual['ingresos'], 'formato' => LibroExcel::MONEDA_DECIMALES],

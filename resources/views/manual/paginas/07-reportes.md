@@ -69,7 +69,7 @@ Cada culto del rango, con lo que se recibió y gastó en él.
 
 ## Reporte de ingresos
 
-Lo recibido en el rango, **comparado con el periodo anterior** de la misma duración.
+Lo recibido en el rango, **comparado con el periodo anterior** de la misma duración. Si el periodo todavía está en curso (por ejemplo, el mes actual), la pantalla lo avisa y compara solo **los mismos días ya transcurridos** del periodo anterior, para no mostrar como caída un mes que va a medias.
 
 ![Reporte de ingresos](img:reportes-ingresos.jpg "Desde y Hasta (1), atajos (2), Consultar (3) y descargas (4), con los mismos filtros que el reporte de cultos")
 

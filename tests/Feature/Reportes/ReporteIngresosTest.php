@@ -71,6 +71,27 @@ class ReporteIngresosTest extends TestCase
         $this->assertSame('+12.5 %', ReporteIngresos::textoPorcentaje(12.5));
     }
 
+    /** Hoy es 15/10/2026: octubre va a medias y no se compara contra septiembre entero. */
+    public function test_un_mes_en_curso_se_compara_con_los_mismos_dias_del_mes_anterior(): void
+    {
+        $reporte = ReporteIngresos::generar($this->filtro('2026-10-01', '2026-10-31'));
+
+        $this->assertSame('del 01/09/2026 al 15/09/2026', $reporte->etiquetaAnterior());
+        $this->assertSame(
+            'El periodo está en curso (van 15 días, hasta el 15/10/2026): se compara con los mismos días del periodo anterior, del 01/09/2026 al 15/09/2026',
+            $reporte->textoComparacion()
+        );
+
+        // Un rango libre en curso: del 10 al 20 van 6 dias, se compara con los 6 dias justo antes
+        $libre = ReporteIngresos::generar($this->filtro('2026-10-10', '2026-10-20'));
+        $this->assertSame('del 04/10/2026 al 09/10/2026', $libre->etiquetaAnterior());
+
+        // Un mes ya cerrado sigue comparandose con el mes anterior completo
+        $cerrado = ReporteIngresos::generar($this->filtro('2026-09-01', '2026-09-30'));
+        $this->assertSame('del 01/08/2026 al 31/08/2026', $cerrado->etiquetaAnterior());
+        $this->assertSame('Se compara con el periodo anterior de igual duración, del 01/08/2026 al 31/08/2026', $cerrado->textoComparacion());
+    }
+
     public function test_un_rango_que_no_son_meses_completos_se_compara_con_los_mismos_dias_antes(): void
     {
         $reporte = ReporteIngresos::generar($this->filtro('2026-02-10', '2026-02-23'));

@@ -51,7 +51,7 @@
     </div>
 
     <div class="bg-blue-50 border border-blue-100 rounded-lg px-4 py-3 text-sm text-blue-900">
-        <p><span class="font-semibold">{{ $filtro->etiquetaPeriodo() }} comparado con el periodo anterior de igual duración, {{ $reporte->etiquetaAnterior() }}.</span>
+        <p><span class="font-semibold">{{ $filtro->etiquetaPeriodo() }}. {{ $reporte->textoComparacion() }}.</span>
             Cifras en colones con la misma regla del recuento de cada culto (los dólares al tipo de cambio del sobre). El detalle culto por culto está en el <a href="{{ route('reportes.cultos', $filtro->aParametros()) }}" class="underline font-medium">Reporte de cultos</a>.</p>
     </div>
 

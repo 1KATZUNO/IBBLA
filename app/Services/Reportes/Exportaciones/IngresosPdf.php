@@ -26,7 +26,7 @@ class IngresosPdf
         $filtro = $reporte->filtro();
         $doc = new DocumentoPdf('Reporte de ingresos', $filtro->etiquetaPeriodo(), $filtro->descripcion(FiltroCultos::tiposDisponibles()));
         $doc->encabezado();
-        $doc->nota('Se compara con el periodo anterior de igual duración, '.$reporte->etiquetaAnterior().'. Cifras en colones con la misma regla del recuento de cada culto (dólares al tipo de cambio del sobre).');
+        $doc->nota($reporte->textoComparacion().'. Cifras en colones con la misma regla del recuento de cada culto (dólares al tipo de cambio del sobre).');
 
         $actual = $reporte->actual->totales();
         $total = $reporte->total();
