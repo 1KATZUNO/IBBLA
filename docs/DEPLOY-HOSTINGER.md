@@ -189,3 +189,23 @@ cómo refrescar QA con una copia de producción sin datos de WhatsApp y el flujo
 El PDF del manual completo tarda unos 30 s en dibujarse la primera vez (Hostinger corta a los 10 s). Con `--qa` el deploy
 lo deja listo solo; en producción agrega `--manual-pdf` (o corre `php artisan manual:pdf` después de desplegar) y la
 descarga sale al instante.
+
+## Auto-deploy de Hostinger: leer antes de hacer push a main (hallazgo del 24/11/2026)
+
+El hPanel (Advanced > GIT > Manage Repositories) tiene el repo `1KATZUNO/IBBLA`, rama `main`, instalado en
+`public_html` con auto-deploy por webhook: **cada push a `main` hace `git reset --hard` + `git pull` en el
+servidor en segundos**, y corre composer, pero NO migra ni reconstruye caches. Si el push trae migraciones,
+produccion queda con codigo nuevo y base vieja hasta que alguien corra el script.
+
+Orden correcto cuando hay migraciones:
+
+1. Por SSH: `cd ~/domains/ibbla.eu/public_html && php artisan down --retry=60`.
+2. Desde la maquina de desarrollo: `git push origin main --tags` (con la cuenta duena del repo).
+3. Por SSH: `git checkout -- composer.lock` si el auto-deploy lo dejo modificado (solo cambia la URL de un
+   paquete), y luego `bash deploy/hostinger.sh --maintenance` (respalda, migra, reconstruye caches, levanta la
+   app y comprueba).
+4. `php artisan compromisos:sincronizar && php artisan ibbla:verificar`.
+
+El servidor queda en la rama `main` (no en un tag suelto) para que el auto-deploy siga funcionando. Acceso
+SSH: llave `claude-code-pc-david-ibbla` registrada en hPanel > Advanced > SSH Access (se puede borrar ahi).
+Respaldos previos a cada migracion: `~/respaldos-ibbla/` en el servidor (se conservan 10).

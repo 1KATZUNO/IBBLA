@@ -293,6 +293,12 @@ fi
 
 # --- 5. Chequeo final ---
 paso "5/6 Chequeo final"
+# Con --maintenance la app sigue caida en este punto y el chequeo daria 503 (falso negativo visto en el
+# deploy del 24/11/2026): se levanta antes de comprobar, porque migraciones y caches ya terminaron.
+# El trap de salida lo reintenta por si esto fallara.
+if [ "$MANTENIMIENTO" -eq 1 ] && [ "$DRY_RUN" -eq 0 ]; then
+    ejecutar "$PHP_BIN" artisan up || info "AVISO: artisan up fallo; se reintenta al salir."
+fi
 CHEQUEO_OK=1
 if [ "$SALTAR_CHEQUEO" -eq 1 ]; then
     info "Omitido (--skip-check)."
