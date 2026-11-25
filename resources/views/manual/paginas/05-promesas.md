@@ -78,13 +78,15 @@ Sirve para cargar **desde ahora** las promesas que empiezan en una fecha futura 
 | **Estado** en la lista | **Programado** (dice la fecha y cuántos días faltan), **Vigente** (el que rige hoy) o **Anterior**. | Administrador | Un corte **sin promesas no entra en vigor nunca**: la lista lo avisa en rojo. |
 | **+ Agregar persona** | Busca a la persona por nombre, PIN o teléfono y toca **Elegir**; si no existe, la das de alta ahí mismo (solo el nombre es obligatorio). Después escribes el monto de cada categoría, con su frecuencia (semanal por defecto) y su moneda (colones por defecto). | Administrador | Vuelves al detalle con la persona en la tabla. Si ya estaba en el corte, se abre para editar. |
 | **Editar** / **Quitar** (en cada fila) | Cambia lo que promete en el corte o la quita del corte. | Administrador | Sus promesas de hoy no cambian. Todo queda en la auditoría. |
-| **Importar Excel** | Sube el Excel con todas las personas (ver abajo). Eliges si los montos son semanales, quincenales o mensuales, y la moneda. | Administrador | Ves una **revisión**; nada se guarda hasta tocar **Aplicar**. |
-| **Descargar plantilla** | Baja el Excel con la fila de títulos (Miembro, Clase y las categorías de promesa de la iglesia) y una hoja de **Instrucciones**. | Administrador | Lo llenas y lo subes con **Importar Excel**. |
+| **Importar Excel** | Sube el Excel con todas las personas (ver abajo). Eliges la moneda y la frecuencia que se usa cuando una fila no trae la suya. | Administrador | Ves una **revisión**; nada se guarda hasta tocar **Aplicar**. |
+| **Descargar plantilla** | Baja el Excel con la fila de títulos (Miembro, Clase, Frecuencia con su lista, y las categorías de promesa de la iglesia) y una hoja de **Instrucciones**. | Administrador | Lo llenas y lo subes con **Importar Excel**. |
 | **Editar corte** | Cambia el nombre o el mes. Desde ahí también se **elimina** (pide escribir **CONFIRMAR**; borra sus promesas programadas y las categorías nuevas que se crearon para él). | Administrador | Solo mientras está programado: ya en vigor, el corte se ve en solo lectura. |
 
 ### Cómo debe venir el Excel
 
-- Primera hoja; la **fila 1** es para los títulos. Columna **A: Miembro** (o **Nombre**), columna **B: Clase**, y de la **C** en adelante **una columna por categoría** con su nombre.
+- Primera hoja; la **fila 1** es para los títulos. Columna **A: Miembro** (o **Nombre**), columna **B: Clase**, columna **C: Frecuencia**, y de la **D** en adelante **una columna por categoría** con su nombre.
+- **Frecuencia:** en la plantilla se elige de una lista (**Semanal**, **Quincenal** o **Mensual**) y vale para todos los montos de esa persona. Si la celda queda vacía, se usa la frecuencia que elijas al subir el archivo (semanal por defecto). Si dice otra cosa, la fila sale en la revisión como **Frecuencia no válida** y no se aplica hasta que corrijas el archivo o la omitas.
+- Un archivo **sin la columna Frecuencia** (Miembro, Clase y enseguida las categorías) también sirve: todas las filas llevan la frecuencia que elijas al subirlo.
 - Una persona por fila. Monto vacío o 0 = sin promesa en esa categoría. Los montos se guardan con dos decimales (230,769… queda en 230,77).
 - Un título que la iglesia no tiene es una **categoría nueva**: se crea **inactiva** y aparece en los sobres y en los reportes recién el día en que el corte entra en vigor.
 - Máximo 2 MB y 2.000 personas.
@@ -98,6 +100,9 @@ Sirve para cargar **desde ahora** las promesas que empiezan en una fecha futura 
    - **Nombre parecido:** tienes que elegir quién es, crear una persona nueva u omitir la fila. No hay opción marcada: **Aplicar** no se habilita hasta que decides.
    - **No existe:** se crea como persona nueva (con su clase, si hay una clase con ese nombre). También puedes buscar a alguien o omitirla.
    - **Sin montos** y **Repetida en el archivo** (se toma la primera vez que aparece): se ignoran.
+   - **Frecuencia no válida:** la columna Frecuencia dice algo distinto de Semanal, Quincenal o Mensual (se muestra el texto). Corrige el archivo y súbelo de nuevo, u omite la fila: mientras tanto **Aplicar** no se habilita.
+
+   Cada fila muestra la frecuencia con la que se va a guardar.
 3. Toca **Aplicar**. El mensaje dice cuántas personas se agregaron, cuántas ya estaban y se dejaron igual, cuántas se omitieron y qué categorías se crearon.
 
 > **Consejo:** puedes volver a subir el mismo archivo sin miedo: quien ya está en el corte se deja como está, así que no se agrega nada repetido.
