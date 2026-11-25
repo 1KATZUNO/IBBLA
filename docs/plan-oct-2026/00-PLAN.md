@@ -291,3 +291,8 @@ Del lider del proyecto (David):
   parecido; Construccion no existe y se propone crearla; Campamento calza sola); reimportar no agrega nada;
   22 pantallas y reportes en 200. Limitaciones anotadas: un periodo que cruce un corte a mitad de anio puede
   descuadrar la tabla de compromisos del estado de cuenta (el corte de 2027 es el 1 de enero y no cruza).
+  DESPLEGADO 22:00 CR como `v2026.11.24-e3` (main 2e257b6): suite final 1012 pruebas / 14 de Breeze; un minuto de
+  mantenimiento; migracion de las tres tablas; huella de cifras de produccion IDENTICA antes y despues del deploy
+  (cortes 31/10 y 24/11, con promesa y todas); `ibbla:verificar` OK salvo la contrasena de semilla. En produccion no
+  hay todavia ningun corte: falta cargar el Excel real junto con David o Roy (decidir Construccion y emparejar
+  los nombres que no calzan solos).
