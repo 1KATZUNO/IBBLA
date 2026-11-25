@@ -490,4 +490,24 @@ class PromesasFuturasMotorTest extends TestCase
 
         $this->assertCount(1, $consultas, implode("\n", $consultas));
     }
+
+    // ------------------------------------------------------------------ ibbla:verificar
+
+    public function test_verificar_avisa_de_un_corte_con_la_fecha_cumplida_sin_activar(): void
+    {
+        Carbon::setTestNow('2026-10-15 10:00:00');
+        \Illuminate\Support\Facades\Cache::forever(\App\Console\Commands\VerificarIbbla::CLAVE_LATIDO, now()->toIso8601String());
+        $this->artisan('ibbla:verificar', ['--sin-reportes' => true])
+            ->expectsOutputToContain('Cortes de promesas: ninguno con la fecha cumplida sin activar')
+            ->assertExitCode(0);
+
+        $this->crearCorte('2026-07-01');
+        $this->crearCorte('2026-09-01', []);
+        $this->crearCorte('2027-01-01');
+        $this->artisan('ibbla:verificar', ['--sin-reportes' => true])
+            ->expectsOutputToContain('con la fecha cumplida y sin activar: «Promesas 2026» (iglesia '.$this->iglesia->id.', desde 01/07/2026)')
+            ->expectsOutputToContain('con la fecha cumplida pero sin promesas (no se activan solos)')
+            ->doesntExpectOutputToContain('desde 01/01/2027')
+            ->assertExitCode(0);
+    }
 }
