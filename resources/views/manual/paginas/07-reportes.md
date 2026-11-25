@@ -4,7 +4,7 @@ orden: 70
 icono: reporte
 resumen: Sacar reportes de ingresos, asistencia (por culto y por clase) y estados de cuenta, en pantalla, PDF o Excel.
 roles: admin, tesorero, asistente
-rutas: ingresos-asistencia.*, reportes.*
+rutas: ingresos-asistencia.*, reportes.*, reportes.cumplimiento*#cumplimiento-de-promesas-con-corte, reportes.estados-cuenta*#estados-de-cuenta-en-lote, ingresos-asistencia.ingresos#reporte-de-ingresos, ingresos-asistencia.asistencia#reporte-de-asistencia, ingresos-asistencia.asistencia-clases*#asistencia-por-clase-con-promedio
 palabras: cumplimiento de promesas, al día, corte, estados de cuenta en lote, lote, zip, reportes, informes, ingresos, asistencia por clase, promedio, estado de cuenta, pdf, excel, csv, transferencias, descargar, rango de fechas, reporte general, dado contra esperado
 ---
 
@@ -25,7 +25,7 @@ El menú lateral solo muestra los que tu rol puede abrir. El Tesorero ve en **Re
 
 ## Cómo llegar
 
-Menú lateral → **Consultas** → **Reportes**. Es el **centro de reportes**: una tarjeta por cada reporte que puedes abrir, con una línea de qué contiene y en qué formatos sale (pantalla, PDF, Excel). Desde cualquier pantalla llegas a cualquier reporte en dos clics.
+Menú lateral → **Consultas** → **Reportes**. Es el **centro de reportes** (la pantalla se titula **Ingresos y Asistencia**): una tarjeta por cada reporte que puedes abrir, con una línea de qué contiene y en qué formatos sale (pantalla, PDF, Excel). Desde cualquier pantalla llegas a cualquier reporte en dos clics.
 
 ![Pantalla de reportes](img:reportes-indice.jpg "Cada tarjeta abre un reporte; abajo hay un resumen de la semana")
 

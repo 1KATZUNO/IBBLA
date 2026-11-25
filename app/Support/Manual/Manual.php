@@ -22,7 +22,8 @@ use League\CommonMark\MarkdownConverter;
  *   icono: personas            (nombre de App\Support\Iconos)
  *   resumen: Una linea que se ve en el indice y en el buscador.
  *   roles: admin               (todos, admin, tesorero, asistente, servidor, miembro)
- *   rutas: personas.*, compromisos.*   (pantallas cuyo boton "?" abre esta pagina; admite *)
+ *   rutas: personas.*, compromisos.*   (pantallas cuyo boton "?" abre esta pagina; admite *;
+ *                                       con "patron#ancla" abre directo esa seccion)
  *   ancla: seccion-inicial     (opcional: el "?" abre directo esa seccion)
  *   palabras: miembros, hermanos       (sinonimos para el buscador)
  *   ---
@@ -120,7 +121,10 @@ class Manual
         $mejorPuntos = -1;
 
         foreach (self::paginas() as $pagina) {
-            foreach ($pagina->rutas as $patron) {
+            foreach ($pagina->rutas as $declaracion) {
+                // "reportes.cumplimiento*#seccion": la pantalla abre directo esa seccion de la pagina
+                [$patron, $anclaPropia] = array_pad(explode('#', $declaracion, 2), 2, null);
+
                 if (! Str::is($patron, $nombreRuta)) {
                     continue;
                 }
@@ -128,7 +132,7 @@ class Manual
                 $puntos = strlen(str_replace('*', '', $patron)) + (str_contains($patron, '*') ? 0 : 1000);
                 if ($puntos > $mejorPuntos) {
                     $mejorPuntos = $puntos;
-                    $mejor = ['pagina' => $pagina, 'ancla' => $pagina->ancla];
+                    $mejor = ['pagina' => $pagina, 'ancla' => ($anclaPropia !== null && $anclaPropia !== '') ? $anclaPropia : $pagina->ancla];
                 }
             }
         }

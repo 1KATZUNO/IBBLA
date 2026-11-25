@@ -178,3 +178,14 @@ Antes de correr las migraciones, `deploy/hostinger.sh` hace un `mysqldump` compr
 contraseña viaja por `MYSQL_PWD`, nunca en la línea de comandos). Si el respaldo falla, el deploy se
 detiene sin migrar. Para restaurar: `gunzip -c <archivo> | mysql -h <host> -u <usuario> -p <bd>`.
 `--sin-respaldo` lo omite y solo tiene sentido con un respaldo hecho a mano en hPanel.
+
+## Ambiente QA (qa.ibbla.eu) y manual en PDF
+
+Antes de desplegar a producción, la versión se prueba en el ambiente QA: `bash deploy/hostinger.sh --qa`
+(rama `integracion/oct-2026`, base de datos propia, aviso «AMBIENTE DE PRUEBAS» en pantalla). Pasos de instalación,
+cómo refrescar QA con una copia de producción sin datos de WhatsApp y el flujo «primero QA, luego producción»:
+`docs/AMBIENTE-QA.md`.
+
+El PDF del manual completo tarda unos 30 s en dibujarse la primera vez (Hostinger corta a los 10 s). Con `--qa` el deploy
+lo deja listo solo; en producción agrega `--manual-pdf` (o corre `php artisan manual:pdf` después de desplegar) y la
+descarga sale al instante.

@@ -14,11 +14,20 @@ palabras: personas, miembros, hermanos, pin, teléfono, correo, fecha de nacimie
 
 ## Quién puede usarlo
 
-Solo el **Administrador**. El Tesorero puede *registrar* sobres a nombre de una persona (en *Recuento y sobres*), pero no abre la lista de personas.
+Solo el **Administrador** abre la lista y las fichas de personas. El Tesorero puede *registrar* sobres a nombre de una persona (en *Recuento y sobres*) y **agregar a alguien que todavía no está en la lista** con el alta rápida (ver *Agregar una persona rápido*), pero no abre la lista de personas.
 
 ## Cómo llegar
 
 Menú lateral → **Administración** → **Gestionar Personas**, la tarjeta **Personas** de Principal, o buscando el nombre, el PIN o el teléfono en el buscador de la barra superior.
+
+## Agregar una persona rápido (alta rápida)
+
+Para alguien que todavía no está en la lista, por ejemplo una visita que trajo su sobre. La pueden usar el **Administrador** y el **Tesorero** (el Asistente no).
+
+- **Desde el menú:** **Registro** → **Agregar persona** (para el Tesorero; el Administrador usa **Gestionar Personas** → **+ Nueva Persona**).
+- **Desde un sobre:** en el formulario del sobre, **+ Nueva persona** (ver *Recuento y sobres*), sin salir de la pantalla.
+
+Solo piden el **Nombre completo**; el **Teléfono** y el **Correo** son opcionales. Toca **Agregar persona**. La persona queda **activa y sin usuario**, lista para elegirla en los sobres. El administrador completa después sus datos, promesas, clases y ministerios en **Gestionar Personas**.
 
 ## La lista de personas
 
@@ -26,7 +35,7 @@ Menú lateral → **Administración** → **Gestionar Personas**, la tarjeta **P
 
 | Botón o control | Qué hace | Quién puede usarlo | Qué pasa después |
 |---|---|---|---|
-| **1. Buscar por nombre o PIN** | Filtra la lista. | Administrador | Muestra solo las coincidencias; aparece **Limpiar** para volver a ver todas. |
+| **1. Buscar por nombre, PIN o teléfono** | Filtra la lista. | Administrador | Muestra solo las coincidencias; aparece **Limpiar** para volver a ver todas. |
 | **2. + Nueva Persona** | Abre el formulario de una persona nueva. | Administrador | Al guardar vuelves a la lista con un mensaje. |
 | **3. Reporte PDF** | Abre el **Reporte de Contribuciones** (de enero al mes actual, de todas las personas). | Administrador | Eliges **Ver PDF** o **Descargar**. |
 | **4. Reporte General** | Genera el reporte «dado contra esperado» de todos los activos. | Administrador | Se abre el PDF en otra pestaña. |

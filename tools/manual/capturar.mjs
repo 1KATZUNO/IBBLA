@@ -24,7 +24,8 @@
  * Formato de cada captura en capturas.json
  *   archivo   nombre del JPG que se guarda en public/images/manual
  *   rol       clave de "usuarios" (admin, tesorero, asistente, servidor, miembro)
- *   ruta      ruta de la app ("/personas")
+ *   ruta      ruta de la app ("/personas"). Admite {culto_abierto} (id del primer culto abierto de Recuento) y
+ *             {culto_cerrado} (id del primer culto cerrado), para no depender de ids fijos de tu base.
  *   ancho, alto   tamano de la ventana (por omision 1366 x 768)
  *   completa  true = pagina completa (por omision solo lo que se ve)
  *   pasos     acciones antes de la foto: {"clic": "selector"}, {"clicTexto": "Nueva persona"},
@@ -92,6 +93,24 @@ const navegador = await puppeteer.launch({
 });
 
 const sesiones = {};
+const idsDeCulto = {};
+
+/** Cambia {culto_abierto} / {culto_cerrado} por el id de un culto real, leido de la lista de Recuento. */
+async function resolverRuta(ruta, pagina) {
+    for (const estado of ['abierto', 'cerrado']) {
+        const marca = `{culto_${estado}}`;
+        if (!ruta.includes(marca)) continue;
+        if (!idsDeCulto[estado]) {
+            await pagina.goto(`${base}/recuento?estado=${estado}s`, { waitUntil: 'networkidle2', timeout: 90000 });
+            const href = await pagina.evaluate(() => document.querySelector('tr[data-href]')?.dataset.href || '');
+            const id = (href.match(/\/(\d+)\/?$/) || [])[1];
+            if (!id) throw new Error(`No hay ningun culto ${estado} en Recuento (crea o reabre uno para sacar esta captura)`);
+            idsDeCulto[estado] = id;
+        }
+        ruta = ruta.split(marca).join(idsDeCulto[estado]);
+    }
+    return ruta;
+}
 async function paginaDe(rol) {
     if (sesiones[rol]) return sesiones[rol];
     const usuario = config.usuarios[rol];
@@ -156,7 +175,7 @@ for (const c of capturas) {
     try {
         const pagina = await paginaDe(c.rol);
         await pagina.setViewport({ width: c.ancho || 1366, height: c.alto || 768, deviceScaleFactor: 1 });
-        await pagina.goto(`${base}${c.ruta}`, { waitUntil: 'networkidle2', timeout: 90000 });
+        await pagina.goto(`${base}${await resolverRuta(c.ruta, pagina)}`, { waitUntil: 'networkidle2', timeout: 90000 });
 
         for (const p of c.pasos || []) {
             if (p.clic) await pagina.click(p.clic);
