@@ -36,7 +36,12 @@ class PermisosDescargasTest extends TestCase
     public static function financieras(): array
     {
         return [
-            'Excel de ingresos' => ['ingresos-asistencia.excel-ingresos', ['fecha_inicio' => '2026-01-01', 'fecha_fin' => '2026-03-31']],
+            // El Excel de ingresos viejo redirige al nuevo (ReporteIngresosTest): se prueba el destino
+            'Excel de ingresos' => ['reportes.ingresos.excel', ['fecha_inicio' => '2026-01-01', 'fecha_fin' => '2026-03-31']],
+            'PDF de ingresos' => ['reportes.ingresos.pdf', ['fecha_inicio' => '2026-01-01', 'fecha_fin' => '2026-03-31']],
+            'Reporte de cultos' => ['reportes.cultos', ['fecha_inicio' => '2026-01-01', 'fecha_fin' => '2026-03-31']],
+            'Excel de cultos' => ['reportes.cultos.excel', ['fecha_inicio' => '2026-01-01', 'fecha_fin' => '2026-03-31']],
+            'PDF de transferencias' => ['ingresos-asistencia.pdf-ingresos-transferencias', ['fecha_inicio' => '2026-01-01', 'fecha_fin' => '2026-03-31']],
             'Reporte General' => ['personas.reporte-general', ['accion' => 'ver']],
             'Reporte de contribuciones' => ['personas.reporte-pdf', ['accion' => 'ver']],
             'Cumplimiento' => ['reportes.cumplimiento', []],

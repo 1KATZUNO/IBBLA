@@ -8,16 +8,19 @@
     {{-- Centro de reportes: una tarjeta por reporte, solo los que el rol puede abrir (misma regla que la ruta) --}}
     @php
         $verDinero = Auth::user()->canAccessRecuento();
-        $verAsistencia = Auth::user()->canAccessAsistencia();
+        // Reportes de asistencia: admin, tesorero y asistente (decision 5 de 04-DECISIONES), la misma
+        // regla de la ruta (role:admin,tesorero,asistente: el tesorero entra por el permiso de recuento)
+        $verAsistencia = Auth::user()->canAccessAsistencia() || $verDinero;
         $tarjetas = array_values(array_filter([
             ['ruta' => 'reportes.cumplimiento', 'visible' => $verDinero, 'icono' => 'check', 'titulo' => 'Cumplimiento de promesas', 'texto' => 'Quién está al día y quién debe, con fecha de corte.', 'formatos' => 'Pantalla, PDF y Excel'],
             ['ruta' => 'reportes.estados-cuenta', 'visible' => $verDinero, 'icono' => 'documento', 'titulo' => 'Estados de cuenta en lote', 'texto' => 'El estado de cuenta de muchas personas a la vez.', 'formatos' => 'PDF, ZIP y Excel'],
             ['ruta' => 'personas.reporte-general', 'params' => ['accion' => 'ver'], 'visible' => $verDinero, 'icono' => 'barras', 'titulo' => 'Reporte General', 'texto' => 'Lo dado contra lo esperado de todas las personas activas.', 'formatos' => 'PDF'],
             ['ruta' => 'personas.reporte-pdf', 'params' => ['accion' => 'ver'], 'visible' => $verDinero, 'icono' => 'reporte', 'titulo' => 'Reporte de contribuciones', 'texto' => 'Contribuciones de todas las personas, de enero al mes actual.', 'formatos' => 'PDF'],
-            ['ruta' => 'ingresos-asistencia.ingresos', 'visible' => $verDinero, 'icono' => 'reporte', 'titulo' => 'Ingresos', 'texto' => 'Lo recibido por culto, semana o mes.', 'formatos' => 'Pantalla, PDF y Excel'],
+            ['ruta' => 'reportes.cultos', 'visible' => $verDinero, 'icono' => 'calendario', 'titulo' => 'Reporte de cultos', 'texto' => 'Cada culto de un rango: sobres, efectivo, transferencias, suelto, egresos y firmas, con totales por categoría y método de pago.', 'formatos' => 'Pantalla, PDF y Excel'],
+            ['ruta' => 'reportes.ingresos', 'visible' => $verDinero, 'icono' => 'barras', 'titulo' => 'Reporte de ingresos', 'texto' => 'Ingresos de un rango por categoría y método de pago, comparados con el periodo anterior.', 'formatos' => 'Pantalla, PDF y Excel'],
             ['ruta' => 'ingresos-asistencia.promesas', 'visible' => $verDinero, 'icono' => 'documento', 'titulo' => 'Promesas', 'texto' => 'Promesas y compromisos por persona.', 'formatos' => 'Pantalla, PDF y Excel'],
-            ['ruta' => 'ingresos-asistencia.asistencia', 'visible' => $verAsistencia, 'icono' => 'grupo', 'titulo' => 'Asistencia', 'texto' => 'Asistencia por culto y resumen por mes.', 'formatos' => 'Pantalla, PDF y Excel'],
-            ['ruta' => 'ingresos-asistencia.asistencia-clases', 'visible' => $verAsistencia, 'icono' => 'calendario', 'titulo' => 'Asistencia por clase', 'texto' => 'Niños, niñas, maestros y promedio en un rango de fechas.', 'formatos' => 'Pantalla, PDF, CSV y Excel'],
+            ['ruta' => 'ingresos-asistencia.asistencia', 'visible' => $verAsistencia, 'icono' => 'grupo', 'titulo' => 'Asistencia por culto', 'texto' => 'Asistencia de cada culto en un rango de fechas y resumen por mes.', 'formatos' => 'Pantalla, PDF y Excel'],
+            ['ruta' => 'ingresos-asistencia.asistencia-clases', 'visible' => $verAsistencia, 'icono' => 'calendario', 'titulo' => 'Asistencia por clase', 'texto' => 'Niños, niñas, maestros y promedio por clase en un rango de fechas; una clase o todas.', 'formatos' => 'Pantalla, PDF, CSV y Excel'],
         ], fn ($t) => $t['visible'] && \Illuminate\Support\Facades\Route::has($t['ruta'])));
     @endphp
     <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4" data-testid="centro-reportes">

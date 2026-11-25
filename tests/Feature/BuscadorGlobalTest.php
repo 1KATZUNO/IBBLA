@@ -295,6 +295,37 @@ class BuscadorGlobalTest extends TestCase
         }
     }
 
+    public function test_los_reportes_de_cultos_e_ingresos_se_encuentran_segun_el_rol(): void
+    {
+        $casos = [
+            ['Reporte de cultos', 'reporte cultos'],
+            ['Reporte de cultos', 'firmas'],
+            ['Reporte de ingresos', 'ingresos'],
+            ['Reporte de ingresos', 'periodo anterior'],
+        ];
+        foreach ([$this->admin, $this->tesorero] as $usuario) {
+            foreach ($casos as [$titulo, $consulta]) {
+                $this->assertContains($titulo, $this->titulos($this->buscar($usuario, $consulta), 'reportes'), "{$usuario->rol}: {$consulta}");
+            }
+        }
+        foreach ([$this->asistente, $this->miembro] as $usuario) {
+            foreach ($casos as [$titulo, $consulta]) {
+                $this->assertNotContains($titulo, $this->titulos($this->buscar($usuario, $consulta), 'reportes'), "{$usuario->rol}: {$consulta}");
+            }
+        }
+
+        // El reporte de ingresos del buscador abre la pantalla nueva
+        $ingresos = collect(collect($this->buscar($this->tesorero, 'reporte ingresos')['grupos'])->firstWhere('clave', 'reportes')['items'])->firstWhere('titulo', 'Reporte de ingresos');
+        $this->assertSame(route('reportes.ingresos'), $ingresos['url'] ?? null);
+    }
+
+    public function test_el_tesorero_encuentra_los_reportes_de_asistencia(): void
+    {
+        $this->assertContains('Reporte de asistencia', $this->titulos($this->buscar($this->tesorero, 'reporte asistencia'), 'reportes'));
+        $this->assertContains('Asistencia por clase', $this->titulos($this->buscar($this->tesorero, 'asistencia por clase'), 'reportes'));
+        $this->assertNotContains('Asistencia por clase', $this->titulos($this->buscar($this->miembro, 'asistencia por clase'), 'reportes'));
+    }
+
     public function test_el_reporte_general_del_buscador_abre_directo_el_pdf(): void
     {
         $r = $this->buscar($this->tesorero, 'reporte general');

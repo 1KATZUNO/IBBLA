@@ -132,8 +132,9 @@ class AsistenciaClasesReporteController extends Controller
         [$desde, $hasta] = ReporteAsistenciaClasesService::rangoPorDefecto();
 
         $validador = Validator::make([
-            'desde' => $request->query('desde') ?: $desde->toDateString(),
-            'hasta' => $request->query('hasta') ?: $hasta->toDateString(),
+            // fecha_inicio/fecha_fin: los nombres de los demas reportes (enlaces desde Asistencia por culto)
+            'desde' => $request->query('desde') ?: ($request->query('fecha_inicio') ?: $desde->toDateString()),
+            'hasta' => $request->query('hasta') ?: ($request->query('fecha_fin') ?: $hasta->toDateString()),
             'clase_id' => $request->query('clase_id') ?: null,
             'incluir_ceros' => $request->query('incluir_ceros') ?: null,
         ], [
