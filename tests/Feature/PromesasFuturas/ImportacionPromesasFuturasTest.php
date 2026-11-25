@@ -218,6 +218,34 @@ class ImportacionPromesasFuturasTest extends TestCase
         $this->assertSame(1, TenantCategory::where('nombre', 'Alcance Local')->count());
     }
 
+    public function test_los_reportes_existentes_dan_lo_mismo_antes_y_despues_de_importar(): void
+    {
+        ['ana' => $ana, 'ruta' => $ruta] = $this->escenario();
+        $pantallas = [
+            route('ingresos-asistencia.promesas', ['anio' => 2026]),
+            route('reportes.cumplimiento', ['corte' => '2026-11-24']),
+            route('dashboard.promesas'),
+            route('personas.reporte-general', ['accion' => 'ver']),
+            route('personas.index'),
+        ];
+        // Fuera lo que cambia en cada peticion: token CSRF y fecha / id del PDF
+        $quitarToken = fn (string $html) => preg_replace(['/(name="_token" value="|csrf-token" content=")[^"]+"/', '/\/(CreationDate|ModDate) \([^)]*\)/', '/\/ID\[<[0-9a-f]+><[0-9a-f]+>\]/'], ['$1"', '/$1', '/ID'], $html);
+        $antes = [];
+        foreach ($pantallas as $url) {
+            $antes[$url] = $quitarToken($this->actingAs($this->admin)->get($url)->assertOk()->getContent());
+        }
+
+        $this->subir($ruta);
+        $this->actingAs($this->admin)->post(route('promesas-futuras.importar.aplicar', $this->corte), ['filas' => [3 => 'persona:'.$ana->id, 4 => 'omitir']])->assertSessionHas('success');
+        $this->assertSame(3, PromesaProgramada::distinct()->count('persona_id'));
+        $this->actingAs($this->admin)->get(route('promesas-futuras.show', $this->corte))->assertOk(); // consume el aviso de exito
+        // Se omite a Pedro (persona nueva): una persona nueva sale en las listas como cualquier alta
+
+        foreach ($antes as $url => $html) {
+            $this->assertSame($html, $quitarToken($this->actingAs($this->admin)->get($url)->getContent()), "Cambió {$url}");
+        }
+    }
+
     public function test_columna_a_una_categoria_existente_u_omitida_y_buscar_a_alguien(): void
     {
         $beto = $this->persona('Roberto Rojas');
