@@ -31,6 +31,7 @@
                         </div>
 
                         @include('admin.usuarios._telefono', ['telefono' => null])
+                        @include('admin.usuarios._persona', ['persona' => null, 'usuarioId' => null])
 
                         <!-- Rol -->
                         <div class="mb-4">

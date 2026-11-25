@@ -11,6 +11,13 @@ class AuditLogController extends Controller
     {
         $query = AuditLog::query()->orderByDesc('id');
 
+        // QE-013: por defecto solo las acciones (sin visitas GET ni ingresos/salidas, que tienen su
+        // historial); "ver todo" muestra también las visitas y las columnas técnicas.
+        $verTodo = $request->query('ver') === 'todo';
+        if (! $verTodo) {
+            $query->soloAcciones();
+        }
+
         if ($request->filled('user')) {
             $user = $request->string('user');
             $query->where(function ($q) use ($user) {
@@ -39,6 +46,6 @@ class AuditLogController extends Controller
 
         $logs = $query->paginate(25)->appends($request->query());
 
-        return view('admin.audit.index', compact('logs'));
+        return view('admin.audit.index', compact('logs', 'verTodo'));
     }
 }

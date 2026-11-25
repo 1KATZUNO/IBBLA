@@ -3,7 +3,6 @@
 namespace App\Services\WhatsApp;
 
 use App\Events\SobresAlcanzados;
-use App\Jobs\EnviarAvisoWhatsApp;
 use App\Models\AvisoWhatsApp;
 use App\Models\Culto;
 use App\Models\Sobre;
@@ -15,21 +14,31 @@ use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
 use Throwable;
 
-use function Illuminate\Support\defer;
-
 /**
  * Crea los avisos de WhatsApp para los líderes de la iglesia (un aviso por destinatario y evento).
  *
  * Destinatarios: usuarios de la iglesia cuyo rol está en config('whatsapp.avisos.roles')
  * (admin y tesorero por defecto) y que tienen un teléfono válido. Con el driver meta (y
- * credenciales) cada aviso se envía solo con un job; con link queda pendiente en el panel /avisos.
+ * credenciales) cada aviso sale solo; con link queda pendiente en el panel /avisos.
  *
  * Con el driver callmebot cada líder decide por sí mismo: quien activó WhatsApp en su perfil recibe el
- * aviso solo (después de responder la petición, sin cola); quien no, lo tiene pendiente en el panel
- * para mandarlo con un toque (wa.me). Un aviso que no pudo salir también queda pendiente: nunca se pierde.
+ * aviso solo; quien no, lo tiene pendiente en el panel para mandarlo con un toque (wa.me).
+ *
+ * QE-009: el envío automático NUNCA ocurre en la petición que crea el aviso. La tabla avisos_whatsapp
+ * es la cola y whatsapp:enviar-pendientes (cada minuto, planificador) la vacía. Un aviso que no pudo
+ * salir queda pendiente en el panel con su último error: nunca se pierde.
  */
 class AvisosWhatsAppService
 {
+    /** Intentos de envío automático antes de dejar el aviso para mandarlo a mano. */
+    public const INTENTOS_MAXIMOS = 3;
+
+    /** Minutos de espera tras el 1.º y el 2.º intento fallido. */
+    private const ESPERAS_MINUTOS = [1, 5, 15];
+
+    /** Pasado este tiempo un aviso ya no sale solo (p. ej. el cron estuvo caído días). */
+    public const VIGENCIA_HORAS = 12;
+
     public function __construct(private WhatsAppService $whatsapp)
     {
     }
@@ -167,64 +176,112 @@ class AvisosWhatsAppService
             ]);
         });
 
-        $this->enviarSiEsAutomatico($avisos);
+        $this->marcarEnvioAutomatico($avisos);
 
         return $avisos;
     }
 
     /**
-     * Con el driver meta (y credenciales) cada aviso se envía solo con un job y lo marca enviado.
-     * Con link no se hace nada: quedan pendientes en el panel. Un fallo al encolar uno no impide
-     * encolar el resto, y el aviso que no salió sigue pendiente en el panel para mandarlo a mano.
+     * QE-009: aquí NO se envía nada. Crear un culto o guardar el 10.º sobre no puede esperar a un
+     * tercero (Hostinger corta a los 10 s y no hay workers de colas). Solo se marca qué avisos puede
+     * mandar el sistema solo (meta con credenciales, o callmebot a quien activó su WhatsApp); el
+     * comando whatsapp:enviar-pendientes, que corre cada minuto desde el planificador, los envía.
+     * Los demás quedan pendientes en el panel /avisos para mandarlos con un toque, como siempre.
      *
      * @param  Collection<int, AvisoWhatsApp>  $avisos
      */
-    private function enviarSiEsAutomatico(Collection $avisos): void
+    private function marcarEnvioAutomatico(Collection $avisos): void
     {
-        if ($this->whatsapp->usaClavePorReceptor()) {
-            $this->enviarConClave($avisos);
-
-            return;
-        }
-
-        if (! $this->whatsapp->puedeEnviar()) {
-            return;
-        }
-
         foreach ($avisos as $aviso) {
             try {
-                EnviarAvisoWhatsApp::dispatch($aviso->id);
+                $usuario = $aviso->user_id ? User::find($aviso->user_id) : null;
+
+                if ($usuario !== null && $this->whatsapp->puedeEnviarA($usuario)) {
+                    $aviso->forceFill(['envio_automatico' => true])->save();
+                }
             } catch (Throwable $e) {
+                // Si no se pudo decidir, el aviso queda manual en el panel: nunca se pierde.
                 report($e);
             }
         }
     }
 
     /**
-     * Driver callmebot: manda cada aviso a quien tiene clave. En una petición web va después de enviar
-     * la respuesta (defer): CallMeBot es un tercero sin garantía y crear un culto no debe esperarlo, y
-     * en un hosting compartido no hay un worker de colas que lo haga. En consola (comandos, tests) va
-     * en línea. Un fallo no tumba nada: el aviso sigue pendiente en el panel.
+     * Envía los avisos automáticos que esperan su turno (lo llama whatsapp:enviar-pendientes, fuera de
+     * cualquier petición). Cada aviso se reclama con un UPDATE condicional antes de enviarlo, así que
+     * dos corridas a la vez nunca lo mandan dos veces. Reintentos acotados: tras INTENTOS_MAXIMOS el
+     * aviso deja de ser automático y queda pendiente en el panel con su último error. Un aviso que
+     * esperó más de VIGENCIA_HORAS (el cron estuvo caído) no sale solo: ya no sirve como aviso.
      *
-     * @param  Collection<int, AvisoWhatsApp>  $avisos
+     * @return array{enviados: int, fallidos: int, vencidos: int}
      */
-    private function enviarConClave(Collection $avisos): void
+    public function enviarPendientes(int $maxSegundos = 50, int $limite = 100): array
     {
-        if ($avisos->isEmpty()) {
-            return;
-        }
+        $inicio = microtime(true);
+        $resultado = ['enviados' => 0, 'fallidos' => 0, 'vencidos' => 0];
 
-        $enviar = function () use ($avisos): void {
-            foreach ($avisos as $aviso) {
-                $this->enviarAviso($aviso);
+        $resultado['vencidos'] = AvisoWhatsApp::withoutGlobalScopes()
+            ->where('estado', AvisoWhatsApp::PENDIENTE)
+            ->where('envio_automatico', true)
+            ->where('created_at', '<', now()->subHours(self::VIGENCIA_HORAS))
+            ->update(['envio_automatico' => false, 'ultimo_error' => 'No salió a tiempo: se manda a mano desde el panel.']);
+
+        $ids = AvisoWhatsApp::withoutGlobalScopes()
+            ->where('estado', AvisoWhatsApp::PENDIENTE)
+            ->where('envio_automatico', true)
+            ->where('intentos', '<', self::INTENTOS_MAXIMOS)
+            ->where(fn ($q) => $q->whereNull('proximo_intento_at')->orWhere('proximo_intento_at', '<=', now()))
+            ->orderBy('id')
+            ->limit($limite)
+            ->pluck('id');
+
+        foreach ($ids as $id) {
+            if (microtime(true) - $inicio >= $maxSegundos) {
+                break;
             }
-        };
 
-        if (app()->runningInConsole()) {
-            $enviar();
-        } else {
-            defer($enviar);
+            $aviso = AvisoWhatsApp::withoutGlobalScopes()->find($id);
+
+            if ($aviso === null || ! $this->reclamar($aviso)) {
+                continue;
+            }
+
+            try {
+                $motivo = $this->enviarAviso($aviso);
+            } catch (Throwable $e) {
+                report($e);
+                $motivo = 'Error inesperado al enviar: '.class_basename($e);
+            }
+
+            if ($motivo === null) {
+                $resultado['enviados']++;
+
+                continue;
+            }
+
+            $resultado['fallidos']++;
+            $intentos = (int) $aviso->intentos + 1;
+            $aviso->forceFill([
+                'ultimo_error' => mb_substr($motivo, 0, 500),
+                // Sin más intentos, vuelve a ser manual: el panel ofrece el enlace de siempre.
+                'envio_automatico' => $intentos < self::INTENTOS_MAXIMOS,
+            ])->save();
         }
+
+        return $resultado;
+    }
+
+    /** Toma el aviso para esta corrida: suma el intento y fija la espera del siguiente. */
+    private function reclamar(AvisoWhatsApp $aviso): bool
+    {
+        $intentos = (int) $aviso->intentos;
+        $espera = self::ESPERAS_MINUTOS[$intentos] ?? 15;
+
+        return AvisoWhatsApp::withoutGlobalScopes()
+            ->where('id', $aviso->id)
+            ->where('estado', AvisoWhatsApp::PENDIENTE)
+            ->where('intentos', $intentos)
+            ->update(['intentos' => $intentos + 1, 'proximo_intento_at' => now()->addMinutes($espera)]) === 1;
     }
 
     /**

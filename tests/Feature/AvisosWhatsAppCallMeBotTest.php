@@ -18,6 +18,7 @@ use Tests\TestCase;
 /**
  * Avisos a los líderes con el driver callmebot: quien activó WhatsApp en su perfil recibe el aviso solo
  * (y queda enviado por el sistema); quien no, lo tiene pendiente en el panel con el toque manual (wa.me).
+ * QE-009: el envío lo hace whatsapp:enviar-pendientes (planificador), nunca la petición que crea el aviso.
  * Todo con Http::fake: nunca se llama a CallMeBot de verdad.
  */
 class AvisosWhatsAppCallMeBotTest extends TestCase
@@ -67,6 +68,12 @@ class AvisosWhatsAppCallMeBotTest extends TestCase
         Http::fake(['api.callmebot.com/*' => Http::response(self::EXITO, 200)]);
 
         $this->crearCultoPorHttp();
+        Http::assertNothingSent();
+        $this->assertSame(AvisoWhatsApp::PENDIENTE, $this->aviso($this->admin)->estado, 'QE-009: crear el culto no llama a CallMeBot');
+        $this->assertTrue($this->aviso($this->admin)->envio_automatico);
+        $this->assertFalse($this->aviso($this->tesorero)->envio_automatico);
+
+        $this->artisan('whatsapp:enviar-pendientes')->assertExitCode(0);
 
         $delAdmin = $this->aviso($this->admin);
         $this->assertSame(AvisoWhatsApp::ENVIADO, $delAdmin->estado);
@@ -87,6 +94,7 @@ class AvisosWhatsAppCallMeBotTest extends TestCase
         Http::fake();
 
         $this->crearCultoPorHttp();
+        $this->artisan('whatsapp:enviar-pendientes');
 
         Http::assertNothingSent();
         $this->assertSame(2, AvisoWhatsApp::withoutGlobalScopes()->where('estado', AvisoWhatsApp::PENDIENTE)->count());
@@ -98,6 +106,7 @@ class AvisosWhatsAppCallMeBotTest extends TestCase
         Http::fake(['*' => Http::response('ERROR: APIKey is invalid', 200)]);
 
         $this->crearCultoPorHttp();
+        $this->artisan('whatsapp:enviar-pendientes');
 
         $this->assertSame(1, Culto::count());
         $this->assertSame(AvisoWhatsApp::PENDIENTE, $this->aviso($this->admin)->estado);
@@ -116,6 +125,8 @@ class AvisosWhatsAppCallMeBotTest extends TestCase
             $this->crearSobre($culto, null, ['diezmo' => 1000]);
             $servicio->sobreRegistrado($culto);
         }
+        Http::assertNothingSent();
+        $this->artisan('whatsapp:enviar-pendientes');
 
         $delTesorero = AvisoWhatsApp::withoutGlobalScopes()->where('evento', AvisoWhatsApp::EVENTO_SOBRES_ALCANZADOS)->where('user_id', $this->tesorero->id)->sole();
         $this->assertSame(AvisoWhatsApp::ENVIADO, $delTesorero->estado);
@@ -129,6 +140,7 @@ class AvisosWhatsAppCallMeBotTest extends TestCase
         Http::fake();
 
         $this->crearCultoPorHttp();
+        $this->artisan('whatsapp:enviar-pendientes');
 
         Http::assertNothingSent();
         $this->assertSame(AvisoWhatsApp::PENDIENTE, $this->aviso($this->admin)->estado);
@@ -141,29 +153,63 @@ class AvisosWhatsAppCallMeBotTest extends TestCase
         Http::fake();
 
         $this->crearCultoPorHttp();
+        $this->artisan('whatsapp:enviar-pendientes');
 
         Http::assertNothingSent();
         $this->assertSame(AvisoWhatsApp::PENDIENTE, $this->aviso($this->admin)->estado);
     }
 
-    public function test_en_una_peticion_web_el_envio_se_difiere_hasta_despues_de_la_respuesta(): void
+    public function test_en_una_peticion_web_no_se_envia_ni_se_difiere_nada(): void
     {
         $this->activarWhatsApp($this->admin, 'CLAVEADMIN');
         Http::fake(['api.callmebot.com/*' => Http::response(self::EXITO, 200)]);
-        // En consola (y en los tests) el envío va en línea; aquí se simula una petición web.
+        // En los tests la app corre "en consola"; aquí se simula una petición web.
         (new ReflectionProperty($this->app, 'isRunningInConsole'))->setValue($this->app, false);
 
         $culto = $this->crearCulto('2026-10-18');
         app(AvisosWhatsAppService::class)->cultoCreado($culto);
 
         Http::assertNothingSent();
-        $this->assertSame(AvisoWhatsApp::PENDIENTE, $this->aviso($this->admin)->estado, 'Todavía no salió: se difirió');
-        $this->assertCount(1, app(DeferredCallbackCollection::class));
+        $this->assertCount(0, app(DeferredCallbackCollection::class), 'QE-009: nada queda colgado al final de la petición');
+        $this->assertSame(AvisoWhatsApp::PENDIENTE, $this->aviso($this->admin)->estado);
 
-        app(DeferredCallbackCollection::class)->invoke();
+        (new ReflectionProperty($this->app, 'isRunningInConsole'))->setValue($this->app, true);
+        $this->artisan('whatsapp:enviar-pendientes');
 
         Http::assertSentCount(1);
         $this->assertSame(AvisoWhatsApp::ENVIADO, $this->aviso($this->admin)->estado);
+    }
+
+    public function test_guardar_el_decimo_sobre_por_http_no_llama_al_proveedor(): void
+    {
+        $this->activarWhatsApp($this->admin, 'CLAVEADMIN');
+        $this->activarWhatsApp($this->tesorero, 'CLAVETES');
+        $this->crearCategoriasPorDefecto();
+        Http::fake(['api.callmebot.com/*' => Http::response(self::EXITO, 200)]);
+        $culto = $this->crearCulto('2026-10-18');
+        foreach (range(1, 9) as $n) {
+            $this->crearSobre($culto, null, ['diezmo' => 1000]);
+        }
+
+        $inicio = microtime(true);
+        $this->actingAs($this->admin)->post(route('recuento.store'), [
+            'culto_id' => $culto->id,
+            'persona_id' => $this->crearPersona('Persona Diez', '7000-0010')->id,
+            'metodo_pago' => 'efectivo',
+            'moneda' => 'CRC',
+            'detalles' => [['categoria' => 'diezmo', 'monto' => 1000]],
+        ])->assertSessionHasNoErrors();
+        $this->assertLessThan(10, microtime(true) - $inicio);
+
+        Http::assertNothingSent();
+        $avisos = AvisoWhatsApp::withoutGlobalScopes()->where('evento', AvisoWhatsApp::EVENTO_SOBRES_ALCANZADOS)->get();
+        $this->assertCount(2, $avisos);
+        $this->assertTrue($avisos->every(fn ($a) => $a->estado === AvisoWhatsApp::PENDIENTE && $a->envio_automatico));
+
+        $this->artisan('whatsapp:enviar-pendientes');
+
+        Http::assertSentCount(2);
+        $this->assertSame(2, AvisoWhatsApp::withoutGlobalScopes()->where('estado', AvisoWhatsApp::ENVIADO)->count());
     }
 
     public function test_un_aviso_atendido_a_mano_mientras_tanto_no_se_envia(): void

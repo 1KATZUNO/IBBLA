@@ -37,6 +37,16 @@ class AccesoEdicionController extends Controller
         $idsCultos = $vigentes->concat($historial)->flatMap(fn (PermisoEdicion $p) => $p->idsCultos())->unique()->values();
         $cultosPorId = Culto::with('serviceType')->whereIn('id', $idsCultos)->get()->keyBy('id');
 
+        // QE-013: un acceso sobre cultos concretos que ya se borraron todos no da acceso a nada: deja de
+        // verse vigente y pasa al historial ("Sus cultos se eliminaron").
+        $sinCultos = $vigentes->filter(fn (PermisoEdicion $p) => $p->tipo === PermisoEdicion::TIPO_CULTOS
+            && collect($p->idsCultos())->every(fn ($id) => ! $cultosPorId->has($id)));
+        if ($sinCultos->isNotEmpty()) {
+            $sinCultos->each(fn (PermisoEdicion $p) => $p->setAttribute('sin_cultos', true));
+            $vigentes = $vigentes->diff($sinCultos)->values();
+            $historial = $sinCultos->concat($historial)->values();
+        }
+
         return view('admin.accesos.index', [
             'usuarios' => $this->permisos->usuariosElegibles($tenantId),
             'vigentes' => $vigentes,

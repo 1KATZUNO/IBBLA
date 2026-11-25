@@ -269,19 +269,23 @@ Route::middleware(['auth', 'role:admin', 'audit'])->group(function () {
     Route::post('personas/{persona}/reiniciar-compromisos', [PersonaController::class, 'reiniciarCompromisos'])->name('personas.reiniciar-compromisos');
     Route::post('personas/{persona}/limpiar-todo', [PersonaController::class, 'limpiarTodo'])->name('personas.limpiar-todo');
     Route::resource('personas', PersonaController::class);
-    Route::resource('promesas', PromesaController::class);
+    // QE-020: el CRUD viejo de promesas ya no existe; sus direcciones llevan a Personas (ver PromesaController)
+    Route::get('promesas/{cualquiera?}', [PromesaController::class, 'redirigir'])->where('cualquiera', '.*')->name('promesas.index');
 
     // Compromisos
     Route::get('personas/{persona}/compromisos', [App\Http\Controllers\CompromisoController::class, 'show'])->name('compromisos.show');
     Route::post('compromisos/recalcular', [App\Http\Controllers\CompromisoController::class, 'recalcular'])->name('compromisos.recalcular');
 
-    // Limpieza de personas inactivas (temporal)
+    // Mantenimiento de Personas (QA-034): acciones masivas con pantalla de confirmación (escribir CONFIRMAR) y auditoría
+    Route::get('personas/mantenimiento/{accion}', [PersonaController::class, 'confirmarMantenimiento'])->whereIn('accion', ['inactivas', 'promesas'])->name('personas.mantenimiento');
     Route::post('personas/limpiar-inactivas', [PersonaController::class, 'limpiarInactivas'])->name('personas.limpiar-inactivas');
     Route::post('personas/resetear-promesas', [PersonaController::class, 'resetearPromesas'])->name('personas.resetear-promesas');
 
     // Gestión de Usuarios
-    // Sin "show": no hay pantalla de detalle (antes daba 500, QA-012)
-    Route::resource('usuarios', App\Http\Controllers\UserController::class)->except(['show']);
+    // No hay pantalla de detalle: "show" lleva a la lista (antes 500 con QA-012 y 405 con QE-020)
+    // QA-018: buscador de personas para vincularlas con un usuario (va antes del resource por usuarios/{usuario})
+    Route::get('usuarios/buscar-personas', [App\Http\Controllers\UserController::class, 'buscarPersonas'])->name('usuarios.buscar-personas');
+    Route::resource('usuarios', App\Http\Controllers\UserController::class);
 
     // Carga retroactiva de asistencias (import Excel)
     Route::get('/admin/asistencia/importar', [App\Http\Controllers\AsistenciaImportController::class, 'index'])->name('asistencia.importar.index');

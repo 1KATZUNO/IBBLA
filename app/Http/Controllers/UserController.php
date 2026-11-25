@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\AuditLog;
+use App\Models\Persona;
 use App\Models\User;
 use App\Services\WhatsApp\WhatsAppService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
@@ -22,6 +25,14 @@ class UserController extends Controller
             ->paginate(15);
 
         return view('admin.usuarios.index', compact('usuarios'));
+    }
+
+    /**
+     * QE-020: no hay pantalla de detalle de un usuario; /usuarios/{id} lleva a la lista (antes 405).
+     */
+    public function show(string $usuario)
+    {
+        return redirect()->route('usuarios.index');
     }
 
     /**
@@ -49,7 +60,11 @@ class UserController extends Controller
             'password' => 'required|string|min:8|confirmed',
             'rol' => 'required|in:admin,tesorero,asistente,servidor,miembro',
             'tenant_role_id' => $this->reglaRolDeLaIglesia(),
-        ]);
+            'persona_id' => $this->reglaPersona(null),
+        ], $this->mensajesPersona());
+
+        $personaId = $validated['persona_id'] ?? null;
+        unset($validated['persona_id']);
 
         $validated['password'] = Hash::make($validated['password']);
         $validated['tenant_id'] = $tenant?->id;
@@ -60,10 +75,11 @@ class UserController extends Controller
             $validated['tenant_role_id'] = $tenantRole?->id;
         }
 
-        User::create($validated);
+        $usuario = User::create($validated);
+        $persona = $this->vincularPersona($usuario, $personaId);
 
         return redirect()->route('usuarios.index')
-            ->with('success', 'Usuario creado exitosamente.');
+            ->with('success', 'Usuario creado exitosamente.'.($persona ? " Quedó vinculado con {$persona->nombre}." : ''));
     }
 
     /**
@@ -75,7 +91,9 @@ class UserController extends Controller
         $tenant = tenant();
         $roles = $tenant ? $tenant->roles()->orderBy('orden')->get() : collect();
 
-        return view('admin.usuarios.edit', compact('usuario', 'roles'));
+        $personaVinculada = Persona::where('user_id', $usuario->id)->first();
+
+        return view('admin.usuarios.edit', compact('usuario', 'roles', 'personaVinculada'));
     }
 
     /**
@@ -92,7 +110,11 @@ class UserController extends Controller
             'password' => 'nullable|string|min:8|confirmed',
             'rol' => 'required|in:admin,tesorero,asistente,servidor,miembro',
             'tenant_role_id' => $this->reglaRolDeLaIglesia(),
-        ]);
+            'persona_id' => $this->reglaPersona($usuario),
+        ], $this->mensajesPersona());
+
+        $personaId = $validated['persona_id'] ?? null;
+        unset($validated['persona_id']);
 
         if ($request->filled('password')) {
             $validated['password'] = Hash::make($validated['password']);
@@ -108,6 +130,7 @@ class UserController extends Controller
         }
 
         $usuario->update($validated);
+        $this->vincularPersona($usuario, $personaId);
 
         return redirect()->route('usuarios.index')
             ->with('success', 'Usuario actualizado exitosamente.');
@@ -125,6 +148,93 @@ class UserController extends Controller
         if ($usuario->isSuperAdmin() || ($deOtraIglesia && ! $actual->isSuperAdmin())) {
             abort(404);
         }
+    }
+
+    /**
+     * QA-018: buscador de personas para vincular con un usuario (nombre, PIN o teléfono). Devuelve hasta
+     * 10, de esta iglesia, y dice si ya tienen otro usuario (no se pueden elegir).
+     */
+    public function buscarPersonas(Request $request): JsonResponse
+    {
+        $texto = trim((string) $request->query('q', ''));
+        if (mb_strlen($texto) < 2) {
+            return response()->json([]);
+        }
+
+        $digitos = preg_replace('/\D+/', '', $texto);
+        $tenantId = auth()->user()->tenant_id ?? tenant()?->id;
+
+        $personas = Persona::query()
+            ->when($tenantId, fn ($q) => $q->where('tenant_id', $tenantId))
+            ->where(function ($q) use ($texto, $digitos) {
+                $q->where('nombre', 'like', '%'.$texto.'%')->orWhere('pin', $texto);
+                if (strlen($digitos) >= 4) {
+                    $q->orWhereRaw("REPLACE(REPLACE(telefono, '-', ''), ' ', '') like ?", ['%'.$digitos.'%']);
+                }
+            })
+            ->orderByDesc('activo')
+            ->orderBy('nombre')
+            ->limit(10)
+            ->get(['id', 'nombre', 'pin', 'telefono', 'activo', 'user_id']);
+
+        $ignorar = $request->integer('usuario') ?: null;
+
+        return response()->json($personas->map(fn (Persona $p) => [
+            'id' => $p->id,
+            'nombre' => $p->nombre,
+            'detalle' => collect([$p->pin ? 'PIN '.$p->pin : null, $p->telefono, $p->activo ? null : 'inactiva'])->filter()->join(' · '),
+            'ocupada' => $p->user_id !== null && (int) $p->user_id !== (int) $ignorar,
+        ])->values());
+    }
+
+    /** La persona elegida es de esta iglesia y no tiene otro usuario. */
+    private function reglaPersona(?User $usuario): array
+    {
+        $tenantId = auth()->user()->tenant_id ?? tenant()?->id;
+
+        return ['nullable', 'integer', Rule::exists('personas', 'id')->where(function ($q) use ($tenantId, $usuario) {
+            if ($tenantId) {
+                $q->where('tenant_id', $tenantId);
+            }
+            $q->where(fn ($libre) => $libre->whereNull('user_id')->when($usuario, fn ($w) => $w->orWhere('user_id', $usuario->id)));
+        })];
+    }
+
+    private function mensajesPersona(): array
+    {
+        return ['persona_id.exists' => 'Esa persona ya tiene otro usuario o no es de esta iglesia. Elija otra.'];
+    }
+
+    /**
+     * Deja al usuario vinculado con esa persona (o sin persona si es null): suelta la que tenía antes
+     * y queda en la auditoría. Así "Mi perfil" encuentra su ficha y su estado de cuenta.
+     */
+    private function vincularPersona(User $usuario, ?int $personaId): ?Persona
+    {
+        $anterior = Persona::where('user_id', $usuario->id)->first();
+        if ($anterior?->id === $personaId) {
+            return $anterior;
+        }
+
+        if ($anterior) {
+            $anterior->forceFill(['user_id' => null])->save();
+        }
+
+        $persona = $personaId ? Persona::find($personaId) : null;
+        if ($persona) {
+            $persona->forceFill(['user_id' => $usuario->id])->save();
+        }
+
+        AuditLog::registrar($persona ? 'Vincular usuario con persona' : 'Quitar persona del usuario', [
+            'usuario_id' => $usuario->id,
+            'usuario' => $usuario->name,
+            'persona_id' => $persona?->id,
+            'persona' => $persona?->nombre,
+            'persona_anterior_id' => $anterior?->id,
+            'persona_anterior' => $anterior?->nombre,
+        ]);
+
+        return $persona;
     }
 
     /** El rol dinamico elegido tiene que ser de esta iglesia. */
