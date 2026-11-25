@@ -119,10 +119,18 @@ class ImportacionPromesasFuturasTest extends TestCase
         file_put_contents($ruta, $r->getContent());
         $libro = IOFactory::load($ruta);
 
-        $titulos = $libro->getSheet(0)->rangeToArray('A1:I1')[0];
-        $this->assertSame(['Miembro', 'Clase', 'Misiones', 'Seminario', 'Construcción', 'CAMPA', 'Préstamo', 'Micro', null], $titulos);
+        $titulos = $libro->getSheet(0)->rangeToArray('A1:J1')[0];
+        $this->assertSame(['Miembro', 'Clase', 'Frecuencia', 'Misiones', 'Seminario', 'Construcción', 'CAMPA', 'Préstamo', 'Micro', null], $titulos);
+        // La columna Frecuencia trae su lista desplegable
+        $lista = $libro->getSheet(0)->getCell('C2')->getDataValidation();
+        $this->assertSame(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST, $lista->getType());
+        $this->assertSame('"Semanal,Quincenal,Mensual"', $lista->getFormula1());
+        $this->assertSame(\PhpOffice\PhpSpreadsheet\Cell\DataValidation::TYPE_LIST, $libro->getSheet(0)->getCell('C500')->getDataValidation()->getType());
         $this->assertSame('Instrucciones', $libro->getSheet(1)->getTitle());
-        $this->assertStringContainsString('categoría nueva', implode(' ', array_column($libro->getSheet(1)->toArray(), 0)));
+        $instrucciones = implode(' ', array_column($libro->getSheet(1)->toArray(), 0));
+        $this->assertStringContainsString('categoría nueva', $instrucciones);
+        $this->assertStringContainsString('Columna C: Frecuencia', $instrucciones);
+        $this->assertStringContainsString('De la columna D en adelante', $instrucciones);
 
         // La plantilla vacia la entiende el lector (solo le faltan personas)
         $this->assertSame(['El archivo no trae personas: escribe una persona por fila desde la fila 2.'], (new LectorExcelPromesas)->leer($ruta)['errores']);
@@ -273,6 +281,86 @@ class ImportacionPromesasFuturasTest extends TestCase
 
         $this->assertSame($antes, PromesaProgramada::orderBy('id')->get()->toArray());
         $this->assertSame(1, Persona::count());
+    }
+
+    public function test_columna_frecuencia_cada_fila_con_la_suya_y_vacia_toma_la_del_selector(): void
+    {
+        $ana = $this->persona('Ana Mora');
+        $beto = $this->persona('Beto Rojas');
+        $carla = $this->persona('Carla Solano');
+        $ruta = $this->excel([
+            ['Miembro', 'Clase', 'frecuencia', 'Misiones', 'Construcción'],
+            ['Ana Mora', '', 'Mensual', 10000, 2000],
+            ['Beto Rojas', '', '  QUINCENAL ', 5000, null],
+            ['Carla Solano', '', '', 1500, 300],
+        ]);
+
+        $lectura = (new LectorExcelPromesas)->leer($ruta);
+        $this->assertTrue($lectura['con_frecuencia']);
+        $this->assertSame(['Misiones', 'Construcción'], array_column($lectura['categorias'], 'titulo'), 'Frecuencia no es una categoría');
+        $this->assertSame(['mensual', 'quincenal', null], array_column($lectura['filas'], 'frecuencia'));
+
+        $this->subir($ruta, 'semanal');
+        $this->actingAs($this->admin)->get(route('promesas-futuras.importar.revisar', $this->corte))->assertOk()
+            ->assertSee('Mensual')->assertSee('Quincenal')->assertSee('Semanal (vacía: la elegida al subir)')
+            ->assertDontSee('Crear la categoría nueva «frecuencia»', false);
+        $this->actingAs($this->admin)->post(route('promesas-futuras.importar.aplicar', $this->corte), [])
+            ->assertSessionHasNoErrors()->assertSessionHas('success', fn ($m) => str_contains($m, '3 personas agregadas'));
+
+        $frec = fn (Persona $p) => PromesaProgramada::where('persona_id', $p->id)->orderBy('categoria')->get()->map(fn ($x) => [$x->categoria, $x->monto, $x->frecuencia])->all();
+        $this->assertSame([['construccion', '2000.00', 'mensual'], ['misiones', '10000.00', 'mensual']], $frec($ana));
+        $this->assertSame([['misiones', '5000.00', 'quincenal']], $frec($beto));
+        $this->assertSame([['construccion', '300.00', 'semanal'], ['misiones', '1500.00', 'semanal']], $frec($carla));
+        $this->assertFalse(TenantCategory::where('tenant_id', $this->iglesia->id)->where('activa', false)->exists());
+    }
+
+    public function test_frecuencia_invalida_queda_con_error_y_no_se_aplica_hasta_omitirla(): void
+    {
+        $ana = $this->persona('Ana Mora');
+        $beto = $this->persona('Beto Rojas');
+        $ruta = $this->excel([
+            ['Miembro', 'Clase', 'Frecuencia', 'Misiones'],
+            ['Ana Mora', '', 'Semanal', 1000],
+            ['Beto Rojas', '', 'cada mes', 5000],
+        ]);
+
+        $this->subir($ruta, 'mensual');
+        $this->actingAs($this->admin)->get(route('promesas-futuras.importar.revisar', $this->corte))->assertOk()
+            ->assertSee('Frecuencia no válida: «cada mes»', false)->assertSee('Filas con la frecuencia mal escrita (1)', false);
+
+        // Sin decidir: no se guarda nada
+        $this->actingAs($this->admin)->from(route('promesas-futuras.importar.revisar', $this->corte))
+            ->post(route('promesas-futuras.importar.aplicar', $this->corte), [])
+            ->assertSessionHasErrors('filas.3');
+        // Elegirle una persona tampoco vale: solo omitir o corregir el archivo
+        $this->actingAs($this->admin)->from(route('promesas-futuras.importar.revisar', $this->corte))
+            ->post(route('promesas-futuras.importar.aplicar', $this->corte), ['filas' => [3 => 'persona:'.$beto->id]])
+            ->assertSessionHasErrors('filas.3');
+        $this->assertSame(0, PromesaProgramada::count());
+
+        $this->actingAs($this->admin)->post(route('promesas-futuras.importar.aplicar', $this->corte), ['filas' => [3 => 'omitir']])
+            ->assertSessionHas('success', fn ($m) => str_contains($m, '1 persona agregada') && str_contains($m, '1 omitida'));
+        $this->assertSame([[$ana->id, 'semanal']], PromesaProgramada::get()->map(fn ($p) => [$p->persona_id, $p->frecuencia])->all());
+    }
+
+    public function test_archivo_sin_columna_frecuencia_se_lee_como_siempre(): void
+    {
+        $ana = $this->persona('Ana Mora');
+        $ruta = $this->excel([
+            ['Miembro', 'Clase', 'Misiones', 'Construcción'],
+            ['Ana Mora', 'Adultos', 1000, 230.769230769231],
+        ]);
+        $lectura = (new LectorExcelPromesas)->leer($ruta);
+        $this->assertFalse($lectura['con_frecuencia']);
+        $this->assertSame(['C', 'D'], array_column($lectura['categorias'], 'col'));
+        $this->assertNull($lectura['filas'][0]['frecuencia']);
+
+        $this->subir($ruta, 'quincenal');
+        $this->actingAs($this->admin)->get(route('promesas-futuras.importar.revisar', $this->corte))->assertOk()
+            ->assertSee('Montos quincenales')->assertDontSee('vacía: la elegida al subir');
+        $this->actingAs($this->admin)->post(route('promesas-futuras.importar.aplicar', $this->corte), [])->assertSessionHas('success');
+        $this->assertSame([['construccion', '230.77', 'quincenal'], ['misiones', '1000.00', 'quincenal']],
+            PromesaProgramada::where('persona_id', $ana->id)->orderBy('categoria')->get()->map(fn ($p) => [$p->categoria, $p->monto, $p->frecuencia])->all());
     }
 
     public function test_columna_a_una_categoria_existente_u_omitida_y_buscar_a_alguien(): void

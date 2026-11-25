@@ -9,7 +9,7 @@ use App\Models\PromesaProgramada;
 /**
  * Revision de un Excel ya leido contra la iglesia y el corte, sin guardar nada:
  *  - cada titulo de columna con la categoria de igual nombre (sin tildes ni mayusculas) o "nueva";
- *  - cada fila con su estado: calza, en_corte, parecido, no_existe, sin_montos o repetida.
+ *  - cada fila con su estado: calza, en_corte, parecido, no_existe, sin_montos, repetida o frecuencia_invalida.
  */
 class AnalizadorImportacion
 {
@@ -24,6 +24,9 @@ class AnalizadorImportacion
     public const SIN_MONTOS = 'sin_montos';
 
     public const REPETIDA = 'repetida';
+
+    /** La columna Frecuencia trae algo que no es semanal, quincenal ni mensual: hay que corregir el archivo u omitirla. */
+    public const FRECUENCIA_INVALIDA = 'frecuencia_invalida';
 
     /** Parecido minimo (0-100) para ofrecer a alguien como candidata. */
     private const UMBRAL = 80;
@@ -76,7 +79,7 @@ class AnalizadorImportacion
 
         $filas = [];
         $vistos = [];
-        $conteo = array_fill_keys([self::CALZA, self::EN_CORTE, self::PARECIDO, self::NO_EXISTE, self::SIN_MONTOS, self::REPETIDA], 0);
+        $conteo = array_fill_keys([self::CALZA, self::EN_CORTE, self::PARECIDO, self::NO_EXISTE, self::SIN_MONTOS, self::REPETIDA, self::FRECUENCIA_INVALIDA], 0);
         foreach ($lectura['filas'] as $fila) {
             $clave = Normalizador::clave($fila['nombre']);
             $fila['persona_id'] = null;
@@ -87,6 +90,8 @@ class AnalizadorImportacion
                 $fila['primera'] = $vistos[$clave];
             } elseif ($fila['montos'] === []) {
                 $fila['estado'] = self::SIN_MONTOS;
+            } elseif (! empty($fila['frecuencia_invalida'])) {
+                $fila['estado'] = self::FRECUENCIA_INVALIDA;
             } else {
                 $exactas = $indice[$clave] ?? [];
                 if (count($exactas) === 1) {
