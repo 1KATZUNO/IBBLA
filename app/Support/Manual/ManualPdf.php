@@ -31,20 +31,18 @@ class ManualPdf
 
         // El manual completo lleva decenas de capturas: DomPDF necesita mas memoria y tiempo que un PDF comun
         @ini_set('memory_limit', '512M');
-        @set_time_limit(180);
+        // En consola (manual:pdf, pruebas) no hay limite de tiempo y no hay que fijar uno: en las pruebas pisaba el -d max_execution_time=0 de la suite
+        if (PHP_SAPI !== 'cli') {
+            @set_time_limit(180);
+        }
+        // Si el servidor corta la peticion (Hostinger a los 10 s), el PDF igual se termina de dibujar y queda listo para la siguiente
+        @ignore_user_abort(true);
 
         if (! is_dir(dirname($ruta))) {
             mkdir(dirname($ruta), 0775, true);
         }
 
-        $paginasHtml = array_map(fn (Pagina $p) => ['pagina' => $p] + Manual::render($p, true), $paginas);
-
-        $pdf = Pdf::loadView('manual.pdf', array_merge(tenant_pdf_data(), [
-            'paginasHtml' => $paginasHtml,
-            'completo' => $completo,
-            'indice' => Manual::paginas(),
-            'generado' => now(),
-        ]))->setPaper('a4', 'portrait');
+        $pdf = Pdf::loadHTML(self::vista($paginas, $completo)->render())->setPaper('a4', 'portrait');
 
         // Pie de pagina con el numero (se dibuja despues de maquetar, cuando ya se sabe el total)
         $pdf->render();
@@ -65,6 +63,23 @@ class ManualPdf
         }
 
         return $ruta;
+    }
+
+    /**
+     * La vista que se convierte a PDF: portada, indice (solo en el completo) y cada pagina con sus capturas.
+     *
+     * @param  list<Pagina>  $paginas
+     */
+    public static function vista(array $paginas, bool $completo): \Illuminate\Contracts\View\View
+    {
+        $paginasHtml = array_map(fn (Pagina $p) => ['pagina' => $p] + Manual::render($p, true), $paginas);
+
+        return view('manual.pdf', array_merge(tenant_pdf_data(), [
+            'paginasHtml' => $paginasHtml,
+            'completo' => $completo,
+            'indice' => Manual::paginas(),
+            'generado' => now(),
+        ]));
     }
 
     /** Cambia cuando cambia el contenido, una captura o la plantilla del PDF. */

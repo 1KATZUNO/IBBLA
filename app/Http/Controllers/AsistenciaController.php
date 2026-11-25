@@ -3,11 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\Asistencia;
+use App\Models\AuditLog;
 use App\Models\AsistenciaClaseDetalle;
 use App\Models\AsistenciaRegistroExtra;
 use App\Models\ClaseAsistencia;
 use App\Models\Culto;
 use App\Models\RegistroExtraTipo;
+use App\Services\PermisosEdicionService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -232,16 +234,55 @@ class AsistenciaController extends Controller
             ->with('success', 'Asistencia registrada correctamente.');
     }
 
+    /**
+     * Asistencia cerrada = solo lectura, con la misma regla que Recuento (QE-015 / QA-021): el
+     * asistente la ve en gris con el motivo; el administrador la puede corregir, con aviso, y la
+     * correccion queda en la auditoria (y en Accesos > Ultimos cambios).
+     */
+    private function puedeCorregirCerrada(): bool
+    {
+        $user = auth()->user();
+
+        return $user && ($user->isAdmin() || $user->isSuperAdmin());
+    }
+
+    /** "Cerrada el 05/11/2026 a las 18:30 por Roy": el motivo que ve quien no la puede editar. */
+    public static function textoCerrada(Asistencia $asistencia): string
+    {
+        return 'Cerrada'
+            .($asistencia->cerrado_at ? ' el '.$asistencia->cerrado_at->format('d/m/Y \a \l\a\s H:i') : '')
+            .($asistencia->cerradoPor ? ' por '.$asistencia->cerradoPor->name : '');
+    }
+
+    /** Cifras de la asistencia para dejar en la auditoria el antes y el despues de una correccion. */
+    private function fotoParaAuditoria(Asistencia $asistencia): array
+    {
+        $asistencia->load('detallesClases.claseAsistencia');
+
+        return [
+            'cantidades' => $asistencia->only(array_keys($this->reglasCantidadesFijas())),
+            'clases' => $asistencia->detallesClases
+                ->mapWithKeys(fn ($d) => [($d->claseAsistencia->nombre ?? 'Clase '.$d->clase_asistencia_id) => (int) $d->hombres + (int) $d->mujeres + (int) $d->maestros_hombres + (int) $d->maestros_mujeres])
+                ->all(),
+        ];
+    }
+
     public function show(Asistencia $asistencium)
     {
-        $asistencium->load(['culto', 'detallesClases.claseAsistencia']);
+        $asistencium->load(['culto', 'detallesClases.claseAsistencia', 'cerradoPor']);
 
-        return view('asistencia.show', ['asistencia' => $asistencium]);
+        return view('asistencia.show', ['asistencia' => $asistencium, 'puedeCorregir' => $this->puedeCorregirCerrada()]);
     }
 
     public function edit(Asistencia $asistencium)
     {
-        $asistencium->load(['detallesClases.claseAsistencia', 'registrosExtra.tipo']);
+        // Cerrada y sin poder corregirla: se muestra en solo lectura (antes abria el formulario y
+        // rebotaba al guardar)
+        if ($asistencium->cerrado && ! $this->puedeCorregirCerrada()) {
+            return $this->show($asistencium);
+        }
+
+        $asistencium->load(['detallesClases.claseAsistencia', 'registrosExtra.tipo', 'cerradoPor']);
         $clases = $this->getClasesActivas();
         $maestrosPorClase = $this->getMaestrosPorClase();
         $registroExtraTipos = $this->getRegistroExtraTipos();
@@ -251,10 +292,11 @@ class AsistenciaController extends Controller
 
     public function update(Request $request, Asistencia $asistencium)
     {
-        if ($asistencium->cerrado) {
-            return redirect()->route('asistencia.index')
-                ->with('error', 'No se puede editar una asistencia cerrada.');
+        $corrigiendoCerrada = $asistencium->cerrado;
+        if ($corrigiendoCerrada && ! $this->puedeCorregirCerrada()) {
+            abort(403, self::textoCerrada($asistencium->loadMissing('cerradoPor')).'. Solo el administrador puede corregirla.');
         }
+        $antes = $corrigiendoCerrada ? $this->fotoParaAuditoria($asistencium) : null;
 
         $clases = $this->getClasesActivas();
 
@@ -276,6 +318,22 @@ class AsistenciaController extends Controller
             $this->saveClaseDetalles($asistencium, $clasesData, $clases);
             $this->saveRegistrosExtra($asistencium, $registroExtraData, $registroExtraTipos);
         });
+
+        if ($corrigiendoCerrada) {
+            $asistencium->load('culto');
+            $fecha = $asistencium->culto?->fecha;
+            AuditLog::registrar(PermisosEdicionService::ACCION_CORRECCION, [
+                'permiso_id' => null,
+                'accion' => 'Corregir asistencia cerrada'.($fecha ? ' del culto del '.$fecha->format('d/m/Y') : ''),
+                'asistencia_id' => $asistencium->id,
+                'fecha_culto' => $fecha?->toDateString(),
+                'antes' => $antes,
+                'despues' => $this->fotoParaAuditoria($asistencium),
+            ], 'asistencia.update');
+
+            return redirect()->route('asistencia.show', $asistencium)
+                ->with('success', 'Asistencia cerrada corregida. El cambio quedó en la auditoría.');
+        }
 
         return redirect()->route('asistencia.index')
             ->with('success', 'Asistencia actualizada correctamente.');

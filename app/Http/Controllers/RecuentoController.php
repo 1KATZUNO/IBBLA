@@ -466,7 +466,20 @@ class RecuentoController extends Controller
         ]);
 
         // Recalcular totales finales con tipo de cambio congelado
-        $this->calculoService->recalcular($culto);
+        $totales = $this->calculoService->recalcular($culto);
+
+        // QE-013: el cierre deja su registro semántico (quién, qué culto, con qué totales).
+        AuditLog::registrar('Cerrar culto', [
+            'culto_id' => $culto->id,
+            'fecha_culto' => $culto->fecha->toDateString(),
+            'tipo_culto' => $culto->tipo_culto,
+            'cantidad_sobres' => (int) $totales->cantidad_sobres,
+            'total_general' => (float) $totales->total_general,
+            'total_general_usd' => (float) $totales->total_general_usd,
+            'total_suelto' => (float) $totales->total_suelto,
+            'total_egresos' => (float) $totales->total_egresos,
+            'tipo_cambio_venta' => $tipoCambioVenta !== null ? (float) $tipoCambioVenta : null,
+        ], 'recuento.cerrar-culto');
 
         return $this->alCulto($culto->id, 'success', 'Culto cerrado correctamente. Tipo de cambio congelado: ₡'.($tipoCambioVenta ? number_format((float) $tipoCambioVenta, 2) : 'N/A'));
     }
@@ -622,17 +635,21 @@ class RecuentoController extends Controller
      */
     private function datosFormularioSobre(Culto $culto, ?Sobre $sobre = null): array
     {
-        $personas = Persona::where('activo', true)->orderBy('nombre')->get(['id', 'nombre', 'pin'])
-            ->map(fn (Persona $p) => ['id' => $p->id, 'nombre' => $p->nombre, 'pin' => $p->pin, 'inactiva' => false]);
+        // Nombre, PIN y telefono: con homonimos el PIN y el telefono dicen cual es cual (QE-014)
+        $opcion = fn (Persona $p, bool $inactiva) => [
+            'id' => $p->id, 'nombre' => $p->nombre, 'pin' => $p->pin, 'telefono' => $p->telefono, 'inactiva' => $inactiva,
+        ];
+        $personas = Persona::where('activo', true)->orderBy('nombre')->get(['id', 'nombre', 'pin', 'telefono'])
+            ->map(fn (Persona $p) => $opcion($p, false));
 
         if ($sobre?->persona && ! $sobre->persona->activo) {
-            $personas->prepend(['id' => $sobre->persona->id, 'nombre' => $sobre->persona->nombre, 'pin' => $sobre->persona->pin, 'inactiva' => true]);
+            $personas->prepend($opcion($sobre->persona, true));
         }
 
         return [
             'culto' => $culto,
             'categorias' => tenant_categories(['es_ofrenda_suelta' => false]),
-            // Para el buscador de persona: solo lo necesario (nombre, PIN y si esta inactiva)
+            // Para el buscador de persona: solo lo necesario (nombre, PIN, telefono y si esta inactiva)
             'personas' => $personas->values(),
         ];
     }

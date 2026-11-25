@@ -14,6 +14,8 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->trustProxies(at: '*');
+        // Global (no del grupo web): asi tambien cubre las redirecciones del middleware auth, que corre antes (QA, noindex)
+        $middleware->append(\App\Http\Middleware\NoIndexEnQa::class);
         $middleware->web(append: [
             \App\Http\Middleware\DetectMobileApp::class,
             \App\Http\Middleware\ResolveTenant::class,

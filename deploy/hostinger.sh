@@ -16,6 +16,12 @@
 #   --skip-check     No hacer el chequeo final con curl.
 #   --sin-respaldo   No respaldar la BD antes de migrar (solo con un respaldo hecho a mano).
 #   --allow-path     Permitir correr fuera de .../domains/ibbla.eu/public_html (no recomendado).
+#   --qa             Desplegar el AMBIENTE QA (qa.ibbla.eu) y no produccion. Ver docs/AMBIENTE-QA.md.
+#                    Sin --branch ni --tag usa la rama integracion/oct-2026. Solo corre en
+#                    .../domains/qa.ibbla.eu/public_html, con APP_ENV=qa y una BD distinta de la de
+#                    produccion; chequea https://qa.ibbla.eu. Sin --qa el script no corre en la ruta de QA.
+#   --manual-pdf     Deja listo el PDF del manual de usuario (php artisan manual:pdf, ~30 s) para que nadie lo
+#                    espere al descargarlo. Con --qa se hace siempre; en produccion solo si se pide.
 #   -h, --help       Esta ayuda.
 #
 # Variables de entorno opcionales: PHP_BIN (php), COMPOSER_BIN (composer).
@@ -41,13 +47,22 @@ URL_BASE=""
 SALTAR_CHEQUEO=0
 PERMITIR_RUTA=0
 SIN_RESPALDO=0
+MANUAL_PDF=0
 
-uso() { sed -n '2,23p' "$0" | sed 's/^# \{0,1\}//'; }
+QA=0
+RAMA_EXPLICITA=0
+RUTA_QA_SUFIJO="domains/qa.ibbla.eu/public_html"
+RAMA_QA="integracion/oct-2026"
+URL_QA="https://qa.ibbla.eu"
+
+uso() { sed -n '2,29p' "$0" | sed 's/^# \{0,1\}//'; }
 
 while [ $# -gt 0 ]; do
     case "$1" in
         --tag) TAG="${2:-}"; shift 2 ;;
-        --branch) RAMA="${2:-}"; shift 2 ;;
+        --branch) RAMA="${2:-}"; RAMA_EXPLICITA=1; shift 2 ;;
+        --qa) QA=1; shift ;;
+        --manual-pdf) MANUAL_PDF=1; shift ;;
         --dry-run) DRY_RUN=1; shift ;;
         --maintenance) MANTENIMIENTO=1; shift ;;
         --url) URL_BASE="${2:-}"; shift 2 ;;
@@ -81,19 +96,72 @@ cd "$RAIZ" || exit 1
 [ -e .git ] || { falla "$RAIZ no es un clon de git."; exit 1; }
 [ -f .env ] || { falla "Falta el .env en $RAIZ (se crea una sola vez a mano en el servidor)."; exit 1; }
 
-case "$RAIZ" in
-    *"$RUTA_ESPERADA_SUFIJO") ;;
-    *)
-        if [ "$PERMITIR_RUTA" -ne 1 ]; then
-            falla "Esta ruta ($RAIZ) no termina en $RUTA_ESPERADA_SUFIJO."
-            echo "     ~/public_html del mismo usuario es OTRA app (musica.ibbla.eu). Si de verdad es la correcta, use --allow-path." >&2
+if [ "$QA" -eq 1 ]; then
+    # --- Ambiente QA: tres defensas para no tocar nunca produccion (docs/AMBIENTE-QA.md) ---
+    case "$RAIZ" in
+        *"$RUTA_QA_SUFIJO") ;;
+        *)
+            falla "--qa solo corre en una ruta que termine en $RUTA_QA_SUFIJO (esta es $RAIZ). --allow-path no aplica a QA."
+            exit 1
+            ;;
+    esac
+
+    env_de() { grep -E "^$2=" "$1" | head -1 | cut -d= -f2- | sed -e 's/^"//' -e 's/"$//' -e "s/^'//" -e "s/'$//" | tr -d '\r'; }
+
+    APP_ENV_QA="$(env_de .env APP_ENV)"
+    if [ "$APP_ENV_QA" != "qa" ]; then
+        falla "El .env de $RAIZ dice APP_ENV='$APP_ENV_QA' y para --qa debe decir APP_ENV=qa."
+        exit 1
+    fi
+
+    DB_QA="$(env_de .env DB_DATABASE)"
+    if [ -z "$DB_QA" ]; then
+        falla "No se pudo leer DB_DATABASE del .env de QA."
+        exit 1
+    fi
+    # La ruta de produccion es la misma con el subdominio cambiado: si su .env existe, la BD no puede coincidir.
+    RUTA_PROD="${RAIZ%"$RUTA_QA_SUFIJO"}$RUTA_ESPERADA_SUFIJO"
+    if [ -f "$RUTA_PROD/.env" ]; then
+        DB_PROD="$(env_de "$RUTA_PROD/.env" DB_DATABASE)"
+        if [ -n "$DB_PROD" ] && [ "$DB_QA" = "$DB_PROD" ]; then
+            falla "DB_DATABASE de QA ($DB_QA) es la misma que la de produccion ($RUTA_PROD/.env). QA necesita su propia base de datos."
             exit 1
         fi
-        ;;
-esac
+    else
+        case "$DB_QA" in
+            *qa*|*QA*) ;;
+            *)
+                falla "No se encontro el .env de produccion ($RUTA_PROD/.env) para comparar y DB_DATABASE ('$DB_QA') no contiene 'qa'. Use una base cuyo nombre incluya 'qa'."
+                exit 1
+                ;;
+        esac
+    fi
+
+    # Valores por defecto propios de QA (un --branch / --url explicito manda)
+    [ "$RAMA_EXPLICITA" -eq 0 ] && RAMA="$RAMA_QA"
+    [ -z "$URL_BASE" ] && URL_BASE="$URL_QA"
+else
+    case "$RAIZ" in
+        *"$RUTA_QA_SUFIJO")
+            falla "Esta ruta ($RAIZ) es la del ambiente QA: ahi se despliega con --qa (ni siquiera --allow-path lo permite sin --qa)."
+            exit 1
+            ;;
+    esac
+    case "$RAIZ" in
+        *"$RUTA_ESPERADA_SUFIJO") ;;
+        *)
+            if [ "$PERMITIR_RUTA" -ne 1 ]; then
+                falla "Esta ruta ($RAIZ) no termina en $RUTA_ESPERADA_SUFIJO."
+                echo "     ~/public_html del mismo usuario es OTRA app (musica.ibbla.eu). Si de verdad es la correcta, use --allow-path." >&2
+                exit 1
+            fi
+            ;;
+    esac
+fi
 
 # --- Resumen del plan ---
 paso "Deploy IBBLA"
+[ "$QA" -eq 1 ] && info "AMBIENTE QA (APP_ENV=qa, BD $DB_QA)"
 [ "$DRY_RUN" -eq 1 ] && info "MODO DRY-RUN: no se cambia nada (solo git fetch)."
 info "Ruta:   $RAIZ"
 if [ -n "$TAG" ]; then info "Objetivo: tag $TAG"; else info "Objetivo: rama $RAMA (pull --ff-only)"; fi
@@ -217,8 +285,20 @@ else
     ejecutar "$PHP_BIN" artisan storage:link || info "AVISO: storage:link fallo (revise permisos o crearlo a mano)."
 fi
 
+# --- Manual de usuario en PDF ya generado (siempre en QA; en produccion solo con --manual-pdf) ---
+if [ "$QA" -eq 1 ] || [ "$MANUAL_PDF" -eq 1 ]; then
+    paso "Manual de usuario en PDF"
+    ejecutar "$PHP_BIN" artisan manual:pdf || info "AVISO: manual:pdf fallo; el PDF se generara en la primera descarga (puede tardar)."
+fi
+
 # --- 5. Chequeo final ---
 paso "5/6 Chequeo final"
+# Con --maintenance la app sigue caida en este punto y el chequeo daria 503 (falso negativo visto en el
+# deploy del 24/11/2026): se levanta antes de comprobar, porque migraciones y caches ya terminaron.
+# El trap de salida lo reintenta por si esto fallara.
+if [ "$MANTENIMIENTO" -eq 1 ] && [ "$DRY_RUN" -eq 0 ]; then
+    ejecutar "$PHP_BIN" artisan up || info "AVISO: artisan up fallo; se reintenta al salir."
+fi
 CHEQUEO_OK=1
 if [ "$SALTAR_CHEQUEO" -eq 1 ]; then
     info "Omitido (--skip-check)."

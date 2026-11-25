@@ -157,25 +157,17 @@
             Mantenimiento (acciones que no se pueden deshacer)
         </summary>
         <div class="px-4 pb-4 pt-1 border-t border-red-100">
-            <p class="text-sm text-gray-600 mb-3">Afectan a todas las personas a la vez. Cada una pide confirmacion antes de ejecutarse.</p>
+            <p class="text-sm text-gray-600 mb-3">Afectan a todas las personas a la vez. Cada una abre una pantalla que explica qué se borra y pide confirmación.</p>
             <div class="flex flex-col sm:flex-row flex-wrap gap-2">
                 @if($personasInactivas > 0)
-                <form action="{{ route('personas.limpiar-inactivas') }}" method="POST" class="inline-block"
-                      onsubmit="return confirm('¿Estás seguro de eliminar TODAS las personas inactivas y sus promesas? Los sobres se mantendrán.');">
-                    @csrf
-                    <button type="submit" class="btn-danger w-full sm:w-auto">
-                        Eliminar personas inactivas ({{ $personasInactivas }})
-                    </button>
-                </form>
+                <a href="{{ route('personas.mantenimiento', 'inactivas') }}" class="btn-danger w-full sm:w-auto">
+                    Eliminar personas inactivas ({{ $personasInactivas }})
+                </a>
                 @endif
-            
-                <form action="{{ route('personas.resetear-promesas') }}" method="POST" class="inline-block"
-                      onsubmit="return confirm('⚠️ ATENCIÓN: Esto eliminará TODAS las promesas y compromisos de TODAS las personas. Los sobres dados se mantienen como historial. ¿Estás seguro?');">
-                    @csrf
-                    <button type="submit" class="btn-danger-soft w-full sm:w-auto">
-                        Borrar todas las promesas
-                    </button>
-                </form>
+
+                <a href="{{ route('personas.mantenimiento', 'promesas') }}" class="btn-danger-soft w-full sm:w-auto">
+                    Borrar todas las promesas
+                </a>
 
             </div>
         </div>
@@ -304,7 +296,7 @@
                     <p class="text-xs text-gray-600 mb-2"><strong>Incluye:</strong></p>
                     <ul class="text-xs text-gray-600 space-y-1">
                         <li>• Todas las personas con promesas o contribuciones</li>
-                        <li>• Categorias: Misiones, Seminario, Campa, Construccion, Micro</li>
+                        <li>• Categorías: Misiones, Seminario, Campa, Construcción, Micro</li>
                         <li>• Filas verdes (Dado) y azules (Esperado) por mes</li>
                         <li>• Totales y diferencia por persona</li>
                         <li>• Totales generales al final</li>

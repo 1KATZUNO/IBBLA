@@ -44,6 +44,8 @@ Menú lateral → **Administración** → **Auditoría**.
 | **1. Usuario, Acción, Método, Ruta, IP, Desde y Hasta** | Filtran el registro. | Administrador | La lista se limita a lo que buscas. |
 | **2. Registro** | Cada renglón dice **Fecha**, **Usuario**, **Método**, **Ruta**, **Acción**, **IP**, **Agente** y **Detalles** de lo que hizo un administrador o tesorero. | Administrador | Sirve para saber quién registró o cambió algo. |
 
+La pantalla abre por defecto mostrando **solo acciones** (lo que alguien guardó, creó o cerró): se ocultan las visitas a pantallas y los ingresos (que tienen su propio historial). Con la opción **Ver todo (visitas y datos técnicos)** del filtro aparecen también, con el método, la ruta, la IP y el agente. **Cerrar un culto** queda registrado (quién, qué culto y sus totales), sin renglones duplicados.
+
 ## Cuánto tiempo se guarda
 
 El detalle de las acciones se conserva unos **30 días**; el historial de ingresos, **un año**. Lo más antiguo se limpia periódicamente (una vez al mes).

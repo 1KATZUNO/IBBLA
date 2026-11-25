@@ -90,6 +90,8 @@
                     {{ $reporte['clase_nombre'] ?? 'Todas las clases' }}
                     · {{ $general['fechas'] }} {{ $general['fechas'] === 1 ? 'fecha con registro' : 'fechas con registro' }}
                 </p>
+                <a href="{{ route('ingresos-asistencia.asistencia', ['fecha_inicio' => $filtros['desde']->toDateString(), 'fecha_fin' => $filtros['hasta']->toDateString()]) }}"
+                   class="inline-flex items-center min-h-[44px] text-sm text-white underline">Ver la asistencia por culto de estas fechas</a>
             </div>
             <div class="flex gap-2">
                 <a href="{{ route('ingresos-asistencia.asistencia-clases.pdf', $descarga) }}"

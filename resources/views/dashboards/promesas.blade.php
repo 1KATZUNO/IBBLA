@@ -14,41 +14,49 @@
             : 'Los compromisos se calculan por mes: se incluyen los meses completos ('.$rangoMeses->etiqueta().').',
     ])
 
-    {{-- Estos números salen de la tabla compromisos (en colones), que se recalcula al cerrar cada culto.
-         El admin puede rehacerla del año en curso; el cumplimiento por persona al corte está en Reportes. --}}
-    <div class="flex flex-wrap items-center justify-between gap-3 text-sm text-gray-600">
-        <p>Montos en colones por mes de culto. Para quién está al día al corte, ver
-            <a href="{{ route('reportes.cumplimiento') }}" class="text-blue-700 underline">Cumplimiento de promesas</a>.</p>
-        @if(auth()->user()?->isAdmin())
-            <form method="POST" action="{{ route('compromisos.recalcular') }}">
-                @csrf
-                <button type="submit" class="min-h-[44px] px-4 py-2 border border-gray-300 rounded-md bg-white hover:bg-gray-50 font-medium text-gray-700">
-                    Recalcular compromisos del año
-                </button>
-            </form>
-        @endif
+    @php
+        $formato = fn (float $monto, bool $signo = false) => \App\Services\Reportes\Dinero::formato($monto, 0, $signo);
+        $mesEnCurso = $resumen->mesEnCurso();
+    @endphp
+
+    {{-- Cifras del motor único (QE-008): las mismas del Cumplimiento de promesas al mismo corte. --}}
+    <div class="text-sm text-gray-600 bg-blue-50 border border-blue-100 rounded-lg px-4 py-3">
+        <p>
+            <span class="font-semibold">Prometido = meses completos{{ $resumen->hayMesesCobrables() ? ' ('.$resumen->periodo->textoMesesCobrables().')' : '' }}.</span>
+            @if($mesEnCurso)
+                {{ $mesEnCurso->nombre }} está en curso y todavía no se cobra: se muestra aparte y no entra en el saldo ni en el porcentaje.
+            @endif
+            Dado = lo que las personas con promesa dieron en lo que prometieron, hasta hoy.
+            Son las mismas cifras de
+            <a href="{{ route('reportes.cumplimiento') }}" class="text-blue-700 underline">Cumplimiento de promesas</a> (le correspondía y ha dado).
+        </p>
     </div>
 
     {{-- KPIs --}}
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+    <div class="grid grid-cols-1 sm:grid-cols-2 {{ $mesEnCurso ? 'lg:grid-cols-5' : 'lg:grid-cols-4' }} gap-4">
         <div class="bg-gray-50 border-l-4 border-gray-500 rounded-lg p-4">
-            <p class="text-xs text-gray-700 uppercase font-medium">Prometido del período</p>
-            <p class="text-2xl font-bold text-gray-900 mt-1">₡{{ number_format($prometido, 2, '.', ',') }}</p>
+            <p class="text-xs text-gray-700 uppercase font-medium">Prometido (meses completos)</p>
+            <p class="text-2xl font-bold text-gray-900 mt-1" data-kpi="prometido">{{ $formato($prometido) }}</p>
         </div>
         <div class="bg-emerald-50 border-l-4 border-emerald-500 rounded-lg p-4">
-            <p class="text-xs text-emerald-700 uppercase font-medium">Dado en el período</p>
-            <p class="text-2xl font-bold text-emerald-900 mt-1">₡{{ number_format($dado, 2, '.', ',') }}</p>
+            <p class="text-xs text-emerald-700 uppercase font-medium">Dado (hasta hoy)</p>
+            <p class="text-2xl font-bold text-emerald-900 mt-1" data-kpi="dado">{{ $formato($dado) }}</p>
         </div>
         <div class="bg-{{ $saldo >= 0 ? 'blue' : 'red' }}-50 border-l-4 border-{{ $saldo >= 0 ? 'blue' : 'red' }}-500 rounded-lg p-4">
             <p class="text-xs text-{{ $saldo >= 0 ? 'blue' : 'red' }}-700 uppercase font-medium">Saldo</p>
-            <p class="text-2xl font-bold text-{{ $saldo >= 0 ? 'blue' : 'red' }}-900 mt-1">
-                {{ $saldo >= 0 ? '+' : '' }}₡{{ number_format($saldo, 2, '.', ',') }}
-            </p>
+            <p class="text-2xl font-bold text-{{ $saldo >= 0 ? 'blue' : 'red' }}-900 mt-1" data-kpi="saldo">{{ $formato($saldo, true) }}</p>
         </div>
         <div class="bg-amber-50 border-l-4 border-amber-500 rounded-lg p-4">
             <p class="text-xs text-amber-700 uppercase font-medium">Cumplimiento</p>
             <p class="text-2xl font-bold text-amber-900 mt-1">{{ $cumplimiento }}%</p>
         </div>
+        @if($mesEnCurso)
+        <div class="bg-white border border-dashed border-gray-400 rounded-lg p-4">
+            <p class="text-xs text-gray-600 uppercase font-medium">{{ $resumen->rotuloEnCurso() }}</p>
+            <p class="text-lg font-bold text-gray-700 mt-1" data-kpi="en-curso">{{ $formato($resumen->prometidoEnCurso()) }} prometido</p>
+            <p class="text-sm text-gray-600">{{ $formato($resumen->dadoEnCurso()) }} dado en el mes</p>
+        </div>
+        @endif
     </div>
 
     {{-- Gráfico mensual --}}
@@ -65,24 +73,24 @@
                 <thead class="bg-gray-50">
                     <tr>
                         <th class="px-4 py-2 text-left text-xs font-medium text-gray-700 uppercase">Persona</th>
-                        <th class="px-4 py-2 text-right text-xs font-medium text-gray-700 uppercase">Prometido</th>
+                        <th class="px-4 py-2 text-right text-xs font-medium text-gray-700 uppercase">Prometido (meses completos)</th>
                         <th class="px-4 py-2 text-right text-xs font-medium text-gray-700 uppercase">Dado</th>
                         <th class="px-4 py-2 text-right text-xs font-medium text-gray-700 uppercase">Saldo</th>
                         <th class="px-4 py-2 text-right text-xs font-medium text-gray-700 uppercase">%</th>
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
-                    @foreach($topContribuyentes as $p)
+                    @forelse($topContribuyentes as $p)
                     <tr>
                         <td class="px-4 py-2 text-sm font-medium">{{ $p['nombre'] }}</td>
-                        <td class="px-4 py-2 text-sm text-right">₡{{ number_format($p['prometido'], 2, '.', ',') }}</td>
-                        <td class="px-4 py-2 text-sm text-right text-emerald-700 font-semibold">₡{{ number_format($p['dado'], 2, '.', ',') }}</td>
-                        <td class="px-4 py-2 text-sm text-right {{ $p['saldo'] >= 0 ? 'text-brand-700' : 'text-red-700' }}">
-                            {{ $p['saldo'] >= 0 ? '+' : '' }}₡{{ number_format($p['saldo'], 2, '.', ',') }}
-                        </td>
+                        <td class="px-4 py-2 text-sm text-right">{{ $formato($p['prometido']) }}</td>
+                        <td class="px-4 py-2 text-sm text-right text-emerald-700 font-semibold">{{ $formato($p['dado']) }}</td>
+                        <td class="px-4 py-2 text-sm text-right {{ $p['saldo'] >= 0 ? 'text-brand-700' : 'text-red-700' }}">{{ $formato($p['saldo'], true) }}</td>
                         <td class="px-4 py-2 text-sm text-right font-semibold">{{ $p['pct'] }}%</td>
                     </tr>
-                    @endforeach
+                    @empty
+                    <tr><td colspan="5" class="px-4 py-6 text-sm text-gray-600 text-center">No hay personas con promesa en este periodo. Las promesas se registran en Personas &gt; Promesas.</td></tr>
+                    @endforelse
                 </tbody>
             </table>
         </div>
@@ -100,7 +108,7 @@ new Chart(document.getElementById('chartMensual'), {
             {
                 label: 'Prometido',
                 data: serie.map(r => r.prometido),
-                backgroundColor: 'rgba(168, 85, 247, 0.7)',
+                backgroundColor: serie.map(r => r.en_curso ? 'rgba(168, 85, 247, 0.25)' : 'rgba(168, 85, 247, 0.7)'),
                 borderColor: 'rgb(126, 34, 206)',
                 borderWidth: 1,
             },
@@ -118,14 +126,14 @@ new Chart(document.getElementById('chartMensual'), {
         plugins: {
             tooltip: {
                 callbacks: {
-                    label: (ctx) => ctx.dataset.label + ': ₡' + ctx.parsed.y.toLocaleString('es-CR'),
+                    label: (ctx) => ctx.dataset.label + ': ₡' + Math.round(ctx.parsed.y).toLocaleString('en-US') + (serie[ctx.dataIndex].en_curso && ctx.datasetIndex === 0 ? ' (en curso, todavía no se cobra)' : ''),
                 },
             },
         },
         scales: {
             y: {
                 beginAtZero: true,
-                ticks: { callback: (v) => '₡' + v.toLocaleString('es-CR') },
+                ticks: { callback: (v) => '₡' + Number(v).toLocaleString('en-US') },
             },
         },
     },

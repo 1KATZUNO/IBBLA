@@ -12,7 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * Aviso de WhatsApp para un destinatario (un líder con rol configurado y teléfono).
  *
  * Nace «pendiente». Con el driver link alguien abre el enlace de WhatsApp desde el panel /avisos y
- * lo marca «enviado» (o lo «descarta»); con el driver meta un job lo envía y lo marca solo.
+ * lo marca «enviado» (o lo «descarta»); con el driver meta (o callmebot con clave) el comando whatsapp:enviar-pendientes lo envía y lo marca solo.
  */
 class AvisoWhatsApp extends Model
 {
@@ -54,6 +54,8 @@ class AvisoWhatsApp extends Model
     {
         return [
             'enviado_at' => 'datetime',
+            'envio_automatico' => 'boolean',
+            'proximo_intento_at' => 'datetime',
         ];
     }
 

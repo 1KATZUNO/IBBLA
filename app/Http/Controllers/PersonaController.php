@@ -16,6 +16,7 @@ use App\Services\Reportes\MotorReportes;
 use App\Services\Reportes\PeriodoReporte;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Symfony\Component\HttpFoundation\HeaderUtils;
 
@@ -35,6 +36,17 @@ class PersonaController extends Controller
         }
 
         return $regla;
+    }
+
+    /**
+     * QA-018: el usuario que nace desde la ficha de la persona lleva el mismo rol dinámico que los
+     * creados en Usuarios (antes quedaba con tenant_role_id nulo).
+     */
+    private function rolMiembroId(): ?int
+    {
+        $id = tenant()?->roles()->where('slug', 'miembro')->value('id');
+
+        return $id !== null ? (int) $id : null;
     }
 
     public function index(Request $request)
@@ -104,6 +116,7 @@ class PersonaController extends Controller
                 'password' => Hash::make($validated['password']),
                 'rol' => 'miembro',
                 'tenant_id' => auth()->user()->tenant_id,
+                'tenant_role_id' => $this->rolMiembroId(),
             ]);
         }
 
@@ -272,6 +285,7 @@ class PersonaController extends Controller
                 'password' => Hash::make($validated['password']),
                 'rol' => 'miembro',
                 'tenant_id' => auth()->user()->tenant_id,
+                'tenant_role_id' => $this->rolMiembroId(),
             ]);
             $persona->user_id = $user->id;
             $createUser = true;
@@ -342,20 +356,56 @@ class PersonaController extends Controller
         }
         $persona->ministerios()->sync($syncMin);
 
-        // Sincronizar promesas
-        $persona->promesas()->delete(); // Eliminar promesas anteriores
-        if ($request->has('promesas')) {
-            foreach ($request->promesas as $promesaData) {
-                if (!empty($promesaData['monto']) && $promesaData['monto'] > 0) {
-                    $persona->promesas()->create($promesaData);
-                }
-            }
-        }
+        // QA-036: las promesas se actualizan en sitio (conservan id e historial)
+        $this->sincronizarPromesas($persona, (array) $request->input('promesas', []));
 
         return redirect()->route('personas.index')
             ->with('success', 'Persona actualizada correctamente.' . 
                 ($createUser ? ' Se creó acceso como miembro.' : '') . 
                 ($updateUser ? ' Se actualizó el acceso de miembro.' : ''));
+    }
+
+    /**
+     * QA-036: guardar la ficha ya no borra y recrea las promesas. Por categoría: si la persona ya
+     * prometía, se actualiza esa misma promesa (solo si cambió); si no, se crea; las categorías que
+     * quedaron sin monto se eliminan. Si había dos promesas de la misma categoría (datos viejos) se
+     * conserva la primera, como antes quedaba una sola.
+     *
+     * @param  array<int|string, array<string, mixed>>  $enviadas
+     */
+    private function sincronizarPromesas(Persona $persona, array $enviadas): void
+    {
+        $existentes = $persona->promesas()->orderBy('id')->get()->toBase()->groupBy('categoria');
+        $conservadas = [];
+        $idsConservados = [];
+
+        foreach ($enviadas as $datos) {
+            $categoria = (string) ($datos['categoria'] ?? '');
+            $monto = (float) ($datos['monto'] ?? 0);
+            if ($categoria === '' || $monto <= 0 || in_array($categoria, $conservadas, true)) {
+                continue;
+            }
+
+            $valores = [
+                'monto' => $monto,
+                'moneda' => in_array($datos['moneda'] ?? null, ['CRC', 'USD'], true) ? $datos['moneda'] : 'CRC',
+                'frecuencia' => $datos['frecuencia'] ?? 'mensual',
+            ];
+
+            $promesa = $existentes->get($categoria)?->first();
+            if ($promesa) {
+                $promesa->fill($valores);
+                if ($promesa->isDirty()) {
+                    $promesa->save();
+                }
+            } else {
+                $promesa = $persona->promesas()->create($valores + ['categoria' => $categoria]);
+            }
+            $conservadas[] = $categoria;
+            $idsConservados[] = $promesa->id;
+        }
+
+        $persona->promesas()->whereNotIn('id', $idsConservados)->get()->each->delete();
     }
 
     public function destroy(Persona $persona)
@@ -421,54 +471,119 @@ class PersonaController extends Controller
         ]);
     }
 
+    /** Texto que hay que escribir para ejecutar una acción masiva (QA-034). */
+    public const PALABRA_CONFIRMACION = 'CONFIRMAR';
+
     /**
-     * Limpia todas las personas inactivas y sus promesas/compromisos
+     * QA-034: pantalla de confirmación de las acciones masivas de Mantenimiento (solo admin). Dice qué se
+     * va a borrar y cuánto, y pide escribir CONFIRMAR; reemplaza el confirm() del navegador.
      */
-    public function limpiarInactivas()
+    public function confirmarMantenimiento(string $accion)
     {
-        // Obtener personas inactivas
-        $personasInactivas = Persona::where('activo', false)->get();
-        $count = $personasInactivas->count();
-        
-        foreach ($personasInactivas as $persona) {
-            // Eliminar promesas
-            $persona->promesas()->delete();
-            
-            // Eliminar compromisos
-            $persona->compromisos()->delete();
-            
-            // Desvincular sobres (no eliminarlos)
-            $persona->sobres()->update(['persona_id' => null]);
-            
-            // Eliminar usuario asociado si existe
-            if ($persona->user_id) {
-                $user = $persona->user;
-                if ($user) {
-                    $user->delete();
-                }
-            }
-            
-            // Eliminar persona
-            $persona->delete();
+        return view('personas.mantenimiento', ['accion' => $accion] + $this->resumenMantenimiento($accion));
+    }
+
+    /** @return array<string, mixed> lo que afectaría la acción, con los mismos filtros que la ejecución */
+    private function resumenMantenimiento(string $accion): array
+    {
+        if ($accion === 'inactivas') {
+            $personas = Persona::where('activo', false)->orderBy('nombre')->get(['id', 'nombre', 'user_id']);
+            $ids = $personas->pluck('id');
+
+            return [
+                'personas' => $personas,
+                'cantidadPersonas' => $personas->count(),
+                'cantidadPromesas' => Promesa::whereIn('persona_id', $ids)->count(),
+                'cantidadCompromisos' => Compromiso::whereIn('persona_id', $ids)->count(),
+                'cantidadUsuarios' => $personas->whereNotNull('user_id')->count(),
+                'cantidadSobres' => \App\Models\Sobre::whereIn('persona_id', $ids)->count(),
+            ];
         }
-        
-        return redirect()->route('personas.index')
-            ->with('success', "Se eliminaron {$count} personas inactivas y sus promesas/compromisos.");
+
+        $ids = Persona::pluck('id');
+
+        return [
+            'personas' => collect(),
+            'cantidadPersonas' => Promesa::whereIn('persona_id', $ids)->distinct()->count('persona_id'),
+            'cantidadPromesas' => Promesa::whereIn('persona_id', $ids)->count(),
+            'cantidadCompromisos' => Compromiso::whereIn('persona_id', $ids)->count(),
+            'cantidadUsuarios' => 0,
+            'cantidadSobres' => 0,
+        ];
+    }
+
+    /** Valida la palabra de confirmación (QA-034). */
+    private function validarConfirmacion(Request $request): void
+    {
+        $request->validate([
+            'confirmacion' => ['required', 'in:'.self::PALABRA_CONFIRMACION],
+        ], [
+            'confirmacion.required' => 'Escriba '.self::PALABRA_CONFIRMACION.' para continuar.',
+            'confirmacion.in' => 'Escriba '.self::PALABRA_CONFIRMACION.' en mayúsculas, tal cual, para continuar.',
+        ]);
     }
 
     /**
-     * Resetea todas las promesas y compromisos de todas las personas
-     * Los sobres dados se mantienen como historial
+     * Elimina las personas inactivas con sus promesas, compromisos y usuarios (los sobres quedan, sin
+     * persona). QA-034: solo con la palabra de confirmación y con auditoría de quiénes se borraron.
      */
-    public function resetearPromesas()
+    public function limpiarInactivas(Request $request)
     {
-        // Eliminar compromisos y promesas solo de personas del tenant actual
-        $personaIds = Persona::pluck('id');
-        Compromiso::whereIn('persona_id', $personaIds)->delete();
-        Promesa::whereIn('persona_id', $personaIds)->delete();
+        $this->validarConfirmacion($request);
+        $resumen = $this->resumenMantenimiento('inactivas');
+        $personasInactivas = Persona::where('activo', false)->get();
+        $count = $personasInactivas->count();
+
+        DB::transaction(function () use ($personasInactivas) {
+            foreach ($personasInactivas as $persona) {
+                $persona->promesas()->delete();
+                $persona->compromisos()->delete();
+                // Desvincular sobres (no eliminarlos)
+                $persona->sobres()->update(['persona_id' => null]);
+                if ($persona->user_id && ($user = $persona->user)) {
+                    $user->delete();
+                }
+                $persona->delete();
+            }
+        });
+
+        AuditLog::registrar('Eliminar personas inactivas', [
+            'personas' => $resumen['personas']->map(fn ($p) => ['id' => $p->id, 'nombre' => $p->nombre])->values()->all(),
+            'cantidad_personas' => $count,
+            'promesas_borradas' => $resumen['cantidadPromesas'],
+            'compromisos_borrados' => $resumen['cantidadCompromisos'],
+            'usuarios_borrados' => $resumen['cantidadUsuarios'],
+            'sobres_sin_persona' => $resumen['cantidadSobres'],
+        ], 'personas.limpiar-inactivas');
 
         return redirect()->route('personas.index')
-            ->with('success', 'Todas las promesas y compromisos han sido reseteados. Los sobres dados se mantienen como historial.');
+            ->with('success', "Se eliminaron {$count} ".($count === 1 ? 'persona inactiva' : 'personas inactivas').' con sus promesas y compromisos. Los sobres quedan registrados. Quedó en la auditoría.');
+    }
+
+    /**
+     * Borra todas las promesas y compromisos de la iglesia (los sobres se mantienen como historial).
+     * QA-034: solo con la palabra de confirmación y con auditoría de cuánto se borró.
+     */
+    public function resetearPromesas(Request $request)
+    {
+        $this->validarConfirmacion($request);
+        $resumen = $this->resumenMantenimiento('promesas');
+
+        // Solo personas de la iglesia actual (scope por iglesia)
+        $personaIds = Persona::pluck('id');
+        DB::transaction(function () use ($personaIds) {
+            Compromiso::whereIn('persona_id', $personaIds)->delete();
+            Promesa::whereIn('persona_id', $personaIds)->delete();
+        });
+
+        AuditLog::registrar('Borrar todas las promesas', [
+            'personas_con_promesa' => $resumen['cantidadPersonas'],
+            'promesas_borradas' => $resumen['cantidadPromesas'],
+            'compromisos_borrados' => $resumen['cantidadCompromisos'],
+        ], 'personas.resetear-promesas');
+
+        return redirect()->route('personas.index')
+            ->with('success', 'Se borraron todas las promesas y compromisos. Los sobres dados se mantienen como historial. Quedó en la auditoría.');
     }
 
     /**
@@ -501,7 +616,7 @@ class PersonaController extends Controller
             ->update(['saldo_anterior' => 0, 'saldo_actual' => 0]);
 
         return redirect()->route('personas.edit', $persona)
-            ->with('success', 'Compromisos reiniciados correctamente desde ' . $fechaInicio->format('F Y'));
+            ->with('success', 'Compromisos reiniciados correctamente desde ' . $fechaInicio->locale('es')->translatedFormat('F \d\e Y') . '.');
     }
 
     /**

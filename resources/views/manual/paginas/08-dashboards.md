@@ -39,8 +39,9 @@ Debajo del selector dice siempre qué período estás viendo, por ejemplo *«Mos
 
 ## Dashboard general
 
-- **Alertas:** mensajes en color con lo que merece atención, por ejemplo cuántas promesas siguen pendientes o cuántos miembros activos no han registrado sobres en las últimas semanas.
-- **Ingresos del período, Asistencia promedio y Promesas cumplidas:** tres tarjetas con la comparación.
+- **Alertas:** mensajes en color con lo que merece atención, por ejemplo cuántas promesas siguen pendientes o cuántos miembros activos no han registrado sobres en las últimas semanas. Las promesas **al día y pendientes** se cuentan igual que en *Cumplimiento de promesas*: al cierre del **último mes completo** y por persona con promesa (el mes en curso no se cobra todavía).
+- **Mes en curso:** si el período todavía no termina, el dashboard compara contra los **mismos días del mes anterior** (no contra el mes entero) y lo rotula «mes en curso (N días)», para que el día 5 no diga que los ingresos «bajaron» frente a un mes completo.
+- **Neto del período (ingresos − egresos), Asistencia promedio y Promesas cumplidas:** tres tarjetas con la comparación.
 - **Estadísticas del Período:** totales por categoría.
 - **Análisis visual:** ingresos por culto, distribución por categorías y tendencia mensual.
 - **Tendencias:** asistencia y estado de las promesas.

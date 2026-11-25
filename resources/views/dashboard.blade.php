@@ -43,7 +43,7 @@
         <div class="glass-card p-5">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-sm text-gray-500">Ingresos del período</p>
+                    <p class="text-sm text-gray-500">Neto del período (ingresos − egresos)</p>
                     <p class="text-2xl font-bold text-gray-900">₡{{ number_format($totalesPeriodo['total_general'], 0) }}</p>
                 </div>
                 <div class="text-right">
@@ -61,6 +61,9 @@
                     <span class="badge-neutral">Sin datos anteriores</span>
                     @endif
                     <p class="text-xs text-gray-400 mt-1">vs {{ $comparativo['periodo_anterior_nombre'] }}</p>
+                    @if($comparativo['en_curso'] ?? null)
+                    <p class="text-xs text-gray-500" data-en-curso>{{ $comparativo['en_curso'] }}: mismos días</p>
+                    @endif
                 </div>
             </div>
         </div>
@@ -86,7 +89,7 @@
         <div class="glass-card p-5">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-sm text-gray-500">Promesas cumplidas</p>
+                    <p class="text-sm text-gray-500">Al día con su promesa</p>
                     <p class="text-2xl font-bold text-gray-900">{{ $promesasStatus['cumplidas'] }} / {{ $promesasStatus['cumplidas'] + $promesasStatus['pendientes'] }}</p>
                 </div>
                 <div class="text-right">
@@ -95,7 +98,7 @@
                         {{ $pctCumplidas >= 70 ? 'bg-green-100 text-green-700' : ($pctCumplidas >= 40 ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700') }}">
                         {{ $pctCumplidas }}%
                     </span>
-                    <p class="text-xs text-gray-400 mt-1">cumplimiento</p>
+                    <p class="text-xs text-gray-400 mt-1">al {{ $promesasStatus['corte']->format('d/m/Y') }}</p>
                 </div>
             </div>
         </div>
@@ -114,7 +117,7 @@
                         </svg>
                     </div>
                     <dl class="flex-1">
-                        <dt class="text-sm font-medium text-gray-500 mb-1">Total Mensual</dt>
+                        <dt class="text-sm font-medium text-gray-500 mb-1">Neto mensual (ingresos − egresos)</dt>
                         <dd class="text-lg font-display font-bold text-brand-700">₡{{ number_format($totalesPeriodo['total_general'], 2) }}</dd>
                     </dl>
                 </div>
@@ -200,7 +203,7 @@
 
             <!-- Promesas Cumplidas vs Pendientes -->
             <div class="glass-card p-6">
-                <h3 class="text-base font-display font-semibold text-gray-900 mb-4">Estado de Promesas (Período)</h3>
+                <h3 class="text-base font-display font-semibold text-gray-900 mb-4">Promesas al {{ $promesasStatus['corte']->format('d/m/Y') }} <span class="font-normal text-gray-500">(último mes completo)</span></h3>
                 <div style="height: 300px; position: relative;">
                     <canvas id="promesasChart"></canvas>
                 </div>
@@ -434,7 +437,7 @@
     new Chart(promesasCtx, {
         type: 'pie',
         data: {
-            labels: ['Cumplidas', 'Pendientes'],
+            labels: ['Al día', 'Pendientes'],
             datasets: [{
                 data: [{{ $promesasStatus['cumplidas'] }}, {{ $promesasStatus['pendientes'] }}],
                 backgroundColor: [

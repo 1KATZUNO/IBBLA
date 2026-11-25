@@ -143,44 +143,59 @@
       ]
     },
     {
-      "archivo": "recuento-culto.jpg",
+      "archivo": "recuento-lista.jpg",
       "rol": "tesorero",
-      "ruta": "/recuento?culto_id=74",
+      "ruta": "/recuento",
       "alto": 700,
       "marcas": [
         {
           "n": 1,
-          "selector": "#culto_id",
-          "lado": "abajo"
+          "selector": "#f-fecha",
+          "lado": "arriba"
         },
         {
           "n": 2,
-          "texto": "+ Agregar Sobre",
-          "en": "main a,main button"
+          "selector": "nav[aria-label=\"Filtrar por estado\"]"
         },
         {
           "n": 3,
-          "texto": "+ Dinero Suelto",
+          "selector": "tbody tr[data-href]"
+        }
+      ]
+    },
+    {
+      "archivo": "recuento-culto.jpg",
+      "rol": "tesorero",
+      "ruta": "/recuento/culto/{culto_abierto}",
+      "alto": 700,
+      "marcas": [
+        {
+          "n": 1,
+          "texto": "Todos los cultos",
+          "en": "main a"
+        },
+        {
+          "n": 2,
+          "texto": "+ Agregar sobre",
+          "en": "main a"
+        },
+        {
+          "n": 3,
+          "texto": "+ Dinero suelto",
           "en": "main button"
         },
         {
           "n": 4,
-          "texto": "- Egresos",
+          "texto": "Egreso",
           "en": "main button"
         },
         {
           "n": 5,
-          "texto": "Descargar PDF",
-          "en": "main a"
+          "selector": "main details[data-menu] summary"
         },
         {
           "n": 6,
-          "texto": "PDF Transferencias",
-          "en": "main a"
-        },
-        {
-          "n": 7,
-          "texto": "Cerrar Culto",
+          "texto": "Cerrar culto",
           "en": "main button"
         }
       ]
@@ -188,25 +203,25 @@
     {
       "archivo": "recuento-nuevo-sobre.jpg",
       "rol": "tesorero",
-      "ruta": "/recuento/create?culto_id=74",
+      "ruta": "/recuento/create?culto_id={culto_abierto}",
       "alto": 900,
       "marcas": [
         {
           "n": 1,
-          "selector": "#persona_id"
+          "selector": "#buscarPersona"
         },
         {
           "n": 2,
-          "selector": "#metodo_pago"
+          "selector": "#chkAnonimo"
         },
         {
           "n": 3,
-          "selector": "#diezmo",
+          "selector": "#monto_diezmo",
           "lado": "izq"
         },
         {
           "n": 4,
-          "selector": "#btnGuardarSobre"
+          "selector": "#btnPrincipalSobre"
         }
       ]
     },
@@ -319,6 +334,18 @@
           "n": 10,
           "selector": "main button[aria-label^='Eliminar ']",
           "lado": "abajo"
+        }
+      ]
+    },
+    {
+      "archivo": "personas-mantenimiento.jpg",
+      "rol": "admin",
+      "ruta": "/personas/mantenimiento/inactivas",
+      "alto": 700,
+      "marcas": [
+        {
+          "n": 1,
+          "selector": "#confirmacion"
         }
       ]
     },
@@ -497,24 +524,77 @@
       "ruta": "/ingresos-asistencia"
     },
     {
-      "archivo": "reportes-ingresos.jpg",
-      "rol": "admin",
-      "ruta": "/ingresos-asistencia/ingresos",
-      "alto": 700,
+      "archivo": "reportes-cultos.jpg",
+      "rol": "tesorero",
+      "ruta": "/reportes/cultos",
+      "alto": 780,
       "marcas": [
         {
           "n": 1,
-          "selector": "#tipo_reporte"
+          "selector": "#fecha_inicio"
         },
         {
           "n": 2,
-          "texto": "PDF Completo",
-          "en": "main a"
+          "texto": "Este mes",
+          "en": "main a,main button"
         },
         {
           "n": 3,
-          "texto": "Transferencias",
-          "en": "main a"
+          "texto": "Consultar",
+          "en": "main button"
+        },
+        {
+          "n": 4,
+          "texto": "Descargar PDF",
+          "en": "main a,main button"
+        }
+      ]
+    },
+    {
+      "archivo": "reportes-cumplimiento.jpg",
+      "rol": "tesorero",
+      "ruta": "/reportes/cumplimiento",
+      "alto": 900,
+      "marcas": [
+        {
+          "n": 1,
+          "selector": "#corte"
+        },
+        {
+          "n": 2,
+          "selector": "#filtro-estado"
+        },
+        {
+          "n": 3,
+          "texto": "Seleccionar todos los filtrados",
+          "en": "main button"
+        }
+      ]
+    },
+    {
+      "archivo": "reportes-ingresos.jpg",
+      "rol": "tesorero",
+      "ruta": "/reportes/ingresos",
+      "alto": 760,
+      "marcas": [
+        {
+          "n": 1,
+          "selector": "#fecha_inicio"
+        },
+        {
+          "n": 2,
+          "texto": "Este año",
+          "en": "main a,main button"
+        },
+        {
+          "n": 3,
+          "texto": "Consultar",
+          "en": "main button"
+        },
+        {
+          "n": 4,
+          "texto": "Descargar PDF",
+          "en": "main a,main button"
         }
       ]
     },
@@ -688,6 +768,11 @@
           "n": 5,
           "texto": "Crear Usuario",
           "en": "main button"
+        },
+        {
+          "n": 6,
+          "texto": "Persona vinculada",
+          "en": "main label,main span,main h3,main p"
         }
       ]
     },

@@ -52,8 +52,8 @@ class UsuariosSoloDeSuIglesiaTest extends TestCase
         ])->assertRedirect(route('usuarios.index'));
         $this->assertSame('Tesorera Nueva', $tesorero->fresh()->name);
 
-        // /usuarios/{id} ya no da 500: no existe
-        $this->actingAs($admin)->get('/usuarios/'.$tesorero->id)->assertStatus(405);
+        // /usuarios/{id} ya no da 500 ni 405 (QE-020): no hay detalle, lleva a la lista
+        $this->actingAs($admin)->get('/usuarios/'.$tesorero->id)->assertRedirect(route('usuarios.index'));
     }
 
     public function test_no_se_asigna_un_rol_dinamico_de_otra_iglesia(): void

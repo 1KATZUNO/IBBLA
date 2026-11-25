@@ -261,6 +261,9 @@
                             </svg>
                             Ver
                         </a>
+                        @if(auth()->user()->isAdmin() || auth()->user()->isSuperAdmin())
+                        <a href="{{ route('asistencia.edit', $asistencia) }}" class="btn-secondary flex-1">Corregir</a>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -392,10 +395,10 @@ document.addEventListener('click', function(event) {
             
             <div class="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-4">
                 <p class="text-sm text-orange-800 mb-2">
-                    ¿Cerrar esta asistencia? Ya no podrás editarla después de cerrarla.
+                    ¿Cerrar esta asistencia? Después de cerrarla queda en solo lectura: solo el administrador podrá corregirla.
                 </p>
                 <p class="text-xs text-orange-600 mt-2">
-                    ⚠️ Esta acción bloqueará las ediciones de la asistencia.
+                    ⚠️ Cerrar la asistencia no cierra el culto en Recuento: son pasos separados.
                 </p>
             </div>
 

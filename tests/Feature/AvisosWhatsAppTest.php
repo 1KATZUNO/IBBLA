@@ -4,7 +4,6 @@ namespace Tests\Feature;
 
 use App\Events\CultoCreado;
 use App\Events\SobresAlcanzados;
-use App\Jobs\EnviarAvisoWhatsApp;
 use App\Models\AvisoWhatsApp;
 use App\Models\Culto;
 use App\Models\Persona;
@@ -19,13 +18,12 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request as ClientRequest;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Queue;
 use Tests\Concerns\CreaEscenarioWhatsApp;
 use Tests\TestCase;
 
 /**
  * Avisos de WhatsApp a los líderes: se crean cuando se crea un culto y cuando un culto llega a N
- * sobres (una sola vez). Con el driver link quedan pendientes; con meta un job los envía.
+ * sobres (una sola vez). Con el driver link quedan pendientes; con meta los envía whatsapp:enviar-pendientes (QE-009).
  */
 class AvisosWhatsAppTest extends TestCase
 {
@@ -310,48 +308,59 @@ class AvisosWhatsAppTest extends TestCase
         $this->assertCount(0, $this->avisos());
     }
 
-    // ---------------------------------------------------------------- driver link / meta
+    // ---------------------------------------------------------------- driver link / meta (QE-009)
 
-    public function test_con_el_driver_link_no_se_encola_ningun_envio(): void
+    public function test_con_el_driver_link_el_aviso_queda_manual(): void
     {
-        Queue::fake();
+        Http::fake();
 
         $this->crearCultoPorHttp();
+        $this->artisan('whatsapp:enviar-pendientes')->assertExitCode(0);
 
-        Queue::assertNothingPushed();
-        $this->assertCount(1, $this->avisos());
-        $this->assertSame(AvisoWhatsApp::PENDIENTE, $this->avisos()[0]->estado);
+        Http::assertNothingSent();
+        $aviso = $this->avisos()->sole();
+        $this->assertSame(AvisoWhatsApp::PENDIENTE, $aviso->estado);
+        $this->assertFalse($aviso->envio_automatico);
     }
 
-    public function test_con_meta_configurado_se_encola_un_envio_por_aviso(): void
+    public function test_con_meta_configurado_el_aviso_queda_en_cola_sin_llamar_al_proveedor(): void
     {
         config(['whatsapp.driver' => 'meta', 'whatsapp.meta.token' => 'T', 'whatsapp.meta.phone_number_id' => '555']);
         $this->crearLider('tesorero', '8888-1002');
-        Queue::fake();
+        Http::fake();
 
         $this->crearCultoPorHttp();
 
-        Queue::assertPushed(EnviarAvisoWhatsApp::class, 2);
-        Queue::assertPushed(EnviarAvisoWhatsApp::class, fn (EnviarAvisoWhatsApp $job) => in_array($job->avisoId, $this->avisos()->pluck('id')->all(), true));
+        Http::assertNothingSent();
+        $this->assertCount(2, $this->avisos());
+        foreach ($this->avisos() as $aviso) {
+            $this->assertSame(AvisoWhatsApp::PENDIENTE, $aviso->estado);
+            $this->assertTrue($aviso->envio_automatico);
+        }
     }
 
-    public function test_con_meta_sin_credenciales_no_se_encola_nada(): void
+    public function test_con_meta_sin_credenciales_el_aviso_queda_manual(): void
     {
         config(['whatsapp.driver' => 'meta', 'whatsapp.meta.token' => '', 'whatsapp.meta.phone_number_id' => null]);
-        Queue::fake();
+        Http::fake();
 
         $this->crearCultoPorHttp();
+        $this->artisan('whatsapp:enviar-pendientes');
 
-        Queue::assertNothingPushed();
+        Http::assertNothingSent();
         $this->assertSame(AvisoWhatsApp::PENDIENTE, $this->avisos()[0]->estado);
+        $this->assertFalse($this->avisos()[0]->envio_automatico);
     }
 
-    public function test_con_meta_el_aviso_se_envia_solo_y_queda_marcado_como_enviado(): void
+    public function test_con_meta_el_comando_lo_envia_y_queda_marcado_como_enviado(): void
     {
         config(['whatsapp.driver' => 'meta', 'whatsapp.meta.token' => 'T', 'whatsapp.meta.phone_number_id' => '555']);
         Http::fake(['graph.facebook.com/*' => Http::response(['messages' => [['id' => 'wamid.1']]], 200)]);
 
         $this->crearCultoPorHttp();
+        Http::assertNothingSent();
+
+        $this->artisan('whatsapp:enviar-pendientes')->assertExitCode(0);
 
         $aviso = $this->avisos()->sole();
         $this->assertSame(AvisoWhatsApp::ENVIADO, $aviso->estado);
@@ -363,51 +372,74 @@ class AvisosWhatsAppTest extends TestCase
             && $r['text']['body'] === $aviso->mensaje);
     }
 
-    public function test_si_meta_falla_el_aviso_sigue_pendiente_para_mandarlo_a_mano(): void
+    public function test_si_meta_falla_reintenta_acotado_y_al_final_queda_para_mandarlo_a_mano(): void
     {
         config(['whatsapp.driver' => 'meta', 'whatsapp.meta.token' => 'T', 'whatsapp.meta.phone_number_id' => '555']);
         Http::fake(['graph.facebook.com/*' => Http::response(['error' => ['message' => 'boom', 'code' => 1]], 500)]);
 
         $this->crearCultoPorHttp()->assertRedirect(route('cultos.index'));
-
         $this->assertSame(1, Culto::count());
+
+        // 1.er intento: falla y espera 1 minuto; correr de nuevo antes no reintenta.
+        $this->artisan('whatsapp:enviar-pendientes');
         $aviso = $this->avisos()->sole();
+        $this->assertSame(1, $aviso->intentos);
+        $this->assertTrue($aviso->envio_automatico);
+        $this->assertNotNull($aviso->ultimo_error);
+        $this->artisan('whatsapp:enviar-pendientes');
+        $this->assertSame(1, $aviso->fresh()->intentos);
+
+        Carbon::setTestNow(now()->addMinutes(2));
+        $this->artisan('whatsapp:enviar-pendientes');
+        Carbon::setTestNow(now()->addMinutes(6));
+        $this->artisan('whatsapp:enviar-pendientes');
+        Carbon::setTestNow(now()->addMinutes(30));
+        $this->artisan('whatsapp:enviar-pendientes');
+
+        $aviso = $aviso->fresh();
+        $this->assertSame(AvisosWhatsAppService::INTENTOS_MAXIMOS, $aviso->intentos, 'Nunca más de los intentos máximos');
         $this->assertSame(AvisoWhatsApp::PENDIENTE, $aviso->estado);
+        $this->assertFalse($aviso->envio_automatico, 'Agotados los intentos vuelve a ser manual');
         $this->assertNotNull($aviso->enlace_whatsapp);
+        Http::assertSentCount(AvisosWhatsAppService::INTENTOS_MAXIMOS);
     }
 
-    public function test_el_job_no_envia_un_aviso_que_ya_se_atendio_a_mano(): void
+    public function test_el_comando_no_envia_un_aviso_que_ya_se_atendio_a_mano(): void
     {
+        config(['whatsapp.driver' => 'meta', 'whatsapp.meta.token' => 'T', 'whatsapp.meta.phone_number_id' => '555']);
         Http::fake();
         $this->crearCultoPorHttp();
         $aviso = $this->avisos()->sole();
         $aviso->descartar($this->admin);
 
-        config(['whatsapp.driver' => 'meta', 'whatsapp.meta.token' => 'T', 'whatsapp.meta.phone_number_id' => '555']);
-        (new EnviarAvisoWhatsApp($aviso->id))->handle(app(WhatsAppService::class));
+        $this->artisan('whatsapp:enviar-pendientes');
 
         Http::assertNothingSent();
         $this->assertSame(AvisoWhatsApp::DESCARTADO, $aviso->fresh()->estado);
     }
 
-    public function test_el_job_con_un_aviso_inexistente_no_hace_nada(): void
+    public function test_un_aviso_automatico_viejo_no_sale_solo(): void
     {
-        Http::fake();
         config(['whatsapp.driver' => 'meta', 'whatsapp.meta.token' => 'T', 'whatsapp.meta.phone_number_id' => '555']);
+        Http::fake();
+        $this->crearCultoPorHttp();
 
-        (new EnviarAvisoWhatsApp(999999))->handle(app(WhatsAppService::class));
+        Carbon::setTestNow(now()->addHours(AvisosWhatsAppService::VIGENCIA_HORAS + 1));
+        $this->artisan('whatsapp:enviar-pendientes');
 
         Http::assertNothingSent();
+        $aviso = $this->avisos()->sole();
+        $this->assertSame(AvisoWhatsApp::PENDIENTE, $aviso->estado);
+        $this->assertFalse($aviso->envio_automatico);
     }
 
-    public function test_el_job_sin_credenciales_falla_sin_marcar_el_aviso(): void
+    public function test_el_planificador_corre_el_envio_cada_minuto_sin_encimarse(): void
     {
-        $this->crearCultoPorHttp();
-        $aviso = $this->avisos()->sole();
-        config(['whatsapp.driver' => 'meta', 'whatsapp.meta.token' => '', 'whatsapp.meta.phone_number_id' => '']);
+        $evento = collect(app(\Illuminate\Console\Scheduling\Schedule::class)->events())
+            ->first(fn ($e) => str_contains((string) $e->command, 'whatsapp:enviar-pendientes'));
 
-        (new EnviarAvisoWhatsApp($aviso->id))->handle(app(WhatsAppService::class));
-
-        $this->assertSame(AvisoWhatsApp::PENDIENTE, $aviso->fresh()->estado);
+        $this->assertNotNull($evento, 'whatsapp:enviar-pendientes no está en routes/console.php');
+        $this->assertSame('* * * * *', $evento->expression);
+        $this->assertTrue($evento->withoutOverlapping);
     }
 }

@@ -109,7 +109,7 @@ Para quedar otra vez en `main` despues de un rollback: `git checkout main && git
 
 | Chequeo | En produccion | Fuera de produccion |
 |---|---|---|
-| `APP_ENV` = production | AVISO si no | AVISO |
+| `APP_ENV` = production (el ambiente sale tambien en la primera linea) | AVISO si no | AVISO |
 | `APP_DEBUG` = false | **FALLA** si es true | AVISO |
 | `APP_KEY` definida | FALLA | FALLA |
 | Caches de config, rutas y vistas activas | **FALLA** si falta alguna | AVISO |
@@ -118,21 +118,46 @@ Para quedar otra vez en `main` despues de un rollback: `git checkout main && git
 | Cuentas de `AdminUserSeeder` (`admin@ibbsc.com`, `super@admin.com`, `tesorero@ibbsc.com`) con la contrasena publica del repo | **FALLA** | AVISO |
 | Escritura en `storage/*` y `bootstrap/cache` | FALLA | FALLA |
 | `public/storage` (enlace) | AVISO | AVISO |
+| Cron del planificador: latido `ibbla:ultimo_schedule` en la cache (lo escribe una tarea cada minuto) | **FALLA** si falta o tiene mas de 10 min | FALLA (solo con `APP_ENV=local` es AVISO) |
+| Avisos de WhatsApp automaticos esperando mas de 10 min | AVISO (nadie los procesa o el proveedor los rechaza) | igual |
+| `QUEUE_CONNECTION` distinta de `sync` | AVISO (no hay worker de colas en Hostinger; IBBLA no la usa) | igual |
 | Reporte General y estado de cuenta (la persona con mas sobres) | FALLA si tarda 10 s o mas, AVISO desde 5 s | igual |
 
-Opciones: `--tenant=ID`, `--sin-reportes`, `--umbral=SEGUNDOS`. Codigo de salida 1 si hay alguna FALLA.
+Opciones: `--tenant=ID`, `--sin-reportes`, `--umbral=SEGUNDOS` (por defecto 10, el corte de Hostinger). Codigo de salida 1 si hay alguna FALLA.
 El 504 del Reporte General se producia a los 60 s; con el fix tarda unos 3 s con 140 personas y 2.600 sobres.
 No escribe en la base: los PDF se generan en memoria.
 
 ## 6. Cron
 
-Los avisos y el reporte mensual dependen del scheduler de Laravel. En hPanel > Avanzado > Cron Jobs debe existir (cada minuto):
+Los avisos de WhatsApp, el reporte mensual, el tipo de cambio y la purga de auditoria dependen del scheduler de Laravel.
+En hPanel > Avanzado > Cron Jobs debe existir (cada minuto):
 
 ```
 cd /home/u598753224/domains/ibbla.eu/public_html && php artisan schedule:run >> /dev/null 2>&1
 ```
 
 Verificar que apunte a `domains/ibbla.eu/public_html` y no a `~/public_html`.
+
+Tareas programadas (`routes/console.php`; `php artisan schedule:list` las muestra):
+
+| Tarea | Cuando | Para que |
+|---|---|---|
+| `ibbla:latido` | cada minuto | Guarda la hora en la cache (`ibbla:ultimo_schedule`). `ibbla:verificar` FALLA si tiene mas de 10 min: el cron no corre |
+| `whatsapp:enviar-pendientes --max-segundos=50` | cada minuto, sin encimarse (candado de 5 min) | Envia los avisos de WhatsApp automaticos (QE-009) |
+| `exchange:fetch` | 18:00 CR | Tipo de cambio del BCCR |
+| `reporte:enviar-mensual` | dia 1, 08:00 CR | Correo con los reportes del mes anterior |
+| `audit:purge` | mensual | Purga la auditoria vieja |
+
+### Avisos de WhatsApp: fuera de la peticion (QE-009)
+
+Crear un culto o guardar el 10.o sobre **no** llama a ningun proveedor: solo deja los avisos en la tabla
+`avisos_whatsapp`. Los que el sistema puede mandar solo (driver `meta` con credenciales, o `callmebot` a quien
+activo su WhatsApp) quedan con `envio_automatico = 1` y los envia `whatsapp:enviar-pendientes` en el minuto
+siguiente. Reintentos: 3 como maximo (esperas de 1 y 5 min); si se agotan, o si el aviso tiene mas de 12 horas
+(cron caido), deja de ser automatico y queda pendiente en el panel /avisos con su ultimo error, para mandarlo
+con un toque. No se usan las colas de Laravel: `QUEUE_CONNECTION=sync` sigue siendo lo correcto en Hostinger.
+
+Para probarlo a mano sin esperar al cron: `php artisan whatsapp:enviar-pendientes`.
 
 ## 7. Problemas frecuentes
 
@@ -153,3 +178,34 @@ Antes de correr las migraciones, `deploy/hostinger.sh` hace un `mysqldump` compr
 contraseña viaja por `MYSQL_PWD`, nunca en la línea de comandos). Si el respaldo falla, el deploy se
 detiene sin migrar. Para restaurar: `gunzip -c <archivo> | mysql -h <host> -u <usuario> -p <bd>`.
 `--sin-respaldo` lo omite y solo tiene sentido con un respaldo hecho a mano en hPanel.
+
+## Ambiente QA (qa.ibbla.eu) y manual en PDF
+
+Antes de desplegar a producción, la versión se prueba en el ambiente QA: `bash deploy/hostinger.sh --qa`
+(rama `integracion/oct-2026`, base de datos propia, aviso «AMBIENTE DE PRUEBAS» en pantalla). Pasos de instalación,
+cómo refrescar QA con una copia de producción sin datos de WhatsApp y el flujo «primero QA, luego producción»:
+`docs/AMBIENTE-QA.md`.
+
+El PDF del manual completo tarda unos 30 s en dibujarse la primera vez (Hostinger corta a los 10 s). Con `--qa` el deploy
+lo deja listo solo; en producción agrega `--manual-pdf` (o corre `php artisan manual:pdf` después de desplegar) y la
+descarga sale al instante.
+
+## Auto-deploy de Hostinger: leer antes de hacer push a main (hallazgo del 24/11/2026)
+
+El hPanel (Advanced > GIT > Manage Repositories) tiene el repo `1KATZUNO/IBBLA`, rama `main`, instalado en
+`public_html` con auto-deploy por webhook: **cada push a `main` hace `git reset --hard` + `git pull` en el
+servidor en segundos**, y corre composer, pero NO migra ni reconstruye caches. Si el push trae migraciones,
+produccion queda con codigo nuevo y base vieja hasta que alguien corra el script.
+
+Orden correcto cuando hay migraciones:
+
+1. Por SSH: `cd ~/domains/ibbla.eu/public_html && php artisan down --retry=60`.
+2. Desde la maquina de desarrollo: `git push origin main --tags` (con la cuenta duena del repo).
+3. Por SSH: `git checkout -- composer.lock` si el auto-deploy lo dejo modificado (solo cambia la URL de un
+   paquete), y luego `bash deploy/hostinger.sh --maintenance` (respalda, migra, reconstruye caches, levanta la
+   app y comprueba).
+4. `php artisan compromisos:sincronizar && php artisan ibbla:verificar`.
+
+El servidor queda en la rama `main` (no en un tag suelto) para que el auto-deploy siga funcionando. Acceso
+SSH: llave `claude-code-pc-david-ibbla` registrada en hPanel > Advanced > SSH Access (se puede borrar ahi).
+Respaldos previos a cada migracion: `~/respaldos-ibbla/` en el servidor (se conservan 10).

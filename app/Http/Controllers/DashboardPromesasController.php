@@ -2,81 +2,50 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Compromiso;
-use App\Models\Persona;
+use App\Services\Reportes\PeriodoInvalido;
+use App\Services\Reportes\PeriodoReporte;
+use App\Services\Reportes\ResumenPromesas;
+use App\Services\Reportes\ResumenPromesasService;
 use App\Support\RangoFechas;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 /**
- * Dashboard específico de Promesas — prometido vs dado (Fase 4).
- * Visible solo para admin y tesorero. Muestra, para el rango elegido:
- *  - KPIs: total prometido, total dado, saldo, % cumplimiento.
- *  - Gráfico de barras agrupadas: prometido vs dado por mes.
- *  - Tabla top 10 personas por monto dado.
+ * Dashboard de Promesas — prometido vs dado (QE-008). Visible solo para admin y tesorero.
  *
- * Los Compromisos se calculan por mes (tabla compromisos: año + mes), así que no se pueden
- * partir por días: un rango como 15/09 - 20/10 incluye los meses completos de septiembre y
- * octubre, y la pantalla lo avisa. Por defecto se muestra el año en curso, como siempre.
+ * Las cifras salen del motor unico (ResumenPromesasService), con la regla de los reportes:
+ *  - Prometido = meses COMPLETOS del rango antes de hoy (= "le correspondía" del Cumplimiento de
+ *    promesas para el mismo corte).
+ *  - El mes en curso se muestra aparte, rotulado "en curso, todavía no se cobra": no entra en el
+ *    saldo ni en el porcentaje.
+ *  - Dado = lo que las personas con promesa dieron en las categorias que prometieron, hasta hoy.
+ *
+ * El rango se amplia a meses completos (un rango 15/09 - 20/10 toma septiembre y octubre) y la
+ * pantalla lo avisa. Por defecto, el anio en curso. Ya no depende de la tabla compromisos.
  */
 class DashboardPromesasController extends Controller
 {
-    public function index(Request $request): View
+    public function index(Request $request, ResumenPromesasService $servicio): View
     {
         $rango = RangoFechas::desdeRequest($request, RangoFechas::MODO_ANIO);
         $meses = $rango->ampliadoAMeses();
 
-        // Índice año * 12 + mes: permite pedir "del mes A al mes B" aunque cruce de año.
-        $desde = $meses->inicio->year * 12 + $meses->inicio->month;
-        $hasta = $meses->fin->year * 12 + $meses->fin->month;
-        $enRango = fn ($q) => $q->whereRaw('(`año` * 12 + `mes`) between ? and ?', [$desde, $hasta]);
+        try {
+            $periodo = PeriodoReporte::deFechas($meses->inicio->toDateString(), $meses->fin->toDateString());
+            $resumen = $servicio->generar($periodo);
+        } catch (PeriodoInvalido) {
+            // Mas de 24 meses o fechas fuera de rango: se muestra vacio con el motivo.
+            $periodo = PeriodoReporte::deFechas($meses->inicio->toDateString(), $meses->inicio->endOfMonth()->toDateString());
+            $resumen = ResumenPromesas::vacio($periodo);
+        }
 
-        // Compromiso no tiene alcance por iglesia propio; se limita por su persona (Persona sí lo tiene).
-        $compromisos = Compromiso::whereHas('persona')
-            ->tap($enRango)
-            ->get(['año', 'mes', 'monto_prometido_crc', 'monto_dado_crc']);
-
-        // KPIs del período
-        $prometido = (float) $compromisos->sum('monto_prometido_crc');
-        $dado = (float) $compromisos->sum('monto_dado_crc');
-        $saldo = $dado - $prometido;
-        $cumplimiento = $prometido > 0 ? round(($dado / $prometido) * 100, 1) : 0;
-
-        // Serie mensual: prometido vs dado por cada mes del rango
-        $serie = $meses->mesesTocados()->map(function ($mes) use ($compromisos, $meses) {
-            $delMes = $compromisos->where('año', $mes->year)->where('mes', $mes->month);
-
-            return [
-                'mes' => $mes->locale('es')->translatedFormat($meses->inicio->year === $meses->fin->year ? 'M' : 'M y'),
-                'prometido' => (float) $delMes->sum('monto_prometido_crc'),
-                'dado' => (float) $delMes->sum('monto_dado_crc'),
-            ];
-        });
-
-        // Top contribuyentes (por monto dado en el período)
-        $topContribuyentes = Persona::with(['promesas'])
-            ->withSum(['compromisos as dado_total' => $enRango], 'monto_dado_crc')
-            ->withSum(['compromisos as prometido_total' => $enRango], 'monto_prometido_crc')
-            ->orderByDesc('dado_total')
-            ->limit(10)
-            ->get()
-            ->map(function ($p) {
-                $prometido = (float) ($p->prometido_total ?? 0);
-                $dado = (float) ($p->dado_total ?? 0);
-
-                return [
-                    'nombre' => $p->nombre,
-                    'prometido' => $prometido,
-                    'dado' => $dado,
-                    'saldo' => $dado - $prometido,
-                    'pct' => $prometido > 0 ? round(($dado / $prometido) * 100, 1) : 0,
-                ];
-            });
-
-        // Años disponibles para el selector
-        $añosDisponibles = $rango->aniosParaSelector(
-            Compromiso::selectRaw('DISTINCT año')->pluck('año')
-        );
+        $serie = collect($resumen->meses())->map(fn (array $m) => [
+            'mes' => $m['mes']->inicio()->locale('es')->translatedFormat($meses->inicio->year === $meses->fin->year ? 'M' : 'M y')
+                .($m['en_curso'] ? ' (en curso)' : ''),
+            'prometido' => $m['prometido'],
+            'dado' => $m['dado'],
+            'en_curso' => $m['en_curso'],
+        ]);
 
         // El Excel de promesas solo sabe de "un año" o "un mes de un año".
         $excelUrl = null;
@@ -89,16 +58,19 @@ class DashboardPromesasController extends Controller
             $excelNota = 'El Excel de promesas se descarga por mes o por año completo.';
         }
 
+        $añoActual = (int) now()->year;
+
         return view('dashboards.promesas', [
             'rango' => $rango,
             'rangoMeses' => $meses,
-            'añosDisponibles' => $añosDisponibles,
-            'prometido' => $prometido,
-            'dado' => $dado,
-            'saldo' => $saldo,
-            'cumplimiento' => $cumplimiento,
+            'añosDisponibles' => $rango->aniosParaSelector(range($añoActual - 2, $añoActual)),
+            'resumen' => $resumen,
+            'prometido' => $resumen->prometido(),
+            'dado' => $resumen->dado(),
+            'saldo' => $resumen->saldo(),
+            'cumplimiento' => $resumen->porcentaje(),
             'serie' => $serie,
-            'topContribuyentes' => $topContribuyentes,
+            'topContribuyentes' => collect($resumen->top(10)),
             'entrada' => RangoFechas::entrada($request),
             'excelUrl' => $excelUrl,
             'excelNota' => $excelNota,

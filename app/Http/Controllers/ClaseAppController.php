@@ -41,6 +41,13 @@ class ClaseAppController extends Controller
                     $user->persona->clasesAsistencia()->wherePivot('es_maestro', true)->pluck('clases_asistencia.id')
                 );
             }
+            // QE-016: sin clase asignada, el miembro ve que tiene que pedirla; los demas roles no usan
+            // la App de Clases (docs/ROLES.md) y reciben el 403 de la app, no un rebote al login
+            if ($clasesIds->isEmpty()) {
+                abort_unless($user->isMiembro(), 403, 'La App de Clases es para el administrador y las maestras de cada clase.');
+
+                return view('clase-app.sin-clase');
+            }
             $clasesQuery->whereIn('id', $clasesIds->unique());
         }
 

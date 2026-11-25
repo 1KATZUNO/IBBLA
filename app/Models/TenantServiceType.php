@@ -47,8 +47,8 @@ class TenantServiceType extends Model
         return collect([
             (object) ['id' => null, 'slug' => 'domingo', 'nombre' => 'Domingo AM', 'tenant_id' => $tenantId],
             (object) ['id' => null, 'slug' => 'domingo_pm', 'nombre' => 'Domingo PM', 'tenant_id' => $tenantId],
-            (object) ['id' => null, 'slug' => 'miercoles', 'nombre' => 'Miercoles', 'tenant_id' => $tenantId],
-            (object) ['id' => null, 'slug' => 'sabado', 'nombre' => 'Sabado', 'tenant_id' => $tenantId],
+            (object) ['id' => null, 'slug' => 'miercoles', 'nombre' => 'Miércoles', 'tenant_id' => $tenantId],
+            (object) ['id' => null, 'slug' => 'sabado', 'nombre' => 'Sábado', 'tenant_id' => $tenantId],
             (object) ['id' => null, 'slug' => 'especial', 'nombre' => 'Especial', 'tenant_id' => $tenantId],
         ]);
     }

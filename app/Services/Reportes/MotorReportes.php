@@ -48,7 +48,7 @@ final class MotorReportes
             $personasPorId[(int) $persona->id] = $persona;
         }
 
-        $acumulado = ['dado' => [], 'ultimo' => [], 'usd' => [], 'detalle' => [], 'promesas' => []];
+        $acumulado = ['dado' => [], 'ultimo' => [], 'ultimoPorCategoria' => [], 'usd' => [], 'detalle' => [], 'promesas' => []];
         foreach (array_chunk(array_keys($personasPorId), 1000) as $ids) {
             $this->leerDado($acumulado, $ids, $periodo, $deCompromiso, $conversor, $conDetalle);
             $this->leerPromesas($acumulado, $ids, $deCompromiso);
@@ -77,6 +77,7 @@ final class MotorReportes
                 isset($acumulado['ultimo'][$id]) ? CarbonImmutable::parse($acumulado['ultimo'][$id]) : null,
                 $acumulado['usd'][$id] ?? false,
                 $acumulado['detalle'][$id] ?? [],
+                $acumulado['ultimoPorCategoria'][$id] ?? [],
             );
         }
 
@@ -124,6 +125,8 @@ final class MotorReportes
             // Ultimo aporte: el ultimo culto en que dio algo en una categoria de compromiso.
             if ($centimos > 0 && isset($esCompromiso[$fila->categoria])) {
                 $acumulado['ultimo'][$id] = $fecha;
+                // Y por categoria, para "ultimo aporte a sus compromisos" (QE-011): las filas vienen por fecha.
+                $acumulado['ultimoPorCategoria'][$id][$fila->categoria] = $fecha;
             }
 
             if ($conDetalle) {

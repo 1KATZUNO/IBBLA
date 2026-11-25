@@ -23,6 +23,7 @@ final class CuentaPersona
      * @param  array<string, PromesaVigente>  $promesas  categoria => promesa, en el orden de la iglesia
      * @param  list<string>  $categoriasCompromiso
      * @param  list<array<string, mixed>>  $detalle  un renglon por detalle de sobre (solo si se pidio)
+     * @param  array<string, string>  $ultimoPorCategoria  categoria de compromiso => fecha (Y-m-d) del ultimo aporte en ella
      */
     public function __construct(
         public readonly int $id,
@@ -36,7 +37,27 @@ final class CuentaPersona
         public readonly ?CarbonImmutable $ultimoAporte,
         public readonly bool $hayUsd,
         public readonly array $detalle = [],
+        private readonly array $ultimoPorCategoria = [],
     ) {}
+
+    /**
+     * Ultimo aporte con la misma base que "ha dado" (QE-011): la fecha del ultimo culto en que dio en
+     * una categoria que prometio; sin promesa, en cualquier categoria de compromiso. Asi "Ha dado ₡0"
+     * nunca convive con un "ultimo aporte" de una categoria que no cuenta.
+     */
+    public function ultimoAporteACompromisos(): ?CarbonImmutable
+    {
+        $categorias = $this->tienePromesa() ? $this->categoriasConPromesa() : $this->categoriasCompromiso;
+        $ultima = null;
+        foreach ($categorias as $categoria) {
+            $fecha = $this->ultimoPorCategoria[$categoria] ?? null;
+            if ($fecha !== null && ($ultima === null || $fecha > $ultima)) {
+                $ultima = $fecha;
+            }
+        }
+
+        return $ultima === null ? null : CarbonImmutable::parse($ultima);
+    }
 
     // ------------------------------------------------------------------
     // Lo dado

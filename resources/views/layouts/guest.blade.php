@@ -29,6 +29,7 @@
         @vite(['resources/css/app.css', 'resources/js/app.js'])
     </head>
     <body class="font-sans antialiased bg-gray-50 text-gray-900">
+        @include('partials.aviso-ambiente')
         <div class="flex min-h-screen min-h-dvh flex-col items-center justify-center px-4 py-8">
             <div class="w-full max-w-md">
                 <!-- Encabezado de marca -->

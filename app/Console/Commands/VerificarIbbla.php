@@ -7,9 +7,14 @@ use App\Models\Tenant;
 use App\Services\InformePersonaService;
 use App\Services\ReporteGeneralPdf;
 use App\Services\ReporteGeneralService;
-use Illuminate\Console\Command;
+use App\Models\AvisoWhatsApp;
 use App\Models\User;
+use App\Services\WhatsApp\WhatsAppService;
+use Carbon\CarbonImmutable;
+use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Hash;
 use Throwable;
 
@@ -36,6 +41,12 @@ class VerificarIbbla extends Command
 
     protected $description = 'Verifica entorno, base de datos, migraciones, permisos y tiempos de los reportes pesados.';
 
+    /** Marca que deja el planificador cada minuto (routes/console.php). */
+    public const CLAVE_LATIDO = 'ibbla:ultimo_schedule';
+
+    /** Minutos sin latido a partir de los cuales el cron se da por muerto. */
+    public const MINUTOS_LATIDO = 10;
+
     private int $fallas = 0;
 
     private int $avisos = 0;
@@ -43,7 +54,7 @@ class VerificarIbbla extends Command
     public function handle(): int
     {
         $this->newLine();
-        $this->line('<options=bold>Verificación de IBBLA</>  ('.config('app.url').')');
+        $this->line('<options=bold>Verificación de IBBLA</>  ('.config('app.url').' · ambiente '.app()->environment().')');
 
         $this->seccion('Entorno');
         $this->chequearEntorno();
@@ -55,6 +66,12 @@ class VerificarIbbla extends Command
             $this->chequearCuentasDeSemilla();
         } else {
             $this->falla('Migraciones', 'no se pueden revisar sin conexión a la base de datos');
+        }
+
+        $this->seccion('Planificador (cron) y avisos de WhatsApp');
+        $this->chequearPlanificador();
+        if ($bdOk) {
+            $this->chequearAvisos();
         }
 
         $this->seccion('Permisos de escritura');
@@ -207,6 +224,109 @@ class VerificarIbbla extends Command
             $this->falla('Cuentas de semilla', 'contraseña publica en el repositorio: '.implode(', ', $expuestas).' (cambiarla o borrar la cuenta)');
         } else {
             $this->aviso('Cuentas de semilla', implode(', ', $expuestas).' conservan la contraseña de AdminUserSeeder (cambiarla antes de produccion)');
+        }
+    }
+
+    // ------------------------------------------------------------------ planificador y avisos
+
+    /**
+     * QE-017: el cron de schedule:run es el que envía los avisos de WhatsApp y el reporte mensual. Una
+     * tarea programada cada minuto deja su latido en la caché; sin latido reciente el cron no corre.
+     * Es FALLA en cualquier servidor; solo en la máquina de desarrollo (APP_ENV=local) queda como AVISO.
+     */
+    private function chequearPlanificador(): void
+    {
+        $registro = 'php artisan schedule:run cada minuto (docs/DEPLOY-HOSTINGER.md, sección Cron)';
+
+        try {
+            $marca = Cache::get(self::CLAVE_LATIDO);
+        } catch (Throwable $e) {
+            $this->falla('Cron del planificador', 'no se pudo leer la caché: '.$this->primeraLinea($e->getMessage()));
+
+            return;
+        }
+
+        if (! $marca) {
+            $this->fallaSalvoLocal('Cron del planificador', 'nunca corrió en este servidor: falta el cron de '.$registro);
+
+            return;
+        }
+
+        try {
+            $ultimo = CarbonImmutable::parse($marca);
+        } catch (Throwable) {
+            $this->fallaSalvoLocal('Cron del planificador', 'marca ilegible en la caché: '.$registro);
+
+            return;
+        }
+
+        $minutos = (int) floor(abs(now()->diffInSeconds($ultimo)) / 60);
+
+        if ($minutos > self::MINUTOS_LATIDO) {
+            $this->fallaSalvoLocal('Cron del planificador', "última corrida hace {$minutos} min ({$ultimo->format('d/m/Y H:i')}): revisar el cron de ".$registro);
+
+            return;
+        }
+
+        $this->ok('Cron del planificador', "última corrida hace {$minutos} min");
+    }
+
+    /**
+     * QE-009: los avisos automáticos los envía whatsapp:enviar-pendientes desde el planificador, nunca
+     * una cola de Laravel. Avisa si hay avisos automáticos esperando de más (nadie los procesa) o si
+     * quedaron trabajos en una cola que en Hostinger nadie atiende.
+     */
+    private function chequearAvisos(): void
+    {
+        $driver = (string) config('whatsapp.driver', 'link');
+
+        try {
+            $whatsapp = app(WhatsAppService::class);
+            $automatico = $whatsapp->usaClavePorReceptor() || $whatsapp->puedeEnviar();
+        } catch (Throwable $e) {
+            $this->aviso('WhatsApp', "driver {$driver}: no se pudo revisar: ".$this->primeraLinea($e->getMessage()));
+
+            return;
+        }
+
+        $this->ok('WhatsApp', $automatico
+            ? "driver {$driver}: los avisos automáticos salen con whatsapp:enviar-pendientes (planificador, cada minuto)"
+            : "driver {$driver}: los avisos se mandan a mano desde el panel (nada que procesar)");
+
+        try {
+            $atrasados = AvisoWhatsApp::withoutGlobalScopes()
+                ->where('estado', AvisoWhatsApp::PENDIENTE)
+                ->where('envio_automatico', true)
+                ->where('created_at', '<', now()->subMinutes(self::MINUTOS_LATIDO))
+                ->count();
+        } catch (Throwable $e) {
+            $this->aviso('Avisos en cola', 'no se pudieron revisar: '.$this->primeraLinea($e->getMessage()));
+
+            return;
+        }
+
+        if ($atrasados > 0) {
+            $this->aviso('Avisos en cola', "{$atrasados} aviso(s) automático(s) esperan hace más de ".self::MINUTOS_LATIDO.' min: nadie los procesa (revisar el cron) o el proveedor los rechaza (ver /avisos)');
+        } else {
+            $this->ok('Avisos en cola', 'ninguno atrasado');
+        }
+
+        $conexion = (string) config('queue.default');
+        if ($conexion !== 'sync') {
+            $pendientes = $conexion === 'database' && Schema::hasTable('jobs') ? DB::table('jobs')->count() : 0;
+            $this->aviso('QUEUE_CONNECTION', "{$conexion}: en Hostinger no hay worker de colas y lo que se encole no sale"
+                .($pendientes > 0 ? " ({$pendientes} trabajo(s) esperando en la tabla jobs)" : '').'; IBBLA no la necesita: dejar sync');
+        } else {
+            $this->ok('QUEUE_CONNECTION', 'sync (los avisos no dependen de la cola)');
+        }
+    }
+
+    private function fallaSalvoLocal(string $nombre, string $detalle): void
+    {
+        if (app()->environment('local')) {
+            $this->aviso($nombre, $detalle.' (en desarrollo es normal)');
+        } else {
+            $this->falla($nombre, $detalle);
         }
     }
 

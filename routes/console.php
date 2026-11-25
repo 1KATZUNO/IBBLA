@@ -1,6 +1,8 @@
 <?php
 
+use App\Console\Commands\VerificarIbbla;
 use Illuminate\Foundation\Inspiring;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
 
@@ -20,3 +22,15 @@ Schedule::command('exchange:fetch')->dailyAt('18:00')->timezone('America/Costa_R
 Schedule::command('reporte:enviar-mensual')
     ->monthlyOn(1, '08:00')
     ->timezone('America/Costa_Rica');
+
+// QE-017: latido del planificador. `php artisan ibbla:verificar` FALLA si esta marca falta o tiene más
+// de 10 minutos: quiere decir que el cron de schedule:run no está corriendo en el servidor.
+Schedule::call(function () {
+    Cache::forever(VerificarIbbla::CLAVE_LATIDO, now()->toIso8601String());
+})->everyMinute()->name('ibbla:latido');
+
+// QE-009: avisos de WhatsApp automáticos, fuera de cualquier petición. Corre cada minuto; si una corrida
+// se alarga (proveedor lento) la siguiente no se monta encima (el candado vence a los 5 minutos).
+Schedule::command('whatsapp:enviar-pendientes --max-segundos=50')
+    ->everyMinute()
+    ->withoutOverlapping(5);

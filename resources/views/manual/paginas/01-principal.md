@@ -27,6 +27,7 @@ Debajo de la bienvenida está la pregunta **¿Qué quieres hacer?** con tarjetas
 | **Reportes** | Reportes en PDF y Excel. | Administrador, Tesorero, Asistente | Eliges el reporte que necesitas. |
 | **Personas** | Buscar, agregar y editar personas. | Administrador | Ves la lista de personas. |
 | **Cultos** | Crear el culto de hoy. | Administrador | Ves la lista de cultos con su botón **+ Nuevo Culto**. |
+| **Agregar persona** | Alta rápida de alguien que todavía no está en la lista: nombre, teléfono y correo (opcionales). | Tesorero | Queda activa y lista para elegirla en los sobres (ver *Personas y compromisos*). El Administrador usa **Personas**. |
 | **Mi perfil** | Tus promesas y compromisos. | Tesorero, Asistente, Servidor, Miembro | Ves tu estado de cuenta (solo si tu usuario está ligado a una persona de la lista). |
 
 La misión, la visión y los valores se editan por iglesia en la administración de la plataforma; las redes sociales de la iglesia, si están configuradas, aparecen al final y en el menú.
