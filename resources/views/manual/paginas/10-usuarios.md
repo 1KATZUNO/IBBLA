@@ -36,15 +36,16 @@ Menú lateral → **Administración** → **Gestionar Usuarios**.
 1. Toca **+ Nuevo Usuario**.
 2. Escribe el **Nombre** y el **Email** (no puede repetirse con otro usuario).
 3. Elige el **Rol**.
-4. Opcional: escribe el **Teléfono (WhatsApp)** de 8 dígitos; el prefijo +506 se agrega solo. Los administradores y tesoreros que tengan teléfono reciben los **avisos de WhatsApp** (culto creado, sobres alcanzados).
-5. Escribe la **Contraseña** (mínimo 8 caracteres) y repítela en **Confirmar Contraseña**.
-6. Toca **Guardar**.
+4. **Persona vinculada** (para el rol Miembro, Servidor y quien deba ver **Mi perfil**): busca a la persona escribiendo su nombre, PIN o teléfono y elígela. Solo salen personas de tu iglesia que **todavía no tienen otro usuario**. **Quitar vínculo** la suelta. Cambiar o quitar el vínculo queda en la auditoría.
+5. Opcional: escribe el **Teléfono (WhatsApp)** de 8 dígitos; el prefijo +506 se agrega solo. Los administradores y tesoreros que tengan teléfono reciben los **avisos de WhatsApp** (culto creado, sobres alcanzados).
+6. Escribe la **Contraseña** (mínimo 8 caracteres) y repítela en **Confirmar Contraseña**.
+7. Toca **Guardar**.
 
-![Formulario de un usuario](img:usuarios-formulario.jpg "Nombre y correo (1), rol (2), teléfono (3), contraseña (4) y Guardar (5)")
+![Formulario de un usuario](img:usuarios-formulario.jpg "Nombre y correo (1), rol (2), teléfono (3), contraseña (4), Guardar (5) y persona vinculada (6)")
 
 Al **editar** un usuario, la contraseña es opcional: déjala vacía para conservar la actual.
 
-> **Consejo:** para que un hermano vea sus propias promesas, **no lo crees aquí**: agrega un **correo y una contraseña** en su ficha de *Personas* y queda con acceso como **Miembro**, ya ligado a su persona. Un Miembro creado desde esta pantalla puede entrar, pero su **Mi perfil** saldrá vacío porque no está ligado a ninguna persona.
+> **Consejo:** para que un hermano vea sus propias promesas, lo más simple es agregar un **correo y una contraseña** en su ficha de *Personas*: queda con acceso como **Miembro**, ya ligado a su persona. Si lo creas aquí, elige su **Persona vinculada**; sin ese vínculo su **Mi perfil** saldría vacío («No se encontró información de persona asociada»).
 
 > **Importante:** al sistema solo entran las personas que el administrador agregó, con su correo y contraseña. No hay acceso libre ni de invitados.
 

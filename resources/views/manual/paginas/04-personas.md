@@ -4,7 +4,7 @@ orden: 40
 icono: personas
 resumen: Buscar, agregar y editar a los hermanos; ver su ficha, sus compromisos y su estado de cuenta en PDF.
 roles: admin
-rutas: personas.*, compromisos.*
+rutas: personas.*, compromisos.*, personas.mantenimiento#mantenimiento-borrados-masivos
 palabras: personas, miembros, hermanos, pin, teléfono, correo, fecha de nacimiento, ficha, compromisos, estado de cuenta, activo, inactivo, eliminar persona, clases, ministerios, acceso, contraseña
 ---
 
@@ -46,7 +46,18 @@ Solo piden el **Nombre completo**; el **Teléfono** y el **Correo** son opcional
 | **9. Editar** | Abre el formulario de edición. | Administrador | Al guardar vuelves a la lista. |
 | **10. Eliminar (basurero)** | Elimina a la persona. | Administrador | Pide confirmación. Se borran sus promesas, sus compromisos y su usuario (si tenía); **sus sobres se conservan** como sobres sin nombre. |
 
-Al final de la lista hay un bloque plegado, **Mantenimiento**, con acciones que afectan a todas las personas a la vez (**Eliminar personas inactivas** y **Borrar todas las promesas**). Piden confirmación y no se pueden deshacer: úsalas solo si sabes exactamente por qué.
+### Mantenimiento: borrados masivos
+
+Al final de la lista hay un bloque plegado, **Mantenimiento**, con dos acciones que afectan a todas las personas a la vez. Ninguna borra al tocarla: cada una abre **su propia pantalla de confirmación**.
+
+![Pantalla de confirmación de Eliminar personas inactivas](img:personas-mantenimiento.jpg "Escribe CONFIRMAR (1) para habilitar el borrado")
+
+| Botón o control | Qué hace | Quién puede usarlo | Qué pasa después |
+|---|---|---|---|
+| **Eliminar personas inactivas** | Abre la pantalla que dice cuántas personas inactivas se borran (puedes ver sus nombres con **Ver las N personas**), con sus promesas, compromisos y usuarios, y **lo que NO se borra** (los sobres quedan, sin persona). | Administrador | Para continuar escribes **CONFIRMAR** y tocas **Eliminar personas inactivas**; con **Cancelar** o **Volver a Personas** no se borra nada. |
+| **Borrar todas las promesas** | Abre la pantalla que dice cuántas promesas y compromisos mensuales se borran de cuántas personas. Las personas y los sobres se conservan. | Administrador | Igual: escribes **CONFIRMAR** y confirmas. |
+
+Sin la palabra **CONFIRMAR** no se borra nada. Todo se hace de una vez (si algo falla no queda a medias) y en la **Auditoría** queda quién lo hizo, cuándo y el detalle de lo que se borró. Si no hay nada que borrar, la pantalla lo dice y te devuelve a Personas. **No se puede deshacer**: úsalas solo si sabes exactamente por qué.
 
 ## La ficha de la persona
 
@@ -61,10 +72,10 @@ El formulario tiene tres secciones y el botón **Guardar** siempre a la vista.
 ![Formulario de una persona](img:personas-formulario.jpg "Datos personales (1), clases y ministerios (2), promesas (3) y Guardar (4)")
 
 1. **Datos personales.** El **Nombre completo** es obligatorio. El **PIN** es un identificador único para encontrar a la persona rápido en el recuento (puede quedar vacío). Marca **Activo** si la persona sigue asistiendo: las personas inactivas no aparecen en *Cumpleañeros* ni en el *Reporte General*.
-2. **Acceso como miembro.** Si escribes un **Correo**, aparece la casilla **Contraseña** (mínimo 8 caracteres): con ese correo la persona podrá entrar al sistema como **Miembro** y ver su progreso en *Mi perfil*.
+2. **Acceso como miembro.** Si escribes un **Correo**, aparece la casilla **Contraseña** (mínimo 8 caracteres): con ese correo la persona podrá entrar al sistema como **Miembro** y ver su progreso en *Mi perfil*. El usuario queda ya ligado a esta persona y con el rol Miembro, igual que si lo crearas en *Usuarios y roles*.
 3. **Clases y ministerios.** Con **Agregar clase** asignas hasta cuatro clases; marca **Maestro(a)** si da clase. Si no se asigna clase, la persona pertenece a **Capilla**. Con **Agregar ministerio** la asignas a uno o varios ministerios (marca **Líder** si lo dirige).
 4. **Promesas de ofrenda.** Una fila por categoría: monto, moneda y frecuencia. Ver *Promesas*.
-5. Toca **Guardar**.
+5. Toca **Guardar**. Al guardar solo cambia lo que tocaste: las promesas que no modificaste siguen con su historial.
 
 | Botón o control | Qué hace | Quién puede usarlo | Qué pasa después |
 |---|---|---|---|

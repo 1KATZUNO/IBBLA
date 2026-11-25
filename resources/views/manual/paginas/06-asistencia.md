@@ -32,7 +32,7 @@ Menú lateral → **Registro** → **Asistencia**. La lista muestra los cultos c
 |---|---|---|---|
 | **1. + Nueva Asistencia** | Abre el formulario para registrar la asistencia de un culto. | Administrador, Asistente | Al guardar vuelves a la lista con un mensaje. |
 | **2. Mes, Año y Filtrar** | Limita la lista a un mes y año. **Limpiar** quita el filtro. | Administrador, Asistente | La lista muestra solo esos cultos. |
-| **3. Editar / Cerrar / Eliminar** | Corrige, cierra o elimina la asistencia de un culto. | Administrador, Asistente | **Cerrar** pide confirmación y deja la asistencia en **Asistencias Cerradas (Archivo)**. |
+| **3. Editar / Cerrar / Eliminar** | Corrige, cierra o elimina la asistencia de un culto. | Administrador, Asistente | **Cerrar** pide confirmación («Después de cerrarla queda en solo lectura: solo el administrador podrá corregirla») y deja la asistencia en **Asistencias Cerradas (Archivo)**. |
 | **+ Registrar** | Aparece en un culto sin asistencia y abre el formulario con ese culto elegido. | Administrador, Asistente | Llenas y guardas. |
 
 ### Paso a paso: registrar la asistencia de un culto
@@ -52,7 +52,7 @@ Menú lateral → **Registro** → **Asistencia**. La lista muestra los cultos c
 | **3. Total Asistencia** | Suma de capilla, clases y maestros. | Administrador, Asistente | No necesita editarse. |
 | **4. Guardar** | Guarda la asistencia. | Administrador, Asistente | Vuelves a la lista con el mensaje de confirmación. |
 
-> **Importante:** una asistencia **cerrada** ya no se puede editar, ni siquiera el Administrador: al guardar, el sistema responde que no se puede editar una asistencia cerrada y se pierde lo escrito. Cierra solo cuando el conteo esté completo.
+> **Importante:** una asistencia **cerrada** queda en **solo lectura**. Quien no puede corregirla (el Asistente, el Tesorero) la ve con las cifras en gris y el aviso «Cerrada el … por … · solo lectura»; el formulario no deja guardar. El **Administrador** sí puede corregirla: la abre con el aviso «corrigiendo como administrador», cambia lo necesario y guarda; el antes y el después queda en la auditoría como «Corrección de culto cerrado» (**Administración** → **Accesos** → **Últimos cambios**). **Cerrar la asistencia no cierra el culto** del Recuento: son dos cierres independientes. Cierra solo cuando el conteo esté completo.
 
 ## Gestionar Clases
 
@@ -69,7 +69,7 @@ Para que una persona sea alumna o maestra de una clase, asígnala desde su formu
 
 ## App de Clases
 
-Menú lateral → **App de Clases**. La maestra elige su clase y entra a su registro digital: **Inicio**, **Miembros**, **Visitas**, **Asistencia** (toca el círculo de cada persona para marcar que asistió), **Visitación** (las semanas en que visitó a cada miembro) y **Reportes**. Reemplaza el cuaderno de registro.
+Menú lateral → **App de Clases**. La maestra elige su clase y entra a su registro digital: **Inicio**, **Miembros**, **Visitas**, **Asistencia** (toca el círculo de cada persona para marcar que asistió), **Visitación** (las semanas en que visitó a cada miembro) y **Reportes**. Reemplaza el cuaderno de registro. Solo entran el Administrador y las maestras asignadas a una clase: el Tesorero (o un Asistente sin clase) ve la pantalla de acceso denegado con el motivo, y un Miembro que no es maestra ve «No tenés una clase asignada. Pedile al administrador que te asigne una.»
 
 ## Marcar Asistencia (servidores)
 
@@ -87,7 +87,7 @@ Menú lateral → **Administración** → **Cargar Histórico** (solo Administra
 
 ## Preguntas frecuentes
 
-**No puedo editar una asistencia.** Probablemente está cerrada. Pídele al administrador que la corrija.
+**No puedo editar una asistencia.** Probablemente está cerrada: la ves en solo lectura. Pídele al administrador que la corrija; él puede hacerlo y queda registrado.
 
 **El culto no aparece al registrar la asistencia.** Solo aparecen cultos sin asistencia registrada. Si el culto no existe, el administrador debe crearlo en *Cultos*.
 
