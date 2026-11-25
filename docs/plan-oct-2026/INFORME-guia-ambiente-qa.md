@@ -134,3 +134,38 @@ viaja con git: en el worktree es un junction al del repo principal (sin modifica
 `resources/views/partials/aviso-ambiente.blade.php`, tres layouts (una línea), `app/Support/Manual/Manual.php`, `app/Support/Manual/ManualPdf.php`,
 `resources/views/manual/paginas/{00-novedades-noviembre-2026,01-principal,02-recuento,03-cultos,04-personas,07-reportes}.md`, `public/images/manual/{recuento-lista,recuento-culto,recuento-nuevo-sobre,reportes-indice}.jpg`,
 `tools/manual/{capturar.mjs,capturas.json}`, tests `AmbienteQaTest`, `ManualAyudaPantallasTest`, `ManualContenidoTest`, `ManualPdfTest`.
+
+---
+
+# Fase 2: documentar lo que integraron R1, R2, F1 y F2 (25/11/2026)
+
+Base: `integracion/oct-2026` (cb5f7c1), migraciones aplicadas en `ibbla_gqa`. Fuentes: `INFORME-reportes-3b.md` (R1), `INFORME-reportes-nuevos.md` (R2) y los commits de F1/F2 (QE-009, QE-014, QE-015/QA-021, QE-016, QA-018, QA-034, QA-036, QA-043, QE-013, QE-020) contrastados con las vistas.
+
+## Qué se documentó, por página
+| Página | Cambios |
+|---|---|
+| `07-reportes` (reescrita) | Tabla de tarjetas del centro de reportes (incluye **Reporte de cultos**, **Reporte de ingresos**, asistencia para el Tesorero); filtros de fechas y atajos; secciones **Reporte de cultos** y **Reporte de ingresos** (comparativo, PDF y Excel, máximo un año); enlaces cruzados de asistencia; **selector de personas** completo (filtros combinables, Seleccionar todos los filtrados, contador, buscar por nombre/PIN/teléfono); **vista previa** ordenable y paginada; columna **Último aporte a sus compromisos**; ya no dice que el Excel de asistencia es solo del Administrador |
+| `05-promesas` | Dashboard y Reporte de promesas con **meses completos** y el **mes en curso aparte**; Excel igual al de Cumplimiento; guardar la ficha conserva el historial; `/promesas` vieja lleva a Personas |
+| `02-recuento` | Barra del sobre **Sin persona** (gris) hasta marcar **Sobre anónimo**; buscador con PIN y teléfono; flechas que no llegan solas a «Crear persona nueva» |
+| `06-asistencia` | Asistencia cerrada en **solo lectura**; corrección por el Administrador con auditoría («Corrección de culto cerrado»); cerrar asistencia no cierra el culto; mensajes de la **App de Clases** (acceso denegado / «No tenés una clase asignada…») |
+| `04-personas` | **Mantenimiento: borrados masivos** con pantalla de confirmación (escribir **CONFIRMAR**) y auditoría; usuario creado desde la ficha queda ligado y con rol Miembro; guardar no pierde historial |
+| `10-usuarios` | **Persona vinculada** (buscador por nombre, PIN o teléfono; **Quitar vínculo**) |
+| `12-whatsapp` | Los avisos **ya no salen al guardar**: los envía el planificador en cerca de un minuto; reintentos, **Enviar ahora**, textos de «Tiene / No tiene WhatsApp automático» |
+| `08-dashboards` | Mes en curso comparado con los mismos días del anterior; promesas al día y pendientes al último mes completo |
+| `11-auditoria` | Abre en «solo acciones»; **Ver todo (visitas y datos técnicos)**; el cierre de culto queda registrado |
+| `00-novedades-noviembre-2026` | Todo lo anterior, por área, pensado para Roy |
+
+## «?» de las pantallas nuevas
+`Manual::paginaParaRuta` ya admitía `patrón#ancla`; en esta fase: `reportes.cultos*` → `/manual/reportes#reporte-de-cultos`; `reportes.ingresos*` (y la ruta vieja `ingresos-asistencia.ingresos`, que ahora redirige) → `#reporte-de-ingresos`; `personas.mantenimiento` (pantalla de confirmación de borrados masivos) → `/manual/personas#mantenimiento-borrados-masivos`; `avisos.*` → `/manual/whatsapp#avisos-de-whatsapp`. El recorrido de **todas** las rutas GET con nombre (menos ingreso, enlaces públicos, API, manual y plataforma) sigue en `ManualAyudaPantallasTest` y pasa con las rutas nuevas, y se agregaron las aserciones de estas anclas. `ManualContenidoTest` exige además que el manual hable de lo nuevo (reporte de cultos/ingresos, selector, vista previa, último aporte, mes en curso, CONFIRMAR, persona vinculada, planificador…).
+
+## Capturas
+Regeneradas (con `capturar.mjs`, 25/11): `reportes-indice` (tarjetas nuevas), `reportes-ingresos` (ahora la pantalla nueva), `recuento-nuevo-sobre` (barra «Sin persona»), `usuarios-formulario` (marca 6: Persona vinculada), `whatsapp-avisos` (aviso de envío automático), `promesas-reporte` (meses completos), `dashboards-general`.
+Nuevas: `reportes-cultos`, `reportes-cumplimiento` (selector de personas), `personas-mantenimiento` (confirmación CONFIRMAR).
+Sin captura nueva (solo texto): asistencia cerrada en solo lectura, vista previa del selector (queda bajo el pliegue de la pantalla), pantalla de acceso denegado de la App de Clases, Reporte de ingresos con el comparativo completo.
+
+## Defectos de la app vistos al documentar (no se tocaron)
+- Ninguno bloqueante. Observaciones: el texto de la App de Clases usa voseo («No tenés… Pedile…») mientras el resto de la app usa «tú/usted»; la tarjeta **Sin firmas completas** del Reporte de cultos no explica en pantalla qué cuenta como «firmas completas».
+
+## Pendientes
+- Capturas de asistencia cerrada y de la vista previa paginada (requieren datos/estado específicos).
+- Si el líder añade pantallas con ruta nueva, `ManualAyudaPantallasTest` avisa qué ruta falta declarar.
