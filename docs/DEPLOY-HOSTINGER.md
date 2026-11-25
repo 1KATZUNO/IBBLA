@@ -209,3 +209,14 @@ Orden correcto cuando hay migraciones:
 El servidor queda en la rama `main` (no en un tag suelto) para que el auto-deploy siga funcionando. Acceso
 SSH: llave `claude-code-pc-david-ibbla` registrada en hPanel > Advanced > SSH Access (se puede borrar ahi).
 Respaldos previos a cada migracion: `~/respaldos-ibbla/` en el servidor (se conservan 10).
+
+Dos detalles mas del auto-deploy (comprobados el 24/11/2026):
+
+- Lo dispara CUALQUIER push al repositorio, tambien a otra rama: la rutina de Hostinger corre igual, deja
+  `composer.lock` modificado y borra la cache de configuracion (`bootstrap/cache/config.php`). La app sigue
+  funcionando, pero conviene dejarla como la deja el script: `git checkout -- composer.lock && php artisan config:cache`.
+- Por eso ningun codigo de la app puede leer `env()` fuera de `config/`: con la configuracion en cache devuelve
+  vacio. El reporte mensual lo hacia y abortaba sin enviar; ahora lee `config('reportes.mensual')` y hay un test
+  que falla si alguien vuelve a usar `env()` en `app/` o `routes/`.
+- Para esperar al auto-deploy tras el push, mirar que `git rev-parse --short HEAD` cambie y dar unos segundos
+  fijos. No usar un bucle con `pgrep -f composer`: el patron aparece en el propio comando y nunca termina.

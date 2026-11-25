@@ -271,3 +271,6 @@ Del lider del proyecto (David):
   HEAD cambie y dar unos segundos fijos; nunca un bucle con pgrep cuyo patron aparece en el propio comando.
   Estado final de produccion: main en `v2026.11.24-e2.1` (15b0c9e), arbol limpio, cron corriendo, 3 respaldos en
   ~/respaldos-ibbla, `ibbla:verificar` con una sola falla (contrasena de semilla de super@admin.com).
+  Retoque `v2026.11.24-e2.2`: el reporte mensual por correo leia REPORTE_MENSUAL_TO con env() dentro del comando y,
+  con la configuracion en cache (como queda tras cada deploy), abortaba sin enviar. Ahora lee config/reportes.php.
+  Importa desde hoy porque el cron ya existe: el primer envio automatico sera el 01/12 a las 08:00.

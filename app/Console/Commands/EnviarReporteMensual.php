@@ -49,7 +49,7 @@ class EnviarReporteMensual extends Command
         // En consola no hay auth()->user(). Bindear el tenant manualmente para
         // que tenant() funcione en views (email, PDF) y BelongsToTenant scopes.
         // Por defecto: tenant id=7 (IBBLA). Override con --tenant=N.
-        $tenantId = (int) ($this->option('tenant') ?: env('REPORTE_MENSUAL_TENANT_ID', 7));
+        $tenantId = (int) ($this->option('tenant') ?: config('reportes.mensual.iglesia_id', 7));
         $tenant = Tenant::find($tenantId);
         if (! $tenant) {
             $this->error("Tenant id={$tenantId} no encontrado.");
@@ -187,7 +187,7 @@ class EnviarReporteMensual extends Command
      */
     protected function parseDestinatarios(): array
     {
-        $raw = env('REPORTE_MENSUAL_TO', '');
+        $raw = (string) config('reportes.mensual.para', '');
         $emails = array_filter(array_map('trim', explode(',', $raw)));
 
         return array_values(array_filter($emails, fn ($e) => filter_var($e, FILTER_VALIDATE_EMAIL)));
