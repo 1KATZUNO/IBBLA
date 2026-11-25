@@ -19,6 +19,8 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             \App\Http\Middleware\DetectMobileApp::class,
             \App\Http\Middleware\ResolveTenant::class,
+            // Promesas futuras: activa un corte con la fecha cumplida aunque el cron no corra (como mucho una revision por minuto y por iglesia)
+            \App\Http\Middleware\ActivarCortesPromesas::class,
         ]);
 
         // Quien ya tiene sesion y abre /login o /register va a SU inicio, no a /dashboard (QA-011)

@@ -274,3 +274,20 @@ Del lider del proyecto (David):
   Retoque `v2026.11.24-e2.2`: el reporte mensual por correo leia REPORTE_MENSUAL_TO con env() dentro del comando y,
   con la configuracion en cache (como queda tras cada deploy), abortaba sin enviar. Ahora lee config/reportes.php.
   Importa desde hoy porque el cron ya existe: el primer envio automatico sera el 01/12 a las 08:00.
+  Estado final real de produccion (20:05 CR): main en `v2026.11.24-e2.2` (b331c37), arbol limpio, configuracion en
+  cache, cron con latido, reporte mensual probado en seco con la configuracion en cache (1 destinatario, 4 adjuntos,
+  sin enviar), 4 respaldos en ~/respaldos-ibbla. Suite: 980 tests, 14 fallos = linea base de Breeze.
+- 2026-11-24 (21:00-22:30 CR): PROMESAS FUTURAS (pedido nuevo de David con el Excel de promesas 2027 de La Aurora).
+  Especificacion en 06-PROMESAS-FUTURAS.md. Corte de promesas = borron y cuenta nueva con fecha de inicio (dia 1 de
+  un mes); apartado "Promesas futuras" solo para el administrador; altas a mano y por Excel (quien ya esta en el
+  corte no se sobrescribe ni se duplica; reimportar no agrega nada); titulos del Excel = categorias y una nueva nace
+  inactiva y se activa con el corte (desde ese dia sale en los sobres); plantilla descargable. La historia no se
+  toca: al activarse el corte las promesas anteriores pasan a `promesas_historial` y el motor usa en cada mes las
+  que regian ese mes (`PromesasPorPeriodo`). Activacion por planificador cada diez minutos y disparo perezoso.
+  Dos equipos: M (motor y activacion, 991 pruebas) y P (pantallas, importador, plantilla, manual; 1000 pruebas).
+  Ensayo del lider sobre la copia de produccion: sin cortes las cifras son las de produccion; con un corte
+  programado de 323 promesas quedan identicas; tras simular la activacion, los meses anteriores quedan identicos
+  persona por persona; el Excel real se lee sin errores (135 filas: 69 calzan, 44 con nombre parecido, 22 sin
+  parecido; Construccion no existe y se propone crearla; Campamento calza sola); reimportar no agrega nada;
+  22 pantallas y reportes en 200. Limitaciones anotadas: un periodo que cruce un corte a mitad de anio puede
+  descuadrar la tabla de compromisos del estado de cuenta (el corte de 2027 es el 1 de enero y no cruza).

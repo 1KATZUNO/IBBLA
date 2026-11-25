@@ -19,7 +19,7 @@ use Throwable;
  * - Acotado: solo los meses del anio que tienen al menos un culto de la iglesia hasta hoy.
  * - Idempotente: compara con lo guardado y solo inserta, actualiza o borra lo que cambio; una
  *   segunda corrida no escribe nada.
- * - Personas: las activas de la iglesia con promesa. Las filas de esos meses que ya no corresponden
+ * - Personas: las activas de la iglesia con promesa (hoy o, si hubo un corte de promesas, en el historial del anio). Las filas de esos meses que ya no corresponden
  *   (promesa borrada, persona inactiva) se borran.
  * - Borra las filas de meses posteriores al mes en curso (las creaba la pantalla de Compromisos al
  *   "mirar" un mes futuro, QA-025).
@@ -104,7 +104,10 @@ final class SincronizadorCompromisos
         $personas = DB::table('personas')
             ->where('tenant_id', $tenant->id)
             ->where('activo', true)
-            ->whereIn('id', DB::table('promesas')->select('persona_id'))
+            // Con promesa hoy, o con promesas de un corte anterior que rigieron en este anio (promesas futuras).
+            ->where(fn ($q) => $q->whereIn('id', DB::table('promesas')->select('persona_id'))
+                ->orWhereIn('id', DB::table('promesas_historial')->select('persona_id')
+                    ->where('tenant_id', $tenant->id)->where('vigente_hasta', '>=', $anio.'-01-01')))
             ->orderBy('id')
             ->get(['id', 'nombre', 'activo']);
         $deseadas = $personas->isEmpty() ? [] : $this->filasDeseadas($personas, $anio, $meses);
@@ -206,7 +209,8 @@ final class SincronizadorCompromisos
                 if (! isset($quieroMes[$mes->mes])) {
                     continue;
                 }
-                foreach ($cuenta->promesas() as $categoria => $promesa) {
+                // Las promesas que regian ESE mes (antes de un corte de promesas, las del historial).
+                foreach ($cuenta->promesasDelMes($mes->clave) as $categoria => $promesa) {
                     $prometidoCrc = $cuenta->esperadoDelMesCentimos($mes->clave, $categoria);
                     $dadoCrc = $cuenta->dadoCentimos($mes->clave, [$categoria]);
                     $filas[$cuenta->id.'|'.$categoria.'|'.$mes->mes] = [

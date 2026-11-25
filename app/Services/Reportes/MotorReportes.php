@@ -25,8 +25,12 @@ use Illuminate\Support\Facades\DB;
  *  - Para el estado solo se cobran los meses completos anteriores al corte (PeriodoReporte) y solo
  *    cuenta lo dado en las categorias con promesa (CuentaPersona::estado()).
  *
- * Costo: una consulta para lo dado y otra para las promesas por cada 1000 personas, sin modelos de
- * Eloquent; ~5.000 detalles de un anio se procesan en milisegundos.
+ *  - Promesas futuras: cada mes usa las promesas que regian ESE mes (PromesasPorPeriodo): los meses
+ *    anteriores a un corte de promesas activado, las de `promesas_historial`; los demas, las de hoy.
+ *
+ * Costo: una consulta para lo dado, otra para las promesas y otra liviana para saber si hay cortes
+ * activados por cada 1000 personas (mas una para el historial si el periodo es anterior a un corte),
+ * sin modelos de Eloquent; ~5.000 detalles de un anio se procesan en milisegundos.
  */
 final class MotorReportes
 {
@@ -48,20 +52,35 @@ final class MotorReportes
             $personasPorId[(int) $persona->id] = $persona;
         }
 
-        $acumulado = ['dado' => [], 'ultimo' => [], 'ultimoPorCategoria' => [], 'usd' => [], 'detalle' => [], 'promesas' => []];
+        $acumulado = ['dado' => [], 'ultimo' => [], 'ultimoPorCategoria' => [], 'usd' => [], 'detalle' => [], 'promesas' => [], 'porMes' => []];
         foreach (array_chunk(array_keys($personasPorId), 1000) as $ids) {
             $this->leerDado($acumulado, $ids, $periodo, $deCompromiso, $conversor, $conDetalle);
-            $this->leerPromesas($acumulado, $ids, $deCompromiso);
+            $this->leerPromesas($acumulado, $ids, $periodo, $deCompromiso);
         }
+
+        $meses = $periodo->meses();
+        $ultimoMes = $meses[count($meses) - 1]->clave;
 
         $cuentas = [];
         foreach ($personasPorId as $id => $persona) {
-            $promesas = $acumulado['promesas'][$id] ?? [];
-
+            $porMes = $acumulado['porMes'][$id] ?? null;
             $esperado = [];
-            foreach ($promesas as $categoria => $promesa) {
-                foreach ($periodo->meses() as $mes) {
-                    $esperado[$mes->clave][$categoria] = $promesa->esperadoCentimos($mes, $conversor);
+            if ($porMes === null) {
+                // Las mismas promesas todos los meses (sin cortes de promesas en el periodo): como siempre.
+                $promesas = $acumulado['promesas'][$id] ?? [];
+                foreach ($promesas as $categoria => $promesa) {
+                    foreach ($meses as $mes) {
+                        $esperado[$mes->clave][$categoria] = $promesa->esperadoCentimos($mes, $conversor);
+                    }
+                }
+            } else {
+                // El periodo toca meses anteriores a un corte: cada mes con las promesas que regian ese
+                // mes; "la promesa" que se muestra es la del ultimo mes del periodo.
+                $promesas = $porMes[$ultimoMes] ?? [];
+                foreach ($meses as $mes) {
+                    foreach ($porMes[$mes->clave] ?? [] as $categoria => $promesa) {
+                        $esperado[$mes->clave][$categoria] = $promesa->esperadoCentimos($mes, $conversor);
+                    }
                 }
             }
 
@@ -78,6 +97,7 @@ final class MotorReportes
                 $acumulado['usd'][$id] ?? false,
                 $acumulado['detalle'][$id] ?? [],
                 $acumulado['ultimoPorCategoria'][$id] ?? [],
+                $porMes,
             );
         }
 
@@ -147,34 +167,23 @@ final class MotorReportes
     }
 
     /**
-     * Promesas vigentes: TODAS las de cada categoria de compromiso (si tiene dos de seminario, lo
-     * esperado es la suma de las dos), en el orden de la iglesia.
+     * Promesas de cada mes (PromesasPorPeriodo): TODAS las de cada categoria de compromiso (si tiene
+     * dos de seminario, lo esperado es la suma de las dos), en el orden de la iglesia. Sin cortes de
+     * promesas activados que toquen el periodo, las de la tabla `promesas` para todos los meses.
      *
      * @param  list<int>  $ids
      * @param  list<string>  $deCompromiso
      */
-    private function leerPromesas(array &$acumulado, array $ids, array $deCompromiso): void
+    private function leerPromesas(array &$acumulado, array $ids, PeriodoReporte $periodo, array $deCompromiso): void
     {
-        $porPersona = [];
-        $filas = DB::table('promesas')
-            ->whereIn('persona_id', $ids)
-            ->orderBy('id')
-            ->get(['persona_id', 'categoria', 'monto', 'moneda', 'frecuencia']);
-
-        foreach ($filas as $fila) {
-            $porPersona[(int) $fila->persona_id][$fila->categoria][] = [
-                'monto' => (float) $fila->monto,
-                'moneda' => $fila->moneda ?: 'CRC',
-                'frecuencia' => (string) $fila->frecuencia,
-            ];
-        }
-
-        foreach ($porPersona as $id => $porCategoria) {
-            foreach ($deCompromiso as $categoria) {
-                if (isset($porCategoria[$categoria])) {
-                    $acumulado['promesas'][$id][$categoria] = new PromesaVigente($categoria, $porCategoria[$categoria]);
-                }
+        $leidas = app(PromesasPorPeriodo::class)->leer($ids, $periodo, $deCompromiso);
+        foreach ($leidas['vigentes'] as $id => $promesas) {
+            if ($promesas !== []) {
+                $acumulado['promesas'][$id] = $promesas;
             }
+        }
+        foreach ($leidas['porMes'] as $id => $porMes) {
+            $acumulado['porMes'][$id] = $porMes;
         }
     }
 }

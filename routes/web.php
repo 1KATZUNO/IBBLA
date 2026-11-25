@@ -299,8 +299,32 @@ Route::middleware(['auth', 'role:admin', 'audit'])->group(function () {
     Route::get('/admin/servidores/{servidor}/pdf', [App\Http\Controllers\ServidorController::class, 'pdfIndividual'])->name('admin.servidores.pdf-individual');
     Route::get('/admin/servidores/qr/{culto}', [App\Http\Controllers\ServidorController::class, 'qrCulto'])->name('admin.servidores.qr');
 
+    // Promesas futuras (cortes de promesas programados): solo admin, todo con auditoría.
+    // Va en /promesas-futuras (no /promesas/...) porque promesas/{cualquiera} redirige a Personas.
+    Route::prefix('promesas-futuras')->name('promesas-futuras.')->controller(App\Http\Controllers\PromesasFuturasController::class)->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::get('/nuevo', 'create')->name('create');
+        Route::post('/', 'store')->name('store');
+        Route::get('/plantilla', 'plantilla')->name('plantilla');
+        Route::get('/{corte}', 'show')->name('show');
+        Route::get('/{corte}/editar', 'edit')->name('edit');
+        Route::put('/{corte}', 'update')->name('update');
+        Route::get('/{corte}/eliminar', 'confirmarEliminar')->name('eliminar');
+        Route::delete('/{corte}', 'destroy')->name('destroy');
+        Route::get('/{corte}/importar', 'importar')->name('importar');
+        Route::post('/{corte}/importar', 'subir')->name('importar.subir');
+        Route::get('/{corte}/importar/revisar', 'revisar')->name('importar.revisar');
+        Route::post('/{corte}/importar/aplicar', 'aplicar')->name('importar.aplicar');
+        Route::post('/{corte}/importar/descartar', 'descartar')->name('importar.descartar');
+        Route::get('/{corte}/personas/agregar', 'agregarPersona')->name('personas.agregar');
+        Route::post('/{corte}/personas/nueva', 'crearPersona')->name('personas.crear');
+        Route::get('/{corte}/personas/{persona}', 'editarPersona')->name('personas.edit');
+        Route::put('/{corte}/personas/{persona}', 'guardarPersona')->name('personas.update');
+        Route::delete('/{corte}/personas/{persona}', 'quitarPersona')->name('personas.destroy');
+    });
+
     // Auditoría
-    Route::get('/admin/auditoria', [App\Http\Controllers\AuditLogController::class, 'index'])->name('admin.auditoria.index');
+    Route::get('/admin/auditoria',[App\Http\Controllers\AuditLogController::class, 'index'])->name('admin.auditoria.index');
 
     // Historial de ingresos a la plataforma: quién entró, cuándo y a qué hora (+ CSV)
     Route::get('/admin/auditoria/ingresos', [App\Http\Controllers\HistorialIngresosController::class, 'index'])->name('admin.auditoria.ingresos');
