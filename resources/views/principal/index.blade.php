@@ -58,7 +58,7 @@
                 </span>
                 <span class="min-w-0">
                     <span class="block font-semibold text-gray-900">{{ $tituloAcceso }}</span>
-                    <span class="block text-sm text-gray-500 truncate">{{ $detalleAcceso }}</span>
+                    <span class="block text-sm leading-snug text-gray-500" data-detalle-acceso>{{ $detalleAcceso }}</span>
                 </span>
             </a>
             @endforeach
