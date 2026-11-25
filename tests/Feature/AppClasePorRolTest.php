@@ -61,8 +61,8 @@ class AppClasePorRolTest extends TestCase
         $this->actingAs($this->crearUsuario($this->iglesia, 'miembro'))
             ->get(route('clase-app.index'))
             ->assertOk()
-            ->assertSee('No tenés una clase asignada.')
-            ->assertSee('Pedile al administrador que te asigne una.')
+            ->assertSee('No tienes una clase asignada.')
+            ->assertSee('Pídele al administrador que te asigne una.')
             ->assertDontSee('Selecciona una clase')
             ->assertDontSee('No hay clases activas');
     }

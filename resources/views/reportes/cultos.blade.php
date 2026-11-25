@@ -39,7 +39,7 @@
 
     <div class="bg-blue-50 border border-blue-100 rounded-lg px-4 py-3 text-sm text-blue-900">
         <p><span class="font-semibold">{{ $filtro->etiquetaPeriodo() }} · {{ implode(' · ', $filtro->descripcion($tipos)) }}.</span>
-            Cifras en colones con la misma regla del recuento de cada culto (los dólares al tipo de cambio del sobre). Total = efectivo (sobres + suelto − egresos) + transferencias. «Firmas completas» = firmó el pastor y al menos un tesorero.</p>
+            Cifras en colones con la misma regla del recuento de cada culto (los dólares al tipo de cambio del sobre). Total = sobres en efectivo + transferencias + suelto − egresos. «Firmas completas» = firmó el pastor y al menos un tesorero.</p>
     </div>
 
     {{-- Una fila por culto --}}
@@ -57,7 +57,7 @@
                 <table class="min-w-full divide-y divide-gray-200 text-sm" data-testid="tabla-cultos">
                     <thead class="bg-gray-50">
                         <tr>
-                            @foreach(['Fecha' => 'left', 'Tipo' => 'left', 'Estado' => 'center', 'Sobres' => 'right', 'Efectivo' => 'right', 'Transferencias' => 'right', 'Suelto' => 'right', 'Egresos' => 'right', 'Total' => 'right', 'Firmas completas' => 'center'] as $titulo => $alinear)
+                            @foreach(['Fecha' => 'left', 'Tipo' => 'left', 'Estado' => 'center', 'Sobres' => 'right', 'Sobres en efectivo' => 'right', 'Transferencias' => 'right', 'Suelto' => 'right', 'Egresos' => 'right', 'Total' => 'right', 'Firmas completas' => 'center'] as $titulo => $alinear)
                                 <th class="px-3 py-3 text-{{ $alinear }} text-xs font-medium text-gray-500 uppercase whitespace-nowrap">{{ $titulo }}</th>
                             @endforeach
                         </tr>
@@ -73,7 +73,7 @@
                                 <span class="px-2 py-1 text-xs font-semibold rounded-full {{ $fila->culto->cerrado ? 'bg-gray-100 text-gray-700' : 'bg-amber-100 text-amber-800' }}">{{ $fila->estado() }}</span>
                             </td>
                             <td class="px-3 py-2 text-right">{{ number_format($fila->sobres) }}</td>
-                            <td class="px-3 py-2 text-right whitespace-nowrap">{{ $formato($fila->efectivo) }}</td>
+                            <td class="px-3 py-2 text-right whitespace-nowrap">{{ $formato($fila->sobresEfectivo) }}</td>
                             <td class="px-3 py-2 text-right whitespace-nowrap">{{ $formato($fila->transferencias) }}</td>
                             <td class="px-3 py-2 text-right whitespace-nowrap">{{ $formato($fila->sueltos) }}</td>
                             <td class="px-3 py-2 text-right whitespace-nowrap">{{ $formato($fila->egresos) }}</td>
@@ -92,7 +92,7 @@
                         <tr>
                             <td class="px-3 py-3" colspan="3">Total del rango</td>
                             <td class="px-3 py-3 text-right">{{ number_format($t['sobres']) }}</td>
-                            <td class="px-3 py-3 text-right whitespace-nowrap">{{ $formato($t['efectivo']) }}</td>
+                            <td class="px-3 py-3 text-right whitespace-nowrap">{{ $formato($t['sobres_efectivo']) }}</td>
                             <td class="px-3 py-3 text-right whitespace-nowrap">{{ $formato($t['transferencias']) }}</td>
                             <td class="px-3 py-3 text-right whitespace-nowrap">{{ $formato($t['sueltos']) }}</td>
                             <td class="px-3 py-3 text-right whitespace-nowrap">{{ $formato($t['egresos']) }}</td>

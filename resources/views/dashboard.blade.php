@@ -43,7 +43,7 @@
         <div class="glass-card p-5">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-sm text-gray-500">Ingresos del período</p>
+                    <p class="text-sm text-gray-500">Neto del período (ingresos − egresos)</p>
                     <p class="text-2xl font-bold text-gray-900">₡{{ number_format($totalesPeriodo['total_general'], 0) }}</p>
                 </div>
                 <div class="text-right">
@@ -117,7 +117,7 @@
                         </svg>
                     </div>
                     <dl class="flex-1">
-                        <dt class="text-sm font-medium text-gray-500 mb-1">Total Mensual</dt>
+                        <dt class="text-sm font-medium text-gray-500 mb-1">Neto mensual (ingresos − egresos)</dt>
                         <dd class="text-lg font-display font-bold text-brand-700">₡{{ number_format($totalesPeriodo['total_general'], 2) }}</dd>
                     </dl>
                 </div>

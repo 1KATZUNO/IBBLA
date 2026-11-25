@@ -105,7 +105,7 @@ class CumplimientoPromesasTest extends TestCase
         $this->assertEquals(-154173.75, $ana->diferencia());
         $this->assertSame('04/10/2026', $ana->ultimoAporteTexto());
         $this->assertSame('sin aportes en 5 meses (Abril a Septiembre)', $ana->observacion);
-        $this->assertSame('Misiones ₡10,000.00 mensual · Seminario $5.00 cada quincena · Construccion ₡2,000.00 cada domingo', $ana->promesa);
+        $this->assertSame('Misiones ₡10,000.00 mensual · Seminario $5.00 cada quincena · Construcción ₡2,000.00 cada domingo', $ana->promesa);
 
         $this->assertSame('sin aportes en 6 meses (Febrero a Agosto)', $filas['Carla Solano']->observacion);
         $this->assertSame('sin aportes en Julio', $filas['Gabriel Ureña']->observacion);

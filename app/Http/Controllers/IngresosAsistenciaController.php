@@ -252,7 +252,7 @@ class IngresosAsistenciaController extends Controller
     /** PDF de ingresos viejo: ahora es el PDF del Reporte de ingresos (HU-R11), mismas fechas. */
     public function pdfIngresos(Request $request)
     {
-        return redirect()->route('reportes.ingresos.pdf', $this->parametrosIngresos($request) + ['accion' => 'ver']);
+        return redirect()->route('reportes.ingresos.pdf', $this->parametrosIngresos($request) + ['accion' => $request->query('accion') === 'descargar' ? 'descargar' : 'ver']);
     }
 
     /**

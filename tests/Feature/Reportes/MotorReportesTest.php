@@ -229,7 +229,7 @@ class MotorReportesTest extends TestCase
         $this->assertSame([$this->carla->id, $this->beto->id], array_keys($resultado->cuentas()));
         $this->assertNull($resultado->cuenta($this->ana->id));
         $this->assertEquals(26234.56, $resultado->cuenta($this->beto->id)->dado());
-        $this->assertSame(['Diezmo', 'Ofrenda Especial', 'Misiones', 'Seminario', 'Construccion', 'CAMPA', 'Prestamo', 'Micro'], array_values($resultado->categorias));
+        $this->assertSame(['Diezmo', 'Ofrenda Especial', 'Misiones', 'Seminario', 'Construcción', 'CAMPA', 'Préstamo', 'Micro'], array_values($resultado->categorias));
         $this->assertSame('Pro Templo', $resultado->nombreCategoria('pro_templo'));
     }
 

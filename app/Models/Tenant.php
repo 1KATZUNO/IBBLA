@@ -172,9 +172,9 @@ class Tenant extends Model
             ['nombre' => 'Ofrenda Especial', 'slug' => 'ofrenda_especial', 'tipo' => 'ingreso', 'excluir_de_promesas' => true, 'color' => '#8b5cf6', 'orden' => 2],
             ['nombre' => 'Misiones', 'slug' => 'misiones', 'tipo' => 'ambos', 'excluir_de_promesas' => false, 'color' => '#10b981', 'orden' => 3],
             ['nombre' => 'Seminario', 'slug' => 'seminario', 'tipo' => 'ambos', 'excluir_de_promesas' => false, 'color' => '#f59e0b', 'orden' => 4],
-            ['nombre' => 'Construccion', 'slug' => 'construccion', 'tipo' => 'ambos', 'excluir_de_promesas' => false, 'color' => '#ef4444', 'orden' => 5],
+            ['nombre' => 'Construcción', 'slug' => 'construccion', 'tipo' => 'ambos', 'excluir_de_promesas' => false, 'color' => '#ef4444', 'orden' => 5],
             ['nombre' => 'CAMPA', 'slug' => 'campa', 'tipo' => 'ambos', 'excluir_de_promesas' => false, 'color' => '#ec4899', 'orden' => 6],
-            ['nombre' => 'Prestamo', 'slug' => 'prestamo', 'tipo' => 'ambos', 'excluir_de_promesas' => false, 'color' => '#6366f1', 'orden' => 7],
+            ['nombre' => 'Préstamo', 'slug' => 'prestamo', 'tipo' => 'ambos', 'excluir_de_promesas' => false, 'color' => '#6366f1', 'orden' => 7],
             ['nombre' => 'Micro', 'slug' => 'micro', 'tipo' => 'ambos', 'excluir_de_promesas' => false, 'color' => '#14b8a6', 'orden' => 8],
         ];
     }

@@ -19,7 +19,7 @@ class CultosPdf
         $filtro = $reporte->filtro;
         $doc = new DocumentoPdf('Reporte de cultos', $filtro->etiquetaPeriodo(), $filtro->descripcion(FiltroCultos::tiposDisponibles()), 'landscape');
         $doc->encabezado();
-        $doc->nota('Cifras en colones con la misma regla del recuento de cada culto: los dólares al tipo de cambio del sobre (o al del día del culto). Total = efectivo (sobres + suelto - egresos) + transferencias.');
+        $doc->nota('Cifras en colones con la misma regla del recuento de cada culto: los dólares al tipo de cambio del sobre (o al del día del culto). Total = sobres en efectivo + transferencias + suelto - egresos.');
 
         $t = $reporte->totales();
         $doc->tarjetas([
@@ -43,7 +43,7 @@ class CultosPdf
             $f->tipo,
             $f->estado(),
             (string) $f->sobres,
-            Dinero::formato($f->efectivo),
+            Dinero::formato($f->sobresEfectivo),
             Dinero::formato($f->transferencias),
             Dinero::formato($f->sueltos),
             Dinero::formato($f->egresos),
@@ -56,14 +56,14 @@ class CultosPdf
             ['titulo' => 'Tipo', 'ancho' => 2.0],
             ['titulo' => 'Estado', 'ancho' => 1.3],
             ['titulo' => 'Sobres', 'ancho' => 1.1, 'alinear' => 'derecha'],
-            ['titulo' => 'Efectivo', 'ancho' => 2.2, 'alinear' => 'derecha'],
+            ['titulo' => 'Sobres en efectivo', 'ancho' => 2.2, 'alinear' => 'derecha'],
             ['titulo' => 'Transferencias', 'ancho' => 2.2, 'alinear' => 'derecha'],
             ['titulo' => 'Suelto', 'ancho' => 1.8, 'alinear' => 'derecha'],
             ['titulo' => 'Egresos', 'ancho' => 1.8, 'alinear' => 'derecha'],
             ['titulo' => 'Total', 'ancho' => 2.2, 'alinear' => 'derecha'],
             ['titulo' => 'Firmas', 'ancho' => 1.1, 'alinear' => 'centro'],
         ], $filas, total: [
-            'Total', '', '', number_format($t['sobres']), Dinero::formato($t['efectivo']), Dinero::formato($t['transferencias']),
+            'Total', '', '', number_format($t['sobres']), Dinero::formato($t['sobres_efectivo']), Dinero::formato($t['transferencias']),
             Dinero::formato($t['sueltos']), Dinero::formato($t['egresos']), Dinero::formato($t['total']), '',
         ]);
 

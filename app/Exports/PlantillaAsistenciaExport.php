@@ -127,7 +127,7 @@ class PlantillaAsistenciaExport implements FromArray, WithHeadings, WithTitle, W
                 // Fila de ejemplo en italic + gris
                 $ejemploRange = "A2:{$ultimaCol}2";
                 $sheet->getStyle($ejemploRange)->getFont()->setItalic(true)->getColor()->setARGB('FF6B7280');
-                $sheet->getStyle("A2")->getComment()->getText()->createTextRun('Fila de ejemplo, bórrela antes de subir el archivo');
+                $sheet->getComment('A2')->getText()->createTextRun('Fila de ejemplo, bórrela antes de subir el archivo');
 
                 // Bordes en todo
                 $totalRows = $sheet->getHighestRow();

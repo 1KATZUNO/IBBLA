@@ -296,7 +296,7 @@
                     <p class="text-xs text-gray-600 mb-2"><strong>Incluye:</strong></p>
                     <ul class="text-xs text-gray-600 space-y-1">
                         <li>• Todas las personas con promesas o contribuciones</li>
-                        <li>• Categorias: Misiones, Seminario, Campa, Construccion, Micro</li>
+                        <li>• Categorías: Misiones, Seminario, Campa, Construcción, Micro</li>
                         <li>• Filas verdes (Dado) y azules (Esperado) por mes</li>
                         <li>• Totales y diferencia por persona</li>
                         <li>• Totales generales al final</li>

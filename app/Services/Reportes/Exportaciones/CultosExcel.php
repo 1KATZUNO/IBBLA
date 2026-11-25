@@ -21,7 +21,7 @@ class CultosExcel
         $t = $reporte->totales();
 
         $resumen = $libro->hoja('Resumen')
-            ->encabezado('Cifras en colones con la misma regla del recuento de cada culto. Total = efectivo (sobres + suelto - egresos) + transferencias.', 10)
+            ->encabezado('Cifras en colones con la misma regla del recuento de cada culto. Total = sobres en efectivo + transferencias + suelto - egresos.', 10)
             ->tarjetas([
                 ['etiqueta' => 'Cultos', 'valor' => $t['cultos'], 'formato' => LibroExcel::ENTERO],
                 ['etiqueta' => 'Sobres', 'valor' => $t['sobres'], 'formato' => LibroExcel::ENTERO],
@@ -36,7 +36,7 @@ class CultosExcel
             ['titulo' => 'Tipo', 'ancho' => 16],
             ['titulo' => 'Estado', 'ancho' => 10],
             ['titulo' => 'Sobres', 'ancho' => 9, 'formato' => LibroExcel::ENTERO],
-            ['titulo' => 'Efectivo', 'ancho' => 16, 'formato' => LibroExcel::MONEDA_DECIMALES],
+            ['titulo' => 'Sobres en efectivo', 'ancho' => 20, 'formato' => LibroExcel::MONEDA_DECIMALES],
             ['titulo' => 'Transferencias', 'ancho' => 16, 'formato' => LibroExcel::MONEDA_DECIMALES],
             ['titulo' => 'Suelto', 'ancho' => 14, 'formato' => LibroExcel::MONEDA_DECIMALES],
             ['titulo' => 'Egresos', 'ancho' => 14, 'formato' => LibroExcel::MONEDA_DECIMALES],
@@ -47,13 +47,13 @@ class CultosExcel
             $f->tipo,
             $f->estado(),
             $f->sobres,
-            $f->efectivo,
+            $f->sobresEfectivo,
             $f->transferencias,
             $f->sueltos,
             $f->egresos,
             $f->total,
             $f->firmasCompletas ? 'Sí' : 'No',
-        ], $reporte->filas), total: ['TOTAL', '', '', $t['sobres'], $t['efectivo'], $t['transferencias'], $t['sueltos'], $t['egresos'], $t['total'], '']);
+        ], $reporte->filas), total: ['TOTAL', '', '', $t['sobres'], $t['sobres_efectivo'], $t['transferencias'], $t['sueltos'], $t['egresos'], $t['total'], '']);
 
         self::desgloses($libro->hoja('Por categoría y método'), $reporte);
 
