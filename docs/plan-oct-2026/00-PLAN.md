@@ -296,3 +296,12 @@ Del lider del proyecto (David):
   (cortes 31/10 y 24/11, con promesa y todas); `ibbla:verificar` OK salvo la contrasena de semilla. En produccion no
   hay todavia ningun corte: falta cargar el Excel real junto con David o Roy (decidir Construccion y emparejar
   los nombres que no calzan solos).
+- 2026-11-25 (09:20 CR): PROMESAS FUTURAS, ajustes pedidos por David y desplegados como `v2026.11.25-e3.1` (main
+  b19c3fd): la plantilla y el importador llevan una tercera columna **Frecuencia** (Semanal, Quincenal o Mensual por
+  persona; vacia toma la elegida al subir; un archivo sin la columna se lee como antes); al reimportar, quien fue
+  emparejado a mano ya no pide decidir de nuevo. Suite 1015 pruebas / 14 de Breeze; un minuto de mantenimiento;
+  huella de produccion identica antes y despues; ningun corte creado todavia en produccion.
+  Decisiones de David para la carga real: la columna "Construccion" de su Excel va a la categoria existente
+  **Yo Creo 2030** (no se crea categoria ni se renombra); los montos son semanales; los nombres dudosos los marca
+  el en `Documents/IBBLA-respaldos/nombres-por-revisar-promesas-2027.xlsx` (69 calzan solos, 44 parecidos, 20
+  posibles, 2 sin parecido) y con eso el lider crea el corte de enero 2027 y carga el archivo.
