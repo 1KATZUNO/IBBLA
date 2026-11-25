@@ -69,7 +69,7 @@ Para que una persona sea alumna o maestra de una clase, asígnala desde su formu
 
 ## App de Clases
 
-Menú lateral → **App de Clases**. La maestra elige su clase y entra a su registro digital: **Inicio**, **Miembros**, **Visitas**, **Asistencia** (toca el círculo de cada persona para marcar que asistió), **Visitación** (las semanas en que visitó a cada miembro) y **Reportes**. Reemplaza el cuaderno de registro. Solo entran el Administrador y las maestras asignadas a una clase: el Tesorero (o un Asistente sin clase) ve la pantalla de acceso denegado con el motivo, y un Miembro que no es maestra ve «No tenés una clase asignada. Pedile al administrador que te asigne una.»
+Menú lateral → **App de Clases**. La maestra elige su clase y entra a su registro digital: **Inicio**, **Miembros**, **Visitas**, **Asistencia** (toca el círculo de cada persona para marcar que asistió), **Visitación** (las semanas en que visitó a cada miembro) y **Reportes**. Reemplaza el cuaderno de registro. Solo entran el Administrador y las maestras asignadas a una clase: el Tesorero (o un Asistente sin clase) ve la pantalla de acceso denegado con el motivo, y un Miembro que no es maestra ve «No tienes una clase asignada. Pídele al administrador que te asigne una.»
 
 ## Marcar Asistencia (servidores)
 

@@ -62,8 +62,8 @@ El **Reporte de cultos** y el **Reporte de ingresos** comparten el mismo bloque 
 Cada culto del rango, con lo que se recibió y gastó en él.
 
 - **Elegir cultos:** el desplegable **Elegir cultos (todos los del rango)** te deja marcar solo los cultos que quieres; sin ninguno marcado salen todos los del rango. Cambia a «(N elegidos)».
-- **Tarjetas de resumen:** **Cultos**, **Sobres**, **Ingresos**, **Egresos**, **Total del rango** y **Sin firmas completas** (cuántos cultos no tienen firmadas todas las firmas del recuento).
-- **Tabla «Cultos (N)»:** **Fecha**, **Tipo**, **Estado**, **Sobres**, **Efectivo**, **Transferencias**, **Suelto**, **Egresos**, **Total** y **Firmas completas**, más los cuadros **Ingresos por categoría** e **Ingresos por método de pago**.
+- **Tarjetas de resumen:** **Cultos**, **Sobres**, **Ingresos**, **Egresos**, **Total del rango** y **Sin firmas completas** (cuántos cultos no tienen la firma del pastor y la de al menos un tesorero).
+- **Tabla «Cultos (N)»:** **Fecha**, **Tipo**, **Estado**, **Sobres**, **Sobres en efectivo**, **Transferencias**, **Suelto**, **Egresos**, **Total** y **Firmas completas** (el Total es sobres en efectivo + transferencias + suelto − egresos, así que las columnas suman), más los cuadros **Ingresos por categoría** e **Ingresos por método de pago**.
 - Si no hay cultos con esos filtros, la pantalla lo dice y sugiere ampliar las fechas (por ejemplo con el atajo **Este año**), quitar tipos o desmarcar cultos.
 - El **Excel** trae las hojas **Resumen** (una fila por culto y totales) y detalle; el **PDF** sale horizontal.
 
