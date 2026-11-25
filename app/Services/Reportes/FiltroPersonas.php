@@ -167,11 +167,29 @@ final class FiltroPersonas
         }
 
         if ($this->promesa !== 'todos') {
-            $conPromesa = function (Builder $q) {
-                $q->whereIn('categoria', tenant_categories(['excluir_de_promesas' => false])->pluck('slug')->all())
-                    ->where('monto', '>', 0);
+            $categorias = tenant_categories(['excluir_de_promesas' => false])->pluck('slug')->all();
+            $conPromesa = function (Builder $q) use ($categorias) {
+                $q->whereIn('categoria', $categorias)->where('monto', '>', 0);
             };
-            $this->promesa === 'si' ? $consulta->whereHas('promesas', $conPromesa) : $consulta->whereDoesntHave('promesas', $conPromesa);
+            // Promesas futuras: si el periodo toca meses anteriores a un corte activado, "con promesa"
+            // es haber tenido alguna que rigio en algun mes del periodo (historial y, si el periodo
+            // llega al corte, las de hoy). Sin cortes, como siempre.
+            $cortes = ($periodo !== null && tenant()) ? app(PromesasPorPeriodo::class)->conPromesaEnPeriodo(tenant()->id, $periodo, $categorias) : null;
+            if ($cortes === null) {
+                $this->promesa === 'si' ? $consulta->whereHas('promesas', $conPromesa) : $consulta->whereDoesntHave('promesas', $conPromesa);
+            } elseif ($this->promesa === 'si') {
+                $consulta->where(function (Builder $q) use ($cortes, $conPromesa) {
+                    $q->whereIn('personas.id', $cortes['historial']);
+                    if ($cortes['actuales']) {
+                        $q->orWhereHas('promesas', $conPromesa);
+                    }
+                });
+            } else {
+                $consulta->whereNotIn('personas.id', $cortes['historial']);
+                if ($cortes['actuales']) {
+                    $consulta->whereDoesntHave('promesas', $conPromesa);
+                }
+            }
         }
 
         if ($this->aporto !== 'todos' && $periodo !== null) {
