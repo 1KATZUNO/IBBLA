@@ -342,20 +342,56 @@ class PersonaController extends Controller
         }
         $persona->ministerios()->sync($syncMin);
 
-        // Sincronizar promesas
-        $persona->promesas()->delete(); // Eliminar promesas anteriores
-        if ($request->has('promesas')) {
-            foreach ($request->promesas as $promesaData) {
-                if (!empty($promesaData['monto']) && $promesaData['monto'] > 0) {
-                    $persona->promesas()->create($promesaData);
-                }
-            }
-        }
+        // QA-036: las promesas se actualizan en sitio (conservan id e historial)
+        $this->sincronizarPromesas($persona, (array) $request->input('promesas', []));
 
         return redirect()->route('personas.index')
             ->with('success', 'Persona actualizada correctamente.' . 
                 ($createUser ? ' Se creó acceso como miembro.' : '') . 
                 ($updateUser ? ' Se actualizó el acceso de miembro.' : ''));
+    }
+
+    /**
+     * QA-036: guardar la ficha ya no borra y recrea las promesas. Por categoría: si la persona ya
+     * prometía, se actualiza esa misma promesa (solo si cambió); si no, se crea; las categorías que
+     * quedaron sin monto se eliminan. Si había dos promesas de la misma categoría (datos viejos) se
+     * conserva la primera, como antes quedaba una sola.
+     *
+     * @param  array<int|string, array<string, mixed>>  $enviadas
+     */
+    private function sincronizarPromesas(Persona $persona, array $enviadas): void
+    {
+        $existentes = $persona->promesas()->orderBy('id')->get()->toBase()->groupBy('categoria');
+        $conservadas = [];
+        $idsConservados = [];
+
+        foreach ($enviadas as $datos) {
+            $categoria = (string) ($datos['categoria'] ?? '');
+            $monto = (float) ($datos['monto'] ?? 0);
+            if ($categoria === '' || $monto <= 0 || in_array($categoria, $conservadas, true)) {
+                continue;
+            }
+
+            $valores = [
+                'monto' => $monto,
+                'moneda' => in_array($datos['moneda'] ?? null, ['CRC', 'USD'], true) ? $datos['moneda'] : 'CRC',
+                'frecuencia' => $datos['frecuencia'] ?? 'mensual',
+            ];
+
+            $promesa = $existentes->get($categoria)?->first();
+            if ($promesa) {
+                $promesa->fill($valores);
+                if ($promesa->isDirty()) {
+                    $promesa->save();
+                }
+            } else {
+                $promesa = $persona->promesas()->create($valores + ['categoria' => $categoria]);
+            }
+            $conservadas[] = $categoria;
+            $idsConservados[] = $promesa->id;
+        }
+
+        $persona->promesas()->whereNotIn('id', $idsConservados)->get()->each->delete();
     }
 
     public function destroy(Persona $persona)
@@ -501,7 +537,7 @@ class PersonaController extends Controller
             ->update(['saldo_anterior' => 0, 'saldo_actual' => 0]);
 
         return redirect()->route('personas.edit', $persona)
-            ->with('success', 'Compromisos reiniciados correctamente desde ' . $fechaInicio->format('F Y'));
+            ->with('success', 'Compromisos reiniciados correctamente desde ' . $fechaInicio->locale('es')->translatedFormat('F \d\e Y') . '.');
     }
 
     /**
