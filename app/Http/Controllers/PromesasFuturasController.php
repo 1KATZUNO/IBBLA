@@ -482,14 +482,16 @@ class PromesasFuturasController extends Controller
     }
 
     /**
-     * Columnas del detalle: las categorias del corte y cualquier otra que tenga promesas en el.
+     * Columnas del detalle: solo las categorias con alguna promesa en el corte (en el orden de la iglesia),
+     * para que la tabla no se llene de columnas vacias.
      *
      * @return Collection<int, TenantCategory>
      */
     private function columnasDe(CortePromesas $corte, Collection $programadas): Collection
     {
-        $cats = CategoriasCorte::de($corte);
-        $faltan = $programadas->pluck('categoria')->unique()->diff($cats->pluck('slug'));
+        $usadas = $programadas->pluck('categoria')->unique();
+        $cats = CategoriasCorte::de($corte)->whereIn('slug', $usadas);
+        $faltan = $usadas->diff($cats->pluck('slug'));
         if ($faltan->isNotEmpty()) {
             $cats = $cats->concat(TenantCategory::where('tenant_id', $corte->tenant_id)->whereIn('slug', $faltan)->get());
         }

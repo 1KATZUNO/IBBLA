@@ -107,7 +107,7 @@
                     <tbody>
                         @foreach($personas as $fila)
                             <tr>
-                                <td>
+                                <td class="min-w-[12rem]">
                                     {{ $fila['persona']->nombre }}
                                     @if(! $fila['persona']->activo)
                                         <span class="badge-danger">inactiva</span>
