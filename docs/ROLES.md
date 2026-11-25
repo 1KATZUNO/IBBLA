@@ -55,6 +55,8 @@ Reglas (policies y métodos) que deciden, una sola vez, para pantalla y backend:
 | `tieneMiPerfil()` | `User` | "Yo / Mi perfil" solo con persona vinculada, también para el admin (QA-014) |
 | `puedeVerDashboardAsistencia()` | `User` | Dashboard de asistencia: admin, tesorero, asistente |
 | `puedeAltaRapidaPersonas()` | `User` | Alta rápida de personas: admin y tesorero |
+| `puedeCorregirCerrada()` | `AsistenciaController` | Asistencia cerrada: el admin la corrige (aviso + auditoría); los demás la ven en solo lectura con el motivo y el guardado da 403 (QE-015) |
+| `index()` | `ClaseAppController` | App de Clases: admin todas; maestra su clase; miembro sin clase, mensaje; los demás, 403 (QE-016) |
 
 ## Matriz
 
@@ -79,14 +81,15 @@ Reglas (policies y métodos) que deciden, una sola vez, para pantalla y backend:
 | **Agregar persona (alta rápida)**: nombre, teléfono, correo | Sí | Sí (desde el sobre y desde Principal) | Oculto | Oculto | Oculto |
 | Gestionar Personas: lista, fichas, compromisos, editar | Sí | **Oculto** | Oculto | Oculto | Oculto |
 | Asistencia web: registrar, editar, cerrar | Sí | Oculto | Sí | Oculto | Oculto |
+| Asistencia **cerrada** | Sí: "Corregir" con aviso "la estás corrigiendo como administrador", auditado | Oculto | Gris ("Cerrada el dd/mm a las hh:mm por X · solo lectura"); guardar da 403 | Oculto | Oculto |
 | App de asistencia (`/asistencia-app/*`) | Sí | 403 | Sí | 403 | 403 (maestra: solo su clase) |
-| App de Clases | Todas | Oculto | Oculto | Oculto | Solo su clase si es maestra |
+| App de Clases | Todas | Oculto (403 por URL) | Oculto (403), salvo que sea maestra | Solo su clase si es maestra; si no, mensaje | Solo su clase si es maestra; si no, "No tenés una clase asignada. Pedile al administrador que te asigne una." |
 | Marcar mi asistencia (QR) | — | — | — | Sí | — |
 | Dashboard general y de promesas | Sí | Sí | Oculto | Oculto | Oculto |
 | Dashboard de asistencia | Sí | Sí | **Sí** | Oculto | Oculto |
 | Reportes financieros (ingresos, promesas, Reporte General, estados de cuenta, cumplimiento, lote) | Sí | Sí | Oculto | Oculto | Solo lo suyo (Mi perfil) |
 | Excel financiero (ingresos, promesas) | Sí | Sí | **Oculto** | Oculto | Oculto |
-| Reportes y Excel de asistencia | Sí | Oculto** | Sí | Oculto | Oculto |
+| Reportes y Excel de asistencia (también el Excel del Dashboard de asistencia) | Sí | Sí | Sí | Oculto | Oculto |
 | Avisos de WhatsApp | Sí | Sí | Oculto | Oculto | Oculto |
 | Ministerios, Clases, Usuarios, Servidores, Cargar histórico | Sí | Oculto | Oculto | Oculto | Oculto |
 | Usuarios: editar o borrar al Super Admin o a otra iglesia | No (404) | — | — | — | — |
@@ -94,7 +97,7 @@ Reglas (policies y métodos) que deciden, una sola vez, para pantalla y backend:
 
 \* Decisión 2.7: cumpleañeros para admin, tesorero y asistente (el miembro no). La ruta sigue abierta a
 todos hasta que el menú (equipo 4) lo oculte; cerrarla antes dejaría un enlace que da 403.
-\** El tesorero ve el Dashboard de asistencia pero no descarga su Excel: el botón debe ocultarse (ver pendientes).
+Reportes de asistencia: admin, tesorero y asistente (decisión 5 de `04-DECISIONES.md`, QE-012).
 
 ## Auditoría de acciones sensibles
 
@@ -107,6 +110,9 @@ Quedan en `audit_logs` con usuario, IP, fecha y detalle (`AuditLog::registrar`):
 - `Asignar persona a sobre anónimo`: sobre, culto, total y persona asignada.
 - `Alta rápida de persona`: persona creada.
 - Cambios en cultos cerrados: corrección del admin o edición con acceso (módulo Accesos).
+- `Corrección de culto cerrado` con la acción "Corregir asistencia cerrada del culto del dd/mm/aaaa": la
+  asistencia, la fecha del culto y las cifras antes y después (QE-015). Sale también en Accesos >
+  Últimos cambios.
 
 ## Pendientes de otros equipos para que la app cumpla la matriz
 
@@ -119,5 +125,5 @@ Quedan en `audit_logs` con usuario, IP, fecha y detalle (`AuditLog::registrar`):
     `$u->puedeAltaRapidaPersonas() && ! $u->canAccessAdmin()`.
   - Cumpleañeros: ocultar a miembro y servidor (decisión 2.7) o dejarlo y corregir esta matriz.
 - **Equipo 3a (reportes, QA-010)**: rutas `excel-ingresos` y `excel-promesas` al grupo admin+tesorero y
-  los botones de Excel según esta matriz; Excel de asistencia oculto para el tesorero.
+  los botones de Excel según esta matriz (hecho).
 - **Equipo 5**: Mi perfil sin persona (vista `mi-perfil.sin-persona`), ya en su rama.
