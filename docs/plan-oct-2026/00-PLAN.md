@@ -265,3 +265,9 @@ Del lider del proyecto (David):
   Servidores fue la ventana de mantenimiento del deploy (19:17-19:20), no un defecto.
   Retoque posterior `v2026.11.24-e2.1`: el Reporte de ingresos compara un periodo en curso con los mismos dias del
   anterior (con datos reales, noviembre pasa de -22,4 % a +1,9 %), igual que el dashboard.
+  Incidente del deploy de e2.1 (error del lider): la espera del auto-deploy usaba `pgrep -f composer` en un bucle
+  y el bucle se detectaba a si mismo, asi que el sitio quedo en mantenimiento de 19:36 a 19:47 CR (unos 10 min) hasta
+  que se corto y se corrio el script. Sin errores en el log ni datos afectados. Leccion: tras el push, esperar a que
+  HEAD cambie y dar unos segundos fijos; nunca un bucle con pgrep cuyo patron aparece en el propio comando.
+  Estado final de produccion: main en `v2026.11.24-e2.1` (15b0c9e), arbol limpio, cron corriendo, 3 respaldos en
+  ~/respaldos-ibbla, `ibbla:verificar` con una sola falla (contrasena de semilla de super@admin.com).
