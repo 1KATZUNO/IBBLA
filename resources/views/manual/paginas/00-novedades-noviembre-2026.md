@@ -68,6 +68,7 @@ Una asistencia **cerrada** queda en **solo lectura** para el Asistente y el Teso
 
 ## Para el Administrador
 
+- **Promesas futuras** (menú **Administración**): carga desde ahora las promesas de 2027 (a mano o con un Excel, con plantilla y revisión antes de guardar). Hasta el día de inicio no cambia nada; ese día reemplazan a todas las anteriores. Detalle en *Promesas* → *Promesas futuras*.
 - **Accesos** (menú **Administración**): conceder y revocar permisos de edición sobre cultos cerrados.
 - **Usuarios:** al crear o editar un usuario eliges su **Persona vinculada** (buscando por nombre, PIN o teléfono), para que su **Mi perfil** muestre su estado de cuenta.
 - **Personas, borrados masivos:** **Eliminar personas inactivas** y **Borrar todas las promesas** ahora abren una pantalla que dice qué se borra y cuánto, y piden escribir **CONFIRMAR**. Quedan en la auditoría.

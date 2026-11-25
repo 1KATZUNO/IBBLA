@@ -14,6 +14,10 @@ use Carbon\CarbonImmutable;
  *   esperadoDelMesCentimos() da lo de cualquier mes del periodo, solo como dato informativo.
  * - "Ha dado" para el estado = lo dado en las categorias en que la persona TIENE promesa (regla 2.1
  *   de 04-DECISIONES.md); el diezmo y las categorias sin promesa se muestran pero no cuentan.
+ * - Promesas futuras: si el periodo toca meses anteriores a un corte de promesas, $promesasPorMes
+ *   trae las que regian cada mes; entonces lo esperado y lo que cuenta como "ha dado" de cada mes
+ *   salen de las promesas de ESE mes, promesas() es el juego del ultimo mes y "tiene promesa" es
+ *   haber tenido alguna en algun mes del periodo. Sin cortes ($promesasPorMes null) todo es como siempre.
  */
 final class CuentaPersona
 {
@@ -24,6 +28,8 @@ final class CuentaPersona
      * @param  list<string>  $categoriasCompromiso
      * @param  list<array<string, mixed>>  $detalle  un renglon por detalle de sobre (solo si se pidio)
      * @param  array<string, string>  $ultimoPorCategoria  categoria de compromiso => fecha (Y-m-d) del ultimo aporte en ella
+     * @param  array<string, array<string, PromesaVigente>>|null  $promesasPorMes  clave de mes => categoria => promesa
+     *                                                                            que regia ese mes; null = las mismas todo el periodo
      */
     public function __construct(
         public readonly int $id,
@@ -38,6 +44,7 @@ final class CuentaPersona
         public readonly bool $hayUsd,
         public readonly array $detalle = [],
         private readonly array $ultimoPorCategoria = [],
+        private readonly ?array $promesasPorMes = null,
     ) {}
 
     /**
@@ -93,7 +100,17 @@ final class CuentaPersona
     /** Lo dado en las categorias en que tiene promesa: lo que cuenta para el estado. */
     public function dadoEnPromesasCentimos(?string $clave = null): int
     {
-        $categorias = $this->categoriasConPromesa();
+        if ($this->promesasPorMes !== null && $clave === null) {
+            // Cada mes con las categorias que prometio ESE mes.
+            $total = 0;
+            foreach ($this->periodo->meses() as $mes) {
+                $total += $this->dadoEnPromesasCentimos($mes->clave);
+            }
+
+            return $total;
+        }
+
+        $categorias = $this->categoriasConPromesa($clave);
 
         return $categorias === [] ? 0 : $this->dadoCentimos($clave, $categorias);
     }
@@ -184,28 +201,66 @@ final class CuentaPersona
     // Promesas y estado
     // ------------------------------------------------------------------
 
-    /** @return array<string, PromesaVigente> categoria => promesa vigente (solo categorias de compromiso) */
+    /**
+     * Categoria => promesa (solo categorias de compromiso). Si las promesas cambiaron dentro del
+     * periodo (corte de promesas), las del ultimo mes del periodo.
+     *
+     * @return array<string, PromesaVigente>
+     */
     public function promesas(): array
     {
         return $this->promesas;
     }
 
+    /**
+     * Las promesas que regian en un mes del periodo.
+     *
+     * @return array<string, PromesaVigente>
+     */
+    public function promesasDelMes(string $clave): array
+    {
+        return $this->promesasPorMes === null ? $this->promesas : ($this->promesasPorMes[$clave] ?? []);
+    }
+
+    /** Si tuvo promesa con monto (en algun mes del periodo, si las promesas cambiaron dentro de el). */
     public function tienePromesa(): bool
     {
-        foreach ($this->promesas as $promesa) {
-            if ($promesa->tieneMonto()) {
-                return true;
+        return $this->categoriasConPromesa() !== [];
+    }
+
+    /**
+     * Categorias en que tiene promesa (monto > 0), en el orden de la iglesia: las de un mes, o (sin
+     * $clave) las de cualquier mes del periodo.
+     *
+     * @return list<string>
+     */
+    public function categoriasConPromesa(?string $clave = null): array
+    {
+        if ($this->promesasPorMes === null) {
+            return self::conMonto($this->promesas);
+        }
+        if ($clave !== null) {
+            return self::conMonto($this->promesasPorMes[$clave] ?? []);
+        }
+
+        $union = [];
+        foreach ($this->promesasPorMes as $promesas) {
+            foreach (self::conMonto($promesas) as $categoria) {
+                $union[$categoria] = true;
             }
         }
 
-        return false;
+        return array_values(array_filter($this->categoriasCompromiso, fn (string $c) => isset($union[$c])));
     }
 
-    /** @return list<string> categorias en que tiene promesa (monto > 0), en el orden de la iglesia */
-    public function categoriasConPromesa(): array
+    /**
+     * @param  array<string, PromesaVigente>  $promesas
+     * @return list<string>
+     */
+    private static function conMonto(array $promesas): array
     {
         $categorias = [];
-        foreach ($this->promesas as $categoria => $promesa) {
+        foreach ($promesas as $categoria => $promesa) {
             if ($promesa->tieneMonto()) {
                 $categorias[] = $categoria;
             }

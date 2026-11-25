@@ -34,3 +34,9 @@ Schedule::call(function () {
 Schedule::command('whatsapp:enviar-pendientes --max-segundos=50')
     ->everyMinute()
     ->withoutOverlapping(5);
+
+// Promesas futuras: pone en vigor los cortes de promesas cuya fecha de inicio ya llego (los vacios no).
+// Ademas hay un disparo perezoso en las peticiones web (middleware ActivarCortesPromesas).
+Schedule::command('promesas:activar-cortes')
+    ->everyTenMinutes()
+    ->withoutOverlapping(10);

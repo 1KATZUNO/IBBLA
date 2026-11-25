@@ -35,7 +35,7 @@ final class ResumenPromesasService
             return ResumenPromesas::vacio($periodo);
         }
 
-        $personas ??= FiltroPersonas::desde(['grupo' => FiltroPersonas::CON_PROMESA])->personas();
+        $personas ??= FiltroPersonas::desde(['grupo' => FiltroPersonas::CON_PROMESA])->personas($periodo);
         $resultado = $this->motor->calcular($periodo, $personas);
         $periodo = $resultado->periodo;
 
@@ -55,13 +55,20 @@ final class ResumenPromesasService
                 continue;
             }
 
+            // Lo dado de cada mes cuenta en las categorias que prometio ESE mes (igual que "ha dado" en
+            // Cumplimiento); sin cortes de promesas en el periodo son las mismas todos los meses.
+            $prometioEnMes = [];
+            foreach ($periodo->meses() as $mes) {
+                $prometioEnMes[$mes->clave] = array_flip($cuenta->categoriasConPromesa($mes->clave));
+            }
+
             $prometidoPersona = 0;
             $dadoPersona = 0;
             foreach ($categorias as $cat) {
                 $fila = $porCategoria[$cat] ?? ['slug' => $cat, 'nombre' => $resultado->nombreCategoria($cat), 'prometido' => 0, 'en_curso' => 0, 'dado' => 0, 'dado_en_curso' => 0];
                 foreach ($periodo->meses() as $mes) {
                     $delMes = $cuenta->esperadoDelMesCentimos($mes->clave, $cat);
-                    $dado = $cuenta->dadoCentimos($mes->clave, [$cat]);
+                    $dado = isset($prometioEnMes[$mes->clave][$cat]) ? $cuenta->dadoCentimos($mes->clave, [$cat]) : 0;
                     if ($mes->cobrable) {
                         $fila['prometido'] += $delMes;
                         $prometidoPersona += $delMes;

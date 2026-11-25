@@ -4,8 +4,8 @@ orden: 50
 icono: check
 resumen: Qué es una promesa, cómo se configura, cómo se calcula lo que cada persona debía dar y dónde ver el cumplimiento.
 roles: admin, tesorero
-rutas: dashboard.promesas, ingresos-asistencia.promesas, ingresos-asistencia.promesas-por-clase, promesas.*
-palabras: promesa, compromiso, prometido, esperado, dado, cumplimiento, semanal, quincenal, mensual, misiones, seminario, construcción, faltante, excedente
+rutas: dashboard.promesas, ingresos-asistencia.promesas, ingresos-asistencia.promesas-por-clase, promesas.*, promesas-futuras.*#promesas-futuras
+palabras: promesa, promesas futuras, corte de promesas, promesas 2027, importar excel, plantilla, compromiso, prometido, esperado, dado, cumplimiento, semanal, quincenal, mensual, misiones, seminario, construcción, faltante, excedente
 ---
 
 ## Para qué sirve
@@ -66,6 +66,44 @@ Menú **Consultas** → **Reportes** → **Promesas** (Administrador y Tesorero)
 | **PDF Mensual** | Genera el PDF del mes elegido. | Administrador, Tesorero | Se abre el PDF en otra pestaña. |
 | **Excel** | Baja el cumplimiento del periodo. | Administrador, Tesorero | Es el mismo Excel de *Cumplimiento de promesas* (con corte al último día del año o mes elegido, sin pasar de hoy), así que dice lo mismo que el estado de cuenta. |
 
+## Promesas futuras
+
+Sirve para cargar **desde ahora** las promesas que empiezan en una fecha futura (por ejemplo, las de 2027 desde el 1 de enero). Mientras llega esa fecha **no cambia nada**: los sobres, los reportes y las fichas siguen con las promesas de hoy. El día que el corte **entra en vigor**, sus promesas **reemplazan a todas las anteriores** de la iglesia: quien no está en el corte queda sin promesa y quien es nuevo, entra. Los reportes de meses anteriores siguen dando lo mismo.
+
+**Quién puede usarlo:** solo el **Administrador**. **Cómo llegar:** menú **Administración** → [Promesas futuras](route:promesas-futuras.index), o escribe «promesas futuras» en el buscador.
+
+| Botón o control | Qué hace | Quién puede usarlo | Qué pasa después |
+|---|---|---|---|
+| **+ Nuevo corte** | Pide un nombre (por ejemplo «Promesas 2027») y el mes en que entran en vigor (siempre el día 1 de un mes que todavía no llegó; un solo corte por mes). | Administrador | Se abre el detalle del corte, vacío. |
+| **Estado** en la lista | **Programado** (dice la fecha y cuántos días faltan), **Vigente** (el que rige hoy) o **Anterior**. | Administrador | Un corte **sin promesas no entra en vigor nunca**: la lista lo avisa en rojo. |
+| **+ Agregar persona** | Busca a la persona por nombre, PIN o teléfono y toca **Elegir**; si no existe, la das de alta ahí mismo (solo el nombre es obligatorio). Después escribes el monto de cada categoría, con su frecuencia (semanal por defecto) y su moneda (colones por defecto). | Administrador | Vuelves al detalle con la persona en la tabla. Si ya estaba en el corte, se abre para editar. |
+| **Editar** / **Quitar** (en cada fila) | Cambia lo que promete en el corte o la quita del corte. | Administrador | Sus promesas de hoy no cambian. Todo queda en la auditoría. |
+| **Importar Excel** | Sube el Excel con todas las personas (ver abajo). Eliges si los montos son semanales, quincenales o mensuales, y la moneda. | Administrador | Ves una **revisión**; nada se guarda hasta tocar **Aplicar**. |
+| **Descargar plantilla** | Baja el Excel con la fila de títulos (Miembro, Clase y las categorías de promesa de la iglesia) y una hoja de **Instrucciones**. | Administrador | Lo llenas y lo subes con **Importar Excel**. |
+| **Editar corte** | Cambia el nombre o el mes. Desde ahí también se **elimina** (pide escribir **CONFIRMAR**; borra sus promesas programadas y las categorías nuevas que se crearon para él). | Administrador | Solo mientras está programado: ya en vigor, el corte se ve en solo lectura. |
+
+### Cómo debe venir el Excel
+
+- Primera hoja; la **fila 1** es para los títulos. Columna **A: Miembro** (o **Nombre**), columna **B: Clase**, y de la **C** en adelante **una columna por categoría** con su nombre.
+- Una persona por fila. Monto vacío o 0 = sin promesa en esa categoría. Los montos se guardan con dos decimales (230,769… queda en 230,77).
+- Un título que la iglesia no tiene es una **categoría nueva**: se crea **inactiva** y aparece en los sobres y en los reportes recién el día en que el corte entra en vigor.
+- Máximo 2 MB y 2.000 personas.
+
+### La revisión antes de aplicar
+
+1. **Categorías:** cada título se empareja con la categoría de igual nombre (sin importar tildes ni mayúsculas). Para un título que no existe eliges: **crear la categoría nueva** (lo que viene marcado), **usar una que ya existe** (por ejemplo, «Campamento» → «CAMPA») o **no importar esa columna**.
+2. **Personas:** cada fila sale con un estado:
+   - **Calza:** el nombre es igual al de una persona del sistema. Se agrega.
+   - **Ya está en este corte: se deja como está.** No se sobrescribe ni se duplica. Para cambiarla, edítala a mano.
+   - **Nombre parecido:** tienes que elegir quién es, crear una persona nueva u omitir la fila. No hay opción marcada: **Aplicar** no se habilita hasta que decides.
+   - **No existe:** se crea como persona nueva (con su clase, si hay una clase con ese nombre). También puedes buscar a alguien o omitirla.
+   - **Sin montos** y **Repetida en el archivo** (se toma la primera vez que aparece): se ignoran.
+3. Toca **Aplicar**. El mensaje dice cuántas personas se agregaron, cuántas ya estaban y se dejaron igual, cuántas se omitieron y qué categorías se crearon.
+
+> **Consejo:** puedes volver a subir el mismo archivo sin miedo: quien ya está en el corte se deja como está, así que no se agrega nada repetido.
+
+> **Importante:** el sistema nunca crea dos veces a la misma persona por una tilde o una mayúscula. Si el nombre del Excel solo **se parece** al de alguien (por ejemplo «Ana Mora» y «Ana Mora Solís»), te pregunta quién es.
+
 ## Preguntas frecuentes
 
 **Abrí una dirección vieja de /promesas.** Esa pantalla ya no existe: te lleva a **Personas**, donde se configuran las promesas (en la ficha de cada persona).
@@ -75,3 +113,5 @@ Menú **Consultas** → **Reportes** → **Promesas** (Administrador y Tesorero)
 **Cambié la promesa de una persona y los meses pasados no cambiaron.** Es lo esperado: los compromisos de meses anteriores ya están calculados con la promesa de ese momento. Si necesitas empezar de nuevo desde un mes, **Reiniciar Compromisos** (al editar a la persona) borra el historial anterior a esa fecha; úsalo solo si estás seguro.
 
 **¿Por qué el diezmo no tiene promesa?** El diezmo se registra en los sobres pero no se configura como promesa: no tiene una cantidad que prometer.
+
+**Cargué las promesas del año que viene y no las veo en los reportes.** Es lo esperado: están en **Promesas futuras** y empiezan a regir el día de inicio del corte. Hasta entonces todo sigue con las promesas de hoy.

@@ -146,6 +146,7 @@ Tareas programadas (`routes/console.php`; `php artisan schedule:list` las muestr
 | `whatsapp:enviar-pendientes --max-segundos=50` | cada minuto, sin encimarse (candado de 5 min) | Envia los avisos de WhatsApp automaticos (QE-009) |
 | `exchange:fetch` | 18:00 CR | Tipo de cambio del BCCR |
 | `reporte:enviar-mensual` | dia 1, 08:00 CR | Correo con los reportes del mes anterior |
+| `promesas:activar-cortes` | cada diez minutos | Activa los cortes de promesas (Promesas futuras) cuya fecha de inicio ya llego: guarda las promesas anteriores en el historial, pone las nuevas y activa las categorias nuevas. Un corte sin promesas no se activa. Tambien se dispara solo al entrar alguien a la app. |
 | `audit:purge` | mensual | Purga la auditoria vieja |
 
 ### Avisos de WhatsApp: fuera de la peticion (QE-009)

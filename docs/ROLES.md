@@ -80,6 +80,7 @@ Reglas (policies y métodos) que deciden, una sola vez, para pantalla y backend:
 | Módulo Accesos (`/admin/accesos`) | Sí | Oculto | Oculto | Oculto | Oculto |
 | **Agregar persona (alta rápida)**: nombre, teléfono, correo | Sí | Sí (desde el sobre y desde Principal) | Oculto | Oculto | Oculto |
 | Gestionar Personas: lista, fichas, compromisos, editar | Sí | **Oculto** | Oculto | Oculto | Oculto |
+| Promesas futuras (`/promesas-futuras`): cortes, personas a mano, importar Excel, plantilla | Sí (auditado) | Oculto (403) | Oculto (403) | Oculto (403) | Oculto (403) |
 | Asistencia web: registrar, editar, cerrar | Sí | Oculto | Sí | Oculto | Oculto |
 | Asistencia **cerrada** | Sí: "Corregir" con aviso "la estás corrigiendo como administrador", auditado | Oculto | Gris ("Cerrada el dd/mm a las hh:mm por X · solo lectura"); guardar da 403 | Oculto | Oculto |
 | App de asistencia (`/asistencia-app/*`) | Sí | 403 | Sí | 403 | 403 (maestra: solo su clase) |

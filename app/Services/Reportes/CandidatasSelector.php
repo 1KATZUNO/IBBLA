@@ -33,8 +33,17 @@ final class CandidatasSelector
             }
 
             $categorias = tenant_categories(['excluir_de_promesas' => false])->pluck('slug')->all();
-            $conPromesa = array_flip(DB::table('promesas')->whereIn('persona_id', $ids)->whereIn('categoria', $categorias)
-                ->where('monto', '>', 0)->distinct()->pluck('persona_id')->map(fn ($id) => (int) $id)->all());
+            // "Con promesa" = tuvo alguna promesa que rigio en algun mes del periodo (promesas futuras:
+            // antes de un corte activado cuentan las del historial). Sin cortes, las de hoy, como siempre.
+            $cortes = tenant() ? app(PromesasPorPeriodo::class)->conPromesaEnPeriodo(tenant()->id, $periodo, $categorias) : null;
+            $actuales = $cortes === null || $cortes['actuales'];
+            $conPromesa = $actuales ? array_flip(DB::table('promesas')->whereIn('persona_id', $ids)->whereIn('categoria', $categorias)
+                ->where('monto', '>', 0)->distinct()->pluck('persona_id')->map(fn ($id) => (int) $id)->all()) : [];
+            if ($cortes !== null) {
+                foreach ($cortes['historial']->distinct()->pluck('persona_id') as $id) {
+                    $conPromesa[(int) $id] = true;
+                }
+            }
 
             $recortado = $periodo->recortadoAHoy();
             $aportaron = array_flip(DB::table('sobres as s')
