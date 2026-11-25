@@ -23,6 +23,8 @@ class PrincipalAccesosTest extends TestCase
             ->assertSee('Recuento del culto abierto')
             ->assertSee('Capilla, clases, salvos y visitas')
             ->assertSee('Buscar, agregar y editar')
+            ->assertSee('siguiendo las enseñanzas')
+            ->assertSee('a través del amor')
             ->getContent();
 
         preg_match_all('/<span class="([^"]*)" data-detalle-acceso>/', $html, $subtitulos);

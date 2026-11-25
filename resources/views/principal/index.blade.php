@@ -6,8 +6,8 @@
     $tLogo = $t ? $t->logo_url : asset('images/Logo.png');
     $tSocial = $t && $t->redes_sociales ? $t->redes_sociales : [];
     // Identidad de la iglesia: editable por tenant en BD. Fallbacks genéricos.
-    $tMision = $t && $t->mision ? $t->mision : 'Proclamar el evangelio de Jesucristo, edificar a los creyentes en la fe y servir a nuestra comunidad con amor y dedicacion, siguiendo las ensenanzas de la Palabra de Dios.';
-    $tVision = $t && $t->vision ? $t->vision : 'Ser una iglesia que impacte al mundo, formando discipulos comprometidos con Cristo, viviendo en santidad y extendiendo el Reino de Dios a traves del amor y la verdad.';
+    $tMision = $t && $t->mision ? $t->mision : 'Proclamar el evangelio de Jesucristo, edificar a los creyentes en la fe y servir a nuestra comunidad con amor y dedicación, siguiendo las enseñanzas de la Palabra de Dios.';
+    $tVision = $t && $t->vision ? $t->vision : 'Ser una iglesia que impacte al mundo, formando discípulos comprometidos con Cristo, viviendo en santidad y extendiendo el Reino de Dios a través del amor y la verdad.';
     $tValores = $t && $t->valores ? $t->valores : [
         ['nombre' => 'Amor', 'descripcion' => 'Amar a Dios sobre todas las cosas y a nuestro prójimo como a nosotros mismos'],
         ['nombre' => 'Integridad', 'descripcion' => 'Vivir con transparencia y honestidad según los principios bíblicos'],
