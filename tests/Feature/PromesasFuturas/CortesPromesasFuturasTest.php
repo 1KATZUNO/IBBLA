@@ -201,6 +201,15 @@ class CortesPromesasFuturasTest extends TestCase
         $this->actingAs($this->admin)->get(route('promesas-futuras.index'))->assertDontSee('Ajeno');
     }
 
+    public function test_el_boton_de_ayuda_abre_su_seccion_del_manual(): void
+    {
+        \App\Support\Manual\Manual::olvidar();
+        foreach (['index', 'create', 'show', 'importar', 'importar.revisar', 'personas.agregar', 'personas.edit', 'eliminar', 'plantilla'] as $ruta) {
+            $this->assertSame('/manual/promesas#promesas-futuras', \App\Support\Manual\Manual::enlaceAyuda('promesas-futuras.'.$ruta), $ruta);
+        }
+        $this->actingAs($this->admin)->get('/manual/promesas')->assertOk()->assertSee('Promesas futuras')->assertSee('Ya está en este corte: se deja como está');
+    }
+
     public function test_menu_y_buscador_solo_para_admin(): void
     {
         $rutas = fn (User $u) => collect(Menu::grupos($u))->flatMap(fn ($g) => collect($g['items'])->pluck('ruta'));
