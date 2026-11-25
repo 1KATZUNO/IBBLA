@@ -239,3 +239,20 @@ Del lider del proyecto (David):
   Reglas comunes de la tanda y propiedad de archivos: se entregaron a cada equipo (hora limite 19:30 CR).
   Luego: integrar R1 -> R2 -> F1 -> F2 -> G, suite + build, QA integral (Q, opus) + G fase 2, corregir lo que
   frene, tag final, push y deploy de David. WA-2 (bot de Meta) sigue descartado por la decision del 13/10.
+- 2026-11-24 (noche): E1 EN PRODUCCION Y E2 CERRADA.
+  * E1 desplegada por el lider con acceso SSH propio (llave `claude-code-pc-david-ibbla` agregada en hPanel > SSH
+    Access a pedido de David): 7 migraciones, compromisos sincronizados, `ibbla:verificar` OK salvo la contrasena
+    de semilla de super@admin.com (la cambia David o Roy). Hallazgo: hPanel > GIT tiene auto-deploy por webhook y
+    cada push a main jala el codigo sin migrar; el orden correcto quedo en DEPLOY-HOSTINGER.md.
+  * Ensayo previo sobre una copia de la base de produccion (fuera del repo, en Documents/IBBLA-respaldos): E1 y E2
+    migran limpio y las cifras de cumplimiento por persona son identicas antes y despues, y entre MySQL local y
+    MariaDB 11.8.9 del servidor. AN-1 hecho sobre datos reales: 3909 sobres, 179 cultos y 217 estados de cuenta
+    sin descuadres; 47 grupos de posibles sobres repetidos y 827 sobres sin persona para que Roy revise.
+  * E2: los cinco equipos (R1, R2, F1, F2, G) entregaron y se fusionaron sin conflictos. QA final (QA-FINAL.md):
+    GO con condiciones, sin bloqueantes ni altos; QF-001 a QF-008 corregidos por el lider y QF-009 verificado en
+    MariaDB. Suite final: 975 tests, 14 fallos = linea base de Breeze. Tag `v2026.11.24-e2`.
+  * Deploy de E2 con `--maintenance --manual-pdf`, `QUEUE_CONNECTION=sync` y cron de `schedule:run` cada minuto
+    creado en hPanel (no existia ninguno: el planificador nunca habia corrido en produccion).
+  * Queda del cliente: lista de los 30 ministerios (IBBLA tiene 7), definicion de "hermanos servidores", cambiar la
+    contrasena de super@admin.com, instalar el ambiente QA con docs/AMBIENTE-QA.md cuando se quiera, y rotar las
+    credenciales viejas de IBBSC del historial de git. El bot de Meta (WA-2) sigue descartado.
