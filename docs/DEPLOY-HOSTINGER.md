@@ -220,3 +220,6 @@ Dos detalles mas del auto-deploy (comprobados el 24/11/2026):
   que falla si alguien vuelve a usar `env()` en `app/` o `routes/`.
 - Para esperar al auto-deploy tras el push, mirar que `git rev-parse --short HEAD` cambie y dar unos segundos
   fijos. No usar un bucle con `pgrep -f composer`: el patron aparece en el propio comando y nunca termina.
+- Tras correr el script, esperar un minuto antes de `php artisan ibbla:verificar`: el script limpia la cache de
+  la aplicacion y el latido del cron vive ahi, asi que hasta el siguiente minuto la verificacion dice que el
+  planificador "nunca corrio". Al minuto vuelve a OK.

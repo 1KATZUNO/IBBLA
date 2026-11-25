@@ -274,3 +274,6 @@ Del lider del proyecto (David):
   Retoque `v2026.11.24-e2.2`: el reporte mensual por correo leia REPORTE_MENSUAL_TO con env() dentro del comando y,
   con la configuracion en cache (como queda tras cada deploy), abortaba sin enviar. Ahora lee config/reportes.php.
   Importa desde hoy porque el cron ya existe: el primer envio automatico sera el 01/12 a las 08:00.
+  Estado final real de produccion (20:05 CR): main en `v2026.11.24-e2.2` (b331c37), arbol limpio, configuracion en
+  cache, cron con latido, reporte mensual probado en seco con la configuracion en cache (1 destinatario, 4 adjuntos,
+  sin enviar), 4 respaldos en ~/respaldos-ibbla. Suite: 980 tests, 14 fallos = linea base de Breeze.
