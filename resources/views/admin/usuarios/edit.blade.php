@@ -32,6 +32,7 @@
                         </div>
 
                         @include('admin.usuarios._telefono', ['telefono' => $usuario->telefono])
+                        @include('admin.usuarios._persona', ['persona' => $personaVinculada, 'usuarioId' => $usuario->id])
 
                         <!-- Rol -->
                         <div class="mb-4">

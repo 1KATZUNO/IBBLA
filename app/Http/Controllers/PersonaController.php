@@ -37,6 +37,17 @@ class PersonaController extends Controller
         return $regla;
     }
 
+    /**
+     * QA-018: el usuario que nace desde la ficha de la persona lleva el mismo rol dinámico que los
+     * creados en Usuarios (antes quedaba con tenant_role_id nulo).
+     */
+    private function rolMiembroId(): ?int
+    {
+        $id = tenant()?->roles()->where('slug', 'miembro')->value('id');
+
+        return $id !== null ? (int) $id : null;
+    }
+
     public function index(Request $request)
     {
         $query = Persona::withCount(['sobres', 'promesas']);
@@ -104,6 +115,7 @@ class PersonaController extends Controller
                 'password' => Hash::make($validated['password']),
                 'rol' => 'miembro',
                 'tenant_id' => auth()->user()->tenant_id,
+                'tenant_role_id' => $this->rolMiembroId(),
             ]);
         }
 
@@ -272,6 +284,7 @@ class PersonaController extends Controller
                 'password' => Hash::make($validated['password']),
                 'rol' => 'miembro',
                 'tenant_id' => auth()->user()->tenant_id,
+                'tenant_role_id' => $this->rolMiembroId(),
             ]);
             $persona->user_id = $user->id;
             $createUser = true;

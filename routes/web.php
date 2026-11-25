@@ -271,6 +271,8 @@ Route::middleware(['auth', 'role:admin', 'audit'])->group(function () {
 
     // Gestión de Usuarios
     // No hay pantalla de detalle: "show" lleva a la lista (antes 500 con QA-012 y 405 con QE-020)
+    // QA-018: buscador de personas para vincularlas con un usuario (va antes del resource por usuarios/{usuario})
+    Route::get('usuarios/buscar-personas', [App\Http\Controllers\UserController::class, 'buscarPersonas'])->name('usuarios.buscar-personas');
     Route::resource('usuarios', App\Http\Controllers\UserController::class);
 
     // Carga retroactiva de asistencias (import Excel)
