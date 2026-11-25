@@ -20,7 +20,7 @@ Una **promesa** es lo que una persona se compromete a dar de forma periódica pa
 
 ## Cómo se configura una promesa
 
-Se configura dentro del formulario de la persona, en la sección **Promesas de ofrenda** (menú **Gestionar Personas** → **Editar**). Hay una fila por categoría, sin el diezmo, que no lleva promesa.
+Se configura dentro del formulario de la persona, en la sección **Promesas de ofrenda**. Al **Guardar** la ficha solo cambia lo que tocaste: las promesas que no cambiaste conservan su historial (antes se borraban y se volvían a crear). Si dejas el monto vacío o en cero, esa promesa se quita (menú **Gestionar Personas** → **Editar**). Hay una fila por categoría, sin el diezmo, que no lleva promesa.
 
 ![Sección de promesas del formulario de una persona](img:promesas-formulario.jpg "Monto (1), moneda (2) y frecuencia (3) por categoría")
 
@@ -50,7 +50,7 @@ En **Gestionar Personas** → el icono de **Compromisos** de la persona. Ver la 
 
 ### Dashboard de promesas
 
-Menú **Consultas** → **Dashboard de promesas** (Administrador y Tesorero). Resume un período: **Prometido**, **Dado**, **Saldo** y **Cumplimiento** en porcentaje, la gráfica de lo prometido contra lo dado por mes y los **Top 10 contribuyentes**. El período se elige con **Mes y año** o con un **Rango de fechas** (ver *Dashboards*).
+Menú **Consultas** → **Dashboard de promesas** (Administrador y Tesorero). Resume un período con las mismas reglas que Cumplimiento: **Prometido (meses completos)**, **Dado (hasta hoy)**, **Saldo** y **Cumplimiento** en porcentaje, y una tarjeta aparte con el **mes en curso** («<Mes> (en curso, todavía no se cobra)»). Una nota azul explica la regla y enlaza a *Cumplimiento de promesas*. Abajo, la gráfica de lo prometido contra lo dado por mes y los **Top 10 contribuyentes**. El período se elige con **Mes y año** o con un **Rango de fechas** (ver *Dashboards*).
 
 ### Reporte de promesas
 
@@ -60,12 +60,15 @@ Menú **Consultas** → **Reportes** → **Promesas** (Administrador y Tesorero)
 
 | Botón o control | Qué hace | Quién puede usarlo | Qué pasa después |
 |---|---|---|---|
-| **1. Año, Mes y Categoría** + **Buscar** | Elige el período (o todos los meses) y, si quieres, una sola categoría. | Administrador, Tesorero | La tabla muestra, por categoría, lo **Total Prometido**, lo **Total Dado** y el **Faltante**. |
+| **1. Año, Mes y Categoría** + **Buscar** | Elige el período (o todos los meses) y, si quieres, una sola categoría. | Administrador, Tesorero | Las tarjetas muestran **Prometido (meses completos)**, **Total Dado**, **Total Faltante** y **Total excedente**; la tabla, por categoría, lo prometido, lo dado, el **Faltante** y el **Excedente**. Una nota azul explica que el **mes en curso** no se cobra todavía y se muestra aparte (columna **En curso (no se cobra)** en los PDF). |
 | **2. Promesas por Clase** | Muestra el cumplimiento agrupado por clase. | Administrador, Tesorero | Ves cada clase con sus totales. |
 | **Reporte Anual (12 meses)** | Genera un PDF con los doce meses del año. | Administrador, Tesorero | Se abre el PDF en otra pestaña. |
 | **PDF Mensual** | Genera el PDF del mes elegido. | Administrador, Tesorero | Se abre el PDF en otra pestaña. |
+| **Excel** | Baja el cumplimiento del periodo. | Administrador, Tesorero | Es el mismo Excel de *Cumplimiento de promesas* (con corte al último día del año o mes elegido, sin pasar de hoy), así que dice lo mismo que el estado de cuenta. |
 
 ## Preguntas frecuentes
+
+**Abrí una dirección vieja de /promesas.** Esa pantalla ya no existe: te lleva a **Personas**, donde se configuran las promesas (en la ficha de cada persona).
 
 **Una persona dio más de lo prometido.** Se muestra como **excedente** (verde) en sus compromisos. No se arrastra al mes siguiente.
 

@@ -48,6 +48,10 @@ class ManualContenidoTest extends TestCase
             'centro de reportes', 'cumplimiento de promesas', 'fecha de corte', 'estados de cuenta en lote', 'selector de personas',
             'accesos de edición', 'alta rápida', 'sobre anónimo', 'solo anónimos', 'asignar persona',
             'callmebot', 'guardar y siguiente', 'avisos de whatsapp',
+            // Fase 2
+            'reporte de cultos', 'reporte de ingresos', 'periodo anterior', 'seleccionar todos los filtrados', 'vista previa',
+            'último aporte a sus compromisos', 'mes en curso', 'sin persona', 'confirmar', 'persona vinculada', 'planificador',
+            'solo lectura', 'corrección de culto cerrado',
         ] as $tema) {
             $this->assertStringContainsString($tema, $texto, "Al manual le falta explicar «{$tema}»");
         }

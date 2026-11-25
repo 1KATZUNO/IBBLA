@@ -60,7 +60,9 @@ Más abajo, en este orden:
 ## Paso a paso: registrar un sobre
 
 1. Abre el culto (toca su línea en la lista) y toca **+ Agregar sobre**.
-2. **1 · Persona:** escribe el nombre o el PIN y elige a la persona de la lista. Su nombre aparece **en grande abajo, junto al botón Guardar**, para que confirmes que es la correcta. Si el sobre no trae nombre, marca **Sobre anónimo (sin persona)**: la barra de abajo dice **ANÓNIMO** en rojo. El sistema nunca guarda un sobre anónimo por descuido: sin persona y sin la casilla marcada no deja guardar.
+2. **1 · Persona:** escribe el nombre o el PIN y elige a la persona de la lista. Su nombre aparece **en grande abajo, junto al botón Guardar**, para que confirmes que es la correcta. Mientras no elijas a nadie, la barra de abajo dice **Sin persona** en gris. Si el sobre no trae nombre, marca **Sobre anónimo (sin persona)**: solo entonces la barra dice **ANÓNIMO** en rojo. El sistema nunca guarda un sobre anónimo por descuido: sin persona y sin la casilla marcada no deja guardar.
+
+   El buscador muestra, junto a cada nombre, su **PIN** y su **teléfono**, para distinguir a dos personas con el mismo nombre. Con las flechas del teclado recorres las personas; las flechas no llegan solas a **Crear «nombre» como persona nueva** (para esa opción tócala, o usa **+ Nueva persona**).
 3. Si la persona no está en la lista, toca **+ Nueva persona** (o elige **Crear «nombre» como persona nueva** en el buscador): escribe el **Nombre completo**, el **Teléfono** si lo tienes (opcional) y toca **Agregar y elegir**. Queda activa y sin usuario; el administrador completa el resto de sus datos después.
 4. **2 · Montos:** escribe el monto de cada categoría (diezmo, misiones, construcción…). Lo que no traiga el sobre se deja vacío. El **Total** de la barra de abajo se va sumando.
 5. Elige el **Método de pago**: **Efectivo** o **Transferencia** (con transferencia aparece **N° de comprobante**). Si el sobre viene en dólares, cambia la **Moneda** a **$ Dólares**: el sistema usa el tipo de cambio del día. Con **+ Agregar nota** puedes escribir una nota del sobre.
@@ -68,12 +70,12 @@ Más abajo, en este orden:
 
 Arriba del formulario, **Último guardado** muestra el sobre anterior (número, persona y monto) con **Editar ese sobre**, por si te equivocaste en el que acabas de guardar.
 
-![Formulario de un sobre nuevo](img:recuento-nuevo-sobre.jpg "Persona (1), sobre anónimo (2), montos por categoría (3) y la barra con el total y Guardar y siguiente (4)")
+![Formulario de un sobre nuevo](img:recuento-nuevo-sobre.jpg "Persona (1), sobre anónimo (2), montos por categoría (3) y la barra con «Sin persona», el total y Guardar y siguiente (4)")
 
 | Botón o control | Qué hace | Quién puede usarlo | Qué pasa después |
 |---|---|---|---|
 | **1. Persona** | Busca por nombre o PIN. **+ Nueva persona** la crea sin salir de la pantalla. | Administrador, Tesorero | El sobre queda ligado a la persona y cuenta para su estado de cuenta. |
-| **2. Sobre anónimo (sin persona)** | Marca que el sobre no trae nombre. | Administrador, Tesorero | El sobre queda como anónimo (rojo); después se le puede asignar persona. |
+| **2. Sobre anónimo (sin persona)** | Marca que el sobre no trae nombre. | Administrador, Tesorero | La barra pasa de **Sin persona** a **ANÓNIMO** (rojo) y el sobre queda anónimo; después se le puede asignar persona. |
 | **3. Montos** | Un monto por categoría. | Administrador, Tesorero | El total del sobre se calcula solo. |
 | **4. Guardar y terminar / Guardar y siguiente** | Guarda el sobre. | Administrador, Tesorero | **Terminar** vuelve al culto con el mensaje de confirmación; **siguiente** abre otro formulario en el mismo culto. |
 

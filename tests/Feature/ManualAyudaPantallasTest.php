@@ -65,6 +65,16 @@ class ManualAyudaPantallasTest extends TestCase
         $this->assertSame('/manual/reportes#estados-de-cuenta-en-lote', Manual::enlaceAyuda('reportes.estados-cuenta.zip'));
         $this->assertSame('/manual/reportes#estados-de-cuenta-en-lote', Manual::enlaceAyuda('reportes.estados-cuenta.excel'));
 
+        // Fase 2: reportes nuevos, borrados masivos y avisos de WhatsApp abren su seccion
+        foreach (['reportes.cultos', 'reportes.cultos.pdf', 'reportes.cultos.excel'] as $ruta) {
+            $this->assertSame('/manual/reportes#reporte-de-cultos', Manual::enlaceAyuda($ruta), $ruta);
+        }
+        foreach (['reportes.ingresos', 'reportes.ingresos.pdf', 'reportes.ingresos.excel', 'ingresos-asistencia.ingresos'] as $ruta) {
+            $this->assertSame('/manual/reportes#reporte-de-ingresos', Manual::enlaceAyuda($ruta), $ruta);
+        }
+        $this->assertSame('/manual/personas#mantenimiento-borrados-masivos', Manual::enlaceAyuda('personas.mantenimiento'));
+        $this->assertSame('/manual/whatsapp#avisos-de-whatsapp', Manual::enlaceAyuda('avisos.index'));
+
         // Los demas reportes siguen en su pagina; el de promesas, en la suya
         $this->assertStringStartsWith('/manual/reportes', Manual::enlaceAyuda('ingresos-asistencia.index'));
         $this->assertStringStartsWith('/manual/promesas', Manual::enlaceAyuda('ingresos-asistencia.promesas'));

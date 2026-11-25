@@ -338,6 +338,18 @@
       ]
     },
     {
+      "archivo": "personas-mantenimiento.jpg",
+      "rol": "admin",
+      "ruta": "/personas/mantenimiento/inactivas",
+      "alto": 700,
+      "marcas": [
+        {
+          "n": 1,
+          "selector": "#confirmacion"
+        }
+      ]
+    },
+    {
       "archivo": "personas-ficha.jpg",
       "rol": "admin",
       "ruta": "/personas/1",
@@ -512,24 +524,77 @@
       "ruta": "/ingresos-asistencia"
     },
     {
-      "archivo": "reportes-ingresos.jpg",
-      "rol": "admin",
-      "ruta": "/ingresos-asistencia/ingresos",
-      "alto": 700,
+      "archivo": "reportes-cultos.jpg",
+      "rol": "tesorero",
+      "ruta": "/reportes/cultos",
+      "alto": 780,
       "marcas": [
         {
           "n": 1,
-          "selector": "#tipo_reporte"
+          "selector": "#fecha_inicio"
         },
         {
           "n": 2,
-          "texto": "PDF Completo",
-          "en": "main a"
+          "texto": "Este mes",
+          "en": "main a,main button"
         },
         {
           "n": 3,
-          "texto": "Transferencias",
-          "en": "main a"
+          "texto": "Consultar",
+          "en": "main button"
+        },
+        {
+          "n": 4,
+          "texto": "Descargar PDF",
+          "en": "main a,main button"
+        }
+      ]
+    },
+    {
+      "archivo": "reportes-cumplimiento.jpg",
+      "rol": "tesorero",
+      "ruta": "/reportes/cumplimiento",
+      "alto": 900,
+      "marcas": [
+        {
+          "n": 1,
+          "selector": "#corte"
+        },
+        {
+          "n": 2,
+          "selector": "#filtro-estado"
+        },
+        {
+          "n": 3,
+          "texto": "Seleccionar todos los filtrados",
+          "en": "main button"
+        }
+      ]
+    },
+    {
+      "archivo": "reportes-ingresos.jpg",
+      "rol": "tesorero",
+      "ruta": "/reportes/ingresos",
+      "alto": 760,
+      "marcas": [
+        {
+          "n": 1,
+          "selector": "#fecha_inicio"
+        },
+        {
+          "n": 2,
+          "texto": "Este año",
+          "en": "main a,main button"
+        },
+        {
+          "n": 3,
+          "texto": "Consultar",
+          "en": "main button"
+        },
+        {
+          "n": 4,
+          "texto": "Descargar PDF",
+          "en": "main a,main button"
         }
       ]
     },
@@ -703,6 +768,11 @@
           "n": 5,
           "texto": "Crear Usuario",
           "en": "main button"
+        },
+        {
+          "n": 6,
+          "texto": "Persona vinculada",
+          "en": "main label,main span,main h3,main p"
         }
       ]
     },
