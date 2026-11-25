@@ -3,14 +3,15 @@
 namespace App\Http\Controllers\Reportes;
 
 use App\Http\Controllers\Controller;
-use App\Models\Ministerio;
-use App\Models\Persona;
 use App\Services\Reportes\AuditoriaReportes;
+use App\Services\Reportes\CandidatasSelector;
+use App\Services\Reportes\Dinero;
 use App\Services\Reportes\EstadoCuentaLoteService;
 use App\Services\Reportes\Exportaciones\EstadoCuentaExcel;
 use App\Services\Reportes\Exportaciones\EstadoCuentaPdf;
 use App\Services\Reportes\FiltroPersonas;
 use App\Services\Reportes\LoteEstadosCuenta;
+use App\Services\Reportes\VistaPrevia;
 use App\Support\Reportes\EntradaPeriodo;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -39,13 +40,39 @@ class EstadosCuentaController extends Controller
         [$entrada, $filtro, $errores] = $this->entrada($request);
         $lote = $this->servicio->generar($entrada->periodo, $filtro);
 
+        // Vista previa (HU-R4): una fila por persona con las cifras del lote (las del PDF y el Excel),
+        // ordenable y paginada de 100 en 100; los totales son de todo el lote, no de la pagina.
+        $filas = [];
+        $totales = ['contribuido' => 0, 'correspondia' => 0, 'dado' => 0, 'diferencia' => 0];
+        foreach ($lote->estados as $datos) {
+            $ultimo = $lote->resultado->cuenta($datos['persona']->id)?->ultimoAporteACompromisos();
+            $filas[] = $datos + ['ultimo_aporte' => $ultimo];
+            $totales['contribuido'] += Dinero::centimos($datos['total_dado']);
+            if ($datos['tiene_compromisos']) {
+                $totales['correspondia'] += Dinero::centimos($datos['total_esperado']);
+                $totales['dado'] += Dinero::centimos($datos['dado_en_compromisos']);
+                $totales['diferencia'] += Dinero::centimos($datos['diferencia']);
+            }
+        }
+        $ordenEstado = ['PENDIENTE' => 0, 'AL DÍA' => 1, 'SIN PROMESA' => 2];
+        $vista = new VistaPrevia($filas, [
+            'persona' => fn (array $f) => VistaPrevia::claveNombre($f['persona']->nombre),
+            'contribuido' => fn (array $f) => Dinero::centimos($f['total_dado']),
+            'correspondia' => fn (array $f) => $f['tiene_compromisos'] ? Dinero::centimos($f['total_esperado']) : null,
+            'dado' => fn (array $f) => $f['tiene_compromisos'] ? Dinero::centimos($f['dado_en_compromisos']) : null,
+            'diferencia' => fn (array $f) => $f['tiene_compromisos'] ? Dinero::centimos($f['diferencia']) : null,
+            'estado' => fn (array $f) => $ordenEstado[$f['tiene_compromisos'] ? ($f['al_dia'] ? 'AL DÍA' : 'PENDIENTE') : 'SIN PROMESA'],
+            'ultimo' => fn (array $f) => $f['ultimo_aporte']?->format('Y-m-d'),
+        ], $request, 'persona');
+
         return view('reportes.estados-cuenta', [
             'lote' => $lote,
             'entrada' => $entrada,
             'errores' => $errores,
             'parametros' => $entrada->aParametros() + $filtro->aParametros(),
-            'ministerios' => Ministerio::where('activo', true)->orderBy('orden')->orderBy('nombre')->get(['id', 'nombre']),
-            'personas' => Persona::orderBy('nombre')->get(['id', 'nombre', 'activo']),
+            'selector' => app(CandidatasSelector::class)->datos($lote->periodo),
+            'vista' => $vista,
+            'totales' => array_map(fn (int $c) => Dinero::colones($c), $totales),
             'maxZip' => EstadoCuentaPdf::MAX_ZIP,
         ]);
     }

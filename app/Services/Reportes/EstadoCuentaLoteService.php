@@ -24,7 +24,7 @@ class EstadoCuentaLoteService
      */
     public function generar(PeriodoReporte $periodo, FiltroPersonas $filtro, bool $conDetalle = false): LoteEstadosCuenta
     {
-        $personas = $filtro->personas();
+        $personas = $filtro->personas($periodo);
         $total = $personas->count();
         $personas = $personas->take(self::MAX_PERSONAS);
 

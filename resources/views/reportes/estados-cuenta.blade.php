@@ -8,7 +8,8 @@
     $formato = fn (float $monto, bool $signo = false) => \App\Services\Reportes\Dinero::formato($monto, 2, $signo);
     $filtro = $lote->filtro;
     $periodo = $lote->periodo;
-    $seleccionadas = $filtro->grupo === \App\Services\Reportes\FiltroPersonas::SELECCION ? $filtro->personaIds : [];
+    $configSelector = $selector + ['filtros' => $filtro->filtrosRapidos(), 'elegidas' => $filtro->esSeleccion() ? $filtro->personaIds : []];
+    $rutaPantalla = 'reportes.estados-cuenta';
     $cantidad = $lote->cantidad();
     $zipPermitido = $cantidad > 0 && $cantidad <= $maxZip;
     $nombresMeses = array_slice(\App\Services\Reportes\PeriodoReporte::NOMBRES_MESES, 1, null, true);
@@ -36,7 +37,7 @@
     {{-- Filtros y exportar --}}
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6">
         <form method="GET" action="{{ route('reportes.estados-cuenta') }}"
-              x-data="Object.assign(selectorPersonas(@js($personas->map(fn ($p) => ['id' => $p->id, 'nombre' => $p->nombre, 'activo' => (bool) $p->activo])->values()), @js($seleccionadas), @js($filtro->grupo)), { periodo: @js($entrada->modo) })">
+              x-data="Object.assign(selectorPersonas(@js($configSelector)), { periodo: @js($entrada->modo) })">
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div>
                     <label for="periodo" class="block text-sm font-medium text-gray-700 mb-1">Periodo</label>
@@ -135,31 +136,36 @@
         @endif
     </div>
 
-    {{-- Vista previa: quienes entran y con que cifras --}}
+    {{-- Vista previa (HU-R4): quienes entran y con que cifras (las del PDF y el Excel), ordenable y paginada --}}
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="px-4 py-3 border-b border-gray-200 flex flex-wrap items-center gap-2">
+            <h2 class="text-base font-semibold text-gray-900">Vista previa</h2>
+            <p class="ml-auto text-xs text-gray-500">Toque un título de columna para ordenar.</p>
+        </div>
         @if($cantidad === 0)
             <div class="px-6 py-12 text-center">
                 <p class="text-gray-700 font-medium">No hay personas que cumplan el filtro.</p>
-                <p class="text-sm text-gray-500 mt-1">Pruebe con «Todas las activas» o elija personas.</p>
+                <p class="text-sm text-gray-500 mt-1">Cambie los filtros de «Personas» o pulse «Seleccionar todos los filtrados» con el estado «Activas».</p>
             </div>
         @else
             <div class="table-scroll">
                 <table class="min-w-full divide-y divide-gray-200 text-sm">
                     <thead class="bg-gray-50">
                         <tr>
-                            <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">#</th>
-                            <th class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nombre</th>
-                            <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase whitespace-nowrap">Total contribuido</th>
-                            <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase whitespace-nowrap">Le corresponde</th>
-                            <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase whitespace-nowrap">Ha dado en compromisos</th>
-                            <th class="px-3 py-3 text-right text-xs font-medium text-gray-500 uppercase">Diferencia</th>
-                            <th class="px-3 py-3 text-center text-xs font-medium text-gray-500 uppercase">Estado</th>
+                            <th scope="col" class="px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase">#</th>
+                            @include('reportes._th-orden', ['columna' => 'persona', 'titulo' => 'Persona', 'ruta' => $rutaPantalla, 'alinear' => 'left'])
+                            @include('reportes._th-orden', ['columna' => 'contribuido', 'titulo' => 'Total contribuido', 'ruta' => $rutaPantalla, 'alinear' => 'right'])
+                            @include('reportes._th-orden', ['columna' => 'correspondia', 'titulo' => 'Le corresponde', 'ruta' => $rutaPantalla, 'alinear' => 'right'])
+                            @include('reportes._th-orden', ['columna' => 'dado', 'titulo' => 'Ha dado en compromisos', 'ruta' => $rutaPantalla, 'alinear' => 'right'])
+                            @include('reportes._th-orden', ['columna' => 'diferencia', 'titulo' => 'Diferencia', 'ruta' => $rutaPantalla, 'alinear' => 'right'])
+                            @include('reportes._th-orden', ['columna' => 'estado', 'titulo' => 'Estado', 'ruta' => $rutaPantalla, 'alinear' => 'center'])
+                            @include('reportes._th-orden', ['columna' => 'ultimo', 'titulo' => \App\Services\Reportes\FilaCumplimiento::TITULO_ULTIMO_APORTE, 'ruta' => $rutaPantalla, 'alinear' => 'center'])
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-100">
-                        @foreach($lote->estados as $datos)
-                        <tr class="hover:bg-gray-50">
-                            <td class="px-3 py-2 text-gray-500">{{ $loop->iteration }}</td>
+                        @foreach($vista->filas() as $i => $datos)
+                        <tr class="hover:bg-gray-50" data-persona="{{ $datos['persona']->id }}">
+                            <td class="px-3 py-2 text-gray-500">{{ $vista->desde() + $i }}</td>
                             <td class="px-3 py-2 font-medium text-gray-900 whitespace-nowrap">{{ $datos['persona']->nombre }}</td>
                             <td class="px-3 py-2 text-right whitespace-nowrap">{{ $formato($datos['total_dado']) }}</td>
                             @if($datos['tiene_compromisos'])
@@ -181,11 +187,24 @@
                                     <span class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold bg-gray-100 text-gray-700 whitespace-nowrap">SIN PROMESA</span>
                                 </td>
                             @endif
+                            <td class="px-3 py-2 text-center whitespace-nowrap text-gray-600">{{ $datos['ultimo_aporte']?->format('d/m/Y') ?? '-' }}</td>
                         </tr>
                         @endforeach
                     </tbody>
+                    <tfoot class="bg-gray-100 font-semibold sticky bottom-0">
+                        <tr>
+                            <td class="px-3 py-3"></td>
+                            <td class="px-3 py-3">Total ({{ $cantidad }} {{ $cantidad === 1 ? 'persona' : 'personas' }}, todas las páginas)</td>
+                            <td class="px-3 py-3 text-right whitespace-nowrap" data-total="contribuido">{{ $formato($totales['contribuido']) }}</td>
+                            <td class="px-3 py-3 text-right whitespace-nowrap" data-total="correspondia">{{ $formato($totales['correspondia']) }}</td>
+                            <td class="px-3 py-3 text-right whitespace-nowrap" data-total="dado">{{ $formato($totales['dado']) }}</td>
+                            <td class="px-3 py-3 text-right whitespace-nowrap" data-total="diferencia">{{ $formato($totales['diferencia'], true) }}</td>
+                            <td colspan="2"></td>
+                        </tr>
+                    </tfoot>
                 </table>
             </div>
+            @include('reportes._paginacion-vista')
         @endif
     </div>
 </div>

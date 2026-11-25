@@ -119,23 +119,31 @@
         </span>
     </div>
 
+    <!-- Regla del motor (QE-008) -->
+    <div class="bg-blue-50 border border-blue-100 rounded-lg px-4 py-3 text-sm text-blue-900" data-explicacion>
+        <p>{{ $totales['explicacion'] ?? '' }}</p>
+        @if(! empty($totales['en_curso']))
+            <p class="mt-1 font-semibold" data-en-curso>{{ $totales['en_curso'] }}: {{ \App\Services\Reportes\Dinero::formato($totales['grand_total']['en_curso']) }} prometido, {{ \App\Services\Reportes\Dinero::formato($totales['grand_total']['dado_en_curso']) }} dado en el mes. No entra en el faltante.</p>
+        @endif
+    </div>
+
     <!-- Resumen General -->
     <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         <div class="bg-brand-600 rounded-xl shadow-lg p-6 text-white">
-            <p class="text-sm text-brand-100 font-medium mb-1">Total Prometido</p>
-            <p class="text-3xl font-bold">₡{{ number_format($totales['grand_total']['prometido'], 0, ',', '.') }}</p>
+            <p class="text-sm text-brand-100 font-medium mb-1">Prometido (meses completos)</p>
+            <p class="text-3xl font-bold">{{ \App\Services\Reportes\Dinero::formato($totales['grand_total']['prometido']) }}</p>
         </div>
         <div class="bg-green-600 rounded-xl shadow-lg p-6 text-white">
             <p class="text-sm text-green-100 font-medium mb-1">Total Dado</p>
-            <p class="text-3xl font-bold">₡{{ number_format($totales['grand_total']['dado'], 0, ',', '.') }}</p>
+            <p class="text-3xl font-bold">{{ \App\Services\Reportes\Dinero::formato($totales['grand_total']['dado']) }}</p>
         </div>
         <div class="bg-red-600 rounded-xl shadow-lg p-6 text-white">
             <p class="text-sm text-red-100 font-medium mb-1">Total Faltante</p>
-            <p class="text-3xl font-bold">₡{{ number_format($totales['grand_total']['faltante'], 0, ',', '.') }}</p>
+            <p class="text-3xl font-bold">{{ \App\Services\Reportes\Dinero::formato($totales['grand_total']['faltante']) }}</p>
         </div>
         <div class="bg-gray-700 rounded-xl shadow-lg p-6 text-white">
             <p class="text-sm text-gray-100 font-medium mb-1">Total excedente</p>
-            <p class="text-3xl font-bold">₡{{ number_format($totales['grand_total']['profit'], 0, ',', '.') }}</p>
+            <p class="text-3xl font-bold">{{ \App\Services\Reportes\Dinero::formato($totales['grand_total']['profit']) }}</p>
         </div>
     </div>
 
@@ -149,7 +157,7 @@
                 <thead class="bg-gray-50">
                     <tr>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Categoría</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total Prometido</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Prometido (meses completos)</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total Dado</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Faltante</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Excedente</th>
@@ -162,16 +170,16 @@
                             {{ $cat['categoria'] }}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-brand-600 font-medium">
-                            ₡{{ number_format($cat['total_prometido'], 0, ',', '.') }}
+                            {{ \App\Services\Reportes\Dinero::formato($cat['total_prometido']) }}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-green-600 font-medium">
-                            ₡{{ number_format($cat['total_dado'], 0, ',', '.') }}
+                            {{ \App\Services\Reportes\Dinero::formato($cat['total_dado']) }}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-red-600 font-bold">
-                            ₡{{ number_format($cat['faltante'], 0, ',', '.') }}
+                            {{ \App\Services\Reportes\Dinero::formato($cat['faltante']) }}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600 font-bold">
-                            ₡{{ number_format($cat['profit'], 0, ',', '.') }}
+                            {{ \App\Services\Reportes\Dinero::formato($cat['profit']) }}
                         </td>
                     </tr>
                     @empty
@@ -185,16 +193,16 @@
                     <tr class="bg-gray-100 font-bold text-gray-900">
                         <td class="px-6 py-4 text-sm">TOTALES GENERALES</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-brand-700">
-                            ₡{{ number_format($totales['grand_total']['prometido'], 0, ',', '.') }}
+                            {{ \App\Services\Reportes\Dinero::formato($totales['grand_total']['prometido']) }}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-green-700">
-                            ₡{{ number_format($totales['grand_total']['dado'], 0, ',', '.') }}
+                            {{ \App\Services\Reportes\Dinero::formato($totales['grand_total']['dado']) }}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-red-700">
-                            ₡{{ number_format($totales['grand_total']['faltante'], 0, ',', '.') }}
+                            {{ \App\Services\Reportes\Dinero::formato($totales['grand_total']['faltante']) }}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                            ₡{{ number_format($totales['grand_total']['profit'], 0, ',', '.') }}
+                            {{ \App\Services\Reportes\Dinero::formato($totales['grand_total']['profit']) }}
                         </td>
                     </tr>
                     @endif
