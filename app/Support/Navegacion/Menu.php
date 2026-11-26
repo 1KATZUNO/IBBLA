@@ -171,6 +171,7 @@ class Menu
         return [
             self::extra('cultos.create', 'Nuevo culto', 'calendario', $p['admin'], 'crear agregar culto servicio nuevo', 'Administración'),
             self::extra('personas.create', 'Nueva persona', 'personas', $p['admin'], 'crear agregar persona miembro nuevo hermano', 'Administración'),
+            self::extra('personas.tarjetas.index', 'Tarjetas con QR de acceso', 'qr', $p['admin'], 'tarjetas qr codigo acceso cuenta imprimir pdf masivo carnet credencial usuario contrasena', 'Administración'),
             self::extra('promesas-futuras.create', 'Nuevo corte de promesas', 'calendario', $p['admin'], 'crear corte promesas futuras nuevas promesas del proximo ano', 'Administración'),
             self::extra('promesas-futuras.plantilla', 'Plantilla de promesas futuras (Excel)', 'subir', $p['admin'], 'plantilla excel promesas futuras importar corte', 'Administración'),
             self::extra('usuarios.create', 'Nuevo usuario', 'personas', $p['admin'], 'crear agregar usuario cuenta nueva rol', 'Administración'),

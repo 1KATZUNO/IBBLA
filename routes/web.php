@@ -28,6 +28,15 @@ Route::get('/informe/{persona}', App\Http\Controllers\InformePublicoController::
     ->middleware(['throttle:30,1', 'signed'])
     ->name('informe.persona');
 
+// Tarjeta con QR de acceso personal: quien la escanea crea su acceso o inicia sesion (nunca entra solo).
+// Publica a proposito, con limite de intentos por IP (cada ruta con su propio contador).
+Route::get('/t/{token}', [App\Http\Controllers\AccesoTarjetaController::class, 'mostrar'])
+    ->middleware('throttle:30,1,tarjeta-qr')
+    ->name('acceso.tarjeta');
+Route::post('/t/{token}', [App\Http\Controllers\AccesoTarjetaController::class, 'guardar'])
+    ->middleware('throttle:10,1,tarjeta-qr-guardar')
+    ->name('acceso.tarjeta.guardar');
+
 // API interna - Tipo de cambio
 Route::middleware(['auth'])->get('/api/tipo-cambio', function (BccrExchangeRateService $service) {
     $tipoCambio = $service->obtenerHoy();
@@ -268,6 +277,18 @@ Route::middleware(['auth', 'role:admin', 'audit'])->group(function () {
     // Personas y Promesas
     Route::post('personas/{persona}/reiniciar-compromisos', [PersonaController::class, 'reiniciarCompromisos'])->name('personas.reiniciar-compromisos');
     Route::post('personas/{persona}/limpiar-todo', [PersonaController::class, 'limpiarTodo'])->name('personas.limpiar-todo');
+    // Tarjetas con QR de acceso personal (docs/plan-oct-2026/07-TARJETAS-QR.md): tarjeta flotante, su PDF,
+    // ver contraseña y restablecer acceso (auditados), QR nuevo y la descarga masiva. Van antes del resource
+    // porque personas/tarjetas lo tomaria personas/{persona}.
+    Route::controller(App\Http\Controllers\TarjetaPersonaController::class)->group(function () {
+        Route::get('personas/tarjetas', 'masivo')->name('personas.tarjetas.index');
+        Route::get('personas/tarjetas/pdf', 'masivoPdf')->name('personas.tarjetas.pdf');
+        Route::get('personas/{persona}/tarjeta', 'show')->name('personas.tarjeta.show');
+        Route::get('personas/{persona}/tarjeta/pdf', 'pdf')->name('personas.tarjeta.pdf');
+        Route::post('personas/{persona}/tarjeta/contrasena', 'contrasena')->middleware('throttle:30,1,tarjeta-contrasena')->name('personas.tarjeta.contrasena');
+        Route::post('personas/{persona}/tarjeta/restablecer', 'restablecer')->name('personas.tarjeta.restablecer');
+        Route::post('personas/{persona}/tarjeta/nuevo-qr', 'nuevoQr')->name('personas.tarjeta.nuevo-qr');
+    });
     Route::resource('personas', PersonaController::class);
     // QE-020: el CRUD viejo de promesas ya no existe; sus direcciones llevan a Personas (ver PromesaController)
     Route::get('promesas/{cualquiera?}', [PromesaController::class, 'redirigir'])->where('cualquiera', '.*')->name('promesas.index');
