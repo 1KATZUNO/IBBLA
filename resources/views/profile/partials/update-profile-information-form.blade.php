@@ -23,9 +23,17 @@
             <x-input-error class="mt-2" :messages="$errors->get('name')" />
         </div>
 
+        @if ($user->usuario)
+            {{-- Cuenta creada con la tarjeta QR con nombre de usuario: entra con él; el correo es opcional --}}
+            <div>
+                <p class="field-label">Usuario</p>
+                <p class="mt-1 text-gray-900"><strong>{{ $user->usuario }}</strong> <span class="text-sm text-gray-500">(con esto inicias sesión)</span></p>
+            </div>
+        @endif
+
         <div>
             <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" name="email" type="email" class="mt-1 block w-full" :value="old('email', $user->email)" required autocomplete="username" />
+            <x-text-input id="email" name="email" type="email" class="mt-1 block w-full" :value="old('email', $user->email)" :required="! $user->usuario" autocomplete="{{ $user->usuario ? 'email' : 'username' }}" />
             <x-input-error class="mt-2" :messages="$errors->get('email')" />
 
             @if ($user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail && ! $user->hasVerifiedEmail())

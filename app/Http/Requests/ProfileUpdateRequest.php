@@ -18,7 +18,8 @@ class ProfileUpdateRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:255'],
             'email' => [
-                'required',
+                // Quien entra con nombre de usuario (Tarjetas QR) puede no tener correo
+                $this->user()->usuario ? 'nullable' : 'required',
                 'string',
                 'lowercase',
                 'email',

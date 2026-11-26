@@ -20,6 +20,7 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'email',
+        'usuario',
         'telefono',
         'password',
         'rol',
@@ -37,7 +38,14 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
+        'password_visible',
     ];
+
+    /**
+     * Tarjetas QR: true cuando establecerContrasena() acaba de poner la copia visible, para que el guardado no
+     * la confunda con un cambio de contrasena hecho por otra via (que deja la copia vacia).
+     */
+    private bool $copiaVisibleEstablecida = false;
 
     /**
      * Get the attributes that should be cast.
@@ -50,7 +58,93 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_super_admin' => 'boolean',
+            // Copia de la contrasena que puede ver el administrador (solo cuentas miembro, ver config/ibbla.php)
+            'password_visible' => 'encrypted',
+            'debe_crear_contrasena' => 'boolean',
         ];
+    }
+
+    /**
+     * La copia visible de la contrasena nunca queda guardada para una cuenta que no sea de miembro ni con el
+     * interruptor apagado, y se vacia si la contrasena cambia por una via que no la actualiza (recuperar por
+     * correo, por ejemplo): asi el administrador nunca ve una contrasena vieja.
+     */
+    protected static function booted(): void
+    {
+        static::saving(function (User $user) {
+            if ($user->isDirty('tenant_role_id')) {
+                $user->unsetRelation('tenantRole');
+            }
+
+            if ($user->isDirty('password') && ! $user->copiaVisibleEstablecida) {
+                $user->password_visible = null;
+            }
+
+            if ($user->getAttributes()['password_visible'] ?? null) {
+                if (! self::contrasenaVisibleActiva() || ! $user->esCuentaMiembro()) {
+                    $user->password_visible = null;
+                }
+            }
+
+            $user->copiaVisibleEstablecida = false;
+        });
+    }
+
+    // --- Tarjetas QR de acceso: usuario o correo, contrasena visible para el administrador ---
+
+    /** Interruptor de configuracion (config/ibbla.php), encendido por defecto. */
+    public static function contrasenaVisibleActiva(): bool
+    {
+        return (bool) config('ibbla.tarjetas.contrasena_visible', true);
+    }
+
+    /** Con lo que la persona inicia sesion: su correo o, si no tiene, su nombre de usuario. */
+    public function identificador(): string
+    {
+        return (string) ($this->email ?: $this->usuario);
+    }
+
+    /**
+     * Cuenta de rol miembro (solo Mi perfil): la unica a la que se le guarda la copia visible de la contrasena
+     * y a la que el administrador puede restablecer el acceso desde la tarjeta. Nunca administrador, tesorero,
+     * asistente, servidor ni super admin.
+     */
+    public function esCuentaMiembro(): bool
+    {
+        return ! $this->isSuperAdmin()
+            && $this->isMiembro()
+            && ! $this->isAdmin()
+            && ! $this->canAccessRecuento()
+            && ! $this->canAccessAsistencia()
+            && ! $this->hasPermission('marcar_asistencia');
+    }
+
+    /**
+     * Cambia la contrasena (se guarda con su hash normal) y, si corresponde, su copia cifrada visible para el
+     * administrador. No guarda: el que llama hace save(). Quita la marca de "debe crear contrasena".
+     */
+    public function establecerContrasena(string $plana): void
+    {
+        $this->password = $plana;
+        $this->debe_crear_contrasena = false;
+        $this->password_visible = (self::contrasenaVisibleActiva() && $this->esCuentaMiembro()) ? $plana : null;
+        $this->copiaVisibleEstablecida = true;
+    }
+
+    /** La contrasena que puede ver el administrador, o null si no hay copia o el interruptor esta apagado. */
+    public function contrasenaVisible(): ?string
+    {
+        if (! self::contrasenaVisibleActiva() || ! $this->esCuentaMiembro()) {
+            return null;
+        }
+
+        try {
+            return $this->password_visible;
+        } catch (\Illuminate\Contracts\Encryption\DecryptException) {
+            // Cifrada con otra llave (APP_KEY cambiada sin APP_PREVIOUS_KEYS): no se puede leer; queda
+            // "Restablecer acceso" en vez de romper la tarjeta.
+            return null;
+        }
     }
 
     // --- Legacy role helpers (backward-compatible, check tenantRole first) ---

@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
 
 class PasswordController extends Controller
@@ -20,9 +19,10 @@ class PasswordController extends Controller
             'password' => ['required', Password::defaults(), 'confirmed'],
         ]);
 
-        $request->user()->update([
-            'password' => Hash::make($validated['password']),
-        ]);
+        // Con su hash normal y, si es una cuenta miembro, la copia que puede ver el administrador (Tarjetas QR)
+        $usuario = $request->user();
+        $usuario->establecerContrasena($validated['password']);
+        $usuario->save();
 
         return back()->with('status', 'password-updated');
     }

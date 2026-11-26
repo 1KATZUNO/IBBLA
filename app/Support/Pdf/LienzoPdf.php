@@ -60,6 +60,9 @@ class LienzoPdf
 
     private bool $simulando = false;
 
+    /** @var array<string, string> temporales de imagenBase64Repetida() (clave => ruta), se borran al destruir */
+    private array $archivosRepetidos = [];
+
     private int $paginasSimuladas = 0;
 
     /** En los scripts de pagina el estado de color de CPDF no es el de esa pagina: se fuerza. */
@@ -298,6 +301,36 @@ class LienzoPdf
         $pdf->fill();
     }
 
+    /**
+     * Muchos rectangulos del mismo color rellenados como UNA sola figura (los modulos de un QR). Rellenados uno
+     * por uno, el visor suaviza cada borde por separado y entre rectangulos vecinos quedan rayas blancas finas;
+     * como una sola figura no.
+     *
+     * @param  iterable<array{0: float, 1: float, 2: float, 3: float}>  $rectangulos  [x, y, ancho, alto]
+     */
+    public function rectangulos(iterable $rectangulos, string $color): void
+    {
+        if ($this->simulando) {
+            return;
+        }
+
+        $this->color($color);
+        $pdf = $this->pdf;
+        $hay = false;
+        foreach ($rectangulos as [$x, $y, $ancho, $alto]) {
+            $arriba = $this->alto - $y;
+            $pdf->moveTo($x, $arriba);
+            $pdf->lineTo($x + $ancho, $arriba);
+            $pdf->lineTo($x + $ancho, $arriba - $alto);
+            $pdf->lineTo($x, $arriba - $alto);
+            $pdf->closePath();
+            $hay = true;
+        }
+        if ($hay) {
+            $pdf->fill();
+        }
+    }
+
     public function circulo(float $centroX, float $centroY, float $radio, string $color): void
     {
         if ($this->simulando) {
@@ -329,6 +362,38 @@ class LienzoPdf
         } catch (\Throwable $e) {
             Log::warning('PDF: no se pudo dibujar una imagen: '.$e->getMessage());
         } finally {
+            @unlink($archivo);
+        }
+    }
+
+    /**
+     * Como imagenBase64(), para una imagen que se repite muchas veces en el mismo PDF (el logo de cada tarjeta
+     * con QR): se escribe a un archivo temporal UNA vez y se dibuja siempre desde el mismo, asi CPDF la mete en
+     * el PDF una sola vez y la reutiliza (cachea por nombre de archivo). Los temporales se borran al destruir
+     * el lienzo.
+     */
+    public function imagenBase64Repetida(string $base64, float $x, float $y, float $ancho, float $alto, string $fondo = '#ffffff'): void
+    {
+        if ($this->simulando || $base64 === '') {
+            return;
+        }
+
+        $clave = md5($base64).'|'.$ancho.'|'.$alto.'|'.$fondo;
+        try {
+            if (! isset($this->archivosRepetidos[$clave])) {
+                $archivo = tempnam($this->dompdf->getOptions()->getTempDir(), 'img');
+                file_put_contents($archivo, self::imagenPreparada($base64, $ancho, $alto, $fondo));
+                $this->archivosRepetidos[$clave] = $archivo;
+            }
+            $this->canvas->image($this->archivosRepetidos[$clave], $x, $y, $ancho, $alto);
+        } catch (\Throwable $e) {
+            Log::warning('PDF: no se pudo dibujar una imagen: '.$e->getMessage());
+        }
+    }
+
+    public function __destruct()
+    {
+        foreach ($this->archivosRepetidos as $archivo) {
             @unlink($archivo);
         }
     }

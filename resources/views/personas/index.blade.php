@@ -52,6 +52,10 @@
                 </svg>
                 Reporte General
             </button>
+            <a href="{{ route('personas.tarjetas.index') }}" class="btn-secondary">
+                <svg class="w-5 h-5 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/></svg>
+                Tarjetas con QR
+            </a>
         </div>
     </div>
 
@@ -113,6 +117,10 @@
                             <a href="{{ route('personas.informe', ['persona' => $persona, 'accion' => 'ver']) }}" target="_blank" rel="noopener" class="btn-icon text-green-700 hover:bg-green-50" aria-label="Estado de cuenta en PDF de {{ $persona->nombre }}" title="Estado de cuenta (PDF)">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6M7 4h7l5 5v11a2 2 0 01-2 2H7a2 2 0 01-2-2V6a2 2 0 012-2z"/></svg>
                             </a>
+                            <a href="{{ route('personas.tarjeta.show', $persona) }}" data-abrir-tarjeta="{{ route('personas.tarjeta.show', $persona) }}" class="btn-row text-gray-700 hover:bg-gray-100" aria-label="Tarjeta con QR de {{ $persona->nombre }}" title="Tarjeta con QR de acceso">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/></svg>
+                                Tarjeta
+                            </a>
                             <a href="{{ route('personas.edit', $persona) }}" class="btn-row text-brand-700 hover:bg-brand-50">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>
                                 Editar
@@ -172,6 +180,21 @@
             </div>
         </div>
     </details>
+</div>
+
+<!-- Tarjeta flotante con QR de acceso (el contenido lo trae personas.tarjeta.show) -->
+<div id="modalTarjeta" class="hidden fixed inset-0 z-50 overflow-y-auto bg-gray-900/60 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="modalTarjetaTitulo">
+    <div class="relative mx-auto my-4 w-full max-w-lg px-4 sm:my-12">
+        <div class="rounded-2xl bg-white p-4 shadow-popover sm:p-6">
+            <div class="mb-4 flex items-center justify-between gap-3">
+                <h3 id="modalTarjetaTitulo" class="text-lg font-semibold text-gray-900">Tarjeta con QR de acceso</h3>
+                <button type="button" data-cerrar-tarjeta class="btn-icon" aria-label="Cerrar">
+                    <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+            <div id="modalTarjetaContenido"></div>
+        </div>
+    </div>
 </div>
 
 <!-- Modal: Confirmar Eliminación -->
@@ -326,6 +349,95 @@
 </div>
 
 <script>
+// Tarjeta flotante con QR: abrir, ver contraseña, restablecer acceso y generar QR nuevo sin salir de la lista
+(function () {
+    const modal = document.getElementById('modalTarjeta');
+    const contenido = document.getElementById('modalTarjetaContenido');
+    const csrf = document.querySelector('meta[name="csrf-token"]')?.content;
+    const cargando = '<p class="py-10 text-center text-sm text-gray-500">Cargando la tarjeta…</p>';
+    let ultimoFoco = null;
+
+    function avisar(texto, tipo) {
+        const aviso = contenido.querySelector('[data-tarjeta-aviso]');
+        if (!aviso || !texto) return;
+        aviso.className = 'mt-3 ' + (tipo === 'error' ? 'alert-error' : 'alert-success');
+        aviso.textContent = texto;
+    }
+
+    async function abrir(url) {
+        ultimoFoco = document.activeElement;
+        contenido.innerHTML = cargando;
+        modal.classList.remove('hidden');
+        modal.querySelector('[data-cerrar-tarjeta]').focus();
+        try {
+            const r = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+            if (!r.ok) throw new Error('HTTP ' + r.status);
+            contenido.innerHTML = await r.text();
+        } catch (e) {
+            contenido.innerHTML = '<p class="alert-error">No se pudo abrir la tarjeta. Recarga la página e inténtalo de nuevo.</p>';
+        }
+    }
+
+    function cerrar() {
+        modal.classList.add('hidden');
+        contenido.innerHTML = '';
+        if (ultimoFoco) ultimoFoco.focus();
+    }
+
+    document.querySelectorAll('[data-abrir-tarjeta]').forEach(function (enlace) {
+        enlace.addEventListener('click', function (e) {
+            e.preventDefault();
+            abrir(enlace.dataset.abrirTarjeta);
+        });
+    });
+    modal.querySelector('[data-cerrar-tarjeta]').addEventListener('click', cerrar);
+    modal.addEventListener('click', function (e) {
+        if (e.target === modal || e.target === modal.firstElementChild) cerrar();
+    });
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && !modal.classList.contains('hidden')) cerrar();
+    });
+
+    contenido.addEventListener('click', function (e) {
+        if (e.target.closest('[data-tarjeta-ocultar]')) {
+            const caja = contenido.querySelector('[data-tarjeta-contrasena]');
+            caja.classList.add('hidden');
+            caja.querySelector('[data-tarjeta-valor]').textContent = '';
+        }
+    });
+
+    contenido.addEventListener('submit', async function (e) {
+        const form = e.target.closest('form[data-tarjeta-accion]');
+        if (!form) return;
+        e.preventDefault();
+        const boton = form.querySelector('[type="submit"]');
+        if (boton) boton.disabled = true;
+        try {
+            const r = await fetch(form.action, {
+                method: 'POST',
+                headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': csrf, 'X-Requested-With': 'XMLHttpRequest' },
+            });
+            const datos = await r.json().catch(function () { return {}; });
+            if (form.dataset.tarjetaAccion === 'ver-contrasena') {
+                if (r.ok && datos.contrasena) {
+                    const caja = contenido.querySelector('[data-tarjeta-contrasena]');
+                    caja.querySelector('[data-tarjeta-valor]').textContent = datos.contrasena;
+                    caja.classList.remove('hidden');
+                } else {
+                    avisar(datos.mensaje || 'No se pudo ver la contraseña.', 'error');
+                }
+            } else {
+                if (datos.html) contenido.innerHTML = datos.html;
+                avisar(datos.mensaje || (r.ok ? 'Listo.' : 'No se pudo completar la acción.'), r.ok ? 'ok' : 'error');
+            }
+        } catch (err) {
+            avisar('No se pudo completar la acción. Revisa la conexión e inténtalo de nuevo.', 'error');
+        } finally {
+            if (boton && boton.isConnected) boton.disabled = false;
+        }
+    });
+})();
+
 let personaIdEliminar = null;
 
 function mostrarModalEliminar(id, nombre) {
