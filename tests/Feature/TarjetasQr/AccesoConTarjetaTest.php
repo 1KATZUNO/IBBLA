@@ -236,20 +236,52 @@ class AccesoConTarjetaTest extends TestCase
         $this->assertNull(DB::table('users')->where('usuario', 'anamora')->value('password_visible'));
     }
 
-    public function test_las_rutas_publicas_tienen_limite_de_intentos(): void
+    public function test_la_misma_tarjeta_tiene_limite_de_intentos_y_lo_avisa_en_espanol(): void
     {
         $url = '/t/'.str_repeat('y', 40);
-        for ($i = 0; $i < 30; $i++) {
+        for ($i = 0; $i < 20; $i++) {
             $this->get($url)->assertNotFound();
         }
-        $this->get($url)->assertStatus(429);
+        $this->get($url)->assertStatus(429)
+            ->assertSee('Espera un momento')
+            ->assertSee('Volver a intentar')
+            ->assertDontSee('Too Many Requests');
 
         $persona = $this->persona();
         $urlPersona = $this->urlTarjeta($persona);
         for ($i = 0; $i < 10; $i++) {
             $this->post($urlPersona, ['identificador' => 'x'])->assertStatus(302);
         }
-        $this->post($urlPersona, ['identificador' => 'x'])->assertStatus(429);
+        $this->post($urlPersona, ['identificador' => 'x'])->assertStatus(429)->assertSee('Espera un momento');
+
+        // El limite es de ESA tarjeta: otra persona, desde la misma red, entra sin problema
+        $this->get($this->urlTarjeta($this->persona('Otra Persona')))->assertOk()->assertSee('Crea tu acceso');
+    }
+
+    public function test_toda_la_iglesia_puede_escanear_a_la_vez_desde_la_misma_red(): void
+    {
+        // El dia que se reparten las tarjetas todos escanean desde el Wi-Fi de la iglesia: una sola IP para
+        // todos. Con un limite corto por IP, los primeros dejaban afuera al resto.
+        $personas = collect(range(1, 40))->map(fn (int $i) => $this->persona('Persona '.$i));
+
+        foreach ($personas as $persona) {
+            $this->get($this->urlTarjeta($persona))->assertOk()->assertSee('Crea tu acceso');
+        }
+
+        foreach ($personas as $i => $persona) {
+            $this->post($this->urlTarjeta($persona), [
+                'identificador' => 'persona'.$i,
+                'password' => 'clave-1234',
+                'password_confirmation' => 'clave-1234',
+            ])->assertRedirect(route('mi-perfil.index'));
+            $this->assertNotNull($persona->fresh()->user_id, 'La persona '.$i.' se quedó sin cuenta');
+
+            // el siguiente telefono no trae la sesion de este
+            $this->post(route('logout'));
+            $this->assertGuest();
+        }
+
+        $this->assertSame(40, User::whereNotNull('usuario')->count());
     }
 
     public function test_el_token_es_aleatorio_de_40_caracteres_y_no_sale_en_json(): void

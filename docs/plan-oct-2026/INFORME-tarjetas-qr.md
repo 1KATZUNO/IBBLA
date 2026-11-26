@@ -12,7 +12,7 @@ Base de datos de desarrollo `ibbla_rn` (150 personas de volumen) y `ibbla_rn_tes
 | Escanear con cuenta | `acceso/entrar.blade.php`: el inicio de sesión normal (`POST /login`) con su usuario o correo ya escrito; tiene que escribir la contraseña. El QR nunca inicia sesión. Si falla, vuelve a la misma tarjeta con el error. |
 | Token inválido | `acceso/no-valido.blade.php` (404): «Este código ya no es válido. Pídele uno nuevo al administrador de tu iglesia.» También para una iglesia inactiva. |
 | Con otra sesión abierta | Si es la suya, va directo a su inicio; si es otra cuenta, `acceso/otra-sesion.blade.php` pide cerrar sesión (no mezcla cuentas). |
-| Límite de intentos | `throttle:30,1,tarjeta-qr` al abrir y `throttle:10,1,tarjeta-qr-guardar` al guardar (contador propio por ruta e IP). Ver contraseña: `throttle:30,1`. |
+| Límite de intentos | Por **tarjeta**: 20 por minuto al abrir y 10 al guardar; por **IP** un tope holgado (300 y 150 por minuto). Limitadores `tarjeta-qr` y `tarjeta-qr-guardar` de `AppServiceProvider`; quien se pasa ve «Espera un momento» (`acceso/espera.blade.php`). Ver contraseña: `throttle:30,1` por administrador. Ver sección 8. |
 | Usuario o correo en el login normal | Ver sección 2. |
 | Contraseña visible para el administrador | `users.password_visible` con cast `encrypted`; solo cuentas miembro (`User::esCuentaMiembro()`); interruptor `IBBLA_CONTRASENA_VISIBLE` en `config/ibbla.php`, encendido por defecto; botón **Ver contraseña** solo al administrador y auditado (quién vio la de quién y si había copia, nunca el valor); aviso al miembro en «Crea tu acceso», «Crea tu contraseña nueva» y Mi cuenta → Cambiar contraseña. |
 | Restablecer acceso | Contraseña imposible de adivinar, borra la copia, cambia el `remember_token`, borra sus sesiones (driver `database`) y marca `users.debe_crear_contrasena`: el próximo escaneo pide «Crea tu contraseña nueva». Solo cuentas miembro y nunca la propia. Auditado. |
@@ -160,3 +160,45 @@ válido», «Tienes otra sesión abierta». Login: «Correo electrónico o usuar
   si se quiere otro, hay que darle una sección de título a `layouts/guest.blade.php`.
 - `ibbla_rn` quedó con 5 clases de ejemplo y 129 asignaciones (para que el PDF muestre clases); la cuenta de
   prueba que creé en la verificación con navegador la borré.
+
+## 8. Revisión de integración (líder técnico, 26/11)
+
+Integrado en `feat/tarjetas-qr`. Suite completa: 1061 pruebas, 14 fallos (los 14 de Breeze de la línea base).
+
+**Corregido antes de subir**
+
+- **Límite de intentos por red.** Las rutas públicas tenían 30 aperturas y 10 guardados por minuto **por IP**.
+  El día que se repartan las tarjetas escanea toda la iglesia desde el Wi-Fi del templo, que sale a internet
+  con una sola IP: la persona número 11 que creara su acceso en el mismo minuto recibía el «429 Too Many
+  Requests» del framework, en inglés. Ahora el límite corto es por tarjeta y el de la IP es un tope holgado;
+  adivinar un token de 40 caracteres no es viable, así que no se pierde protección. Pruebas:
+  `test_la_misma_tarjeta_tiene_limite_de_intentos_y_lo_avisa_en_espanol` y
+  `test_toda_la_iglesia_puede_escanear_a_la_vez_desde_la_misma_red` (40 personas crean su acceso seguidas
+  desde la misma IP).
+- **Mensaje de contraseña equivocada.** Decía «El correo o la contraseña no son correctos» también a quien
+  entra con usuario. Ahora: «El correo, el usuario o la contraseña no son correctos».
+
+**Ensayo con una copia de producción del 26/11** (255 personas, 21 usuarios)
+
+| Qué | Resultado |
+|---|---|
+| Migración | Corre limpia; los 21 usuarios conservan su correo, ninguno queda sin identificador, ninguna copia de contraseña |
+| Cifras de cumplimiento | Huella idéntica a la de producción antes del cambio |
+| PDF masivo «con promesa» (200 tarjetas) | 4,7 s la primera vez, 1,0 s las siguientes |
+| PDF masivo «activas» (255 tarjetas) | 2,1 s (55 QR nuevos), 1,0 s las siguientes |
+| Tarjeta flotante / PDF de una | 0,05 s / 0,23 s |
+| 255 tarjetas escaneadas seguidas desde una sola IP | Las 255 responden bien |
+
+Probado además en un navegador contra el servidor local: tarjeta flotante, «Crea tu acceso» con usuario,
+entrada a Mi perfil, contraseña equivocada (vuelve a la tarjeta con el error), contraseña correcta, otra
+sesión abierta y la página de espera.
+
+**Dato de los datos reales que conviene decidir con el cliente**
+
+De las 200 personas que hoy recibirían tarjeta (promesa vigente o programada para 2027), **126 no tienen
+clase** en el sistema, así que su tarjeta sale sin el renglón «Clase». El Excel de promesas 2027 sí trae la
+clase de sus 135 personas: 27 ya tienen esa misma clase, 20 tienen otra (no se tocan) y **71 no tienen
+ninguna**; de esas, 52 calzan por nombre con una clase del sistema y 19 calzan con una equivalencia evidente
+(«11-12 años» → «Jóvenes 11-12», «13-14 años» → «Jóvenes 13-14», «15-16 años» → «Jóvenes 15-16», «17-19 años»
+→ «Jóvenes 17-19», «Logos» → «Logos Mayores 20-24»). Cargarlas es un cambio de datos que además las mete en
+la lista de asistencia de esa clase: se hace solo con el visto bueno del cliente.

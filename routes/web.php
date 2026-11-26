@@ -31,10 +31,10 @@ Route::get('/informe/{persona}', App\Http\Controllers\InformePublicoController::
 // Tarjeta con QR de acceso personal: quien la escanea crea su acceso o inicia sesion (nunca entra solo).
 // Publica a proposito, con limite de intentos por IP (cada ruta con su propio contador).
 Route::get('/t/{token}', [App\Http\Controllers\AccesoTarjetaController::class, 'mostrar'])
-    ->middleware('throttle:30,1,tarjeta-qr')
+    ->middleware('throttle:tarjeta-qr')
     ->name('acceso.tarjeta');
 Route::post('/t/{token}', [App\Http\Controllers\AccesoTarjetaController::class, 'guardar'])
-    ->middleware('throttle:10,1,tarjeta-qr-guardar')
+    ->middleware('throttle:tarjeta-qr-guardar')
     ->name('acceso.tarjeta.guardar');
 
 // API interna - Tipo de cambio
