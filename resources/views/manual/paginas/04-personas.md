@@ -4,8 +4,8 @@ orden: 40
 icono: personas
 resumen: Buscar, agregar y editar a los hermanos; ver su ficha, sus compromisos y su estado de cuenta en PDF.
 roles: admin
-rutas: personas.*, compromisos.*, personas.mantenimiento#mantenimiento-borrados-masivos
-palabras: personas, miembros, hermanos, pin, teléfono, correo, fecha de nacimiento, ficha, compromisos, estado de cuenta, activo, inactivo, eliminar persona, clases, ministerios, acceso, contraseña
+rutas: personas.*, compromisos.*, personas.mantenimiento#mantenimiento-borrados-masivos, personas.tarjeta*#tarjetas-con-qr-de-acceso
+palabras: tarjeta, tarjetas, qr, código qr, imprimir tarjetas, ver contraseña, restablecer acceso, personas, miembros, hermanos, pin, teléfono, correo, fecha de nacimiento, ficha, compromisos, estado de cuenta, activo, inactivo, eliminar persona, clases, ministerios, acceso, contraseña
 ---
 
 ## Para qué sirve
@@ -43,6 +43,7 @@ Solo piden el **Nombre completo**; el **Teléfono** y el **Correo** son opcional
 | **6. Compromisos (portapapeles)** | Abre los compromisos de la persona. | Administrador | Ves, mes por mes, lo esperado y lo dado. |
 | **7. WhatsApp** | Abre WhatsApp con el estado de cuenta de la persona. | Administrador | Ver la página *WhatsApp*. Aparece apagado si la persona no tiene teléfono válido. |
 | **8. Estado de cuenta (documento)** | Abre el PDF con el estado de cuenta de la persona. | Administrador | Se abre en otra pestaña. |
+| **Tarjeta** | Abre la **tarjeta con QR de acceso** de la persona en una ventana flotante (ver *Tarjetas con QR de acceso*). | Administrador | Desde ahí la descargas en PDF, ves la contraseña o restableces el acceso. |
 | **9. Editar** | Abre el formulario de edición. | Administrador | Al guardar vuelves a la lista. |
 | **10. Eliminar (basurero)** | Elimina a la persona. | Administrador | Pide confirmación. Se borran sus promesas, sus compromisos y su usuario (si tenía); **sus sobres se conservan** como sobres sin nombre. |
 
@@ -58,6 +59,45 @@ Al final de la lista hay un bloque plegado, **Mantenimiento**, con dos acciones 
 | **Borrar todas las promesas** | Abre la pantalla que dice cuántas promesas y compromisos mensuales se borran de cuántas personas. Las personas y los sobres se conservan. | Administrador | Igual: escribes **CONFIRMAR** y confirmas. |
 
 Sin la palabra **CONFIRMAR** no se borra nada. Todo se hace de una vez (si algo falla no queda a medias) y en la **Auditoría** queda quién lo hizo, cuándo y el detalle de lo que se borró. Si no hay nada que borrar, la pantalla lo dice y te devuelve a Personas. **No se puede deshacer**: úsalas solo si sabes exactamente por qué.
+
+## Tarjetas con QR de acceso
+
+Cada persona puede tener una **tarjeta** con su nombre, su clase y un **código QR**. Al escanearlo con la cámara del teléfono, la persona llega a **su cuenta**:
+
+- **Si todavía no tiene cuenta**, la tarjeta le pide **un usuario o su correo** y **una contraseña** (dos veces). Al guardar queda creada su cuenta de **Miembro**, enlazada a su ficha, y entra a **Mi perfil**. No hace falta que tenga correo: puede elegir un usuario como *mariarojas*.
+- **Si ya tiene cuenta**, la tarjeta abre el inicio de sesión con su usuario o correo ya escrito y le pide **su contraseña**. El QR nunca entra solo: quien encuentre una tarjeta ajena no puede entrar sin la contraseña.
+- **Si la tarjeta ya no sirve** (se generó un QR nuevo), le dice que pida una nueva al administrador.
+
+> **Importante:** la tarjeta es personal. Quien tenga en la mano la tarjeta de alguien **sin cuenta** puede crearle el acceso; entrégalas en mano.
+
+### La tarjeta de una persona
+
+En la lista, el botón **Tarjeta** de la persona abre su tarjeta en una ventana flotante: así se ve impresa. Debajo están el estado de su cuenta y las acciones.
+
+| Botón o control | Qué hace | Quién puede usarlo | Qué pasa después |
+|---|---|---|---|
+| **Cuenta** | Dice si la persona **no tiene cuenta**, con qué **correo** o **usuario** entra, o si **debe crear contraseña nueva**. | Administrador | — |
+| **Descargar tarjeta (PDF)** | La tarjeta sola, en hoja carta, con sus marcas de corte. | Administrador | Se abre en otra pestaña para imprimir. |
+| **Ver contraseña** | Muestra la contraseña de la persona, por si la olvidó. Solo existe para cuentas de **Miembro**. | Administrador | La contraseña aparece debajo (**Ocultar** la tapa). **Cada consulta queda en la Auditoría** con tu nombre. Si aparece gris es que no hay copia: usa **Restablecer acceso**. |
+| **Restablecer acceso** | Borra la contraseña de esa cuenta y cierra sus sesiones. Pide confirmación (**Sí, restablecer acceso**). | Administrador | La próxima vez que la persona escanee su tarjeta crea una contraseña nueva. Queda en la Auditoría. Es la forma **recomendada** cuando alguien olvida su contraseña. |
+| **Generar QR nuevo** | Cambia el código de la tarjeta; la tarjeta anterior **deja de servir**. Pide confirmación (**Sí, generar QR nuevo**). | Administrador | Imprime y entrega la tarjeta nueva. Su cuenta y su contraseña no cambian. Queda en la Auditoría. |
+
+La primera vez que abres la tarjeta de alguien se crea su QR; después siempre es el mismo hasta que generes uno nuevo.
+
+> **Cuidado:** el administrador puede ver la contraseña de los miembros porque así lo pidió la iglesia, y al crearla la persona lee el aviso «El administrador de la iglesia puede ver esta contraseña para ayudarte si la olvidas. No uses la misma de tu correo ni la de tu banco.». La contraseña de un administrador, tesorero, asistente o servidor **nunca** se puede ver ni restablecer desde la tarjeta.
+
+### Imprimir todas las tarjetas
+
+El botón **Tarjetas con QR** (arriba, junto a los reportes) abre la descarga masiva: un PDF de hojas carta con **8 tarjetas por hoja** (2 columnas y 4 filas), ordenadas por clase y nombre.
+
+| Botón o control | Qué hace | Quién puede usarlo | Qué pasa después |
+|---|---|---|---|
+| **Personas con promesa** | (Por omisión) Quienes tienen una promesa vigente o programada en un corte de **Promesas futuras**. | Administrador | El número al lado dice cuántas tarjetas salen. |
+| **Todas las personas activas** | Todas las personas activas, tengan o no promesa. | Administrador | — |
+| **Una clase** | Las personas activas de la clase que elijas. | Administrador | La tarjeta muestra esa clase. |
+| **Ver PDF / Descargar PDF** | Genera el PDF. | Administrador | A quien todavía no tenía QR se le crea en ese momento; las tarjetas ya entregadas siguen sirviendo. |
+
+> **Consejo:** imprime al **100 %** (sin «ajustar a la página») y corta por las **marcas negras** del margen; la línea gris fina marca el borde de cada tarjeta.
 
 ## La ficha de la persona
 
@@ -104,6 +144,11 @@ Al editar una persona aparecen, al final, dos acciones aparte para casos especia
 > **Consejo:** cada mes es independiente: la **Diferencia** es *Dado − Esperado* de ese mes, no un saldo acumulado.
 
 ## Preguntas frecuentes
+
+**Alguien olvidó su contraseña. ¿Qué hago?** Abre su **Tarjeta** y toca **Restablecer acceso**: la próxima vez que escanee la tarjeta crea una nueva. Si es miembro, también puedes tocar **Ver contraseña** y decírsela.
+
+**Alguien perdió su tarjeta.** Abre su **Tarjeta**, toca **Generar QR nuevo** e imprime la nueva: la perdida ya no sirve.
+
 
 **¿Qué pasa si elimino a una persona?** Se borran sus promesas, sus compromisos y su usuario (si lo tenía). Sus sobres se quedan registrados, pero sin nombre. Si solo dejó de asistir, es mejor marcarla como **inactiva** en lugar de eliminarla.
 

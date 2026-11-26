@@ -1,7 +1,7 @@
 <x-guest-layout>
     <div class="mb-6">
         <h2 class="text-xl font-semibold tracking-tight text-gray-900">Iniciar sesión</h2>
-        <p class="mt-1 text-sm text-gray-500">Entra con el correo y la contraseña que te dio el administrador de tu iglesia.</p>
+        <p class="mt-1 text-sm text-gray-500">Entra con tu correo o tu usuario y tu contraseña.</p>
     </div>
 
     <x-auth-session-status class="mb-4" :status="session('status')" />
@@ -10,8 +10,9 @@
         @csrf
 
         <div>
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" class="mt-1.5" type="email" name="email" :value="old('email')" required autofocus autocomplete="username" placeholder="tu@correo.com" inputmode="email" />
+            {{-- Correo o nombre de usuario (quien creó su acceso con la tarjeta QR puede no tener correo) --}}
+            <x-input-label for="email" value="Correo electrónico o usuario" />
+            <x-text-input id="email" class="mt-1.5" type="text" name="email" :value="old('email')" required autofocus autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="tu@correo.com o tu usuario" />
             <x-input-error :messages="$errors->get('email')" class="mt-2" />
         </div>
 
