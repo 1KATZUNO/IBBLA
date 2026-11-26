@@ -24,11 +24,14 @@
                         <!-- Email -->
                         <div class="mb-4">
                             <label for="email" class="block text-sm font-medium text-gray-700">Email</label>
-                            <input type="email" name="email" id="email" value="{{ old('email', $usuario->email) }}" required
+                            <input type="email" name="email" id="email" value="{{ old('email', $usuario->email) }}" @required(! $usuario->usuario)
                                 class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-brand-500 focus:ring-brand-500">
                             @error('email')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
+                            @if ($usuario->usuario)
+                                <p class="mt-1 text-xs text-gray-500">Entra con el usuario <strong>{{ $usuario->usuario }}</strong> (lo creó con su tarjeta QR). El correo es opcional.</p>
+                            @endif
                         </div>
 
                         @include('admin.usuarios._telefono', ['telefono' => $usuario->telefono])

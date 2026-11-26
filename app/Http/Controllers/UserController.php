@@ -8,7 +8,6 @@ use App\Models\User;
 use App\Services\WhatsApp\WhatsAppService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rule;
 
 class UserController extends Controller
@@ -66,7 +65,8 @@ class UserController extends Controller
         $personaId = $validated['persona_id'] ?? null;
         unset($validated['persona_id']);
 
-        $validated['password'] = Hash::make($validated['password']);
+        $contrasena = $validated['password'];
+        unset($validated['password']);
         $validated['tenant_id'] = $tenant?->id;
 
         // Assign tenant role if provided, otherwise find by legacy slug
@@ -75,7 +75,10 @@ class UserController extends Controller
             $validated['tenant_role_id'] = $tenantRole?->id;
         }
 
-        $usuario = User::create($validated);
+        // Hash normal y, si es una cuenta miembro, la copia que el administrador puede ver (Tarjetas QR)
+        $usuario = new User($validated);
+        $usuario->establecerContrasena($contrasena);
+        $usuario->save();
         $persona = $this->vincularPersona($usuario, $personaId);
 
         return redirect()->route('usuarios.index')
@@ -105,7 +108,8 @@ class UserController extends Controller
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
-            'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($usuario->id)],
+            // Quien creo su acceso con la tarjeta QR con nombre de usuario puede no tener correo
+            'email' => [$usuario->usuario ? 'nullable' : 'required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($usuario->id)],
             'telefono' => $this->reglaTelefono(),
             'password' => 'nullable|string|min:8|confirmed',
             'rol' => 'required|in:admin,tesorero,asistente,servidor,miembro',
@@ -116,11 +120,8 @@ class UserController extends Controller
         $personaId = $validated['persona_id'] ?? null;
         unset($validated['persona_id']);
 
-        if ($request->filled('password')) {
-            $validated['password'] = Hash::make($validated['password']);
-        } else {
-            unset($validated['password']);
-        }
+        $contrasena = $request->filled('password') ? $validated['password'] : null;
+        unset($validated['password']);
 
         // Assign tenant role if provided, otherwise find by legacy slug
         $tenant = tenant();
@@ -129,7 +130,11 @@ class UserController extends Controller
             $validated['tenant_role_id'] = $tenantRole?->id;
         }
 
-        $usuario->update($validated);
+        $usuario->fill($validated);
+        if ($contrasena !== null) {
+            $usuario->establecerContrasena($contrasena);
+        }
+        $usuario->save();
         $this->vincularPersona($usuario, $personaId);
 
         return redirect()->route('usuarios.index')

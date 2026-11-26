@@ -54,8 +54,8 @@ class RegistrarAccesoSubscriber
 
     public function alFallarIntento(Failed $evento): void
     {
-        // Solo el correo: las credenciales traen la contraseña y jamás se guarda.
-        $correo = is_array($evento->credentials) ? ($evento->credentials['email'] ?? null) : null;
+        // Solo el correo o el usuario (Tarjetas QR): las credenciales traen la contraseña y jamás se guarda.
+        $correo = is_array($evento->credentials) ? ($evento->credentials['email'] ?? $evento->credentials['usuario'] ?? null) : null;
 
         $this->registrar(AuditLog::ACCION_LOGIN_FALLIDO, $evento->user, is_string($correo) ? $correo : null, [
             'guard' => $evento->guard,
@@ -76,7 +76,7 @@ class RegistrarAccesoSubscriber
                 'tenant_id' => data_get($usuario, 'tenant_id'),
                 'user_id' => $usuario?->getAuthIdentifier(),
                 'user_name' => data_get($usuario, 'name'),
-                'user_email' => data_get($usuario, 'email') ?? ($correo !== null ? Str::limit($correo, 255, '') : null),
+                'user_email' => data_get($usuario, 'email') ?? data_get($usuario, 'usuario') ?? ($correo !== null ? Str::limit($correo, 255, '') : null),
                 'ip_address' => $peticion->ip(),
                 'user_agent' => Str::limit((string) $peticion->userAgent(), 255, ''),
                 'method' => $peticion->method(),

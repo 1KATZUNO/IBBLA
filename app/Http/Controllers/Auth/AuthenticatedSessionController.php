@@ -48,8 +48,9 @@ class AuthenticatedSessionController extends Controller
                 return redirect()->route('login')
                     ->withErrors(['email' => 'Tu iglesia no esta activa. Contacta al administrador.']);
             }
-        } else {
+        } elseif ($user->email) {
             // User has no tenant and is not super admin - try to resolve by email domain
+            // (una cuenta con solo nombre de usuario nace siempre con su iglesia: no pasa por aqui)
             $domain = substr(strrchr($user->email, '@'), 1);
             $emailDomain = TenantEmailDomain::where('dominio', $domain)->where('activo', true)->first();
 

@@ -31,6 +31,13 @@
             <x-input-error :messages="$errors->updatePassword->get('password_confirmation')" class="mt-2" />
         </div>
 
+        @if (\App\Models\User::contrasenaVisibleActiva() && auth()->user()->esCuentaMiembro())
+            {{-- Tarjetas QR: aviso obligatorio donde el miembro escribe su contraseña --}}
+            <div class="alert-warning text-sm">
+                El administrador de la iglesia puede ver esta contraseña para ayudarte si la olvidas. No uses la misma de tu correo ni la de tu banco.
+            </div>
+        @endif
+
         <div class="flex items-center gap-4">
             <x-primary-button>{{ __('Save') }}</x-primary-button>
 
