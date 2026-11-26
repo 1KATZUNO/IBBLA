@@ -335,8 +335,10 @@ Del lider del proyecto (David):
   IDENTICA antes y despues (cortes 31/10 y 26/11), `ibbla:verificar` sin fallas nuevas (sigue la contrasena
   de semilla de super@admin.com), PDF masivo de 255 tarjetas medido en el servidor con datos ficticios:
   3,1 s sin cache y 0,5 s despues. En produccion todavia no se genero ninguna tarjeta real.
-  Pendiente con el cliente: (1) probar con un telefono una tarjeta impresa; (2) de las 200 personas que
-  recibirian tarjeta, 126 no tienen clase en el sistema y su tarjeta sale sin ese renglon: el Excel de promesas
-  2027 trae la clase de 71 de ellas y se puede cargar con su visto bueno (las mete en la lista de asistencia
-  de esa clase); (3) confirmar si se queda la contrasena visible para el administrador o solo "Restablecer
-  acceso"; (4) las cuentas que ya existian no tienen copia visible hasta que cambien su contrasena.
+  Pendiente con el cliente: (1) probar con un telefono una tarjeta impresa; (2) confirmar si se queda la
+  contrasena visible para el administrador o solo "Restablecer acceso"; (3) las cuentas que ya existian no
+  tienen copia visible hasta que cambien su contrasena.
+  Clases en las tarjetas, DECIDIDO por David el 26/11: de las 200 personas que recibirian tarjeta, 126 no
+  tienen clase en el sistema y su tarjeta sale sin ese renglon (solo nombre y QR). El Excel de promesas 2027
+  trae la clase de 71 de ellas, pero David pidio dejarlas sin clase: no se carga nada. Si mas adelante se le
+  asigna una clase a una persona en Gestionar Clases, su tarjeta la muestra sola.

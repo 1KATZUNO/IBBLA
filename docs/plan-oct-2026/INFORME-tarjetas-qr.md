@@ -202,3 +202,7 @@ ninguna**; de esas, 52 calzan por nombre con una clase del sistema y 19 calzan c
 («11-12 años» → «Jóvenes 11-12», «13-14 años» → «Jóvenes 13-14», «15-16 años» → «Jóvenes 15-16», «17-19 años»
 → «Jóvenes 17-19», «Logos» → «Logos Mayores 20-24»). Cargarlas es un cambio de datos que además las mete en
 la lista de asistencia de esa clase: se hace solo con el visto bueno del cliente.
+
+**Decisión de David (26/11): dejarlas sin clase.** No se carga nada del Excel; esas tarjetas salen con el
+nombre y el QR. Si más adelante se le asigna una clase a una persona en Gestionar Clases, su tarjeta la
+muestra sola.
