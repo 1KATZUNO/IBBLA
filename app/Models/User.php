@@ -138,7 +138,13 @@ class User extends Authenticatable
             return null;
         }
 
-        return $this->password_visible;
+        try {
+            return $this->password_visible;
+        } catch (\Illuminate\Contracts\Encryption\DecryptException) {
+            // Cifrada con otra llave (APP_KEY cambiada sin APP_PREVIOUS_KEYS): no se puede leer; queda
+            // "Restablecer acceso" en vez de romper la tarjeta.
+            return null;
+        }
     }
 
     // --- Legacy role helpers (backward-compatible, check tenantRole first) ---

@@ -232,6 +232,21 @@ class TarjetaPersonaAdminTest extends TestCase
         $this->assertNull(DB::table('users')->where('id', $usuario->id)->value('password_visible'));
     }
 
+    public function test_una_copia_cifrada_con_otra_llave_no_rompe_la_tarjeta(): void
+    {
+        $persona = $this->personaConCuenta('Lucia Vargas', 'lucia-2026');
+        // Como si la APP_KEY hubiera cambiado: el valor guardado ya no se puede descifrar
+        DB::table('users')->where('id', $persona->user_id)->update(['password_visible' => 'eyJpdiI6ImNvcnJ1cHRvIn0=']);
+
+        $this->assertNull($persona->user->fresh()->contrasenaVisible());
+        $this->actingAs($this->admin)->get(route('personas.tarjeta.show', $persona))
+            ->assertOk()
+            ->assertSee('No hay copia de esta contraseña');
+        $this->actingAs($this->admin)->postJson(route('personas.tarjeta.contrasena', $persona))
+            ->assertOk()
+            ->assertJson(['contrasena' => null]);
+    }
+
     public function test_restablecer_acceso_borra_la_contrasena_cierra_sesiones_y_queda_auditado(): void
     {
         $persona = $this->personaConCuenta('Lucia Vargas', 'lucia-2026');
