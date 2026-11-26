@@ -36,7 +36,7 @@
                     @forelse ($usuarios as $usuario)
                     <tr>
                         <td class="whitespace-nowrap font-medium text-gray-900">{{ $usuario->name }}</td>
-                        <td class="whitespace-nowrap">{{ $usuario->email }}</td>
+                        <td class="whitespace-nowrap">{{ $usuario->email ?? ($usuario->usuario ? 'Usuario: '.$usuario->usuario : '') }}</td>
                         <td class="whitespace-nowrap">
                             <x-ui.badge :tipo="in_array($usuario->rol, ['admin', 'tesorero', 'asistente']) ? 'brand' : 'neutral'">{{ $usuario->rol_nombre }}</x-ui.badge>
                         </td>

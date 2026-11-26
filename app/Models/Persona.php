@@ -36,7 +36,48 @@ class Persona extends Model
 
     protected $hidden = [
         'password',
+        // Secreto del QR de la tarjeta de acceso: nunca sale en un JSON (app de clases, buscadores...)
+        'token_acceso',
     ];
+
+    // --- Tarjeta con QR de acceso personal (docs/plan-oct-2026/07-TARJETAS-QR.md) ---
+
+    /** Largo del secreto que va en la direccion /t/{token} del QR. */
+    public const LARGO_TOKEN = 40;
+
+    /**
+     * El secreto del QR de la persona; si todavia no tiene, se genera y se guarda (la tarjeta nace la primera vez
+     * que se pide).
+     */
+    public function asegurarTokenAcceso(): string
+    {
+        if (! $this->token_acceso) {
+            $this->forceFill(['token_acceso' => self::nuevoTokenAcceso()])->save();
+        }
+
+        return $this->token_acceso;
+    }
+
+    /** "Generar QR nuevo": otro secreto; el QR anterior deja de servir desde ya. */
+    public function renovarTokenAcceso(): string
+    {
+        $this->forceFill(['token_acceso' => self::nuevoTokenAcceso()])->save();
+
+        return $this->token_acceso;
+    }
+
+    /**
+     * 40 caracteres aleatorios (Str::random usa random_bytes, criptograficamente seguro): ~238 bits, no se deriva
+     * del id ni del PIN. Se comprueba que no exista (la columna es unica).
+     */
+    public static function nuevoTokenAcceso(): string
+    {
+        do {
+            $token = \Illuminate\Support\Str::random(self::LARGO_TOKEN);
+        } while (static::withoutGlobalScopes()->where('token_acceso', $token)->exists());
+
+        return $token;
+    }
 
     public function sobres(): HasMany
     {

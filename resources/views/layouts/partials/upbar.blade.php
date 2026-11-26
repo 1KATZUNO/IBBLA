@@ -173,7 +173,7 @@
                  class="absolute right-0 top-full z-50 mt-2 w-72 overflow-hidden rounded-xl border border-gray-200 bg-white text-gray-800 shadow-popover">
                 <div class="border-b border-gray-100 bg-gray-50 px-4 py-3">
                     <p class="truncate text-sm font-semibold text-gray-900">{{ $u->name }}</p>
-                    <p class="truncate text-xs text-gray-500">{{ $u->email }}</p>
+                    <p class="truncate text-xs text-gray-500">{{ $u->email ?? $u->usuario }}</p>
                     <span class="badge-brand mt-2">{{ $u->rol_nombre }}</span>
                 </div>
                 <div class="py-1">

@@ -42,6 +42,22 @@ class PersonaController extends Controller
      * QA-018: el usuario que nace desde la ficha de la persona lleva el mismo rol dinámico que los
      * creados en Usuarios (antes quedaba con tenant_role_id nulo).
      */
+    /** Cuenta de rol miembro para la persona: hash normal y la copia visible para el administrador (Tarjetas QR). */
+    private function crearCuentaMiembro(string $nombre, string $correo, string $contrasena): User
+    {
+        $user = new User([
+            'name' => $nombre,
+            'email' => $correo,
+            'rol' => 'miembro',
+            'tenant_id' => auth()->user()->tenant_id,
+            'tenant_role_id' => $this->rolMiembroId(),
+        ]);
+        $user->establecerContrasena($contrasena);
+        $user->save();
+
+        return $user;
+    }
+
     private function rolMiembroId(): ?int
     {
         $id = tenant()?->roles()->where('slug', 'miembro')->value('id');
@@ -110,14 +126,7 @@ class PersonaController extends Controller
         // Si hay correo y contraseña, crear usuario miembro
         $user = null;
         if (!empty($validated['correo']) && !empty($validated['password'])) {
-            $user = User::create([
-                'name' => $validated['nombre'],
-                'email' => $validated['correo'],
-                'password' => Hash::make($validated['password']),
-                'rol' => 'miembro',
-                'tenant_id' => auth()->user()->tenant_id,
-                'tenant_role_id' => $this->rolMiembroId(),
-            ]);
+            $user = $this->crearCuentaMiembro($validated['nombre'], $validated['correo'], $validated['password']);
         }
 
         // Crear persona
@@ -279,14 +288,7 @@ class PersonaController extends Controller
         
         // Si hay correo nuevo y no tiene usuario, crear usuario
         if (!empty($validated['correo']) && !$persona->user_id && !empty($validated['password'])) {
-            $user = User::create([
-                'name' => $validated['nombre'],
-                'email' => $validated['correo'],
-                'password' => Hash::make($validated['password']),
-                'rol' => 'miembro',
-                'tenant_id' => auth()->user()->tenant_id,
-                'tenant_role_id' => $this->rolMiembroId(),
-            ]);
+            $user = $this->crearCuentaMiembro($validated['nombre'], $validated['correo'], $validated['password']);
             $persona->user_id = $user->id;
             $createUser = true;
         }
@@ -298,14 +300,16 @@ class PersonaController extends Controller
                 if (!empty($validated['correo']) && $user->email !== $validated['correo']) {
                     $userUpdates['email'] = $validated['correo'];
                 }
-                if (!empty($validated['password'])) {
-                    $userUpdates['password'] = Hash::make($validated['password']);
-                }
                 if (!empty($validated['nombre']) && $user->name !== $validated['nombre']) {
                     $userUpdates['name'] = $validated['nombre'];
                 }
-                if (!empty($userUpdates)) {
-                    $user->update($userUpdates);
+                $user->fill($userUpdates);
+                if (!empty($validated['password'])) {
+                    // Hash normal y, si es cuenta miembro, la copia que el administrador puede ver (Tarjetas QR)
+                    $user->establecerContrasena($validated['password']);
+                }
+                if ($user->isDirty()) {
+                    $user->save();
                     $updateUser = true;
                 }
             }

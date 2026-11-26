@@ -27,7 +27,9 @@ class LoginRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'email' => ['required', 'string', 'email'],
+            // Correo o nombre de usuario (Tarjetas QR): el campo se sigue llamando "email" para no cambiar el
+            // formulario, la app instalada ni los gestores de contrasenas de quien ya entra con su correo.
+            'email' => ['required', 'string', 'max:255'],
             'password' => ['required', 'string'],
         ];
     }
@@ -41,7 +43,7 @@ class LoginRequest extends FormRequest
     {
         $this->ensureIsNotRateLimited();
 
-        if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
+        if (! Auth::attempt($this->credenciales(), $this->boolean('remember'))) {
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
@@ -50,6 +52,22 @@ class LoginRequest extends FormRequest
         }
 
         RateLimiter::clear($this->throttleKey());
+    }
+
+    /**
+     * Con @ es un correo y se busca exactamente como siempre (las cuentas que ya existen no cambian); sin @ es
+     * un nombre de usuario (cuentas creadas con la tarjeta QR por quien no tiene correo).
+     *
+     * @return array<string, string>
+     */
+    public function credenciales(): array
+    {
+        $identificador = trim((string) $this->input('email'));
+        $password = (string) $this->input('password');
+
+        return str_contains($identificador, '@')
+            ? ['email' => $identificador, 'password' => $password]
+            : ['usuario' => Str::lower($identificador), 'password' => $password];
     }
 
     /**
