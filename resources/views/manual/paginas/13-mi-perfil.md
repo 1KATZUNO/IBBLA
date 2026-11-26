@@ -4,9 +4,9 @@ orden: 130
 icono: usuario
 resumen: Ver tus promesas, compromisos y estado de cuenta, cambiar tus datos y activar tus avisos por WhatsApp.
 roles: admin, tesorero, asistente, servidor, miembro
-rutas: mi-perfil.*, profile.*
+rutas: mi-perfil.*, profile.*, acceso.*#entrar-con-tu-tarjeta-qr
 ancla: whatsapp-como-activar-tus-avisos
-palabras: mi perfil, mi cuenta, promesas, compromisos, estado de cuenta, contraseña, correo, nombre, whatsapp, avisos, callmebot, activar whatsapp, recibir mis reportes, enlace del bot, mensaje de prueba
+palabras: tarjeta, qr, código qr, crear acceso, usuario, mi perfil, mi cuenta, promesas, compromisos, estado de cuenta, contraseña, correo, nombre, whatsapp, avisos, callmebot, activar whatsapp, recibir mis reportes, enlace del bot, mensaje de prueba
 ---
 
 ## Para qué sirve
@@ -22,6 +22,18 @@ Aquí cada persona ve **sus propios datos**: lo que prometió, lo que ha dado, l
 
 - **Mi perfil:** menú lateral → **Yo**, o la tarjeta **Mi perfil** de Principal.
 - **Mi cuenta:** barra superior → tu nombre → **Mi cuenta**.
+
+## Entrar con tu tarjeta QR
+
+Si la iglesia te dio una **tarjeta con código QR**, ábrela con la cámara del teléfono:
+
+1. **La primera vez** te pide **un usuario o tu correo** y **una contraseña** (dos veces). Un usuario lleva solo letras sin tilde, números, punto o guion, sin espacios (por ejemplo *mariarojas*). Toca **Crear mi acceso y entrar** y llegas a **Mi perfil**.
+2. **Las siguientes veces** la tarjeta abre el inicio de sesión con tu usuario o correo ya escrito: solo escribes tu **contraseña** y tocas **Entrar**.
+3. También puedes entrar sin la tarjeta, desde la pantalla normal de inicio de sesión, con tu usuario o tu correo.
+
+> **Importante:** el administrador de la iglesia puede ver tu contraseña para ayudarte si la olvidas. No uses la misma de tu correo ni la de tu banco.
+
+Si la tarjeta dice **«Este código ya no es válido»**, pídele una nueva al administrador. Si olvidaste tu contraseña, pídele que **restablezca tu acceso**: al escanear la tarjeta creas una nueva.
 
 ## Mi perfil
 
@@ -42,7 +54,7 @@ Aquí cada persona ve **sus propios datos**: lo que prometió, lo que ha dado, l
 
 | Botón o control | Qué hace | Quién puede usarlo | Qué pasa después |
 |---|---|---|---|
-| **1. Información del perfil (Nombre, Correo electrónico) y Guardar** | Cambia tu nombre y tu correo. | Todos | Se guardan con un mensaje de confirmación. |
+| **1. Información del perfil (Nombre, Correo electrónico) y Guardar** | Cambia tu nombre y tu correo. Si entras con un **usuario**, se muestra arriba y el correo es opcional. | Todos | Se guardan con un mensaje de confirmación. |
 | **2. Cambiar contraseña (Contraseña actual, Nueva contraseña, Confirmar contraseña) y Guardar** | Cambia tu contraseña: escribes la actual y la nueva dos veces. | Todos | La nueva contraseña sirve desde la próxima vez que entres. |
 
 Al final de la pantalla hay una sección para **eliminar tu cuenta**. No la uses salvo que el administrador te lo pida: se borra tu usuario.

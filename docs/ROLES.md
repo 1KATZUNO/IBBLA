@@ -80,6 +80,10 @@ Reglas (policies y métodos) que deciden, una sola vez, para pantalla y backend:
 | Módulo Accesos (`/admin/accesos`) | Sí | Oculto | Oculto | Oculto | Oculto |
 | **Agregar persona (alta rápida)**: nombre, teléfono, correo | Sí | Sí (desde el sobre y desde Principal) | Oculto | Oculto | Oculto |
 | Gestionar Personas: lista, fichas, compromisos, editar | Sí | **Oculto** | Oculto | Oculto | Oculto |
+| Tarjetas con QR: tarjeta flotante en Personas, su PDF y el PDF masivo (`/personas/tarjetas`) | Sí | Oculto (403) | Oculto (403) | Oculto (403) | Oculto (403) |
+| Tarjeta: **Ver contraseña** (solo cuentas de rol miembro, con `IBBLA_CONTRASENA_VISIBLE` encendido) | Sí, auditado | Oculto (403) | Oculto (403) | Oculto (403) | Oculto (403) |
+| Tarjeta: **Restablecer acceso** (solo cuentas miembro) y **Generar QR nuevo** | Sí, auditado | Oculto (403) | Oculto (403) | Oculto (403) | Oculto (403) |
+| Escanear su tarjeta (`/t/{token}`, pública con límite de intentos) | Inicia sesión con su contraseña | Ídem | Ídem | Ídem | Crea su acceso (usuario o correo) la primera vez; después, inicia sesión con su contraseña |
 | Promesas futuras (`/promesas-futuras`): cortes, personas a mano, importar Excel, plantilla | Sí (auditado) | Oculto (403) | Oculto (403) | Oculto (403) | Oculto (403) |
 | Asistencia web: registrar, editar, cerrar | Sí | Oculto | Sí | Oculto | Oculto |
 | Asistencia **cerrada** | Sí: "Corregir" con aviso "la estás corrigiendo como administrador", auditado | Oculto | Gris ("Cerrada el dd/mm a las hh:mm por X · solo lectura"); guardar da 403 | Oculto | Oculto |
@@ -100,6 +104,20 @@ Reglas (policies y métodos) que deciden, una sola vez, para pantalla y backend:
 todos hasta que el menú (equipo 4) lo oculte; cerrarla antes dejaría un enlace que da 403.
 Reportes de asistencia: admin, tesorero y asistente (decisión 5 de `04-DECISIONES.md`, QE-012).
 
+## Cuentas y contraseñas (Tarjetas con QR)
+
+- Una cuenta se identifica con su **correo** o con un **nombre de usuario** sin @ (`users.usuario`, creado al escanear la
+  tarjeta por quien no tiene correo). El login normal acepta los dos: con @ busca por correo exactamente como siempre;
+  sin @, por usuario.
+- **Contraseña visible para el administrador** (pedido expreso del cliente): copia cifrada con la llave de la app
+  (`users.password_visible`, cast `encrypted`) **solo de cuentas de rol miembro** (`User::esCuentaMiembro()`); nunca
+  de administrador, tesorero, asistente, servidor ni súper admin (el modelo la borra al guardar si el rol no es
+  miembro). Se vacía si la contraseña cambia por una vía que no la actualiza (recuperar por correo). Interruptor
+  `IBBLA_CONTRASENA_VISIBLE` (`config/ibbla.php`, encendido por defecto): apagado no se guarda, no se muestra y el
+  botón no existe. El miembro ve el aviso donde escribe su contraseña (tarjeta y Mi cuenta).
+- **Restablecer acceso** (recomendado): la contraseña queda imposible de adivinar, se cierran sus sesiones y el
+  próximo escaneo pide una nueva (`users.debe_crear_contrasena`).
+
 ## Auditoría de acciones sensibles
 
 Quedan en `audit_logs` con usuario, IP, fecha y detalle (`AuditLog::registrar`):
@@ -111,6 +129,9 @@ Quedan en `audit_logs` con usuario, IP, fecha y detalle (`AuditLog::registrar`):
 - `Asignar persona a sobre anónimo`: sobre, culto, total y persona asignada.
 - `Alta rápida de persona`: persona creada.
 - Cambios en cultos cerrados: corrección del admin o edición con acceso (módulo Accesos).
+- Tarjetas con QR (`docs/plan-oct-2026/07-TARJETAS-QR.md`): `Ver contraseña de un miembro` (quién vio la de quién y si
+  había copia; **nunca el valor**), `Restablecer acceso de un miembro`, `Generar QR nuevo de una persona` (sin el
+  código), y las de la persona al escanear: `Crear acceso con la tarjeta QR` y `Crear contraseña nueva con la tarjeta QR`.
 - `Corrección de culto cerrado` con la acción "Corregir asistencia cerrada del culto del dd/mm/aaaa": la
   asistencia, la fecha del culto y las cifras antes y después (QE-015). Sale también en Accesos >
   Últimos cambios.
