@@ -24,6 +24,7 @@ class ManualAyudaPantallasTest extends TestCase
     private const SIN_AYUDA = [
         'login', 'password.*', 'verification.*', 'logout',
         'informe.persona',      // enlace firmado que se comparte por WhatsApp (abre sin sesion)
+        'manifiesto',           // manifiesto de la app instalable (JSON para el navegador, no es una pantalla)
         'api.*', 'storage.*',
         'manual.*',             // el manual no se ayuda a si mismo
         'super-admin.*',        // plataforma: otra consola, con su propio layout y sin este boton
