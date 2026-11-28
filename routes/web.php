@@ -21,6 +21,9 @@ Route::get('/', function () {
         : redirect()->route('login');
 });
 
+// Manifiesto de la app instalable con la marca de la iglesia (solo lo enlaza una instalacion de una sola iglesia)
+Route::get('/manifest.webmanifest', App\Http\Controllers\ManifiestoController::class)->name('manifiesto');
+
 // Informe individual de una persona por enlace firmado: se comparte por WhatsApp, no requiere
 // sesión y vence (7 días por defecto). Va fuera de los grupos con auth a propósito.
 Route::get('/informe/{persona}', App\Http\Controllers\InformePublicoController::class)

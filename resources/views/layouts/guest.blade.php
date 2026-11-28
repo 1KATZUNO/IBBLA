@@ -1,3 +1,11 @@
+@php
+    // Marca de la pantalla de entrada: la iglesia de la sesion o la unica de la instalacion; si hay varias
+    // iglesias y nadie entro todavia, la generica de siempre.
+    $iglesiaMarca = iglesia_de_marca();
+    $marcaSiglas = $iglesiaMarca?->siglas ?? 'IBBLA';
+    $marcaNombre = $iglesiaMarca?->nombre ?? 'Iglesia Bíblica Bautista en La Aurora';
+    $marcaLogo = $iglesiaMarca?->logo_url ?? asset('images/Logo.png');
+@endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
     <head>
@@ -9,16 +17,16 @@
         <meta name="apple-mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 
-        <title>Iniciar sesión · IBBLA</title>
+        <title>Iniciar sesión · {{ $marcaSiglas }}</title>
 
         <!-- PWA Manifest -->
-        <link rel="manifest" href="{{ asset('manifest.json') }}">
+        <link rel="manifest" href="{{ url_manifiesto() }}">
 
         <!-- Favicon & App Icons -->
-        <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('images/Logo.png') }}">
-        <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('images/Logo.png') }}">
-        <link rel="shortcut icon" href="{{ asset('images/Logo.png') }}">
-        <link rel="apple-touch-icon" href="{{ asset('images/Logo.png') }}">
+        <link rel="icon" type="image/png" sizes="32x32" href="{{ $marcaLogo }}">
+        <link rel="icon" type="image/png" sizes="16x16" href="{{ $marcaLogo }}">
+        <link rel="shortcut icon" href="{{ $marcaLogo }}">
+        <link rel="apple-touch-icon" href="{{ $marcaLogo }}">
 
         <!-- Google Fonts -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -35,10 +43,10 @@
                 <!-- Encabezado de marca -->
                 <div class="mb-6 flex flex-col items-center text-center">
                     <span class="flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-800 shadow-card">
-                        <img src="{{ asset('images/Logo.png') }}" alt="" class="h-11 w-11 object-contain">
+                        <img src="{{ $marcaLogo }}" alt="" class="h-11 w-11 object-contain">
                     </span>
-                    <h1 class="mt-4 text-2xl font-semibold tracking-tight text-gray-900">{{ tenant()?->siglas ?? 'IBBLA' }}</h1>
-                    <p class="mt-1 text-sm text-gray-500">{{ tenant()?->nombre ?? 'Iglesia Bíblica Bautista en La Aurora' }} · Administración</p>
+                    <h1 class="mt-4 text-2xl font-semibold tracking-tight text-gray-900">{{ $marcaSiglas }}</h1>
+                    <p class="mt-1 text-sm text-gray-500">{{ $marcaNombre }} · Administración</p>
                 </div>
 
                 <!-- Tarjeta -->
@@ -46,7 +54,7 @@
                     {{ $slot }}
                 </div>
 
-                <p class="mt-6 text-center text-xs text-gray-400">&copy; {{ date('Y') }} {{ tenant()?->siglas ?? 'IBBLA' }} · {{ tenant()?->nombre ?? 'Iglesia Bíblica Bautista en La Aurora' }}</p>
+                <p class="mt-6 text-center text-xs text-gray-400">&copy; {{ date('Y') }} {{ $marcaSiglas }} · {{ $marcaNombre }}</p>
             </div>
         </div>
     <script>
