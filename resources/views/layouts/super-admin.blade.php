@@ -10,7 +10,7 @@
 
     <title>Super Admin - @yield('title', 'Dashboard')</title>
 
-    <link rel="manifest" href="{{ asset('manifest.json') }}">
+    <link rel="manifest" href="{{ url_manifiesto() }}">
     <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('images/Logo.png') }}">
     <link rel="apple-touch-icon" href="{{ asset('images/Logo.png') }}">
 

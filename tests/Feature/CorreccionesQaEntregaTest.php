@@ -123,9 +123,19 @@ class CorreccionesQaEntregaTest extends TestCase
         $this->actingAs($this->admin)->get(route('ingresos-asistencia.pdf-recuento-transferencias', $culto))->assertOk();
     }
 
-    /** QE-010: la marca de la app instalada y del login es la de IBBLA. */
+    /**
+     * QE-010: la marca de la app instalada y del login es la de IBBLA. Vale para una instalacion con
+     * varias iglesias, como ibbla.eu (con una sola, la entrada lleva la de esa iglesia: MarcaInstalacionTest).
+     */
     public function test_la_marca_es_la_de_ibbla(): void
     {
+        \App\Models\Tenant::create([
+            'nombre' => 'Otra Iglesia', 'siglas' => 'OTRA', 'slug' => 'otra', 'color_theme' => 'blue',
+            'timezone' => 'America/Costa_Rica', 'locale' => 'es', 'moneda_codigo' => 'CRC', 'moneda_simbolo' => '₡', 'activo' => true,
+        ]);
+        // Quien abre la pantalla de entrada todavia no tiene iglesia: se suelta la que enlaza el escenario.
+        app()->forgetInstance('current_tenant');
+
         $manifiesto = json_decode((string) file_get_contents(public_path('manifest.json')), true);
         $this->assertSame('IBBLA', $manifiesto['short_name']);
         foreach ($manifiesto['icons'] as $icono) {
