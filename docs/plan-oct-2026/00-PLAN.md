@@ -313,3 +313,32 @@ Del lider del proyecto (David):
   ensayo sobre una copia fresca de produccion y en produccion primero en seco; la huella de cifras de hoy quedo
   identica y las 618 promesas vigentes no cambiaron. Queda en auditoria como importacion asistida por soporte.
   El 1 de enero el corte se activa solo: las promesas de 2026 pasan al historial y rigen las nuevas.
+- 2026-11-26 (02:40 CR): TARJETAS CON QR DE ACCESO PERSONAL, pedido de David, DESPLEGADO como `v2026.11.26-e4`
+  (main 798c419). Especificacion en `07-TARJETAS-QR.md`, informe en `INFORME-tarjetas-qr.md`. Un solo equipo.
+  Que hace: cada persona tiene una tarjeta con su nombre, su clase y un QR (`/t/{token}`, secreto de 40
+  caracteres en `personas.token_acceso`). Al escanear: sin cuenta, crea su acceso con un usuario o un correo y
+  una contrasena y entra a Mi perfil; con cuenta, llega al inicio de sesion con su identificador ya escrito y
+  tiene que escribir la contrasena (el QR nunca entra solo). El administrador ve la tarjeta en una ventana desde
+  Personas (boton Tarjeta), la baja en PDF y baja todas juntas en `/personas/tarjetas` (8 por hoja carta, con
+  marcas de corte; con promesa, todas las activas o una clase). Desde la ventana puede ver la contrasena de una
+  cuenta de miembro (copia cifrada en `users.password_visible`, solo rol miembro, cada consulta en auditoria,
+  interruptor `IBBLA_CONTRASENA_VISIBLE`), restablecer el acceso o generar un QR nuevo. El login acepta correo
+  o nombre de usuario (`users.usuario`; `users.email` paso a opcional).
+  Revision del lider antes de subir: el limite de intentos de las rutas publicas era por IP (30 y 10 por
+  minuto) y habria dejado afuera a la gente el dia que toda la iglesia escanee desde el Wi-Fi del templo;
+  ahora el limite corto es por tarjeta y el de la IP es un tope holgado, con pagina de espera en espanol.
+  Suite final 1061 pruebas / 14 de Breeze. Ensayo sobre una copia de produccion del mismo dia: migracion
+  limpia (los 21 usuarios conservan su correo), huella de cifras identica, PDF de 200 tarjetas en 4,7 s la
+  primera vez y 1 s despues, 255 escaneos seguidos desde una sola IP sin bloqueo. Probado en navegador local
+  de punta a punta (tarjeta, crear acceso, entrar, contrasena equivocada, restablecer, QR nuevo, espera).
+  Deploy: un minuto y medio de mantenimiento (02:39 a 02:40 CR), 74 migraciones, huella de produccion
+  IDENTICA antes y despues (cortes 31/10 y 26/11), `ibbla:verificar` sin fallas nuevas (sigue la contrasena
+  de semilla de super@admin.com), PDF masivo de 255 tarjetas medido en el servidor con datos ficticios:
+  3,1 s sin cache y 0,5 s despues. En produccion todavia no se genero ninguna tarjeta real.
+  Pendiente con el cliente: (1) probar con un telefono una tarjeta impresa; (2) confirmar si se queda la
+  contrasena visible para el administrador o solo "Restablecer acceso"; (3) las cuentas que ya existian no
+  tienen copia visible hasta que cambien su contrasena.
+  Clases en las tarjetas, DECIDIDO por David el 26/11: de las 200 personas que recibirian tarjeta, 126 no
+  tienen clase en el sistema y su tarjeta sale sin ese renglon (solo nombre y QR). El Excel de promesas 2027
+  trae la clase de 71 de ellas, pero David pidio dejarlas sin clase: no se carga nada. Si mas adelante se le
+  asigna una clase a una persona en Gestionar Clases, su tarjeta la muestra sola.

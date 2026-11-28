@@ -18,15 +18,59 @@ if (! function_exists('tenant')) {
     }
 }
 
+if (! function_exists('iglesia_unica')) {
+    /**
+     * La UNICA iglesia activa de la instalacion, o null si hay varias (o ninguna). Una instalacion de una
+     * sola iglesia (ibbsc.co.uk) muestra su marca aunque nadie haya iniciado sesion; una de varias iglesias
+     * (ibbla.eu) no puede saber cual es antes del login. Se resuelve una vez por peticion.
+     */
+    function iglesia_unica(): ?\App\Models\Tenant
+    {
+        if (! app()->bound('iglesia_unica')) {
+            try {
+                $activas = \App\Models\Tenant::query()->where('activo', true)->limit(2)->get();
+                $unica = $activas->count() === 1 ? $activas->first() : null;
+            } catch (\Throwable) {
+                $unica = null; // sin base o sin tablas (instalacion a medias): marca generica
+            }
+            app()->instance('iglesia_unica', $unica ?? false);
+        }
+
+        return app('iglesia_unica') ?: null;
+    }
+}
+
+if (! function_exists('iglesia_de_marca')) {
+    /**
+     * La iglesia cuya marca se muestra: la de la sesion si la hay; si no, la unica de la instalacion.
+     * Null = marca generica (pantalla de entrada de una instalacion con varias iglesias).
+     */
+    function iglesia_de_marca(): ?\App\Models\Tenant
+    {
+        return tenant() ?? iglesia_unica();
+    }
+}
+
+if (! function_exists('url_manifiesto')) {
+    /**
+     * El manifiesto de la app instalable: el archivo de siempre, salvo en una instalacion de una sola
+     * iglesia, que lleva su nombre y su logo (ManifiestoController).
+     */
+    function url_manifiesto(): string
+    {
+        return iglesia_unica() ? route('manifiesto') : asset('manifest.json');
+    }
+}
+
 if (! function_exists('tenant_title')) {
     /**
      * Construye el título de página con las siglas del tenant actual.
      * Usado en @section('title', tenant_title('Asistencia')) en blades.
-     * Fallback 'IBBLA' si no hay tenant (rutas públicas / login).
+     * Sin sesion (rutas públicas / login) usa la iglesia de la instalacion si es una sola; si no, 'IBBLA'.
      */
     function tenant_title(string $suffix = ''): string
     {
-        $siglas = tenant()?->siglas ?? 'IBBLA';
+        $siglas = iglesia_de_marca()?->siglas ?? 'IBBLA';
 
         return $suffix === '' ? $siglas : $siglas.' - '.$suffix;
     }
